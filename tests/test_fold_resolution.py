@@ -16,16 +16,27 @@ def test_fold_serves_generated_rows_after_force(tmp_path):
     roles = _make_engine_roles()
     resolver = Resolver(buf, classifier, indexes, roles["resolver"], stub)
 
+    # Literal aspect: generated row supersedes the spent thunk on the key.
+    buf.append(entity="obj:meter", attribute="inscription",
+               value={"policy": INVENT_UNDER_CANON}, value_type="unresolved",
+               valid_from=1.0, status="assumed", role=roles["ingestor"])
+    classifier.classify_all()
+    stub.enqueue({"items": [{"value": "TOVAN"}]})
+    stub.enqueue({"durability": "CONSTITUTIVE", "class_confidence": 0.9})
+    resolver.resolve("obj:meter", "inscription")
+
+    result = indexes.fold_key("obj:meter", "inscription")
+    assert not result.conflicted
+    assert result.winner.status == "generated"
+    assert result.winner.value == "TOVAN"
+
+    # Contents aspect: the key folds to nothing; the tree serves contents.
     buf.append(entity="obj:drawer", attribute="contents",
                value={"policy": INVENT_UNDER_CANON}, value_type="unresolved",
                valid_from=1.0, status="assumed", role=roles["ingestor"])
     classifier.classify_all()
-    stub.enqueue({"items": [{"value": "a brass key"}]})
-    stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+    stub.enqueue({"items": [{"value": "a brass key", "kind": "key"}]})
     resolver.resolve("obj:drawer", "contents")
-
-    result = indexes.fold_key("obj:drawer", "contents")
-    assert not result.conflicted
-    assert result.winner.status == "generated"
-    assert result.winner.value == "a brass key"
+    assert indexes.fold_key("obj:drawer", "contents").winner is None  # spent thunk hidden
+    assert len(indexes.contents("obj:drawer")) == 1
     buf.close()

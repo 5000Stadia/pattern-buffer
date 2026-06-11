@@ -99,16 +99,21 @@ class TestDrawer:
                    value={"policy": INVENT_UNDER_CANON}, value_type="unresolved",
                    valid_from=1.0, status="assumed", role=ing)
         classifier.classify_all()
-        stub.enqueue({"items": [{"value": "a brass key"}, {"value": "two matchbooks"}]})
+        stub.enqueue({"items": [
+            {"value": "a brass key", "kind": "key"},
+            {"value": "two matchbooks", "kind": "matchbook"},
+        ]})
         first = resolver.resolve("obj:drawer", "contents")
-        values = sorted(a.value for a in first)
-        assert values == ["a brass key", "two matchbooks"]
-        assert all(a.status == "generated" for a in first)
+        # Contents resolve as minted entities with containment edges (P2):
+        assert all(a.status == "generated" and a.attribute == "in" for a in first)
+        members = indexes.contents("obj:drawer")
+        names = sorted(indexes.current_state(m)["name"].winner.value for m in members)
+        assert names == ["a brass key", "two matchbooks"]
 
         # Second force: served from the memo, zero model calls.
         n = len(stub.calls)
         again = resolver.resolve("obj:drawer", "contents")
-        assert sorted(a.value for a in again) == values
+        assert [a.id for a in again] == [a.id for a in first]
         assert len(stub.calls) == n
 
         # A cold instance over the same file serves the identical contents.
@@ -118,7 +123,9 @@ class TestDrawer:
         idx2 = Indexes(buf2, cls2)
         resolver2 = Resolver(buf2, cls2, idx2, _make_engine_roles()["resolver"], stub2)
         cold = resolver2.resolve("obj:drawer", "contents")
-        assert sorted(a.value for a in cold) == values
+        assert [a.id for a in cold] == [a.id for a in first]
+        cold_names = sorted(idx2.current_state(m)["name"].winner.value for m in idx2.contents("obj:drawer"))
+        assert cold_names == names
         assert stub2.calls == []
         buf2.close()
 

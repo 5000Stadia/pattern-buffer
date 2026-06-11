@@ -62,6 +62,10 @@ class Indexes:
     def set_identity_resolver(self, fn: Callable[[str], str]) -> None:
         self._resolve = fn
 
+    def resolve_entity(self, entity: str) -> str:
+        """The identity closure's canonical representative for `entity`."""
+        return self._resolve(entity)
+
     # -------------------------------------------------------------- helpers
 
     def _source_class(self, row: Assertion, asserted_as_of: int | None) -> str:
@@ -130,11 +134,22 @@ class Indexes:
         if not candidates:
             return FoldResult(winner=None)
 
-        # Resolution IS the supersession: once concrete rows exist on a key,
-        # its unresolved placeholder no longer competes (whitepaper §8 —
-        # forcing memoizes into the log; the fold serves the memo).
+        # Resolution IS the supersession (whitepaper §8 — forcing memoizes
+        # into the log; the fold serves the memo): a spent thunk (one with a
+        # resolved_by marker) never competes, and once concrete rows exist
+        # on a key, its unresolved placeholder no longer competes either.
+        candidates = [
+            r
+            for r in candidates
+            if r.value_type != "unresolved"
+            or not self._buffer.visible(
+                entity=r.id, attribute="resolved_by", asserted_as_of=asserted_as_of
+            )
+        ]
         if any(r.value_type != "unresolved" for r in candidates):
             candidates = [r for r in candidates if r.value_type != "unresolved"]
+        if not candidates:
+            return FoldResult(winner=None)
 
         by_class = {STATE: [], DISPOSITIONAL: [], CONSTITUTIVE: []}
         for row in candidates:

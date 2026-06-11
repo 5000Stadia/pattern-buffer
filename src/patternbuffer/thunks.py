@@ -123,25 +123,40 @@ class Resolver:
         """Force a thunk per policy. Memoized: a second force serves the
         cache. `access` is the observer-position seam (spec §9.2) —
         accepted, not yet exercised in the spike."""
+        thunk = self._find_thunk_row(entity, aspect, frame)
+
+        # Memoized: a spent thunk serves its cache, forever, identically.
+        if thunk is not None:
+            marker = self._resolved_marker(thunk)
+            if marker is not None:
+                ids = marker.value if isinstance(marker.value, list) else [marker.value]
+                return [self._buffer.get(i) for i in ids]
+
+        # Concrete state on the key answers without any thunk machinery.
         fold = self._indexes.fold_key(entity, aspect, frame)
-        if fold.winner is None:
+        if fold.winner is not None and fold.winner.value_type != "unresolved":
+            return [fold.winner]
+
+        if thunk is None:
             return UNKNOWN if self._world_policy == OBSERVE_OR_UNKNOWN else []
-        row = fold.winner
-        if row.value_type != "unresolved":
-            return [row]  # already concrete (incl. previously memoized)
 
-        marker = self._resolved_marker(row)
-        if marker is not None:
-            ids = marker.value if isinstance(marker.value, list) else [marker.value]
-            return [self._buffer.get(i) for i in ids]
-
-        spec = row.value if isinstance(row.value, dict) else {}
+        spec = thunk.value if isinstance(thunk.value, dict) else {}
         policy = spec.get("policy", self._world_policy)
         if policy == DENY:
             raise ResolutionDenied(f"{entity}·{aspect} is sealed (policy=deny)")
         if policy == OBSERVE_OR_UNKNOWN:
             return UNKNOWN  # never invents; only observation resolves
-        return self._invent(row, spec, frame)
+        return self._invent(thunk, spec, frame)
+
+    def _find_thunk_row(self, entity: str, aspect: str, frame: str) -> Assertion | None:
+        canonical = self._indexes.resolve_entity(entity)
+        rows = [
+            r
+            for r in self._buffer.visible(attribute=aspect, frame=frame)
+            if r.value_type == "unresolved"
+            and self._indexes.resolve_entity(r.entity) == canonical
+        ]
+        return rows[-1] if rows else None
 
     def _invent(self, thunk_row: Assertion, spec: dict, frame: str) -> list[Assertion]:
         constraints = self._inherited_constraints(thunk_row.entity, frame)
@@ -155,9 +170,34 @@ class Resolver:
         )
         out = self._model(prompt, _RESOLVE_SCHEMA)
         appended: list[Assertion] = []
-        for item in out["items"]:
-            appended.append(
-                self._buffer.append(
+        if thunk_row.attribute == "contents":
+            # Contents are never literal rows on one key (P2: emptiness and
+            # contents derive from the tree). Invention mints entities with
+            # containment edges; the contents query serves them forever.
+            for item in out["items"]:
+                eid = f"obj:gen_{self._buffer.head() + 1}"
+                kind_row = self._buffer.append(
+                    entity=eid, attribute="kind", value=str(item.get("kind", "object")),
+                    frame=frame, status="generated", role=self._role,
+                )
+                name_row = self._buffer.append(
+                    entity=eid, attribute="name", value=str(item["value"]),
+                    frame=frame, status="generated", role=self._role,
+                )
+                edge = self._buffer.append(
+                    entity=eid, attribute="in", value=thunk_row.entity,
+                    value_type="entity", valid_from=thunk_row.valid_from,
+                    frame=frame, status="generated", role=self._role,
+                )
+                self._classifier.classify(kind_row)   # guardrail: CONSTITUTIVE
+                self._classifier.classify(name_row)   # guardrail: CONSTITUTIVE
+                # The resolver holds the world context here: invented
+                # contents are movables. Judgment injected, log untouched.
+                self._classifier.set(edge.id, "STATE")
+                appended.append(edge)
+        else:
+            for item in out["items"]:
+                row = self._buffer.append(
                     entity=thunk_row.entity,
                     attribute=thunk_row.attribute,
                     value=item["value"],
@@ -167,7 +207,8 @@ class Resolver:
                     status="generated",
                     role=self._role,
                 )
-            )
+                self._classifier.classify(row)
+                appended.append(row)
         marker = self._buffer.append(
             entity=thunk_row.id,
             attribute="resolved_by",
@@ -175,11 +216,7 @@ class Resolver:
             status="generated",
             role=self._role,
         )
-        # New assertions feed back through classification: the system is
-        # closed under its own operations (whitepaper §13).
-        for a in appended:
-            self._classifier.classify(a)
-        self._classifier.classify(marker)
+        self._classifier.classify(marker)  # closed under its own operations
         logger.info(
             "resolved %s·%s -> %d generated row(s)",
             thunk_row.entity, thunk_row.attribute, len(appended),

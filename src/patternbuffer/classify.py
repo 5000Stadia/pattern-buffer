@@ -75,6 +75,8 @@ class Classifier:
             return EVENT, 1.0
         if row.attribute in {"kind", "connects_to", "adjacent_to"}:
             return CONSTITUTIVE, 1.0
+        if row.attribute in {"name", "alias"}:
+            return CONSTITUTIVE, 0.95  # identity anchors
         if row.attribute in META_ATTRIBUTES:
             # Meta-assertions ride with their subject; they never fold as
             # world facts. Classified EVENT-like for lens purposes: immutable.
@@ -140,6 +142,14 @@ class Classifier:
             (c.assertion_id, c.durability, c.class_confidence, int(c.needs_review)),
         )
         self._buffer.raw_connection().commit()
+
+    def set(self, assertion_id: str, durability: str, confidence: float = 1.0) -> None:
+        """Judgment injection for components that hold the world context
+        (e.g. the resolver knows invented contents are movables). Sidecar
+        only — the log is untouched, and rebuild() re-derives."""
+        if durability not in DURABILITIES:
+            raise ValueError(durability)
+        self._store(Classification(assertion_id, durability, confidence, False))
 
     def get(self, assertion_id: str) -> Classification | None:
         r = self._buffer.raw_connection().execute(
