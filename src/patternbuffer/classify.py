@@ -86,7 +86,11 @@ class Classifier:
         if row.attribute in CONTAINMENT_FAMILY:
             if row.attribute in {"held_by", "worn_by", "carried_by"}:
                 return STATE, 0.95  # things held by agents are movable
-            return None  # in/within: fixture vs movable is a judgment
+            if row.entity.startswith("place:"):
+                # A place's containment is part of what the place IS — the
+                # study does not move out of the home (fixture sub-rule).
+                return CONSTITUTIVE, 0.9
+            return None  # objects: fixture vs movable is a judgment
         return None
 
     def classify(self, row: Assertion) -> Classification:
