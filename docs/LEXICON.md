@@ -1,0 +1,36 @@
+# Lexicon
+
+The working vocabulary for pattern-buffer. One name per concept, used identically in code, docs, tests, and specs. A term not in this file is added here before it is used twice.
+
+## The two rules
+
+1. **The double-read test.** Every exported name (class, function, CLI command) must parse correctly for an engineer with zero Star Trek context. Canon homage that only works as fan service stays out of the code and lives in doc prose.
+2. **Nouns carry the flavor; verbs stay boring.** The operation algebra (`set`, `relate`, `event`, `resolve`, `retract`, `merge`, `refer`) and the role matrix (Ingestor, Classifier, Resolver, Projector, Renderer) keep plain engineering names — they are authority boundaries and must be instantly legible.
+
+## Working terms (code symbols)
+
+| Term | Definition | Double-read |
+|---|---|---|
+| **`World`** | The named, individual unit: one PatternBuffer + its physics (resolution policy + decay configuration) + derived indexes. The thing hosts bind to, name, and ship. | Universal. |
+| **`PatternBuffer`** | The append-only assertion log — the only truth (P1). Each World owns exactly one; a buffer never holds two worlds; a world never spans two buffers (the 1:1 invariant). | Trek: holds the pattern between materializations. Systems: a buffer of patterns (cf. protocol buffers). |
+| **`materialize()` / `Materialization`** | The projector's read: `(scope, as_of, frame, lens, budget)` → the world served from pattern. | Trek: rematerialization — re-entry exactly as left. Databases: a materialized view is the canonical term for a derived, disposable projection over a log. Both readings are precisely correct. |
+| **`Degradation`** | The named failure class: served state contradicting the buffer — drift, contradiction, mutated canon. The test suite's core negative assertion is "no degradation." | Trek: buffer/holomatrix degradation. Systems: data degradation. |
+| **`Frame`** | Perspective scope on every assertion: `canon`, `knows:<entity>`, named frames. Carries knowledge, contested truth, and privacy by structural absence. | RDF named-graph heritage; kept plain deliberately. |
+| **`Thunk`** | An explicitly unresolved aspect with a resolution policy. Forced exactly once; memoized forever. Thunks can move without resolving. | CS-canonical (lazy evaluation). |
+| **`frontier`** | The explicitly-unresolved region: the thunk table plus everything below the resolution floor. Where nothing has been established, the system serves no invented detail. | Robotics-canonical (occupancy-grid mapping); heritage is the lidar ingestion parallel. |
+| **`Anchor`** | Composite identity signals on an entity: names/aliases, roles, recurring locations, distinguishing features. | Plain. |
+| **`Scene cursor`** | The ingest-time "where is the narrated action happening" pose. The largest single precision multiplier in ingestion. | Heritage: lidar pose estimation, not Trek. |
+| **`arch`** | The operator's inspection CLI: dump the buffer, query as-of, audit provenance — without touching the world. | Trek: "Computer, arch!" — the operator's control interface inside the simulation. Allowed in code as a tool nickname, not an API symbol. |
+
+## Doc glosses (metaphor layer — docs and README only, never code)
+
+| Gloss | Maps to | Canon note |
+|---|---|---|
+| *a pattern buffer that never degrades* | The project thesis | *Relics*: Scotty survives 75 years suspended in a pattern buffer rigged against degradation, rematerialized exactly as he entered. The drawer test, personified. |
+| *a holomatrix* | A `World` | The complete structured representation of one program; see *The Swarm* for what degradation does to one. Rejected as a code symbol (fails the double-read); preserved here as the canon mapping. |
+| *a ship in a bottle* | The portable `.world` file | *Ship in a Bottle*: Moriarty's entire persistent universe, self-contained in one box. A world's durable identity is one file plus its policy row — copy it, ship it, archive it. |
+| *you see the grid* | The `frontier` | The empty holodeck grid: bare substrate visible wherever nothing is materialized. "Where nothing has been established, you don't get invented detail — you see the grid." |
+
+## The decoder paragraph (for the README)
+
+> The buffer holds the pattern; materialization is re-entry; degradation is the failure we exist to prevent; the arch is how the operator steps outside the world to inspect it; and where nothing has been established, you see the grid.
