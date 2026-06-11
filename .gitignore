@@ -1,0 +1,8 @@
+# Cross-instance communication channel (pattern-buffer CC <-> Kernos CC); never committed
+dev_inbox/
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
