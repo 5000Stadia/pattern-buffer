@@ -32,23 +32,42 @@ class Verdict:
 
 
 def ent(w: World, key: str) -> str | None:
-    """Resolve a fixture entity key to the extractor's chosen id."""
-    for alias in FX.ENTITIES.get(key, ()):
-        hits = w.registry.by_alias(alias)
-        if len(hits) == 1:
-            return next(iter(hits))
-        if len(hits) > 1:
-            return sorted(hits)[0]
-    # Fuzzy fallback: substring over name/alias rows.
+    """Resolve a fixture entity key to the extractor's chosen id.
+
+    Candidates come from exact alias hits, fuzzy name/alias matches, and
+    id-slug matches; scored by (id contains the fixture key's slug, name
+    matched exactly, number of assertions). The extractor chooses ids
+    freely — the grader has to find them, not dictate them."""
     needles = [a.lower() for a in FX.ENTITIES.get(key, ())]
-    best = None
+    slug = key.lower()
+    scores: dict[str, list[int]] = {}
+
+    def bump(eid: str, *, exact=0, fuzzy=0, idhit=0) -> None:
+        s = scores.setdefault(eid, [0, 0, 0, 0])
+        s[0] += idhit
+        s[1] += exact
+        s[2] += fuzzy
+
+    for alias in needles:
+        for hit in w.registry.by_alias(alias):
+            bump(hit, exact=1)
     for row in w.buffer.visible():
+        if row.entity.startswith("a:"):
+            continue
+        eid = w.registry.resolve(row.entity)
         if row.attribute in {"name", "alias"} and isinstance(row.value, str):
             v = row.value.lower()
-            if any(n in v or v in n for n in needles):
-                best = w.registry.resolve(row.entity)
-                break
-    return best
+            if any(n == v for n in needles):
+                bump(eid, exact=1)
+            elif any(n in v or v in n for n in needles):
+                bump(eid, fuzzy=1)
+        if slug in eid.lower().split(":")[-1]:
+            bump(eid, idhit=1)
+    if not scores:
+        return None
+    for eid in scores:
+        scores[eid][3] = len(rows_about(w, eid))
+    return max(scores, key=lambda e: tuple(scores[e]))
 
 
 def chain(w: World, eid: str, day: float) -> list[str]:
@@ -203,10 +222,12 @@ def run_battery(w: World) -> list[Verdict]:
                 f"{len(moods)} mood rows, {len(bad)} misclassified CONSTITUTIVE"))
 
     # ---------- TIME
+    from patternbuffer.model import META_ATTRIBUTES
     stamped = unstamped = 0
     for r in w.buffer.visible():
-        if r.entity.startswith("a:"):
-            continue
+        if (r.entity.startswith("a:") or r.entity.startswith("event:merge_")
+                or r.attribute in META_ATTRIBUTES):
+            continue  # engine identity/meta machinery is timeless by design
         d = w.classifier.durability(r.id)
         if d in {STATE, EVENT}:
             if r.valid_from is None:
@@ -215,19 +236,28 @@ def run_battery(w: World) -> list[Verdict]:
                 stamped += 1
     distinct_days = len({r.valid_from for r in w.buffer.visible() if r.valid_from is not None})
     ok = unstamped == 0 and distinct_days >= 5
+    # Unstamped world-facts trace to extractor `timeless` mislabels: the
+    # gate stamps everything not explicitly marked timeless.
     add(Verdict(10, "narrative clock on the spine",
                 "PASS" if ok else "FAIL",
-                None if ok else ("shape" if unstamped else "extraction"),
+                None if ok else "extraction",
                 f"stamped={stamped} unstamped={unstamped} distinct_times={distinct_days}"))
 
     probe = FX.CORE_LOCATIONS[0]
     if core:
         good = located_in_any(w, core, probe["day"], probe["expect_any"])
         rejected = located_in_any(w, core, probe["day"], probe["reject"])
-        rows_exist = any(r.valid_from is not None and r.valid_from <= probe["day"] + 0.5
-                         for r in rows_about(w, core))
+        # Shape only if a correctly-located, correctly-timed row EXISTS and
+        # the fold still serves the wrong place — that's the engine failing.
+        expect_ids = {ent(w, k) for k in probe["expect_any"]} - {None}
+        correct_row_exists = any(
+            r.attribute in {"in", "within", "held_by", "carried_by"}
+            and r.value in expect_ids
+            and r.valid_from is not None and r.valid_from <= probe["day"]
+            for r in rows_about(w, core)
+        )
         status = "PASS" if good and not rejected else "FAIL"
-        fclass = None if status == "PASS" else ("shape" if rows_exist and rejected else "extraction")
+        fclass = None if status == "PASS" else ("shape" if correct_row_exists else "extraction")
         add(Verdict(11, "off-screen reveal: valid_time != asserted_at (e25)",
                     status, fclass,
                     f"core at day {probe['day']}: chain={chain(w, core, probe['day'])}"))
@@ -242,9 +272,19 @@ def run_battery(w: World) -> list[Verdict]:
                 f"{len(future)} future/conditional rows"))
 
     aged = [r for r in w.buffer.visible() if re.fullmatch(r"age|years_dead|years_ago|elapsed.*", r.attribute)]
-    add(Verdict(13, "derive-don't-store over time (no stored ages)",
-                "PASS" if not aged else "FAIL", None if not aged else "shape",
-                f"{len(aged)} stored-age rows"))
+    # A stored age is only a violation when it is DERIVABLE — i.e. a birth/
+    # death anchor exists for the same entity. "Nineteen and nervous" with
+    # no birthdate in the text is an honest valid-time-bounded observation.
+    derivable = []
+    for r in aged:
+        eid = w.registry.resolve(r.entity)
+        anchors = [x for x in rows_about(w, eid)
+                   if re.search(r"born|birth|died|death_date", x.attribute)]
+        if anchors and r.valid_from is None:
+            derivable.append(r)
+    add(Verdict(13, "derive-don't-store over time (no stored derivable ages)",
+                "PASS" if not derivable else "FAIL", None if not derivable else "shape",
+                f"{len(aged)} age rows, {len(derivable)} derivable (violations)"))
 
     if core:
         results = []
@@ -401,12 +441,27 @@ def run_battery(w: World) -> list[Verdict]:
 
     # ---------- IDENTITY
     ilsa = ent(w, "ilsa")
-    clerk_hits = w.registry.by_alias("the clerk with the tin ear")
-    named_hits = w.registry.by_alias("ilsa renn")
-    ok = bool(clerk_hits) and clerk_hits == named_hits
+    # Late binding can land two ways: an explicit merge, or the Ch.2 clerk
+    # entity acquiring the Ch.3 name by id reuse. Either is correct. What
+    # fails it: clerk-anchored rows unreachable from the named identity, or
+    # the name fragmented across unmerged entities.
+    named_entities = {
+        w.registry.resolve(r.entity)
+        for r in w.buffer.all_rows()
+        if r.attribute in {"name", "alias"}
+        and isinstance(r.value, str) and "ilsa" in r.value.lower()
+    }
+    clerkish = ilsa is not None and (
+        "clerk" in ilsa or any(
+            r.attribute in {"name", "alias"} and "clerk" in str(r.value).lower()
+            for r in rows_about(w, ilsa)
+        )
+    )
+    ok = clerkish and len(named_entities) == 1
     add(Verdict(24, "late binding: clerk == Ilsa Renn (feature 1)",
                 "PASS" if ok else "FAIL", None if ok else "extraction",
-                f"clerk->{clerk_hits} named->{named_hits}"))
+                f"named identity reaches clerk rows: {clerkish}; "
+                f"entities carrying the name: {sorted(named_entities)}"))
 
     if ilsa:
         names = {str(r.value).lower() for r in w.buffer.all_rows()

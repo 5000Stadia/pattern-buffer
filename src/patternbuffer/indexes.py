@@ -183,6 +183,13 @@ class Indexes:
         """STATE: recency wins within a source class; across classes,
         agreement corroborates (serve the more precise value), disagreement
         flags and keeps serving the prior in-class winner (spec §7)."""
+        # Assumption quarantine (whitepaper §7/§15): `assumed` is explicitly
+        # provisional — it never holds incumbency against evidentiary rows.
+        # An observation arriving over a working assumption is confirmation
+        # or correction, not a cross-source conflict to ask about.
+        if any(r.status != "assumed" for r in rows):
+            rows = [r for r in rows if r.status != "assumed"]
+
         by_source: dict[str, list[Assertion]] = {}
         for r in rows:
             by_source.setdefault(self._source_class(r, asserted_as_of), []).append(r)

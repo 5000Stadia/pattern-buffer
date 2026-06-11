@@ -138,13 +138,14 @@ def main() -> int:
     run_dir = OUT / f"{date.today().isoformat()}-{seed_version}"
     run_dir.mkdir(parents=True, exist_ok=True)
     world_path = run_dir / "fresh_ingest.world"
-    if skip == 0 and only_chapters is None:
+    if skip == 0 and only_chapters is None and "--grade-only" not in sys.argv:
         world_path.unlink(missing_ok=True)
     w = World(world_path, world_id="w:anchor_fresh", model=model)
     w.ingestor.classify_inline = False  # batch after each chunk
 
+    grade_only = "--grade-only" in sys.argv
     t0 = time.time()
-    if not stub_mode:
+    if not stub_mode and not grade_only:
         for i, (chapter_no, scene) in enumerate(chunks(story)):
             if i < skip:
                 continue

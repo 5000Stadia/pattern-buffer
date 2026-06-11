@@ -189,3 +189,25 @@ class TestLateralGraph:
         # Vertical proximity is not connectivity: no edge, no path.
         assert indexes.path("place:council_tier", "place:wellhead") is None
         assert stub.calls == []
+
+
+class TestAssumptionQuarantine:
+    def test_assumed_yields_to_observed(self, world_parts):
+        """An explicitly-provisional assumption never holds incumbency
+        against later direct observation (whitepaper §7/§15)."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        buf.append(entity="obj:core", attribute="in", value="place:theory_vault",
+                   value_type="entity", valid_from=7.0, status="assumed", role=ing)
+        buf.append(entity="obj:core", attribute="in", value="place:seed_vault",
+                   value_type="entity", valid_from=9.0, status="observed", role=ing)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        result = indexes.fold_key("obj:core", "in", valid_as_of=10.0)
+        assert not result.conflicted
+        assert result.winner.value == "place:seed_vault"
+        # Before the observation, the assumption still serves (it is the
+        # only thing known) — provisional, but honest.
+        early = indexes.fold_key("obj:core", "in", valid_as_of=8.0, asserted_as_of=1)
+        assert early.winner.value == "place:theory_vault"
