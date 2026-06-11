@@ -79,6 +79,16 @@ def chunks(story_text: str):
     for no, text in chapters:
         for scene in text.split("\n-----\n"):
             scene = scene.strip()
+            if len(scene) <= 80:
+                continue
+            # Sub-split oversized scenes on paragraph boundaries (~3.5k max):
+            # extraction quality and call latency both degrade past that.
+            while len(scene) > 3500:
+                cut = scene.rfind("\n\n", 1500, 3500)
+                if cut == -1:
+                    cut = 3500
+                yield no, scene[:cut].strip()
+                scene = scene[cut:].strip()
             if len(scene) > 80:
                 yield no, scene
 
@@ -99,9 +109,12 @@ def roster(world: World, limit: int = 120) -> str:
 def main() -> int:
     stub_mode = "--stub" in sys.argv
     skip = 0  # --resume-from N: skip the first N chunks (already ingested)
+    only_chapters: set[int] | None = None  # --chapters=3,4: ingest only these
     for arg in sys.argv[1:]:
         if arg.startswith("--resume-from="):
             skip = int(arg.split("=")[1])
+        if arg.startswith("--chapters="):
+            only_chapters = {int(c) for c in arg.split("=")[1].split(",")}
 
     story = STORY.read_text()
     for marker in BIBLE_MARKERS:
@@ -125,7 +138,7 @@ def main() -> int:
     run_dir = OUT / f"{date.today().isoformat()}-{seed_version}"
     run_dir.mkdir(parents=True, exist_ok=True)
     world_path = run_dir / "fresh_ingest.world"
-    if skip == 0:
+    if skip == 0 and only_chapters is None:
         world_path.unlink(missing_ok=True)
     w = World(world_path, world_id="w:anchor_fresh", model=model)
     w.ingestor.classify_inline = False  # batch after each chunk
@@ -134,6 +147,8 @@ def main() -> int:
     if not stub_mode:
         for i, (chapter_no, scene) in enumerate(chunks(story)):
             if i < skip:
+                continue
+            if only_chapters is not None and chapter_no not in only_chapters:
                 continue
             w.ingestor.cursor.advance(CHAPTER_DAYS[chapter_no])
             context = (

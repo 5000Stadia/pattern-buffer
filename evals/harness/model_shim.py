@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import subprocess
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,8 @@ def claude_model(prompt: str, schema: dict) -> dict:
     )
     last_err: Exception | None = None
     for attempt in (1, 2, 3):
+        if attempt > 1:
+            time.sleep(15 * (attempt - 1))  # transient rate pressure backs off
         try:
             proc = subprocess.run(
                 ["claude", "-p", "--model", MODEL, "--max-turns", "1"],
@@ -64,7 +67,10 @@ def claude_model(prompt: str, schema: dict) -> dict:
             logger.warning("model shim timeout (attempt %d)", attempt)
             continue
         if proc.returncode != 0:
-            last_err = ModelShimError(f"claude exited {proc.returncode}: {proc.stderr[:300]}")
+            last_err = ModelShimError(
+                f"claude exited {proc.returncode}: stderr={proc.stderr[:200]!r} "
+                f"stdout={proc.stdout[:200]!r}"
+            )
             logger.warning("model shim attempt %d failed: %s", attempt, last_err)
             continue
         try:
