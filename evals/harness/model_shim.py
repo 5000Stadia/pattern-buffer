@@ -50,14 +50,19 @@ def claude_model(prompt: str, schema: dict) -> dict:
         f"this JSON Schema:\n{json.dumps(schema)}"
     )
     last_err: Exception | None = None
-    for attempt in (1, 2):
-        proc = subprocess.run(
-            ["claude", "-p", "--model", MODEL, "--max-turns", "1"],
-            input=full,
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT,
-        )
+    for attempt in (1, 2, 3):
+        try:
+            proc = subprocess.run(
+                ["claude", "-p", "--model", MODEL, "--max-turns", "1"],
+                input=full,
+                capture_output=True,
+                text=True,
+                timeout=TIMEOUT,
+            )
+        except subprocess.TimeoutExpired as exc:
+            last_err = exc
+            logger.warning("model shim timeout (attempt %d)", attempt)
+            continue
         if proc.returncode != 0:
             last_err = ModelShimError(f"claude exited {proc.returncode}: {proc.stderr[:300]}")
             logger.warning("model shim attempt %d failed: %s", attempt, last_err)

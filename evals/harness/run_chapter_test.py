@@ -98,6 +98,10 @@ def roster(world: World, limit: int = 120) -> str:
 
 def main() -> int:
     stub_mode = "--stub" in sys.argv
+    skip = 0  # --resume-from N: skip the first N chunks (already ingested)
+    for arg in sys.argv[1:]:
+        if arg.startswith("--resume-from="):
+            skip = int(arg.split("=")[1])
 
     story = STORY.read_text()
     for marker in BIBLE_MARKERS:
@@ -121,13 +125,16 @@ def main() -> int:
     run_dir = OUT / f"{date.today().isoformat()}-{seed_version}"
     run_dir.mkdir(parents=True, exist_ok=True)
     world_path = run_dir / "fresh_ingest.world"
-    world_path.unlink(missing_ok=True)
+    if skip == 0:
+        world_path.unlink(missing_ok=True)
     w = World(world_path, world_id="w:anchor_fresh", model=model)
     w.ingestor.classify_inline = False  # batch after each chunk
 
     t0 = time.time()
     if not stub_mode:
-        for chapter_no, scene in chunks(story):
+        for i, (chapter_no, scene) in enumerate(chunks(story)):
+            if i < skip:
+                continue
             w.ingestor.cursor.advance(CHAPTER_DAYS[chapter_no])
             context = (
                 f"{TIME_CONVENTION}\n\nThis passage is from Chapter {chapter_no} "
