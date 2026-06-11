@@ -130,6 +130,12 @@ class Indexes:
         if not candidates:
             return FoldResult(winner=None)
 
+        # Resolution IS the supersession: once concrete rows exist on a key,
+        # its unresolved placeholder no longer competes (whitepaper §8 —
+        # forcing memoizes into the log; the fold serves the memo).
+        if any(r.value_type != "unresolved" for r in candidates):
+            candidates = [r for r in candidates if r.value_type != "unresolved"]
+
         by_class = {STATE: [], DISPOSITIONAL: [], CONSTITUTIVE: []}
         for row in candidates:
             by_class.setdefault(self._classifier.durability(row.id), []).append(row)
