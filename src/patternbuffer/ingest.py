@@ -62,6 +62,7 @@ _EXTRACT_SCHEMA = {
                     "source_doc": {"type": ["string", "null"]},
                     "caused_by": {"type": ["string", "null"]},
                     "aliases": {"type": "array", "items": {"type": "string"}},
+                    "same_as": {"type": ["string", "null"]},
                 },
                 "required": ["entity", "attribute", "value"],
             },
@@ -91,6 +92,7 @@ class Ingestor:
         model: Callable[[str, dict], Any] | None = None,
         observe_mode: bool = False,
         clock: Callable[[], float] = time.time,
+        classify_inline: bool = True,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
@@ -99,6 +101,7 @@ class Ingestor:
         self._model = model
         self._observe_mode = observe_mode
         self._clock = clock
+        self.classify_inline = classify_inline  # harness defers to batch
         self.cursor = SceneCursor()
         self._alias_map: dict[str, str] = dict(_BUILTIN_ALIASES)
         self._rebuild_alias_map()
@@ -193,7 +196,13 @@ class Ingestor:
             )
         for alias in item.get("aliases", []):
             self._registry.add_alias(entity, alias, status=item.get("status", "stated"))
-        self._classifier.classify(row)
+        if item.get("same_as"):
+            # Late binding requested by the extractor (identity is the
+            # ingestor's to resolve, §12): logged as a merge event.
+            self._registry.merge(entity, str(item["same_as"]),
+                                 evidence="extractor late binding")
+        if self.classify_inline:
+            self._classifier.classify(row)
         return out
 
     # ---------------------------------------------------------- extracted

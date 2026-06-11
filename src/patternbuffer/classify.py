@@ -171,14 +171,85 @@ class Classifier:
         c = self.get(assertion_id)
         return c.durability if c else STATE
 
-    def classify_all(self) -> int:
-        """Classify every row not yet in the sidecar. Returns count."""
-        done = 0
-        for row in self._buffer.all_rows():
-            if self.get(row.id) is None:
+    def classify_all(self, batch_size: int | None = None) -> int:
+        """Classify every row not yet in the sidecar. Returns count.
+
+        With ``batch_size``, model-judged rows go to the model in batches
+        (one call per N rows) — same judgments, fewer round trips."""
+        pending = [r for r in self._buffer.all_rows() if self.get(r.id) is None]
+        if not batch_size:
+            for row in pending:
                 self.classify(row)
-                done += 1
-        return done
+            return len(pending)
+        deferred: list[Assertion] = []
+        for row in pending:
+            verdict = self._guardrails(row)
+            if verdict is not None:
+                durability, confidence = verdict
+                self._store(
+                    Classification(
+                        row.id, durability, confidence,
+                        durability == CONSTITUTIVE and confidence < _REVIEW_FLOOR,
+                    )
+                )
+            else:
+                deferred.append(row)
+        for start in range(0, len(deferred), batch_size):
+            self._classify_batch(deferred[start : start + batch_size])
+        return len(pending)
+
+    def _classify_batch(self, rows: list[Assertion]) -> None:
+        listing = "\n".join(
+            f"{i}. {r.entity} · {r.attribute} · {json.dumps(r.value)}"
+            for i, r in enumerate(rows)
+        )
+        schema = {
+            "type": "object",
+            "properties": {
+                "verdicts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "index": {"type": "integer"},
+                            "durability": {"enum": sorted(DURABILITIES)},
+                            "class_confidence": {"type": "number"},
+                        },
+                        "required": ["index", "durability", "class_confidence"],
+                    },
+                }
+            },
+            "required": ["verdicts"],
+        }
+        prompt = (
+            "Classify the lifetime of each fact about a world. Classes:\n"
+            "CONSTITUTIVE: what the thing IS (identity, structure, fixtures, era); "
+            "true at every moment unless the world is re-authored.\n"
+            "DISPOSITIONAL: what it TENDS to be (habits, roles); defeasible.\n"
+            "STATE: what it is RIGHT NOW (positions of movables, moods); one event "
+            "could flip it.\nEVENT: what HAPPENED (an occurrence at a time).\n"
+            "Mutability test: could one event flip it without re-authoring the "
+            "world? -> STATE. Ambiguous property -> STATE; ambiguous fixture "
+            "containment -> CONSTITUTIVE.\n\nFacts:\n" + listing
+        )
+        verdicts: dict[int, tuple[str, float]] = {}
+        try:
+            out = self._model(prompt, schema)
+            for v in out["verdicts"]:
+                if v["durability"] in DURABILITIES:
+                    verdicts[int(v["index"])] = (v["durability"], float(v["class_confidence"]))
+        except Exception:
+            logger.exception("batch classification failed; defaulting batch")
+        for i, row in enumerate(rows):
+            durability, confidence = verdicts.get(
+                i, (CONSTITUTIVE, 0.5) if row.attribute in {"in", "within"} else (STATE, 0.5)
+            )
+            self._store(
+                Classification(
+                    row.id, durability, confidence,
+                    durability == CONSTITUTIVE and confidence < _REVIEW_FLOOR,
+                )
+            )
 
     def rebuild(self) -> int:
         """Drop the sidecar and re-derive it from the untouched log."""
