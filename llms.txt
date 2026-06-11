@@ -1,0 +1,34 @@
+# pattern-buffer
+
+> A data structure that maps whatever world it's shown — real or fiction.
+> One append-only log of perspective-scoped, time-indexed assertions per
+> world; everything else (current state, space, knowledge, history) is a
+> disposable projection. LLMs at the boundaries only; state questions are
+> deterministic queries. Fiction simulation and real-world tracking are the
+> same engine under one policy switch. Pre-1.0.
+
+Integration contract: the engine is host-blind; you inject one callable
+(prompt, schema) -> json at World construction. The engine never calls you.
+
+## Docs
+
+- [ADOPTION.md](docs/ADOPTION.md): integrating the library — exact
+  signatures, typed outcomes (Resolution/FoldResult/UNKNOWN), the three
+  seams a host supplies (model shim, binding table, frame entitlement),
+  MUST/NEVER rules. Start here if you are wiring pattern-buffer into a host.
+- [WHITEPAPER.md](docs/WHITEPAPER.md): the canonical design reference —
+  principles P1-P8, the two primitives, durability classes, frames,
+  provenance, thunks, refer(), projection, embedding hazards (§18 is the
+  survival checklist), evaluation.
+- [LEXICON.md](docs/LEXICON.md): one name per concept; the double-read rule.
+
+## Hard rules for agents working with this library
+
+- Append-only: corrections are new rows (retraction meta-assertions), never
+  edits. There is no update/delete path; do not look for one.
+- Derive, don't store: location, emptiness, age, staleness, salience are
+  query results.
+- The renderer never writes. Only the ingest gate writes stated/observed;
+  only the resolver writes generated.
+- Out-of-frame assertions are absent from payloads, not redacted.
+- generated/default provenance never promotes to fact.
