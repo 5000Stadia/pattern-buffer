@@ -94,6 +94,8 @@ Consequences: retraction, supersession, confidence decay, classification revisio
 
 **Two time axes.** `valid_time` is when the fact holds in the world; `asserted_at` is when the system learned it. They diverge constantly (a delivery that happened Thursday, read from email Monday; a past event learned today; a future scheduled process asserted now) and both are required for as-of queries and audit.
 
+**Amendment (A1, 2026-06-11):** `asserted_at` is the **log sequence number, permanently** — learn order *is* log order, the total order is what as-of-asserted queries need, and deterministic world builds require byte-identical dumps that wall clock would break. Wall-clock learned-at, where it matters, is an ordinary reified meta-assertion on the row. **Rider (load-bearing):** in `observe_or_unknown` worlds the ingest gate **must** stamp the wall-clock learned-at meta-assertion on every STATE/EVENT write — staleness decay (§15) computes from real time and silently breaks without it; this is a gate invariant with a test, not a convention. Fiction worlds may omit wall-clock entirely.
+
 ---
 
 ## 4. Relations: the spatial spine
@@ -248,6 +250,8 @@ The orienting analogy is a lidar unit on a robot vacuum: it maps **only what it 
 - **Anchor at observed precision, never deeper.** Every new entity attaches to the frontier of the existing map (contained-in or connected-to something already canonical) at exactly the precision observed — never floating, never guessed-finer. "She put the pipe in the drawer," scene cursor at the study → the drawer anchors under the study. No scene context → it anchors under the home, honestly coarse.
 - **The frontier is explicit.** Unscanned isn't empty — it's the thunk table plus everything below the resolution floor. Where nothing has been established, the system serves no invented detail. *(Doc gloss: you see the grid.)*
 - **Attribute canonicalization at the gate.** An LLM extractor will emit `in` / `inside` / `located_in` across turns, silently splitting one fluent into three supersession keys. Structural predicates are fixed (`kind`, `in`, `connects_to`); domain vocabulary emerges freely (the Cyc lesson) — but **through a maintained attribute-alias canonicalization at the ingest boundary, with receipts.** Centralized name repair; the fold key must never fragment.
+
+**Amendment (A2, 2026-06-11):** the fixed structural predicate set is `kind`, the **containment family** (`in`, `within`, `held_by`, `worn_by`, `carried_by` — declared as one logical fold key, so the single-parent move semantics span the family), `connects_to`/`adjacent_to`, **`caused_by`**, and **`world_defining`**. Anything the §18.1 survival checklist references cannot ride on free vocabulary. The bar for any future addition is the same: checklist semantics depend on it.
 
 ---
 
@@ -558,5 +562,14 @@ The working vocabulary is maintained in [`LEXICON.md`](LEXICON.md) — two layer
 | World unit naming | **`World` = PatternBuffer + physics (policy + decay) + derived indexes; 1:1 world↔buffer invariant** | A world is its truth plus its laws of nature; the invariant forecloses both fragmentation failures permanently |
 | Projection verb | **`materialize()`** | Doubly canonical: database materialized views *and* rematerialization |
 | First milestone | **The chapter test, engine-only** | Cheapest possible ground-truthed validation of the hardest properties; interactive criteria and host integration both gated behind its score |
+
+### 24.1 Amendment log
+
+| # | Date | Amendment | Origin |
+|---|---|---|---|
+| A1 | 2026-06-11 | `asserted_at` = log sequence number permanently; wall-clock learned-at as reified meta-assertion, mandatory at the gate for STATE/EVENT in `observe_or_unknown` worlds (§3.2) | SPIKE-V1 Codex review r1–r4; Kernos CC endorsement (letter 007) |
+| A2 | 2026-06-11 | Fixed structural predicates extended: containment family as one fold key; `caused_by` and `world_defining` added (§10) | SPIKE-V1 Codex review r1–r4; Kernos CC endorsement (letter 007) |
+
+The instructor rulings of dev_inbox letter 002 (containment-family fold key, self-contained frames with optional inclusion edges, establishing-set qualification, mandatory STATE/EVENT `valid_time` stamping, file+`world_id` double partitioning, canonicalization receipts-in-log/map-in-sidecar) carry spike authority and are encoded in `specs/SPIKE-V1.md`; A1/A2 are the two that amend this document's text.
 
 **Lineage:** this white paper integrates (a) the framework-agnostic Assertion-World Model design document (June 2026), which itself superseded an earlier host-shaped design frame by re-deriving the system with no concessions and cataloging the diff as §18; and (b) the subsequent design sessions that produced P8, `refer()` and the three-tier cascade, constraint inversion, the scene cursor and lidar disciplines, splits/underdetermined anchors, thunks-move-without-resolving, document trust chains, cross-source conflict handling, the write-path taxonomy, mode-scoped decay, dramatic irony as a computable delta, the worlds/binding model, the naming decisions, and the lexicon.
