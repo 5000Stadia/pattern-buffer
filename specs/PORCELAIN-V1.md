@@ -74,9 +74,12 @@ answers "what exactly did you do to the log."
 - `ask(question, frame="canon", as_of=None) -> Answer` — **new
   porcelain-native code, not a wrapper** (review r1): one model call
   parses the question into a typed query plan `{refer_targets, keys,
-  events?, as_of?}` (strict schema); execution is then deterministic —
-  refer (full cascade permitted; ITS model use is the boundary's), folds,
-  events. `Answer = {answered: bool, facts: [...], prose: str|None,
+  events?, as_of?}` (strict schema). **Model budget, exact (review r2):**
+  that one parse call, PLUS refer's own cascade for each refer_target —
+  which may add tier-2 calls and accrued-alias writes per 018's
+  documented behavior (those writes are refer's, receipted as such, and
+  are the ONLY writes ask can cause). Fold and event execution after
+  resolution is fully deterministic. `Answer = {answered: bool, facts: [...], prose: str|None,
   unknown_reason, asks: [...]}` — provenance on every fact; an
   underdetermined reference returns candidates as `asks`, never a guess;
   every fact traces to a fold, never to the parser.
