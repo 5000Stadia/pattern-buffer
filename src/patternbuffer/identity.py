@@ -113,6 +113,42 @@ class IdentityRegistry:
                 out.add(row.entity)
         return out
 
+    def name_anchors(self, entity: str) -> set[str]:
+        """NAME-class anchors only (names + aliases, lowercased) — the
+        high-weight identity signal. Role/title tokens deliberately
+        excluded (036: a shared title register must never carry a merge)."""
+        closure = self.closure(entity)
+        out: set[str] = set()
+        for row in self._buffer.visible():
+            if row.entity in closure and row.attribute in ("name", "alias") \
+                    and isinstance(row.value, str):
+                out.add(row.value.strip().lower())
+        return out
+
+    def promote_identity_proposals(self) -> int:
+        """Whole-world promotion pass (036): a maybe_same_as proposal
+        whose two sides share a NAME-class anchor promotes to a logged
+        merge event; title-only candidates stay proposals (for tier-2 or
+        explicit confirmation). Returns merges performed."""
+        promoted = 0
+        for row in list(self._buffer.visible(attribute="maybe_same_as")):
+            a, b = row.entity, row.value
+            if not isinstance(b, str):
+                continue
+            if self.resolve(a) == self.resolve(b):
+                continue  # already merged
+            shared = self.name_anchors(a) & self.name_anchors(b)
+            if shared:
+                ev = self._buffer.visible(entity=row.id, attribute="evidence")
+                self.merge(a, b, evidence=(
+                    f"promoted from {row.id}: shared name anchor(s) "
+                    f"{sorted(shared)[:3]}"
+                    + (f"; proposal evidence: {ev[0].value}" if ev else "")))
+                promoted += 1
+        if promoted:
+            logger.info("identity promotion: %d merge(s)", promoted)
+        return promoted
+
     def by_alias(self, alias: str, asserted_as_of: int | None = None) -> set[str]:
         needle = alias.strip().lower()
         hits = set()

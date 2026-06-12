@@ -236,10 +236,11 @@ class Ingestor:
                 )
             )
         if item.get("same_as"):
-            # Late binding requested by the extractor (identity is the
-            # ingestor's to resolve, §12): logged as a merge event.
-            self._registry.merge(entity, str(item["same_as"]),
-                                 evidence="extractor late binding")
+            # 036/019: an extractor holds single-call context — identity
+            # merges are PROPOSED here, promoted where the whole world is
+            # in view (promote_identity_proposals / self-check / tier-2).
+            self._registry.maybe_same_as(entity, str(item["same_as"]),
+                                         evidence="extractor late binding")
         if self.classify_inline:
             self._classifier.classify(row)
         return out

@@ -290,6 +290,10 @@ class Pipeline:
         for r in results:
             w.ingest_structured(r.items)
         w.classifier.classify_all(batch_size=40)
+        # 036: gate same_as now proposes; promotion happens HERE, where the
+        # whole world is in view (shared name anchors promote; title-only
+        # candidates stay proposals for tier-2/confirmation).
+        w.registry.promote_identity_proposals()
         w.truth.scan()
         logger.info("committed: %d rows", w.buffer.head())
         return w

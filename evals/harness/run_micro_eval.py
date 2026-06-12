@@ -182,6 +182,7 @@ def main() -> int:
     for r in results:
         world.ingest_structured(r.items)
     world.classifier.classify_all(batch_size=40)
+    world.registry.promote_identity_proposals()
     promoted = promote_corrections(world)
     world.truth.scan()
     timings["commit_s"] = round(time.time() - t, 1)

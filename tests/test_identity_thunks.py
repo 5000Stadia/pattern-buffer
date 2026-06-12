@@ -183,3 +183,47 @@ class TestDrawer:
         resolver.resolve("obj:desk", "contents")
         prompt = next(p for p, _ in stub.calls if p.startswith("Resolve an unestablished"))
         assert "c.1928 San Francisco" in prompt  # inherited from the containing scope
+
+
+class TestIdentityProposals036:
+    def test_gate_same_as_proposes_never_merges(self, tmp_path):
+        buf, stub, classifier, indexes, roles, registry, _ = make_parts(tmp_path)
+        from patternbuffer.ingest import Ingestor
+        ing = Ingestor(buf, classifier, registry, roles["ingestor"])
+        ing.classify_inline = False
+        ing.ingest_structured([
+            {"entity": "person:clerk", "attribute": "kind", "value": "person",
+             "timeless": True},
+            {"entity": "person:ilsa", "attribute": "kind", "value": "person",
+             "timeless": True, "same_as": "person:clerk"},
+        ])
+        # NOT merged at the gate — proposed:
+        assert registry.resolve("person:ilsa") != registry.resolve("person:clerk")
+        assert "person:clerk" in registry.candidates("person:ilsa")
+
+    def test_promotion_requires_shared_name_anchor(self, tmp_path):
+        """The live officials/Marn case: a title-register collision must
+        NOT promote; a shared name must."""
+        buf, stub, classifier, indexes, roles, registry, _ = make_parts(tmp_path)
+        ing_role = roles["ingestor"]
+        # Title-only pair (the 036 regression case):
+        buf.append(entity="person:officials", attribute="role",
+                   value="allocation officer", status="stated", role=ing_role)
+        buf.append(entity="person:marn", attribute="role",
+                   value="allocation officer", status="stated", role=ing_role)
+        buf.append(entity="person:marn", attribute="name", value="Marn",
+                   status="stated", role=ing_role)
+        registry.maybe_same_as("person:officials", "person:marn",
+                               evidence="render prose title register")
+        # Name-sharing pair:
+        registry.add_alias("person:tin_ear_clerk", "ilsa renn")
+        buf.append(entity="person:ilsa_renn", attribute="name", value="Ilsa Renn",
+                   status="stated", role=ing_role)
+        registry.maybe_same_as("person:tin_ear_clerk", "person:ilsa_renn",
+                               evidence="late binding")
+        promoted = registry.promote_identity_proposals()
+        assert promoted == 1
+        assert registry.resolve("person:tin_ear_clerk") == registry.resolve("person:ilsa_renn")
+        # The bad merge did NOT happen; the proposal survives for judgment.
+        assert registry.resolve("person:officials") != registry.resolve("person:marn")
+        assert "person:marn" in registry.candidates("person:officials")
