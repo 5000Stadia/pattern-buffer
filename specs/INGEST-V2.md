@@ -301,3 +301,21 @@ correction history stays visible by design.
 SDK shim (drop-in later), hierarchical registries for archive-scale corpora
 (interface allows; not built), the messy-dialogue micro-eval (next chapter),
 porcelain verbs (post-adapter-spec), any engine change whatsoever.
+
+
+## 8. Accepted next-cycle design (letter 019 rulings; build with the next pipeline iteration)
+
+- **Registry self-check — propose, never auto-merge.** A dedupe pass over
+  the assembled registry (name/alias overlap heuristics) emits
+  MAYBE_SAME_AS edges carrying their evidence; merges remain logged events
+  confirmed at audit or by tier-2 judgment. Two deliberately-distinct
+  same-named entities must survive the pass unmerged. (Letter-013's
+  loop-closure rule at ingest time: recognition proposes, evidence
+  collapses.)
+- **`M|a|b` grammar line — proposal semantics only.** Parses as a
+  MAYBE_SAME_AS proposal with chunk provenance; promotion to a merge event
+  happens at pass-2/self-check where the whole world is in view. A parallel
+  chunk never holds merge authority.
+- **SDK shim may be pulled ahead of the micro-eval** (no upstream
+  dependency; operational call) — it removes the CLI per-call floor and the
+  max-turns failure class.
