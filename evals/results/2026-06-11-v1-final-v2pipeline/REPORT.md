@@ -114,8 +114,23 @@ All four, milliseconds, zero model calls, prose deleted.
    peer-class stated-vs-observed noise from the extractor's status choices;
    possibly another fold lesson hiding in them).
 5. **Then the standing queue:** messy-dialogue micro-eval (gates tracking
-   mode), 008 porcelain (gates the Kernos adapter), GitHub founding push
-   (your token scope), SDK shim (cuts the CLI's per-call overhead everywhere).
+   mode), 008 porcelain (gates the Kernos adapter), SDK shim (cuts the
+   CLI's per-call overhead everywhere).
+
+**Out of queue (letter 015):** the GitHub founding push is not pipeline
+work — it is blocked on exactly one thing (the founder's token scope) and
+fires the moment that clears, regardless of pipeline state. The honest
+status line is a strength, and runs 1–3's reports are the receipts the
+public history exists to carry.
+
+**Template rule adopted (letter 015):** every milestone report from here
+on carries a **predicted vs actual** section for any estimate a prior
+artifact committed to — the enforcement arm of "estimates stated checkably
+so they can be wrong in public." This report's instance: §E.2 predicted
+3 rounds / ~4–5 min / ~20k output tokens; actual was 3 rounds (validated),
+66 min (pass-0/extension JSON fat — fix queued at #1), and pass-1's
+10-minute parallel extraction with zero rejects (the architectural claim,
+validated).
 
 **What changed in the canonical docs because of this milestone:**
 SPIKE-V1 §7 — evidence rank at the fold (generalizing the assumption
