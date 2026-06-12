@@ -125,9 +125,16 @@ the harness owns registry persistence.)
 entity|attribute|value|flags
 ```
 
-- Exactly 3 `|` splits (`split("|", 3)`); fields 1–2 must match
-  `[a-z][a-z0-9_:]*` (raw `|` is therefore impossible there); the grammar is
-  line-oriented, so newlines cannot occur inside a field.
+- Split `entity|attribute` off with two `|` splits; fields 1–2 must match
+  `[a-z][a-z0-9_:]*` (raw `|` is therefore impossible there). The value's
+  end is found by **JSON boundary detection** (`raw_decode`) when it starts
+  with `{`/`[`/`"`/`?{`, else by the next `|` — so delimiter characters
+  inside JSON values can never split the line. *(Implementation note: a
+  naive `split("|", 3)`, as r1–r4 of this spec said, corrupts JSON values
+  containing `|`; caught at implementation, spec amended to match the
+  correct behavior.)* The grammar is line-oriented, so newlines cannot
+  occur inside a field. A `?` not followed by `{` is a reject — it signals
+  intent-to-be-unresolved with a malformed policy, never a prose value.
 - `value`: parsed as JSON when it starts with `{`, `[`, or `"` (covers any
   value containing `|` or commas — encode as a JSON string); `@entity_id`
   (entity ref); `?{policy}` for unresolved; otherwise a bare scalar

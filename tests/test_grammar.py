@@ -269,3 +269,22 @@ def test_reject_rate_denominator_behavior() -> None:
 
     assert reject_rate([], [], []) == 0.0
     assert reject_rate(items, orphans, rejects) == pytest.approx(1 / 3)
+
+
+def test_bare_question_mark_rejects(registry: Registry) -> None:
+    """`?` signals intent-to-be-unresolved; a malformed policy must reject,
+    never pass silently as a prose value."""
+    items, orphans, rejects = parse(
+        ["obj:box|contents|?not_json|vf=1"], registry, cursor=0.0
+    )
+    assert not items and not orphans
+    assert len(rejects) == 1 and "unresolved" in rejects[0].reason
+
+
+def test_json_value_containing_pipe_keeps_flags(registry: Registry) -> None:
+    items, _, rejects = parse(
+        ['obj:box|label|{"text": "p|q, r"}|vf=2,s=observed'], registry, cursor=0.0
+    )
+    assert not rejects
+    assert items[0]["value"] == {"text": "p|q, r"}
+    assert items[0]["valid_from"] == 2.0 and items[0]["status"] == "observed"

@@ -34,20 +34,16 @@ class Reject:
     reason: str
 
 
-@dataclass(frozen=True)
-class _SplitLine:
-    entity: str
-    attribute: str
-    value_text: str
-    flags_text: str
-
-
 def parse(
     lines: list[str],
-    registry: "WorldRegistry-like",
+    registry: Any,
     cursor: float,
 ) -> tuple[list[dict[str, Any]], list[Orphan], list[Reject]]:
-    """Parse INGEST-V2 grammar lines into structured ingest items."""
+    """Parse INGEST-V2 grammar lines into structured ingest items.
+
+    ``registry`` is duck-typed: anything exposing an ``entities`` mapping
+    whose keys are the known entity ids.
+    """
     known_entities = set(registry.entities.keys())
     items: list[dict[str, Any]] = []
     orphans: list[Orphan] = []
@@ -60,17 +56,20 @@ def parse(
             continue
 
         try:
-            split = _split_line(stripped)
-            _validate_fields(split.entity, split.attribute)
-            value, value_type = _parse_value(split.value_text)
-            flags = _parse_flags(split.flags_text)
+            parts = stripped.split("|", 2)
+            if len(parts) < 3:
+                raise ValueError("expected entity|attribute|value")
+            entity, attribute, rest = parts
+            _validate_fields(entity, attribute)
+            value, value_type, flags_text = _parse_value_and_flags(rest)
+            flags = _parse_flags(flags_text)
         except ValueError as exc:
             rejects.append(Reject(line_no=line_no, line=line, reason=str(exc)))
             continue
 
         item: dict[str, Any] = {
-            "entity": split.entity,
-            "attribute": split.attribute,
+            "entity": entity,
+            "attribute": attribute,
             "value": value,
         }
         if value_type is not None:
@@ -101,46 +100,6 @@ def reject_rate(
     return len(rejects) / total
 
 
-def _split_line(line: str) -> _SplitLine:
-    parts = line.split("|", 2)
-    if len(parts) < 3:
-        raise ValueError("expected entity|attribute|value")
-
-    entity, attribute, rest = parts
-    if rest.startswith(("?", "{", "[", '"')):
-        value_text, flags_text = _split_structured_value(rest)
-    else:
-        value_text, sep, flags_text = rest.partition("|")
-        if not sep:
-            flags_text = ""
-
-    return _SplitLine(
-        entity=entity,
-        attribute=attribute,
-        value_text=value_text,
-        flags_text=flags_text,
-    )
-
-
-def _split_structured_value(text: str) -> tuple[str, str]:
-    json_start = 1 if text.startswith("?{") else 0
-    if text.startswith("?") and json_start == 0:
-        value_text, sep, flags_text = text.partition("|")
-        return value_text, flags_text if sep else ""
-
-    try:
-        _, end = json.JSONDecoder().raw_decode(text[json_start:])
-    except json.JSONDecodeError as exc:
-        raise ValueError("invalid JSON value") from exc
-
-    end += json_start
-    if end == len(text):
-        return text, ""
-    if text[end] != "|":
-        raise ValueError("unexpected trailing data after JSON value")
-    return text[:end], text[end + 1 :]
-
-
 def _validate_fields(entity: str, attribute: str) -> None:
     if FIELD_RE.fullmatch(entity) is None:
         raise ValueError("invalid entity field")
@@ -148,24 +107,40 @@ def _validate_fields(entity: str, attribute: str) -> None:
         raise ValueError("invalid attribute field")
 
 
-def _parse_value(text: str) -> tuple[Any, str | None]:
-    if text.startswith(("?", "{", "[", '"')):
-        if text.startswith("?{"):
-            try:
-                return json.loads(text[1:]), "unresolved"
-            except json.JSONDecodeError as exc:
-                raise ValueError("invalid unresolved policy JSON") from exc
-        if text.startswith("?"):
-            return _coerce_bare_scalar(text), None
-        try:
-            return json.loads(text), None
-        except json.JSONDecodeError as exc:
-            raise ValueError("invalid JSON value") from exc
+def _parse_value_and_flags(rest: str) -> tuple[Any, str | None, str]:
+    """Decode the value (exactly once) and return its trailing flags text.
 
-    if text.startswith("@"):
-        return text[1:], "entity"
+    JSON values are boundary-detected with raw_decode, so delimiter
+    characters inside them never split the line.
+    """
+    if rest.startswith("?"):
+        if not rest.startswith("?{"):
+            raise ValueError("unresolved value must be ?{...}")
+        value, end = _raw_decode(rest, 1)
+        return value, "unresolved", _flags_after(rest, end)
+    if rest.startswith(("{", "[", '"')):
+        value, end = _raw_decode(rest, 0)
+        return value, None, _flags_after(rest, end)
+    value_text, _, flags_text = rest.partition("|")
+    if value_text.startswith("@"):
+        return value_text[1:], "entity", flags_text
+    return _coerce_bare_scalar(value_text), None, flags_text
 
-    return _coerce_bare_scalar(text), None
+
+def _raw_decode(text: str, start: int) -> tuple[Any, int]:
+    try:
+        value, end = json.JSONDecoder().raw_decode(text[start:])
+    except json.JSONDecodeError as exc:
+        raise ValueError("invalid JSON value") from exc
+    return value, end + start
+
+
+def _flags_after(text: str, end: int) -> str:
+    if end == len(text):
+        return ""
+    if text[end] != "|":
+        raise ValueError("unexpected trailing data after JSON value")
+    return text[end + 1 :]
 
 
 def _coerce_bare_scalar(text: str) -> int | float | bool | str:
