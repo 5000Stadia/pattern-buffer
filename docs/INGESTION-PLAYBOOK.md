@@ -193,6 +193,24 @@ archive — at scale the scaffold goes hierarchical (per-arc registries merged
 through the identity machinery). Unbuilt; the natural moment is the
 anchor.world production pipeline, which wants exactly this efficiency.
 
+**Design constraints (letter 014, accepted):**
+
+- **Registry escapes are their own failure class.** Pass-0 quality is the
+  §E architecture's single point of failure: a registry that misses an
+  entity or mis-canonicalizes a key poisons every parallel chunk. Pass-2's
+  audit must explicitly detect orphan references — chunk rows that wanted an
+  entity pass-0 never pinned — and report them as registry escapes, never as
+  extraction noise. They trigger a registry extension + re-extraction of the
+  affected chunks, not a contract tweak.
+- **Pass-0's interface is "establish/extend," never "read everything
+  once."** Batch ingestion (chapter test, anchor.world) happens to call it
+  once over a whole document; tracking mode and live play grow the registry
+  turn by turn (the scene-cursor/lidar discipline wearing its other hat).
+  The whole-document read is a calling pattern, not an interface assumption.
+- **Plan for 2–3× estimate slippage** on first build (parallelism and
+  prompt caching rarely behave immediately); still ~10× over measured
+  serial, so the decision doesn't move.
+
 ## Open items
 
 - Run-2 deltas (validation or refutation of rules 1–5) — pending.

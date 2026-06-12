@@ -153,3 +153,11 @@ anchor.world → micro-eval → porcelain.
 *(run 2) and -run1/; the playbook at docs/INGESTION-PLAYBOOK.md; the*
 *assumption-quarantine fix in commit history with its test; 57-test suite*
 *green at every commit.*
+
+**What changed in the canonical docs because of this milestone:**
+WHITEPAPER.md gained amendments A1/A2 + the §24.1 amendment log;
+specs/SPIKE-V1.md gained the assumption-quarantine fold rule;
+docs/INGESTION-PLAYBOOK.md was created (19 rules + §E registry-first design,
+incl. letter-014 constraints: registry escapes as a failure class,
+establish/extend interface); README/ADOPTION.md/llms.txt landed per the
+009/010 docs discipline.
