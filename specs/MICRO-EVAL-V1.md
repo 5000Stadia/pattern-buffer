@@ -1,6 +1,6 @@
 # MICRO-EVAL-V1 — the reality-divergence battery
 
-**Status:** draft for Codex review. **Authority:** whitepaper §19.1 scope
+**Status:** r2 — review-round-1 RED resolved under letter-027 rulings. **Authority:** whitepaper §19.1 scope
 honesty (the bridge from clean authored prose to sloppy conversational
 fragments, gating any host commitment); letter 025 (scope decision: a
 reality-divergence battery, one criterion per fiction/reality divergence);
@@ -39,14 +39,20 @@ Same bones as the chapter test, new organs:
 |---|---|---|---|
 | R1 | Irrealis filtering (025.1 — highest stakes) | a hypothetical ("maybe I left it in the car"), a question, a sarcastic line, a conditional | **zero** stated/observed rows from any of them; at most `assumed` with low confidence for the hypothetical; the sarcasm produces nothing |
 | R2 | Intention vs fact (025.2) | "I'll move the drill to the van tomorrow" | the drill's location does NOT change; no stated/observed future row; at most one `assumed` future-valid row; rule: intentions are host-side objects, not world state |
-| R3 | Self-correction grace (025.3a) | "3 bedrooms — well, 4 with the office" (same speaker, same turn-window) | folds to 4 with the 3-row retracted-or-superseded; **no conflict flag** |
-| R4 | Genuine contradiction (025.3b) | speaker says X Monday, not-X Friday, no correction marker | conflict flag fires, both rows alive — the R3 path and R4 path must differ |
+| R3 | Self-correction grace (025.3a) | "3 bedrooms — well, 4 with the office" (same speaker, same turn-window) | the replacing row carries the `corr` proposal; pass-2 promotes it to a retraction of the in-window prior; folds to 4; **no conflict flag**; the wrong row stays in the log (shadow-archive) |
+| R4 | Genuine contradiction (025.3b) | speaker A asserts a standing fact Monday; speaker B asserts its contrary Friday; no correction marker | **cross-source flag + ask** (speaker classes disagreeing — §7.2 verbatim); both rows alive; the R3 and R4 paths must differ |
 | R5 | Cursor humility (025.4) | "the fittings are in the van," said from the office | fittings anchor under the van; the office contributes nothing; speaker location ≠ assertion location |
 | R6 | Fuzzy calendar time (025.5) | "last Tuesday sometime" | interval valid_time with honest slop; as-of inside the interval finds it, outside does not |
-| R7 | Vocabulary drift (018) | key registers "cabinet"; speaker later says "the cupboard" | tier-2 resolves first use (receipt logged), tier-1a resolves second use (alias accrued, receipt logged) |
+| R7 | Vocabulary drift (018) | key registers "cabinet"; speaker later says "the cupboard" | tier-2 resolves first use (receipt logged), tier-1a resolves second use (alias accrued, receipt logged). **Build dependency, explicit:** the 018 refer() extensions (zero-candidate escalation + alias accrual) build WITH this milestone, before grading |
 | R8 | Negation as information (025.7) | "I never ended up moving it" after an R2-style intention | the intention/assumption closes (retracted or valid_to'd); the OLD location is confirmed as an explicit row — distinct from unknown (the Dale stated-absence pattern) |
 | R9 | Unknown stays unknown (mode floor) | a never-discussed container is queried | `UNKNOWN` — no invention, no kind-default promotion; the resolver's observe_or_unknown path graded live |
 | R10 | Wall-clock rider (A1) | every STATE/EVENT row from the run | carries a `learned_at_wallclock` meta-assertion; staleness is computable |
+
+**Audit traces (review minor):** the conversational pass-1 stages a
+per-utterance stance receipt (declarative/irrealis/intention/correction,
+with the utterance text) in chunk metadata, so shape-vs-extraction
+adjudication on a leak is mechanical: contract-flagged-but-committed =
+shape; misjudged-stance = extraction.
 
 R1/R2/R9 are the cardinal-sin criteria: in tracking mode a confabulated
 assertion is acting on a false reality. A failure there is graded **shape
@@ -64,12 +70,16 @@ Written fresh from the 025 posture. Deltas from the prose contract:
   @ low confidence), intention/plan (emit nothing into the world store),
   performative-correction ("actually...", "I mean...") → emit the
   corrected value plus a retraction marker for the in-window prior.
-- **Status defaults flip:** the prose contract's default `stated` becomes
-  `observed` for first-person reports about the speaker's own actions and
-  `stated` only for the speaker's assertions about standing facts;
-  hearsay ("Dale said the parts came in") gets a document-style chain
-  (`source` → `person:dale` utterance) — the §7.1 trust-chain machinery
-  applied to spoken sources.
+- **Speaker-source classes (027 Decision 2):** EVERY conversational fact
+  carries `source → person:<speaker>`; the fold's source class becomes
+  `speaker:<id>` (§7.1 generalized — a speaker is a document that talks).
+  Same speaker supersedes self by valid-time progression; speakers
+  disagreeing → cross-source flag + ask (§7.2 free of charge). `observed`
+  is reserved for the gate's own perceptions — nothing this eval plants.
+  Marked corrections take the Decision-1 retraction path; the two paths
+  are both speaker-scoped and cannot collide. Speaker AUTHORITY asymmetry
+  (owner vs guest) is host-side, adapter-phase — never engine trust
+  weighting.
 - **Cursor = conversation time only.** The scene cursor carries
   wall-adjacent conversational time for stamping `valid_from`; it NEVER
   contributes spatial anchoring (cursor humility — the speaker's location
@@ -77,10 +87,22 @@ Written fresh from the 025 posture. Deltas from the prose contract:
 - **Interval stamping:** fuzzy time expressions map to explicit
   `valid_from`/`valid_to` intervals with the slop the language supports
   ("last Tuesday sometime" → that day's bounds), never a fabricated point.
-- **Self-correction window:** within a turn-window, an amendment emits
-  `retract`-marked replacement (grammar gains nothing; the existing
-  `vt=` close + new row suffices — verify in drafting; if a retraction
-  line proves necessary, that is the [DECISION]-letter trigger).
+- **Self-correction window (027 Decision 1):** within a turn-window, an
+  amendment emits the replacing row with a **`corr` flag** — a correction
+  PROPOSAL carrying chunk provenance, the house pattern applied
+  (*authority-heavy acts from context-poor writers are always proposals,
+  promoted where the whole world is in view*; cf. M|a|b). Pass-2 promotes
+  `corr` pairs to retraction of the prior row. **Promotion preconditions
+  (riders):** the pair must share the (entity, attribute, frame) key AND
+  the speaker-source — a correction can never retract another speaker's
+  row or leak across keys. **Receipts chain:** the promoted retraction's
+  justification points at the corr proposal, answering "why retracted?"
+  down to the utterance. Semantics: retraction (not vf-supersession) is
+  correct because a correction asserts *never true*; the wrong row stays
+  in the log; materializations serve the corrected truth, history serves
+  the audit. The 019 audit-retract whitelist widens by exactly this one
+  enumerated case (duplicates + corr pairs) and no further. R8's
+  intention-closure rides the same mechanism.
 
 ## 4. Engine-support audit (the 025 caveat, checked in advance)
 
@@ -89,12 +111,10 @@ Written fresh from the 025 posture. Deltas from the prose contract:
 - Explicit negatives: **supported** (a stated negative is an ordinary
   row; whitepaper §4 distinguishes stated absence from unknown).
 - Intention exclusion: contract-level; nothing to build.
-- Self-correction: expressible as `vt=` close + new row through the gate;
-  **only open question** is whether pass-1 can emit a retraction op —
-  currently retraction is truth-maintenance/audit authority, not
-  extraction authority. Position taken by this spec: pass-1 emits the
-  close-and-replace shape (no new authority); if drafting the seed shows
-  that's insufficient, [DECISION] letter before building.
+- Self-correction: RESOLVED by 027 Decision 1 (corr proposals, audit
+  promotion, preconditions + receipts as riders). Engine support needed:
+  the `speaker:<id>` source class in `_source_class` (Decision 2) and the
+  corr-pair case in the audit whitelist — both ruled, both small.
 - R10: already a gate invariant with a test; the eval grades it end-to-end.
 
 ## 5. Deliverables and sequence
