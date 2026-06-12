@@ -345,6 +345,10 @@ class TestReviewGaps:
              "value": 2, "valid_from": 9.0},
         ])
         assert rows[0].attribute == "working_reactors"  # replayed map held
+        receipts = [r for r in w2.buffer.all_rows()
+                    if r.attribute == "canonicalized_from"
+                    and r.value == "reactors_operational->working_reactors"]
+        assert receipts  # the replayed gate still writes receipts (spec 7)
         w2.close()
 
     def test_audit_add_without_time_dropped(self, tmp_path):
@@ -360,4 +364,7 @@ class TestReviewGaps:
         report = run_audit(w, reg, model)
         assert report.applied_adds == 1
         assert any("no explicit time" in d for d in report.dropped_ops)
+        landed = [r for r in w.buffer.all_rows()
+                  if r.entity == "obj:core" and r.attribute == "condition"]
+        assert len(landed) == 1 and landed[0].valid_from == 5.0  # only the timed add
         w.close()
