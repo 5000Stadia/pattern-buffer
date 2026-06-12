@@ -6,3 +6,8 @@ __pycache__/
 *.egg-info/
 .venv/
 .pytest_cache/
+
+# Result-dir binaries are regenerable from their JSONL dumps (letter 016);
+# the dump is the diffable receipt.
+evals/results/**/*.world
+evals/results/**/staging/

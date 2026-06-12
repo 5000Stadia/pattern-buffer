@@ -1,5 +1,7 @@
 # pattern-buffer
 
+[![tests](https://github.com/5000Stadia/pattern-buffer/actions/workflows/ci.yml/badge.svg)](https://github.com/5000Stadia/pattern-buffer/actions/workflows/ci.yml)
+
 > A data structure that maps whatever world it's shown — real or fiction.
 > The memory under the holodeck.
 
@@ -9,7 +11,24 @@ One append-only log of perspective-scoped, time-indexed assertions about entitie
 
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
-**Status: pre-1.0 engine spike, built and invariant-tested.** The engine — append-only buffer with enforced role authority, durability classification, spatial indexes, knowledge frames, thunks + resolver, `refer()` tier 1, the ingest gate, truth maintenance, deterministic dump/restore — passes its 56-test invariant suite. The chapter test (ingest a complete noir mystery, delete the prose, interrogate the store against a hand-authored answer key) is the acceptance gate now being graded. Not yet installable from PyPI; a shipped example world with a zero-API-key query tour lands after the ingestion pipeline is verified.
+**Status: pre-1.0; substrate validated, ingestion fidelity is the open
+front.** The engine passes its 96-test invariant suite, and the chapter test
+(ingest a complete noir mystery, delete the prose, interrogate the store
+against a hand-authored answer key) has been graded across three full runs.
+The substrate's invariants held in all of them — sealed containers stayed
+sealed, contradictions were flagged and never merged, knowledge frames never
+leaked, the two-time-axis fold answered late-revealed history correctly. Each
+run also surfaced exactly one engine refinement at the fold (a working
+assumption outholding evidence; a wrong inference outholding authored canon),
+each fixed, tested, and generalized the same day — that progression is now
+the **evidence-rank** rule. A registry-first ingestion pipeline
+(whole-document scaffold → parallel compact-grammar extraction → audited
+single commit) replaced serial prompt-iterated extraction after measurement
+showed prose contracts fragment differently every round; identity and key
+fragmentation died as failure classes, and pass-0 registry quality is where
+the remaining extraction failures concentrate. Run 4, with its checkable
+predictions, is in flight. Not yet installable from PyPI; the shipped example
+world with a zero-API-key query tour lands once a verified run stamps it.
 
 ## What this is
 
@@ -28,10 +47,12 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 
 1. ~~Recover and commit the *Last Honest Meter* eval seed (the chapter test's ground truth).~~ Done — v1-final, `evals/last_honest_meter/`.
 2. ~~Engine spike: `PatternBuffer` + derived indexes + classifier + projector + resolver + `refer()` tier 1.~~ Done — `src/patternbuffer/`.
-3. **The chapter test** (in progress): ingest one complete short fiction, delete the prose, interrogate a cold instance against the printed ground truth. The score gates everything after it.
-4. The shipped example world: `examples/anchor/` — a bible-verified noir mystery as a queryable database, with a zero-API-key scripted tour ("where was the memory core during the assembly?").
+3. ~~The chapter test, runs 1–3~~ + run 4 (in flight): substrate validated; registry-first ingestion (INGEST-V2) landed; pass-0 registry quality is the open score lever. Receipts: `evals/results/`.
+4. The shipped example world: `examples/anchor/` — a bible-verified noir mystery as a queryable database, with a zero-API-key scripted tour ("where was the memory core during the assembly?"). Stamps from the first verified run.
 5. The messy-dialogue micro-eval (the honest bridge from fiction ingestion to tracking-mode ingestion).
-6. Host integration (adapter pattern — first host: [Kernos](https://github.com/5000Stadia/Kernos)) and the interactive-fiction milestone.
+6. The porcelain API (`ingest` / `snapshot` / `ask` — three verbs, a complete host integration), then host integration (adapter pattern — first host: [Kernos](https://github.com/5000Stadia/Kernos)).
+7. The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure).
+8. The MCP wrapper — the framework-agnostic claim proven by demonstration: the same five verbs served to non-Python hosts. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
 
 ## License
 
