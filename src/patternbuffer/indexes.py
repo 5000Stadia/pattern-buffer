@@ -81,8 +81,12 @@ class Indexes:
         )
         for m in metas:
             if isinstance(m.value, str) and m.value.startswith("doc:"):
-                return f"{row.status}:document"
-        return f"{row.status}:direct"
+                return "document"
+        # stated and observed without a document chain are ONE supersession
+        # class: both are rank-3 authoritative, and ordinary narrative
+        # movement must supersede across them (run-4 finding: the §7.1
+        # boundary is document-vs-direct, not stated-vs-observed).
+        return "direct"
 
     @staticmethod
     def _values_agree(old: object, new: object) -> bool:

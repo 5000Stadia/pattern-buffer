@@ -258,3 +258,31 @@ class TestAssumptionQuarantine:
         classifier.classify_all()
         later = indexes.fold_key("place:anchor", "working_reactors", valid_as_of=10.0)
         assert later.winner.value == 3 and not later.conflicted
+
+    def test_set_valued_attributes_never_conflict(self, world_parts):
+        """Two names are data, not a dispute: conflict detection requires a
+        functional key (run-4 finding)."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        buf.append(entity="obj:meter", attribute="name", value="master meter",
+                   status="stated", role=ing)
+        buf.append(entity="obj:meter", attribute="name", value="the master meter",
+                   status="stated", role=ing)
+        classifier.classify_all()
+        assert tm.scan() == []
+
+    def test_stated_supersedes_observed_in_movement(self, world_parts):
+        """stated and observed without document chains are one supersession
+        class — ordinary movement supersedes across them (run-4 finding)."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        buf.append(entity="obj:case", attribute="in", value="place:seed_vault",
+                   value_type="entity", valid_from=8.0, status="observed", role=ing)
+        buf.append(entity="obj:case", attribute="in", value="place:records_vault",
+                   value_type="entity", valid_from=12.0, status="stated", role=ing)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        result = indexes.fold_key("obj:case", "in", valid_as_of=16.0)
+        assert not result.conflicted
+        assert result.winner.value == "place:records_vault"

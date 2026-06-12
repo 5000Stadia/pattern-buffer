@@ -33,8 +33,20 @@ def main() -> int:
             f"STAMP world_id {stamp['world_id']!r} != dump world {buffer.world_id!r}"
         )
     buffer.close()
-    print(f"built {target}: {n} assertions (world {stamp['world_id']}, "
-          f"seed {stamp['seed_version']}, run {stamp['run_id']})")
+
+    # The classification sidecar ships as a derived-cache artifact (it is
+    # normally model-rebuilt; a zero-key build loads the cache instead),
+    # then conflicts re-derive deterministically.
+    from patternbuffer import World
+
+    world = World(target, world_id=stamp["world_id"])
+    for line in (HERE / "classifications.jsonl").read_text().splitlines():
+        c = json.loads(line)
+        world.classifier.set(c["assertion_id"], c["durability"], c["confidence"])
+    conflicts = world.truth.scan()
+    world.close()
+    print(f"built {target}: {n} assertions, {len(conflicts)} open conflict flags "
+          f"(world {stamp['world_id']}, seed {stamp['seed_version']})")
     return 0
 
 

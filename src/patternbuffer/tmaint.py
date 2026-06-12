@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.indexes import Indexes, fold_attribute
-from patternbuffer.model import Assertion
+from patternbuffer.model import SET_VALUED_ATTRIBUTES, Assertion
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class TruthMaintenance:
         table is dropped and refilled on every scan."""
         keys: set[tuple[str, str, str]] = set()
         for row in self._buffer.visible():
-            if row.entity.startswith("a:"):
+            if row.entity.startswith("a:") or row.attribute in SET_VALUED_ATTRIBUTES:
                 continue
             keys.add(
                 (

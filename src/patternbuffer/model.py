@@ -44,6 +44,12 @@ META_ATTRIBUTES = frozenset(
     }
 )
 
+# Set-valued attributes: multiple coexisting values are data, never a
+# contradiction — a conflict requires a functional key (run-4 finding:
+# 62 of 77 flags were names/aliases/edges misread as disputes).
+SET_VALUED_ATTRIBUTES = frozenset({"name", "alias", "connects_to", "adjacent_to",
+                                   "maybe_same_as", "same_as"})
+
 VALUE_TYPES = frozenset({"entity", "literal", "unresolved"})
 
 CANON = "canon"

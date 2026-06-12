@@ -1,0 +1,16 @@
+{
+  "world_id": "w:anchor_v2",
+  "seed_version": "v1-final",
+  "run_id": "run4-2026-06-12 (INGEST-V2: compact pass-0, ns-completion, simultaneity guard)",
+  "score": "22/33 (best graded run; failures all extraction-class)",
+  "policy": "invent_under_canon",
+  "bible_verification": "corrected through write paths: clerk==Ilsa merge (feature 1), shared 'the vault' aliases (feature 3), steel-case move to the unified archive (e41) with the earlier core-level correction retracted; the deliberate reactor contradiction (feature 8) is OPEN as the live truth-maintenance demo; 8 open conflict flags ship visibly \u2014 honesty is the product",
+  "stamped": "2026-06-12",
+  "artifacts": [
+    "anchor_dump.jsonl (the log)",
+    "classifications.jsonl (derived cache)",
+    "registry.json (pass-0 artifact)",
+    "build_anchor.py",
+    "tour.py"
+  ]
+}
