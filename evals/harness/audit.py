@@ -117,14 +117,16 @@ def build_digest(world: World, registry: WorldRegistry, cap: int = 200) -> dict:
 
 
 def _is_exact_duplicate(world: World, target) -> bool:
-    """True iff another surviving (visible) row carries the identical
-    (entity, attribute, value, frame). The only retractable condition."""
-    for row in world.buffer.visible(
+    """True iff the target is itself still visible AND another surviving
+    row carries the identical (entity, attribute, value, frame). The only
+    retractable condition — and an already-retracted target is never
+    retractable again (review: repeated same-id retracts must drop)."""
+    rows = world.buffer.visible(
         entity=target.entity, attribute=target.attribute, frame=target.frame
-    ):
-        if row.id != target.id and row.value == target.value:
-            return True
-    return False
+    )
+    if target.id not in {r.id for r in rows}:
+        return False
+    return any(r.id != target.id and r.value == target.value for r in rows)
 
 
 def run_audit(

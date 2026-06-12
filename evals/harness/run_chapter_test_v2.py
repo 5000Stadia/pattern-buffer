@@ -53,7 +53,9 @@ def main() -> int:
     timings: dict[str, float] = {}
 
     t = time.time()
-    registry = pipe.pass0(story)
+    # Chapter-split scaffold: establish over Ch.1, extend over 2-4 (spec §3.2).
+    segments = ["## Chapter" + part for part in story.split("## Chapter")[1:]]
+    registry = pipe.pass0(segments=segments)
     timings["pass0_s"] = round(time.time() - t, 1)
     logger.info("pass-0: %d entities, %d attr aliases, %d edges (%.0fs)",
                 len(registry.entities), len(registry.attributes),

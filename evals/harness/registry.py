@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -86,7 +87,8 @@ class WorldRegistry:
             if eid in self.entities:
                 mine = self.entities[eid]
                 mine.names += [n for n in card.names if n not in mine.names]
-                mine.aliases += [a for a in card.aliases if a not in mine.aliases]
+                have = {a.lower() for a in mine.aliases}
+                mine.aliases += [a for a in card.aliases if a.lower() not in have]
                 mine.anchors += [a for a in card.anchors if a not in mine.anchors]
             else:
                 self.entities[eid] = card
@@ -191,17 +193,25 @@ def parse_registry_lines(
                     card.anchors += [a for a in _split_field(fields[4]) if a not in card.anchors]
             elif kind == "A":
                 canonical = fields[0].strip()
-                if not canonical:
-                    raise ValueError("bad attribute")
-                for variant in _split_field(fields[1]) if len(fields) > 1 else []:
+                variants = _split_field(fields[1]) if len(fields) > 1 else []
+                if not canonical or not variants:
+                    raise ValueError("attribute needs canonical and variants")
+                for variant in variants:
                     v = variant.lower().replace(" ", "_")
                     if v != canonical:
                         reg.attributes.setdefault(v, canonical)
             elif kind == "O":
                 reg.timeline.origin = rest.strip()
             elif kind == "N":
-                reg.timeline.anchors[fields[0].strip()] = float(fields[1])
+                if len(fields) != 2 or not fields[0].strip():
+                    raise ValueError("anchor needs label|offset")
+                offset = float(fields[1])
+                if not math.isfinite(offset):
+                    raise ValueError("non-finite offset")
+                reg.timeline.anchors[fields[0].strip()] = offset
             elif kind == "P":
+                if len(fields) != 2:
+                    raise ValueError("edge needs exactly a|b")
                 a, b = fields[0].strip(), fields[1].strip()
                 if not a or not b:
                     raise ValueError("bad edge")

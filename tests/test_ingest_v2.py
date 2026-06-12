@@ -418,3 +418,38 @@ class TestPass0Compact:
         assert reg.places == [("place:x", "place:y")]
         assert reg.timeline.origin == "Day 0 = start"
         assert (p.run_dir / "registry.json").exists()
+
+
+class TestDeltaReviewGaps:
+    def test_malformed_anchor_and_edge_lines_reject(self):
+        from registry import parse_registry_lines
+        reg, rejects = parse_registry_lines([
+            "N||4",                      # empty label
+            "N|assembly|4|extra",        # extra field
+            "N|bad|nan",                 # non-finite
+            "P|place:a|place:b|extra",   # extra field
+            "A|orphan_attr|",            # no variants
+            "E|obj:x|object",
+            "E|obj:x|imposter_kind",     # re-emission: first kind wins
+        ], world_id="w:test")
+        assert len(rejects) == 5
+        assert reg.timeline.anchors == {} and reg.places == []
+        assert reg.entities["obj:x"].kind == "object"
+
+    def test_repeated_same_id_retract_drops(self, tmp_path):
+        p, _ = scripted_pipeline(tmp_path, PASS1_LINES)
+        reg = make_registry()
+        p.pass1(CHUNKS, reg)
+        w = p.commit(tmp_path / "rr.world", reg)
+        dup_src = next(r for r in w.buffer.all_rows() if r.attribute == "role")
+        dup = w.ingest_structured([{"entity": dup_src.entity, "attribute": "role",
+                                    "value": dup_src.value, "timeless": True}])[0]
+
+        def model(prompt, schema):
+            return {"ops": [f"retract|{dup.id}|duplicate",
+                            f"retract|{dup.id}|duplicate again"]}
+
+        report = run_audit(w, reg, model)
+        assert report.applied_retracts == 1   # second is a drop, not a re-apply
+        assert len(report.dropped_ops) == 1
+        w.close()
