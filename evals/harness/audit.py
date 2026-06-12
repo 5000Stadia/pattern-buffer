@@ -5,6 +5,13 @@ Ops: `add|<grammar line>` via the gate; `retract|<assertion_id>|<reason>`
 via truth maintenance. Nothing else exists. Retracts against flagged
 conflicts are dropped with a warning — open conflicts are questions for
 the author, not the auditor.
+
+Run-3 lesson, code-enforced: the auditor retracted *correct* rows when
+handed drift anomalies. Retraction is therefore restricted to **exact
+duplicates** — a retract applies only when another surviving row carries
+the identical (entity, attribute, value, frame). Everything else the
+auditor wants gone stays; wrongness beyond duplication is the author's
+call, not the auditor's.
 """
 
 from __future__ import annotations
@@ -38,8 +45,10 @@ digest. Emit repair OPS, one per line, ONLY these two forms:
 
 Rules:
 - Repair only what the digest shows: stamp times you can derive from the
-  timeline, retract rows that are extraction errors (wrong entity, wrong
-  frame, duplicated fact), add rows the anomalies imply are missing.
+  timeline (as adds), and retract ONLY exact duplicates — a row whose
+  entity, attribute, value, and frame all match another surviving row.
+  A row that merely looks wrong, off-registry, or unstamped is NOT yours
+  to retract; leave it.
 - NEVER touch assertions listed under 'conflicts' — flagged contradictions
   are deliberate open questions; leave both sides standing.
 - Additions follow the same canon-vs-knowledge and never-invent rules as
@@ -107,6 +116,17 @@ def build_digest(world: World, registry: WorldRegistry, cap: int = 200) -> dict:
     }
 
 
+def _is_exact_duplicate(world: World, target) -> bool:
+    """True iff another surviving (visible) row carries the identical
+    (entity, attribute, value, frame). The only retractable condition."""
+    for row in world.buffer.visible(
+        entity=target.entity, attribute=target.attribute, frame=target.frame
+    ):
+        if row.id != target.id and row.value == target.value:
+            return True
+    return False
+
+
 def run_audit(
     world: World,
     registry: WorldRegistry,
@@ -138,11 +158,16 @@ def run_audit(
                 logger.warning("audit op dropped (targets flagged conflict): %s", op)
                 report.dropped_ops.append(op)
                 continue
-            if world.buffer.get(aid) is None:
+            target = world.buffer.get(aid)
+            if target is None:
                 logger.warning("audit op dropped (unknown assertion id): %s", op)
                 report.dropped_ops.append(op)
                 continue
-            world.truth.retract(aid, reason or "pass-2 audit")
+            if not _is_exact_duplicate(world, target):
+                logger.warning("audit op dropped (not an exact duplicate): %s", op)
+                report.dropped_ops.append(op)
+                continue
+            world.truth.retract(aid, reason or "pass-2 audit: duplicate")
             report.applied_retracts += 1
         else:
             logger.warning("audit op dropped (unknown op kind): %s", op)

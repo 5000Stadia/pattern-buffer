@@ -72,8 +72,16 @@ day one.
 
 ### 3.2 Pass-0 prompt contract
 
-One model call (batch pattern). Output: the registry as JSON (this is the
-one place verbose JSON is fine — it's ~2k tokens, once). Instructions carry
+One model call per segment. Output: **compact registry lines** (E|/A|/O|/
+N|/P|), deterministically parsed with rejects — run 3 measured the original
+JSON output as the pipeline's dominant cost (29 of 66 min, incl. two
+timeouts), so pass-0 got the same treatment as pass-1. The batch pattern
+may pass `segments` (e.g. chapters) to scaffold incrementally:
+establish over the first, extend over the rest — smaller calls, same
+interface. The prompt carries the run-3 spatial-completeness rules:
+nested containers as separate entities (desk AND its drawers), shared
+aliases on split referents ("the vault" on both vaults), and P| edges only
+for traversable passage (a defunct elevator is an entity, never an edge). Instructions carry
 the five run-1 lessons that are registry-shaped: every referring expression
 becomes an alias; one id per individual across the whole text (late naming
 binds to the early id); one canonical attribute name per fluent (the
@@ -237,7 +245,13 @@ retract|<assertion_id>|<reason>         -> World.truth.retract (truth-maintenanc
 No other op kinds exist; anything else in the output is a reject. **Audit
 adds must carry an explicit time flag (`vf=` or `t`)** — there is no scene
 cursor at audit time, so a defaulted valid_time would be fabricated; an
-add without one is a dropped op (post-impl review note, made policy). The
+add without one is a dropped op (post-impl review note, made policy).
+**Retracts apply only to exact duplicates** — the harness verifies another
+surviving row carries the identical (entity, attribute, value, frame)
+before applying; anything else the auditor wants gone is dropped with a
+warning. (Run-3 lesson: handed drift anomalies, the auditor retracted
+correct rows — Pell's age, Cray's credits. Wrongness beyond duplication is
+the author's call, never the auditor's.) The
 deliberate reactor contradiction must survive pass-2 — the audit prompt
 explicitly forbids ops against flagged conflicts (they are questions for the
 author, not the auditor), and the harness enforces it: a retract targeting

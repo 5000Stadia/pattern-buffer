@@ -100,8 +100,20 @@ class Pipeline:
 
     # ------------------------------------------------------------- pass 0
 
-    def pass0(self, text: str, prior: WorldRegistry | None = None) -> WorldRegistry:
-        registry = establish(text, self.model, self.world_id, prior=prior)
+    def pass0(
+        self,
+        text: str | None = None,
+        prior: WorldRegistry | None = None,
+        segments: list[str] | None = None,
+    ) -> WorldRegistry:
+        """Establish/extend the registry. With ``segments`` the document is
+        scaffolded incrementally (establish over the first segment, extend
+        over each subsequent one) — smaller calls, same interface."""
+        parts = segments if segments is not None else [text or ""]
+        registry = prior
+        for part in parts:
+            registry = establish(part, self.model, self.world_id, prior=registry)
+        assert registry is not None
         registry.save(self.run_dir / "registry.json")
         return registry
 

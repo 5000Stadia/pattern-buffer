@@ -148,9 +148,7 @@ class TestPipeline:
                 return {"lines": lines[0]}
             if "WORLD REGISTRY" in prompt or "EXTENDING an existing registry" in prompt:
                 repaired["called"] = True
-                return {"entities": [{"id": "obj:unknown_thing", "kind": "object"}],
-                        "attributes": [], "timeline": {"origin": "Day 0", "anchors": []},
-                        "places": []}
+                return {"lines": ["E|obj:unknown_thing|object"]}
             return rule_classifier_fallback()(prompt, schema)
 
         p = Pipeline(model, WID, tmp_path / "run", max_workers=1)
@@ -219,20 +217,29 @@ class TestAudit:
         conflicted_ids = {a for c in w.truth.open_conflicts() for a in c.assertion_ids}
         assert conflicted_ids
         victim = next(iter(conflicted_ids))
-        target = next(r.id for r in w.buffer.all_rows() if r.attribute == "role")
+        # Plant an exact duplicate (the only retractable condition) and a
+        # non-duplicate target the auditor will be denied.
+        dup_src = next(r for r in w.buffer.all_rows() if r.attribute == "role")
+        dup = w.ingest_structured([{"entity": dup_src.entity, "attribute": "role",
+                                    "value": dup_src.value, "timeless": True}])[0]
+        target = dup.id
+        non_dup = next(r.id for r in w.buffer.all_rows()
+                       if r.attribute == "in" and r.frame == "canon")
 
         def model(prompt, schema):
             return {"ops": [
                 f"add|obj:core|condition|sealed|vf=5",
-                f"retract|{victim}|auditor overreach",     # must be dropped
-                f"retract|{target}|duplicate extraction",  # must apply
-                "promote|a:1|nope",                        # unknown op kind
+                f"retract|{victim}|auditor overreach",     # dropped: conflicted
+                f"retract|{target}|duplicate extraction",  # applies: exact dup
+                f"retract|{non_dup}|looks wrong to me",    # dropped: not a dup
+                "promote|a:1|nope",                        # dropped: unknown op
             ]}
 
         report = run_audit(w, reg, model)
         assert report.applied_adds == 1
         assert report.applied_retracts == 1
-        assert len(report.dropped_ops) == 2
+        assert len(report.dropped_ops) == 3
+        assert w.buffer.visible(entity=non_dup) != [] or w.buffer.get(non_dup)  # survived
         # The conflict survives pass-2 with both rows alive.
         assert {a for c in w.truth.open_conflicts() for a in c.assertion_ids} == conflicted_ids
         assert w.buffer.get(victim) is not None
@@ -268,9 +275,7 @@ class TestReviewGaps:
             if "PASSAGE (chunk" in prompt:
                 return {"lines": lines[0]}
             if "EXTENDING an existing registry" in prompt:
-                return {"entities": [{"id": "obj:unknown_thing", "kind": "object"}],
-                        "attributes": [], "timeline": {"origin": "Day 0", "anchors": []},
-                        "places": []}
+                return {"lines": ["E|obj:unknown_thing|object"]}
             return rule_classifier_fallback()(prompt, schema)
 
         p = Pipeline(model, WID, tmp_path / "run", max_workers=1)
@@ -368,3 +373,48 @@ class TestReviewGaps:
                   if r.entity == "obj:core" and r.attribute == "condition"]
         assert len(landed) == 1 and landed[0].valid_from == 5.0  # only the timed add
         w.close()
+
+
+class TestPass0Compact:
+    def test_registry_line_parse(self):
+        from registry import parse_registry_lines
+        reg, rejects = parse_registry_lines([
+            "E|person:ilsa_renn|person|Ilsa Renn|the clerk;the clerk with the tin ear|records officer",
+            "E|place:records_vault|room|Records Vault|the vault",
+            "E|place:seed_vault|room|Seed Vault|the vault",
+            "A|working_reactors|reactors;reactor count",
+            "O|Day 0 = the night the meter went dark",
+            "N|assembly|4",
+            "N|founding|-7300",
+            "P|place:council_tier|place:gallery_stairs",
+            "",
+            "# comment",
+            "E|no_namespace_id",          # reject: bad id
+            "Q|mystery|line",             # reject: unknown kind
+        ], world_id="w:test")
+        assert reg.world_id == "w:test"
+        assert reg.entities["person:ilsa_renn"].aliases == ["the clerk", "the clerk with the tin ear"]
+        # The shared-alias split-referent case: BOTH vaults carry it.
+        assert "the vault" in reg.entities["place:records_vault"].aliases
+        assert "the vault" in reg.entities["place:seed_vault"].aliases
+        assert reg.attributes == {"reactors": "working_reactors",
+                                  "reactor_count": "working_reactors"}
+        assert reg.timeline.anchors == {"assembly": 4.0, "founding": -7300.0}
+        assert reg.places == [("place:council_tier", "place:gallery_stairs")]
+        assert len(rejects) == 2
+
+    def test_establish_extend_segments(self, tmp_path):
+        """Chapter-split scaffold: establish over segment 1, extend over 2."""
+        def model(prompt, schema):
+            if "EXTENDING an existing registry" in prompt:
+                assert "E|person:a|person" in prompt  # prior pinned, compact
+                return {"lines": ["E|person:b|person|Bee", "P|place:x|place:y"]}
+            return {"lines": ["E|person:a|person|Aye", "E|place:x|room",
+                              "E|place:y|room", "O|Day 0 = start"]}
+
+        p = Pipeline(model, WID, tmp_path / "run")
+        reg = p.pass0(segments=["chapter one text", "chapter two text"])
+        assert set(reg.entities) == {"person:a", "person:b", "place:x", "place:y"}
+        assert reg.places == [("place:x", "place:y")]
+        assert reg.timeline.origin == "Day 0 = start"
+        assert (p.run_dir / "registry.json").exists()
