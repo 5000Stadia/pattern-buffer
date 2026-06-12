@@ -197,31 +197,56 @@ def _parse_float_flag(name: str, text: str) -> float:
         raise ValueError(f"invalid {name} flag") from exc
 
 
+def _complete_id(entity_id: str, known_entities: set[str]) -> str | None:
+    """Deterministic namespace completion: an id the model emitted without
+    its namespace ('narrator') completes to the registry id iff exactly one
+    known id has that suffix ('person:narrator'). Ambiguity stays an orphan
+    — completion never guesses."""
+    if entity_id in known_entities:
+        return entity_id
+    if ":" not in entity_id:
+        matches = [k for k in known_entities if k.split(":", 1)[1] == entity_id]
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
 def _find_orphan(
     item: dict[str, Any],
     known_entities: set[str],
     line_no: int,
     line: str,
 ) -> Orphan | None:
-    checks = [
-        ("subject", item["entity"]),
-    ]
+    """Validate (and where unambiguous, namespace-complete) all four id
+    positions. Mutates `item` in place when completion applies."""
+    completed = _complete_id(item["entity"], known_entities)
+    if completed is None:
+        return Orphan(line_no=line_no, line=line, entity_id=item["entity"],
+                      position="subject")
+    item["entity"] = completed
+
     if item.get("value_type") == "entity":
-        checks.append(("value", item["value"]))
+        completed = _complete_id(item["value"], known_entities)
+        if completed is None:
+            return Orphan(line_no=line_no, line=line, entity_id=item["value"],
+                          position="value")
+        item["value"] = completed
+
     if "caused_by" in item:
-        checks.append(("caused_by", item["caused_by"]))
+        completed = _complete_id(item["caused_by"], known_entities)
+        if completed is None:
+            return Orphan(line_no=line_no, line=line, entity_id=item["caused_by"],
+                          position="caused_by")
+        item["caused_by"] = completed
+
     frame = item.get("frame")
     if isinstance(frame, str) and frame.startswith("knows:"):
-        checks.append(("frame", frame.removeprefix("knows:")))
-
-    for position, entity_id in checks:
-        if entity_id not in known_entities:
-            return Orphan(
-                line_no=line_no,
-                line=line,
-                entity_id=entity_id,
-                position=position,
-            )
+        inner = frame.removeprefix("knows:")
+        completed = _complete_id(inner, known_entities)
+        if completed is None:
+            return Orphan(line_no=line_no, line=line, entity_id=inner,
+                          position="frame")
+        item["frame"] = f"knows:{completed}"
     return None
 
 

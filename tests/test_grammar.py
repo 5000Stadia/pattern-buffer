@@ -288,3 +288,29 @@ def test_json_value_containing_pipe_keeps_flags(registry: Registry) -> None:
     assert not rejects
     assert items[0]["value"] == {"text": "p|q, r"}
     assert items[0]["valid_from"] == 2.0 and items[0]["status"] == "observed"
+
+
+def test_namespace_completion_unique_suffix(registry: Registry) -> None:
+    """A frame/subject id missing its namespace completes iff exactly one
+    registry id carries that suffix; ambiguity stays an orphan."""
+    registry.entities["person:narrator"] = object()
+    registry.entities["person:sela_voss"] = object()
+    registry.entities["obj:sela_voss_tin"] = object()  # different suffix; no clash
+    items, orphans, rejects = parse(
+        ["obj:core|in|@obj:target|f=knows:narrator,vf=1",
+         "obj:core|seen_by|@narrator|vf=1"],
+        registry, cursor=0.0,
+    )
+    assert not orphans and not rejects
+    assert items[0]["frame"] == "knows:person:narrator"
+    assert items[1]["value"] == "person:narrator"
+
+
+def test_namespace_completion_ambiguity_orphans(registry: Registry) -> None:
+    registry.entities["person:pell"] = object()
+    registry.entities["org:pell"] = object()  # two ids share the suffix
+    items, orphans, rejects = parse(
+        ["obj:core|in|@obj:target|f=knows:pell,vf=1"], registry, cursor=0.0,
+    )
+    assert not items and len(orphans) == 1
+    assert orphans[0].position == "frame" and orphans[0].entity_id == "pell"
