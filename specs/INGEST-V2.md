@@ -55,6 +55,7 @@ src/patternbuffer/ changes.
 ```python
 @dataclass
 class WorldRegistry:
+    world_id: str                     # partition key (whitepaper §16); checked on every use
     entities: dict[str, EntityCard]   # id -> {names, aliases, kind, anchors}
     attributes: dict[str, str]        # alias/variant -> canonical attribute
     timeline: TimelineSpec            # origin definition + named anchors (day offsets)
@@ -237,8 +238,8 @@ warning.
 
 The re-run writes: `ingest_dump.jsonl` (canonical-candidate), `registry.json`,
 scorecard, REPORT. Promotion to `examples/anchor/` = copy dump + registry +
-a STAMP file recording seed version, run id, score, and bible-verification
-status — no rebuild, no re-ingestion. **The policy row is non-log metadata**
+a STAMP file recording `world_id`, seed version, run id, score, and
+bible-verification status — no rebuild, no re-ingestion. **The policy row is non-log metadata**
 (a field in STAMP, read by the builder when materializing `anchor.world`) —
 it is never an assertion row and never edited into a dump (review r1).
 Bible-verification corrections (letter 005 item 3) append through
