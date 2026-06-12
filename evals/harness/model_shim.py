@@ -24,6 +24,10 @@ class ModelShimError(RuntimeError):
     pass
 
 
+class QuotaExhausted(ModelShimError):
+    pass
+
+
 def _extract_json(text: str) -> dict:
     text = text.strip()
     fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
@@ -67,6 +71,12 @@ def claude_model(prompt: str, schema: dict) -> dict:
             logger.warning("model shim timeout (attempt %d)", attempt)
             continue
         if proc.returncode != 0:
+            stdout_lower = proc.stdout.lower()
+            if "hit your" in stdout_lower and "limit" in stdout_lower:
+                raise QuotaExhausted(
+                    f"claude quota exhausted: stderr={proc.stderr[:200]!r} "
+                    f"stdout={proc.stdout[:200]!r}"
+                )
             last_err = ModelShimError(
                 f"claude exited {proc.returncode}: stderr={proc.stderr[:200]!r} "
                 f"stdout={proc.stdout[:200]!r}"

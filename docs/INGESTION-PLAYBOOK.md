@@ -79,7 +79,12 @@ do. The load-bearing instructions, in order of damage when absent:
     CLI/API exit-1 bursts are real), capture stdout AND stderr in errors,
     resume-by-chunk so a 45-minute run never restarts from zero. The
     subprocess CLI shim is the zero-setup choice, not the fast one; a direct
-    SDK shim and parallel chunks are the known throughput levers.
+    SDK shim and parallel chunks are the known throughput levers. Learned in
+    run 2 (2026-06-11): quota exhaustion is a distinguishable failure mode,
+    and the CLI prints it to stdout, not stderr. A shim must detect quota
+    exhaustion and stop or pause instead of burning retries; a monthly-spend
+    limit killed 3 chunks, and the burst of failed retries cost the chunks
+    outright.
 
 ## C. What the engine guards so the prompt doesn't have to
 

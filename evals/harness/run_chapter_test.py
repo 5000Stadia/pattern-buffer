@@ -136,7 +136,7 @@ def main() -> int:
         model = StubModel(fallback=rule_classifier_fallback())
         model_name = "stub"
     else:
-        from model_shim import claude_model, MODEL as model_name
+        from model_shim import claude_model, MODEL as model_name, QuotaExhausted
         model = claude_model
 
     run_dir = OUT / f"{date.today().isoformat()}-{seed_version}"
@@ -169,6 +169,10 @@ def main() -> int:
             n_before = w.buffer.head()
             try:
                 w.ingest(scene, context=context)
+            except QuotaExhausted as exc:
+                logger.error("quota exhausted at chunk index %d (ch%d); stopping ingestion: %s",
+                             i, chapter_no, exc)
+                break
             except Exception:
                 logger.exception("chunk failed (ch%d); continuing", chapter_no)
             logger.info("ch%d chunk: +%d rows (total %d, %.0fs)",
