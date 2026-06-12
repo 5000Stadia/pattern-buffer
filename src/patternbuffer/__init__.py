@@ -124,11 +124,11 @@ class World:
 
     # Writes (each behind its role).
 
-    def ingest(self, text: str, context: str = "") -> list:
-        return self.ingestor.ingest(text, context)
+    def ingest(self, text: str, context: str = "", frame: str | None = None) -> list:
+        return self.ingestor.ingest(text, context, frame=frame)
 
-    def ingest_structured(self, items: list[dict]) -> list:
-        return self.ingestor.ingest_structured(items)
+    def ingest_structured(self, items: list[dict], frame: str | None = None) -> list:
+        return self.ingestor.ingest_structured(items, frame=frame)
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):
         return self.resolver.resolve(entity, aspect, frame, access)

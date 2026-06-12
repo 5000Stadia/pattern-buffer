@@ -131,11 +131,21 @@ class Ingestor:
 
     # -------------------------------------------------------- structured
 
-    def ingest_structured(self, items: list[dict[str, Any]]) -> list[Assertion]:
+    def ingest_structured(
+        self, items: list[dict[str, Any]], frame: str | None = None
+    ) -> list[Assertion]:
         """The no-model gate entry: pre-extracted items, full discipline.
-        Synthetic test content only — never bible-derived (spec §6)."""
+        Synthetic test content only — never bible-derived (spec §6).
+
+        ``frame`` (letter 028): default frame for items that carry none —
+        the sanctioned doorway to named-frame authoring (knows:<id>
+        session-zero seeding, plot: arcs). Frame is a TARGET only; every
+        other gate discipline (provenance, canonicalization, cursor,
+        roles) applies unchanged. Per-item frames still win."""
         appended: list[Assertion] = []
         for item in items:
+            if frame is not None and "frame" not in item:
+                item = {**item, "frame": frame}
             appended.extend(self._ingest_item(item))
         return appended
 
@@ -217,8 +227,11 @@ class Ingestor:
 
     # ---------------------------------------------------------- extracted
 
-    def ingest(self, text: str, context: str = "") -> list[Assertion]:
-        """Model-backed extraction through the same gate."""
+    def ingest(self, text: str, context: str = "", frame: str | None = None) -> list[Assertion]:
+        """Model-backed extraction through the same gate. ``frame``
+        re-targets extracted rows to a named frame (letter 028) — used for
+        seeding a character's knowledge from prose; canon discipline is
+        unchanged when frame is None."""
         if self._model is None:
             raise RuntimeError("no model callable injected; use ingest_structured")
         prompt = (
@@ -260,4 +273,4 @@ class Ingestor:
             f"{context}\n\nPASSAGE:\n{text}"
         )
         out = self._model(prompt, _EXTRACT_SCHEMA)
-        return self.ingest_structured(out["items"])
+        return self.ingest_structured(out["items"], frame=frame)

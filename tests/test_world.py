@@ -267,3 +267,29 @@ class TestRefer018Extensions:
         r = world.refer("the cupboard")
         assert r.status == RESOLVED and r.entity_id == "obj:real_cupboard"
         assert r.receipt["signals"] == ["unique_kind_in_scope"]
+
+
+class TestFrameTargetedWrites:
+    """Letter 028: named-frame authoring through the gate — target, not escape."""
+
+    def test_default_frame_param(self, world):
+        _seed_study(world)
+        rows = world.ingest_structured([
+            {"entity": "fact:gap", "attribute": "known", "value": True},
+            {"entity": "fact:gap", "attribute": "suspected", "value": True,
+             "frame": "knows:person:marn"},  # per-item frame wins
+        ], frame="knows:person:pell")
+        assert rows[0].frame == "knows:person:pell"
+        assert rows[1].frame == "knows:person:marn"
+        # The gate's discipline applied unchanged: role-checked, stamped.
+        assert rows[0].status == "stated" and rows[0].valid_from is not None
+
+    def test_plot_frame_is_just_a_named_frame(self, world):
+        _seed_study(world)
+        world.ingest_structured([
+            {"entity": "arc:destiny", "attribute": "next_beat", "value": "the reveal"},
+        ], frame="plot:hidden_arc")
+        m = world.materialize(["arc:destiny"], frame="plot:hidden_arc")
+        assert {r.frame for r in m.assertions} == {"plot:hidden_arc"}
+        canon = world.materialize(["arc:destiny"])
+        assert all(r.frame == "canon" for r in canon.assertions)  # absent, not redacted

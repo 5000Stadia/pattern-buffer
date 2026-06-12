@@ -38,8 +38,11 @@ World(path, world_id, model=None, policy="invent_under_canon", clock=time.time)
   # policy: "invent_under_canon" (fiction) | "observe_or_unknown" (tracking) | "deny"
 
 # Writes — each behind its enforced role; you cannot mint write authority:
-world.ingest(text, context="") -> list[Assertion]          # LLM extraction via the gate
-world.ingest_structured(items) -> list[Assertion]          # pre-extracted items, same gate
+world.ingest(text, context="", frame=None) -> list[Assertion]   # LLM extraction via the gate
+world.ingest_structured(items, frame=None) -> list[Assertion]   # pre-extracted items, same gate
+#   frame= targets a NAMED frame (knows:<id> seeding, plot: arcs) — letter
+#   028: frame is a write TARGET through full gate discipline, never an
+#   authority escape; per-item frames win over the default.
 world.resolve(entity, aspect, frame="canon", access=None)  # force a thunk per policy
 world.truth.retract(assertion_or_id, reason) -> Assertion  # corrections append
 
