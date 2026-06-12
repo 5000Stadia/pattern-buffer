@@ -154,6 +154,36 @@ anchor.world → micro-eval → porcelain.
 *assumption-quarantine fix in commit history with its test; 57-test suite*
 *green at every commit.*
 
+---
+
+## Decisions: CONFIRMED (founder + Kernos CC, 2026-06-11)
+
+**A — registry-first over contract v3. Go.** Founder's analysis: the
+run-1→run-2 inversion is structural evidence (partial compliance fragments
+differently every round); the third options collapse into registry-first
+(post-hoc canonicalization = a weaker pass-2; schema-constrained decoding
+needs a vocabulary-generating first pass = pass-0). Residual risk is
+concentrated in pass-0 quality, instrumented by the registry-escapes audit,
+and cheap to discover — and A is the cheapest test of itself: if the re-run
+doesn't clear most of the 16 extraction failures, that's a finding about the
+approach, discovered for the price of a build the anchor.world pipeline
+needed anyway.
+
+**B — substrate validated; extraction number held open. Go.** Not
+goalpost-moving: the whitepaper's failure taxonomy, written before any test
+ran, prescribes exactly this (extraction = fix and re-run; shape = stop).
+Zero open shape failures after dump audit across two runs; the one engine
+bug was fixed, tested, re-proven. The public claim stays precise: substrate
+invariants held; ingestion fidelity not yet passing.
+
+**C — sequencing as proposed. Go.** Re-run → anchor.world is nearly one
+motion (corrected output becomes the canonical dump by stamping);
+micro-eval before porcelain because messy-dialogue ingestion informs
+`ingest()`'s final signature; porcelain last because the Kernos adapter
+builds against it.
+
+---
+
 **What changed in the canonical docs because of this milestone:**
 WHITEPAPER.md gained amendments A1/A2 + the §24.1 amendment log;
 specs/SPIKE-V1.md gained the assumption-quarantine fold rule;
