@@ -1,6 +1,0 @@
-{"chunk_id": 10, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
-{"attribute": "sealed", "entity": "obj:tovan_footlocker", "status": "stated", "valid_from": 14.0, "value": true}
-{"attribute": "crimp_number", "entity": "obj:tovan_footlocker", "status": "stated", "valid_from": 14.0, "value": 447}
-{"attribute": "in", "entity": "obj:tovan_footlocker", "status": "stated", "valid_from": 14.0, "value": "place:condenser_station"}
-{"attribute": "custodian", "entity": "person:sela_voss", "status": "stated", "valid_from": 14.0, "value": "obj:tovan_footlocker"}
-{"attribute": "survey_status", "entity": "event:southern_survey", "status": "stated", "valid_from": 14.0, "value": "no result yet"}

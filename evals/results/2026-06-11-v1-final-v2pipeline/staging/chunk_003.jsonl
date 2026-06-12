@@ -1,9 +1,0 @@
-{"chunk_id": 3, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
-{"attribute": "in", "entity": "person:marn", "status": "stated", "valid_from": 3.0, "value": "place:wellhead"}
-{"attribute": "in", "entity": "person:narrator", "status": "stated", "valid_from": 3.0, "value": "place:wellhead"}
-{"attribute": "in", "entity": "doc:aquifer_maps", "status": "stated", "valid_from": 0.0, "value": "person:tovan_voss"}
-{"attribute": "custodian", "entity": "doc:aquifer_maps", "status": "stated", "valid_from": 3.0, "value": "person:narrator"}
-{"attribute": "custodian", "entity": "doc:aquifer_maps", "status": "stated", "valid_from": 3.0, "value": "person:sela_voss"}
-{"attribute": "custodian", "entity": "doc:door_log", "status": "stated", "valid_from": 3.0, "value": "person:pell"}
-{"attribute": "role", "entity": "person:pells_mother", "status": "stated", "timeless": true, "value": "council_member"}
-{"attribute": "in", "entity": "person:tovan_voss", "status": "inferred", "valid_from": 0.0, "value": "place:southern_aquifer_site"}
