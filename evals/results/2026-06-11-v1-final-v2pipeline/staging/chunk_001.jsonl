@@ -1,0 +1,14 @@
+{"chunk_id": 1, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
+{"attribute": "in", "entity": "person:pell", "status": "stated", "valid_from": 3.0, "value": "place:wellhead", "value_type": "entity"}
+{"attribute": "role", "entity": "person:pell", "status": "stated", "valid_from": 3.0, "value": "guard"}
+{"attribute": "age", "entity": "person:pell", "status": "stated", "valid_from": 3.0, "value": 19}
+{"attribute": "operational", "entity": "obj:master_meter", "status": "stated", "valid_from": 0.0, "value": false}
+{"attribute": "operational", "entity": "obj:new_master_meter", "status": "stated", "valid_from": 3.0, "value": false}
+{"attribute": "operational", "entity": "obj:block_meters", "status": "stated", "valid_from": 3.0, "value": true}
+{"attribute": "readings_falsified", "entity": "obj:block_meters", "status": "inferred", "valid_from": 0.0, "value": true}
+{"attribute": "in", "entity": "obj:memory_core", "status": "observed", "valid_from": 3.0, "valid_to": 0.0, "value": "obj:master_meter", "value_type": "entity"}
+{"attribute": "condition", "entity": "obj:master_meter", "status": "observed", "valid_from": 0.0, "value": "scorch_on_housing"}
+{"attribute": "entry_time", "entity": "person:tovan_voss", "source_doc": "doc:door_log", "status": "stated", "valid_from": 0.0, "value": 2300}
+{"attribute": "entry_time", "entity": "obj:tovan_badge", "source_doc": "doc:door_log", "status": "stated", "valid_from": 0.0, "value": 2340}
+{"attribute": "in", "entity": "person:tovan_voss", "source_doc": "doc:maintenance_log", "status": "stated", "valid_from": 0.0, "value": "place:wellhead", "value_type": "entity"}
+{"attribute": "custodian", "entity": "obj:tovan_badge", "status": "inferred", "valid_from": 0.0, "value": {"policy": "invent_under_canon"}, "value_type": "unresolved"}

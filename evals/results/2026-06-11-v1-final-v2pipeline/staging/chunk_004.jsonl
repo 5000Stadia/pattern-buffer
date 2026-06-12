@@ -1,0 +1,19 @@
+{"chunk_id": 4, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
+{"attribute": "ration_share", "entity": "place:anchor", "status": "stated", "valid_from": 6.0, "value": {"dig_crew": "double", "general": "half"}}
+{"attribute": "in", "entity": "person:marn", "status": "stated", "valid_from": 6.0, "value": "place:council_tier"}
+{"attribute": "role", "entity": "person:marn", "status": "stated", "valid_from": 6.0, "value": "confined pending tribunal"}
+{"attribute": "operational", "entity": "obj:allocation_seal", "status": "stated", "valid_from": 6.0, "value": false}
+{"attribute": "role", "entity": "person:pell", "status": "stated", "valid_from": 6.0, "value": "deputy warden"}
+{"attribute": "custodian", "entity": "person:pell", "status": "stated", "valid_from": 6.0, "value": "place:wellhead"}
+{"attribute": "age", "entity": "person:pell", "status": "inferred", "valid_from": 6.0, "value": 19}
+{"attribute": "in", "entity": "obj:memory_core", "status": "inferred", "valid_from": 0.0, "value": "place:anchor"}
+{"attribute": "in", "entity": "obj:memory_core", "status": "inferred", "valid_from": 6.0, "value": {"policy": "invent_under_canon"}, "value_type": "unresolved"}
+{"attribute": "in", "entity": "place:allocation_office", "timeless": true, "value": "place:council_tier"}
+{"attribute": "in", "entity": "person:narrator", "status": "stated", "valid_from": 6.0, "value": "place:allocation_office"}
+{"attribute": "in", "entity": "person:ilsa_renn", "status": "stated", "valid_from": 6.0, "value": "place:allocation_office"}
+{"attribute": "role", "entity": "person:ilsa_renn", "status": "stated", "timeless": true, "value": "clerk"}
+{"attribute": "hearing_impairment", "caused_by": "event:dome_breach", "entity": "person:ilsa_renn", "status": "stated", "valid_from": 7.0, "value": "left"}
+{"attribute": "tenure_start", "entity": "person:ilsa_renn", "status": "stated", "timeless": true, "value": {"policy": "invent_under_canon"}, "value_type": "unresolved"}
+{"attribute": "custodian", "entity": "place:records_vault", "status": "stated", "valid_from": 6.0, "value": "person:ilsa_renn"}
+{"attribute": "contents", "entity": "place:records_vault", "status": "stated", "valid_from": 6.0, "value": ["canonical books", "seal blanks", "dead administrators records"]}
+{"attribute": "handwriting", "entity": "doc:inventory_ledger", "status": "stated", "valid_from": 6.0, "value": "person:ilsa_renn"}

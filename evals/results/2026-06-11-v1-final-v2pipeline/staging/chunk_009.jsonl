@@ -1,0 +1,28 @@
+{"chunk_id": 9, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
+{"attribute": "reserve_gap_liters", "caused_by": "event:second_assembly", "entity": "place:anchor", "status": "stated", "valid_from": 10.0, "value": 41200}
+{"attribute": "gap_origin_offset", "caused_by": "event:second_assembly", "entity": "place:anchor", "status": "stated", "valid_from": -4015.0, "value": -4015}
+{"attribute": "contents", "caused_by": "event:second_assembly", "entity": "obj:memory_core", "status": "stated", "valid_from": 10.0, "value": {"type": "master_totals", "years": 10}}
+{"attribute": "sentence", "caused_by": "event:tribunal", "entity": "person:marn", "status": "stated", "valid_from": 12.0, "value": "exile"}
+{"attribute": "in", "caused_by": "event:tribunal", "entity": "person:marn", "status": "stated", "valid_from": 12.0, "value": "place:northern_waystation"}
+{"attribute": "contents", "entity": "place:northern_waystation", "status": "stated", "timeless": true, "value": ["repeater_tower", "rain_trap"]}
+{"attribute": "role", "caused_by": "event:tribunal", "entity": "person:pells_mother", "status": "inferred", "valid_from": 12.0, "value": "council_member"}
+{"attribute": "sentence", "caused_by": "event:tribunal", "entity": "person:ilsa_renn", "status": "stated", "valid_from": 12.0, "value": "conditional_pardon"}
+{"attribute": "role", "caused_by": "event:tribunal", "entity": "person:ilsa_renn", "status": "stated", "valid_from": 12.0, "value": "clerk"}
+{"attribute": "custodian", "caused_by": "event:tribunal", "entity": "place:records_vault", "status": "stated", "valid_from": 12.0, "value": "person:ilsa_renn"}
+{"attribute": "in", "entity": "doc:second_ledgers", "status": "stated", "valid_from": 12.0, "value": "place:records_vault"}
+{"attribute": "in", "entity": "doc:council_books", "status": "stated", "valid_from": 12.0, "value": "place:records_vault"}
+{"attribute": "in", "entity": "obj:memory_core", "status": "stated", "valid_from": 12.0, "value": "place:records_vault"}
+{"attribute": "in", "entity": "obj:crays_personal_case", "status": "stated", "valid_from": 12.0, "value": "place:records_vault"}
+{"attribute": "sealed", "entity": "obj:crays_personal_case", "status": "stated", "valid_from": 12.0, "value": true}
+{"attribute": "in", "entity": "doc:inventory_ledger", "status": "stated", "valid_from": 12.0, "value": "place:records_vault"}
+{"attribute": "role", "caused_by": "event:tribunal", "entity": "person:sela_voss", "status": "stated", "valid_from": 12.0, "value": "water_steward"}
+{"attribute": "custodian", "entity": "doc:aquifer_maps", "status": "stated", "valid_from": 12.0, "value": "person:sela_voss"}
+{"attribute": "role", "caused_by": "event:tribunal", "entity": "person:pell", "status": "stated", "valid_from": 12.0, "value": "deputy_warden"}
+{"attribute": "custodian", "entity": "obj:new_master_meter", "status": "stated", "valid_from": 12.0, "value": "person:pell"}
+{"attribute": "operational", "entity": "obj:new_master_meter", "status": "stated", "valid_from": 12.0, "value": true}
+{"attribute": "in", "entity": "obj:new_master_meter", "status": "stated", "valid_from": 12.0, "value": "place:wellhead"}
+{"attribute": "inscription", "entity": "obj:new_master_meter", "status": "stated", "valid_from": 12.0, "value": "TOVAN"}
+{"attribute": "in", "entity": "doc:aquifer_maps", "status": "stated", "valid_from": 14.0, "value": "place:south_lock"}
+{"attribute": "survey_status", "entity": "place:southern_aquifer_site", "status": "stated", "valid_from": 14.0, "value": "in_progress"}
+{"attribute": "in", "entity": "obj:fuse_tin", "status": "stated", "valid_from": 12.0, "value": "obj:new_master_meter"}
+{"attribute": "contents", "entity": "obj:fuse_tin", "status": "stated", "valid_from": 12.0, "value": {"fuses": 4}}

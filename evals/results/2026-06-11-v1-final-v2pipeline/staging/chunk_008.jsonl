@@ -1,0 +1,20 @@
+{"chunk_id": 8, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
+{"attribute": "handwriting", "entity": "person:ilsa_renn", "status": "stated", "timeless": true, "value": "perfectly regular"}
+{"attribute": "role", "entity": "person:ilsa_renn", "status": "stated", "timeless": true, "value": "records officer"}
+{"attribute": "tenure_start", "entity": "person:ilsa_renn", "status": "stated", "timeless": true, "value": "org:founding_convoy", "value_type": "entity"}
+{"attribute": "custodian", "entity": "person:ilsa_renn", "status": "stated", "valid_from": 9.0, "valid_to": -2372.0, "value": "person:cray", "value_type": "entity"}
+{"attribute": "custodian", "entity": "person:ilsa_renn", "status": "stated", "valid_from": -2372.0, "value": "person:marn", "value_type": "entity"}
+{"attribute": "custodian", "entity": "doc:inventory_ledger", "status": "stated", "timeless": true, "value": "person:ilsa_renn", "value_type": "entity"}
+{"attribute": "custodian", "entity": "doc:second_ledgers", "status": "inferred", "valid_from": -4015.0, "value": "person:ilsa_renn", "value_type": "entity"}
+{"attribute": "in", "entity": "obj:tovan_badge", "status": "stated", "valid_from": 9.0, "valid_to": 0.0, "value": "org:maintenance_guild", "value_type": "entity"}
+{"attribute": "custodian", "entity": "obj:tovan_badge", "status": "stated", "valid_from": 0.0, "value": "person:ilsa_renn", "value_type": "entity"}
+{"attribute": "role", "entity": "person:marn", "status": "stated", "valid_from": 0.0, "value": "ordered core extraction"}
+{"attribute": "operational", "entity": "obj:memory_core", "status": "stated", "valid_from": 0.0, "value": false}
+{"attribute": "custodian", "entity": "obj:memory_core", "status": "stated", "valid_from": 0.0, "valid_to": 8.0, "value": "person:ilsa_renn", "value_type": "entity"}
+{"attribute": "in", "entity": "obj:memory_core", "status": "stated", "valid_from": 0.0, "valid_to": 3.0, "value": "obj:false_drawer", "value_type": "entity"}
+{"attribute": "in", "entity": "obj:memory_core", "status": "stated", "valid_from": 3.0, "valid_to": 8.0, "value": "place:seed_vault", "value_type": "entity"}
+{"attribute": "in", "entity": "person:marn", "status": "stated", "valid_from": 3.0, "value": "place:wellhead", "value_type": "entity"}
+{"attribute": "role", "entity": "person:cray", "status": "stated", "valid_from": -2372.0, "value": "directed record destruction"}
+{"attribute": "custodian", "entity": "obj:memory_core", "status": "stated", "valid_from": 8.0, "value": "person:narrator", "value_type": "entity"}
+{"attribute": "custodian", "entity": "doc:second_ledgers", "status": "stated", "valid_from": 8.0, "value": "person:narrator", "value_type": "entity"}
+{"attribute": "working_reactors", "entity": "place:anchor", "status": "observed", "valid_from": 8.0, "value": 3}

@@ -183,12 +183,16 @@ class Indexes:
         """STATE: recency wins within a source class; across classes,
         agreement corroborates (serve the more precise value), disagreement
         flags and keeps serving the prior in-class winner (spec §7)."""
-        # Assumption quarantine (whitepaper §7/§15): `assumed` is explicitly
-        # provisional — it never holds incumbency against evidentiary rows.
-        # An observation arriving over a working assumption is confirmation
-        # or correction, not a cross-source conflict to ask about.
-        if any(r.status != "assumed" for r in rows):
-            rows = [r for r in rows if r.status != "assumed"]
+        # Evidence rank (the assumption quarantine, generalized): provisional
+        # classes never hold incumbency against authoritative ones — an
+        # authored/observed fact arriving over a character's inference or a
+        # working assumption is confirmation or correction, never a conflict
+        # to ask about. Peers ({stated, observed}) keep the full
+        # corroborate-vs-flag machinery below. (Found by chapter-test run 3:
+        # a narrator's wrong `inferred` theory outheld later `stated` canon.)
+        rank = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
+        top = max(rank.get(r.status, 0) for r in rows)
+        rows = [r for r in rows if rank.get(r.status, 0) == top]
 
         by_source: dict[str, list[Assertion]] = {}
         for r in rows:

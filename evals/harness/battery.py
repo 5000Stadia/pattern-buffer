@@ -170,7 +170,9 @@ def run_battery(w: World) -> list[Verdict]:
             flagged = any(
                 ("reactor" in c.attribute) or
                 set(FX.REACTOR_CONTRADICTION["values"]) <= {
-                    w.buffer.get(i).value for i in c.assertion_ids if w.buffer.get(i)
+                    v for v in (
+                        w.buffer.get(i).value for i in c.assertion_ids if w.buffer.get(i)
+                    ) if isinstance(v, (int, float, str, bool))
                 }
                 for c in conflicts
             )
@@ -252,7 +254,7 @@ def run_battery(w: World) -> list[Verdict]:
         expect_ids = {ent(w, k) for k in probe["expect_any"]} - {None}
         correct_row_exists = any(
             r.attribute in {"in", "within", "held_by", "carried_by"}
-            and r.value in expect_ids
+            and isinstance(r.value, str) and r.value in expect_ids
             and r.valid_from is not None and r.valid_from <= probe["day"]
             for r in rows_about(w, core)
         )

@@ -211,3 +211,24 @@ class TestAssumptionQuarantine:
         # only thing known) — provisional, but honest.
         early = indexes.fold_key("obj:core", "in", valid_as_of=8.0, asserted_as_of=1)
         assert early.winner.value == "place:theory_vault"
+
+    def test_inference_yields_to_stated_canon(self, world_parts):
+        """Evidence rank: a wrong inference never outholds later authored
+        truth (chapter-test run-3 finding, generalizing the quarantine)."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        buf.append(entity="obj:core", attribute="in", value="place:wrong_vault",
+                   value_type="entity", valid_from=0.0, status="inferred", role=ing)
+        buf.append(entity="obj:core", attribute="in", value="place:seed_vault",
+                   value_type="entity", valid_from=3.0, valid_to=8.0,
+                   status="stated", role=ing)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        result = indexes.fold_key("obj:core", "in", valid_as_of=4.5)
+        assert not result.conflicted          # correction, not a conflict
+        assert result.winner.value == "place:seed_vault"
+        # The inference still serves where it is all that exists:
+        early = indexes.fold_key("obj:core", "in", valid_as_of=1.0,
+                                 asserted_as_of=1)
+        assert early.winner.value == "place:wrong_vault"

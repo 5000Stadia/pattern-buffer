@@ -1,0 +1,15 @@
+{"chunk_id": 2, "error": "", "failed": false, "orphans": [], "rejects": [], "world_id": "w:anchor_v2"}
+{"attribute": "in", "entity": "person:marn", "status": "stated", "valid_from": 3.0, "value": "place:council_tier"}
+{"attribute": "role", "entity": "person:marn", "status": "stated", "timeless": true, "value": "allocation officer"}
+{"attribute": "custodian", "entity": "place:allocation_office", "status": "stated", "timeless": true, "value": "person:marn", "value_type": "entity"}
+{"attribute": "operational", "entity": "obj:master_meter", "status": "stated", "valid_from": 0.0, "value": false}
+{"attribute": "entry_time", "entity": "obj:tovan_badge", "status": "stated", "valid_from": 0.0, "value": 2340}
+{"attribute": "role", "entity": "person:tovan_voss", "status": "stated", "timeless": true, "value": "maintenance tech"}
+{"attribute": "custodian", "entity": "obj:master_meter", "status": "stated", "timeless": true, "value": "person:tovan_voss", "value_type": "entity"}
+{"attribute": "population", "entity": "place:anchor", "status": "stated", "valid_from": 0.0, "value": 300}
+{"attribute": "water_reserve_actual", "entity": "place:anchor", "status": "stated", "valid_from": 3.0, "value": 0}
+{"attribute": "reserve_gap_liters", "entity": "place:anchor", "status": "stated", "valid_from": -4015.0, "value": {"gte": 1}}
+{"attribute": "water_reserve_claimed", "entity": "place:anchor", "status": "stated", "valid_from": -4015.0, "value": {"gt": 0}}
+{"attribute": "gap_origin_offset", "entity": "place:anchor", "status": "inferred", "valid_from": 3.0, "value": -4015}
+{"attribute": "reserve_gap_liters", "entity": "place:anchor", "frame": "knows:person:marn", "status": "stated", "valid_from": -4015.0, "value": {"gte": 1}}
+{"attribute": "reserve_gap_liters", "entity": "place:anchor", "frame": "knows:person:tovan_voss", "status": "stated", "valid_from": -4015.0, "value": {"gte": 1}}
