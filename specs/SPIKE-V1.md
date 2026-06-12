@@ -167,6 +167,8 @@ Frame discipline: the payload contains only rows whose `frame` matches the reque
 
 Tier 1 (deterministic, spike-real): exact name/alias hit through the identity registry; unique-kind-in-scope under the scene cursor / given scope; **constraint inversion** (resolve the container by the contained, the owner by the possession — flip the lookup direction before calling any model). Tier 2 (contract + stub): strict-schema model call returning a resolution receipt (candidates, signals, confidence). Tier 3 (contract): returns `Underdetermined(candidates)` — the ask is the host's to deliver; the engine never guesses below the confidence floor. Historical reference (as-of over identity anchors) is supported by the explicit `as_of` parameter, honored in tier 1.
 
+**Accepted post-spike extension (letter 018, lands with the micro-eval):** (1) zero-candidate escalation — tier 1 yielding zero matches with a scope provided routes to tier 2 with the scope's members as candidates (scope-bounded only, confidence floor unchanged), so vocabulary miss stops masquerading as absence; (2) alias accrual — a tier-2/confirmed resolution of a novel term appends an alias assertion carrying the resolution receipt, discourse-scoped first, promoted on recurrence; a learned alias never outranks another entity's exact name; collisions are ordinary ambiguity. Micro-eval criterion: a synonym never used at ingest resolves via tier 2 on first use, tier 1a on second, both receipts in the log.
+
 ## 10. Dump format and builder (the 005 seam)
 
 - `dump(world) -> JSONL`: one assertion per line, ordered by `seq`, canonical key order, no derived data. Diffable; the shipped `examples/anchor/` artifact later (post-chapter-test) is exactly this dump plus policy row.
