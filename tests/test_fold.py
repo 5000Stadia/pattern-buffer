@@ -286,3 +286,30 @@ class TestAssumptionQuarantine:
         result = indexes.fold_key("obj:case", "in", valid_as_of=16.0)
         assert not result.conflicted
         assert result.winner.value == "place:records_vault"
+
+    def test_accrual_promotion(self, world_parts):
+        """Whitepaper 5.1: 3+ same-value STATE observations at distinct
+        valid times promote to DISPOSITIONAL — the world learns a habit."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        for day in (1.0, 8.0, 15.0):
+            buf.append(entity="person:dale", attribute="restocks_on", value="monday",
+                       valid_from=day, status="observed", role=ing)
+        buf.append(entity="person:dale", attribute="mood", value="tired",
+                   valid_from=1.0, status="observed", role=ing)
+        buf.append(entity="person:dale", attribute="mood", value="tired",
+                   valid_from=2.0, status="observed", role=ing)
+        for _ in range(5):
+            stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        n = classifier.promote_accruals(threshold=3)
+        assert n == 3  # the three restock observations; mood (2x) stays STATE
+        assert classifier.durability(
+            next(r.id for r in buf.all_rows() if r.attribute == "restocks_on")
+        ) == "DISPOSITIONAL"
+        assert classifier.durability(
+            next(r.id for r in buf.all_rows() if r.attribute == "mood")
+        ) == "STATE"
+        # The fold now treats the habit as dispositional (defeasible).
+        fold = indexes.fold_key("person:dale", "restocks_on")
+        assert fold.winner.value == "monday"

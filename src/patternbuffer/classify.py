@@ -251,6 +251,33 @@ class Classifier:
                 )
             )
 
+    def promote_accruals(self, threshold: int = 3) -> int:
+        """Accrual promotion (whitepaper §5.1): repeated STATE observations
+        of the same (entity, attribute, value) — at distinct valid times —
+        promote to DISPOSITIONAL in the sidecar. The world learns its
+        habits; the log is untouched; rebuild() re-derives. Returns the
+        number of rows promoted. Promotion frequency doubles as the
+        salience baseline's input."""
+        groups: dict[tuple, set] = {}
+        rows_by_group: dict[tuple, list] = {}
+        for row in self._buffer.visible():
+            if row.entity.startswith("a:") or row.value_type == "unresolved":
+                continue
+            if self.durability(row.id) != STATE:
+                continue
+            key = (row.entity, row.attribute, row.frame, repr(row.value))
+            groups.setdefault(key, set()).add(row.valid_from)
+            rows_by_group.setdefault(key, []).append(row)
+        promoted = 0
+        for key, valid_times in groups.items():
+            if len(valid_times) >= threshold:
+                for row in rows_by_group[key]:
+                    self.set(row.id, DISPOSITIONAL, 0.8)
+                    promoted += 1
+        if promoted:
+            logger.info("accrual promotion: %d row(s) -> DISPOSITIONAL", promoted)
+        return promoted
+
     def rebuild(self) -> int:
         """Drop the sidecar and re-derive it from the untouched log."""
         conn = self._buffer.raw_connection()
