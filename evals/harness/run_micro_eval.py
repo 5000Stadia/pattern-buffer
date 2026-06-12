@@ -61,7 +61,7 @@ Then emit grammar lines for declaratives/corrections only:
 - Atmosphere, banter, and rhetoric are not assertions.
 
 Output BOTH:
-- "stances": one entry per utterance: {"turn": "<stamp>", "stance": "..."}
+- "stances": one entry per utterance: {{"turn": "<stamp>", "stance": "..."}}
 - "lines": the grammar lines.
 
 REGISTRY:
