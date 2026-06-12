@@ -313,3 +313,26 @@ class TestAssumptionQuarantine:
         # The fold now treats the habit as dispositional (defeasible).
         fold = indexes.fold_key("person:dale", "restocks_on")
         assert fold.winner.value == "monday"
+
+    def test_read_path_scales_with_closure_not_log(self, world_parts):
+        """037 (HD live finding): a fold deserializes O(closure) rows, never
+        O(log). Grow-and-requery must not compound."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        buf.append(entity="obj:pipe", attribute="in", value="obj:drawer",
+                   value_type="entity", valid_from=1.0, status="stated", role=ing)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        # Grow the log with 1500 unrelated rows (a long play session).
+        for i in range(1500):
+            buf.append(entity=f"obj:filler_{i}", attribute="hue", value=i,
+                       valid_from=float(i), status="stated", role=ing)
+        before = buf.rows_read
+        result = indexes.fold_key("obj:pipe", "in")
+        cost = buf.rows_read - before
+        assert result.winner.value == "obj:drawer"
+        assert cost < 50, f"fold deserialized {cost} rows on a 1500-row log"
+        # And contents() — the value-indexed walk — stays closure-cheap too.
+        before = buf.rows_read
+        assert indexes.contents("obj:drawer") == ["obj:pipe"]
+        assert buf.rows_read - before < 50

@@ -58,9 +58,15 @@ class Indexes:
         # Identity closure hook: maps any entity id to its canonical
         # representative. Installed by World wiring once the registry exists.
         self._resolve = identity_resolve or (lambda eid: eid)
+        self._closure_of = lambda eid: {eid}
 
     def set_identity_resolver(self, fn: Callable[[str], str]) -> None:
         self._resolve = fn
+
+    def set_closure_provider(self, fn: Callable[[str], set]) -> None:
+        """Identity-closure lookup for indexed (read-path) retrieval —
+        installed by World wiring alongside the resolver (037)."""
+        self._closure_of = fn
 
     def resolve_entity(self, entity: str) -> str:
         """The identity closure's canonical representative for `entity`."""
@@ -129,14 +135,13 @@ class Indexes:
         """Serve one (entity, attribute, frame) key per the per-class rules."""
         entity = self._resolve(entity)
         fa = fold_attribute(attribute)
+        closure = sorted(self._closure_of(entity))
+        attrs = sorted(CONTAINMENT_FAMILY) if fa == _FAMILY_KEY else [attribute]
         candidates: list[Assertion] = []
         for row in self._buffer.visible(
-            frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of
+            entity_in=closure, attribute_in=attrs,
+            frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
         ):
-            if self._resolve(row.entity) != entity:
-                continue
-            if fold_attribute(row.attribute) != fa:
-                continue
             if self._classifier.durability(row.id) == EVENT:
                 continue  # events never fold
             candidates.append(row)
@@ -256,11 +261,13 @@ class Indexes:
     ) -> dict[str, FoldResult]:
         """All folded keys for one entity (attribute -> result)."""
         entity = self._resolve(entity)
+        closure = sorted(self._closure_of(entity))
         attrs: set[str] = set()
         for row in self._buffer.visible(
-            frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of
+            entity_in=closure,
+            frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
         ):
-            if self._resolve(row.entity) == entity and not row.entity.startswith("a:"):
+            if not row.entity.startswith("a:"):
                 attrs.add(row.attribute)
         out: dict[str, FoldResult] = {}
         for attr in attrs:
@@ -308,11 +315,13 @@ class Indexes:
         container = self._resolve(container)
         members: set[str] = set()
         candidates: set[str] = set()
-        for row in self._buffer.visible(
-            frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of
-        ):
-            if row.attribute in CONTAINMENT_FAMILY and not row.entity.startswith("a:"):
-                candidates.add(self._resolve(row.entity))
+        for target in sorted(self._closure_of(container)):
+            for row in self._buffer.visible(
+                attribute_in=sorted(CONTAINMENT_FAMILY), value=target,
+                frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+            ):
+                if not row.entity.startswith("a:"):
+                    candidates.add(self._resolve(row.entity))
         for eid in candidates:
             result = self.fold_key(eid, "in", frame, valid_as_of, asserted_as_of)
             if (

@@ -208,8 +208,7 @@ class Porcelain:
                frame: str = CANON) -> list[dict]:
         scope = sorted({
             self._w.registry.resolve(r.entity)
-            for r in self._w.buffer.visible(frame=frame)
-            if r.entity.startswith("event:")})
+            for r in self._w.buffer.visible(frame=frame, entity_prefix="event:")})
         m = self._w.materialize(scope or ["event:none"], frame=frame,
                                 lens="what_happened", since=since, as_of=until)
         by_event: dict[str, dict] = {}

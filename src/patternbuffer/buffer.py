@@ -41,6 +41,10 @@ CREATE TABLE IF NOT EXISTS assertions (
 );
 CREATE INDEX IF NOT EXISTS ix_assertions_key
   ON assertions (entity, attribute, frame);
+CREATE INDEX IF NOT EXISTS ix_assertions_attr_value
+  ON assertions (attribute, value);
+CREATE INDEX IF NOT EXISTS ix_assertions_frame
+  ON assertions (frame, attribute);
 CREATE TRIGGER IF NOT EXISTS assertions_append_only_update
   BEFORE UPDATE ON assertions
   BEGIN SELECT RAISE(ABORT, 'append-only: UPDATE forbidden'); END;
@@ -73,6 +77,7 @@ class PatternBuffer:
                 f"buffer at {self.path} belongs to world {existing!r}, not {world_id!r}"
             )
         self.world_id = world_id
+        self.rows_read = 0  # deserialization counter (read-path scaling guard, 037)
 
     def _meta(self, key: str) -> str | None:
         row = self._conn.execute(
@@ -169,7 +174,11 @@ class PatternBuffer:
         self,
         *,
         entity: str | None = None,
+        entity_in: list[str] | None = None,
+        entity_prefix: str | None = None,
         attribute: str | None = None,
+        attribute_in: list[str] | None = None,
+        value: Any | None = None,
         frame: str | None = None,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
@@ -189,9 +198,21 @@ class PatternBuffer:
         if entity is not None:
             clauses.append("a.entity = ?")
             params.append(entity)
+        if entity_in is not None:
+            clauses.append(f"a.entity IN ({','.join('?' * len(entity_in))})")
+            params.extend(entity_in)
+        if entity_prefix is not None:
+            clauses.append("a.entity LIKE ?")
+            params.append(entity_prefix + "%")
         if attribute is not None:
             clauses.append("a.attribute = ?")
             params.append(attribute)
+        if attribute_in is not None:
+            clauses.append(f"a.attribute IN ({','.join('?' * len(attribute_in))})")
+            params.extend(attribute_in)
+        if value is not None:
+            clauses.append("a.value = ?")
+            params.append(json.dumps(value, sort_keys=True))
         if frame is not None:
             clauses.append("a.frame = ?")
             params.append(frame)
@@ -214,7 +235,7 @@ class PatternBuffer:
             f" FROM assertions a {where} ORDER BY seq",
             params,
         )
-        return [
+        out = [
             Assertion(
                 seq=r[0],
                 id=r[1],
@@ -232,6 +253,8 @@ class PatternBuffer:
             )
             for r in cur.fetchall()
         ]
+        self.rows_read += len(out)
+        return out
 
     # ------------------------------------------------------------- plumbing
 

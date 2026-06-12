@@ -68,6 +68,7 @@ class World:
         self.classifier = Classifier(self.buffer, model or _no_model)
         self.registry = IdentityRegistry(self.buffer, roles["ingestor"])
         self.indexes = Indexes(self.buffer, self.classifier, self.registry.resolve)
+        self.indexes.set_closure_provider(self.registry.closure)
         self.truth = TruthMaintenance(
             self.buffer, self.classifier, self.indexes, roles["truth_maintenance"]
         )
