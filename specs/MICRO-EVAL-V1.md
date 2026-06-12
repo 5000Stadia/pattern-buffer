@@ -38,13 +38,13 @@ Same bones as the chapter test, new organs:
 | # | Criterion (origin) | Planted case | PASS condition |
 |---|---|---|---|
 | R1 | Irrealis filtering (025.1 — highest stakes) | a hypothetical ("maybe I left it in the car"), a question, a sarcastic line, a conditional | **zero** stated/observed rows from any of them; at most `assumed` with low confidence for the hypothetical; the sarcasm produces nothing |
-| R2 | Intention vs fact (025.2) | "I'll move the drill to the van tomorrow" | the drill's location does NOT change; no stated/observed future row; at most one `assumed` future-valid row; rule: intentions are host-side objects, not world state |
+| R2 | Intention vs fact (025.2) | "I'll move the drill to the van tomorrow" | the drill's location does NOT change; **zero world-store rows of any status** from the intention — plans/reminders are host-side objects (the stance receipt records the intention in chunk metadata, outside the log) |
 | R3 | Self-correction grace (025.3a) | "3 bedrooms — well, 4 with the office" (same speaker, same turn-window) | the replacing row carries the `corr` proposal; pass-2 promotes it to a retraction of the in-window prior; folds to 4; **no conflict flag**; the wrong row stays in the log (shadow-archive) |
 | R4 | Genuine contradiction (025.3b) | speaker A asserts a standing fact Monday; speaker B asserts its contrary Friday; no correction marker | **cross-source flag + ask** (speaker classes disagreeing — §7.2 verbatim); both rows alive; the R3 and R4 paths must differ |
 | R5 | Cursor humility (025.4) | "the fittings are in the van," said from the office | fittings anchor under the van; the office contributes nothing; speaker location ≠ assertion location |
 | R6 | Fuzzy calendar time (025.5) | "last Tuesday sometime" | interval valid_time with honest slop; as-of inside the interval finds it, outside does not |
 | R7 | Vocabulary drift (018) | key registers "cabinet"; speaker later says "the cupboard" | tier-2 resolves first use (receipt logged), tier-1a resolves second use (alias accrued, receipt logged). **Build dependency, explicit:** the 018 refer() extensions (zero-candidate escalation + alias accrual) build WITH this milestone, before grading |
-| R8 | Negation as information (025.7) | "I never ended up moving it" after an R2-style intention | the intention/assumption closes (retracted or valid_to'd); the OLD location is confirmed as an explicit row — distinct from unknown (the Dale stated-absence pattern) |
+| R8 | Negation as information (025.7) | "I never ended up moving it" after an R2-style intention | with R2 emitting zero world rows, the negation's world effect is purely positive: the OLD location is confirmed as an explicit row (distinct from unknown — the Dale stated-absence pattern); if any provisional row about the move DID exist, it closes via the Decision-1 corr→retraction path with its receipts chain, never an unaudited valid_to |
 | R9 | Unknown stays unknown (mode floor) | a never-discussed container is queried | `UNKNOWN` — no invention, no kind-default promotion; the resolver's observe_or_unknown path graded live |
 | R10 | Wall-clock rider (A1) | every STATE/EVENT row from the run | carries a `learned_at_wallclock` meta-assertion; staleness is computable |
 
@@ -69,7 +69,8 @@ Written fresh from the 025 posture. Deltas from the prose contract:
   joke/conditional (NO factual rows; hypotheticals may emit `assumed`
   @ low confidence), intention/plan (emit nothing into the world store),
   performative-correction ("actually...", "I mean...") → emit the
-  corrected value plus a retraction marker for the in-window prior.
+  corrected value with the `corr` proposal flag (pass-2 promotes; the
+  gate never retracts).
 - **Speaker-source classes (027 Decision 2):** EVERY conversational fact
   carries `source → person:<speaker>`; the fold's source class becomes
   `speaker:<id>` (§7.1 generalized — a speaker is a document that talks).
