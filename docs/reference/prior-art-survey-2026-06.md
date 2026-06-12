@@ -115,3 +115,29 @@ lineage, lorebooks as the folk-demand signal, Intra as convergence.
 
 *Method cost: ~100k tokens, all in three parallel cheap-model scouts;
 curation and judgment in the main instance per the delegation directive.*
+
+
+## Coda: Graphiti structural deep-dive (founder-requested, 2026-06-12)
+
+Five seams examined at mechanism level (invalidation, dedup, extraction
+contract, retrieval, operational admissions). Judgment against our designs:
+
+- **Validations (no action):** their costly retrofit from schema-free to
+  typed entities is our registry-first lesson learned independently; their
+  "conservative invalidation on temporal overlap only" parallels our
+  simultaneity guard; their 3–4 LLM calls *per episode* for extract+dedup+
+  invalidate is the cost our derive-don't-store supersession avoids
+  entirely; their identity-fixed-at-creation (no post-hoc merge, wrong
+  calls permanent) is strictly weaker than late-binding merge-as-event.
+- **One transferable lesson (recorded in INGEST-V2 §8):** their dedup's
+  load-bearing finding — two NON-REDUNDANT candidate-generation signals
+  (lexical + semantic), each catching what the other misses. Mapped to our
+  vocabulary (embeddings stay out per whitepaper §23): the registry
+  self-check generates merge candidates by name/alias overlap AND anchor
+  overlap (roles, recurring locations, features) as independent signals —
+  which is §11's "single-anchor identity is brittle" made operational.
+- **One porcelain note:** their memory-context payload shape (fact text +
+  valid/invalid times per fact; name + summary per entity) is a sensible
+  starting shape for `ask`'s provenance-bearing answers.
+
+Verdict: no further sophistication to garner; survey closed.
