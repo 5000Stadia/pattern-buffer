@@ -134,6 +134,15 @@ class World:
     def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):
         return self.resolver.resolve(entity, aspect, frame, access)
 
+    @property
+    def porcelain(self):
+        """The frozen host surface (PORCELAIN-V1). Lazy; import-local to
+        avoid circularity."""
+        if not hasattr(self, "_porcelain"):
+            from patternbuffer.porcelain import Porcelain
+            self._porcelain = Porcelain(self)
+        return self._porcelain
+
     def charter(self) -> dict[str, Any]:
         """The world's self-description, read from world:self (letter 026)."""
         out: dict[str, Any] = {}

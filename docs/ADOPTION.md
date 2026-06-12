@@ -94,9 +94,26 @@ Domain outcomes are values you must branch on:
   learned-at meta-assertions (it does this automatically; do not strip them —
   staleness decay computes from them).
 
-## PLANNED (post-chapter-test; letter-008 direction)
+## THE PORCELAIN (frozen at porcelain-v0.1; additive-only henceforth)
 
-Porcelain: `world.ingest(text) -> Receipt`, `world.snapshot(scope) -> JSON`
-(contractually LLM-free; refer tier-1 only), `world.ask(question) -> Answer`
-(provenance on every answer). MCP wrapper and the `arch` CLI as mechanical
-mirrors of the same five verbs. Build adapters against these names.
+`world.porcelain` — the typed, JSON-serializable host surface
+(specs/PORCELAIN-V1.md is the contract):
+
+```python
+p = world.porcelain
+p.ingest(text, source=None, scene=None, at=None, frame=None) -> Receipt
+p.ingest_structured(items, frame=None) -> Receipt
+p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
+p.retract(assertion_id, reason) -> Receipt
+p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=) -> dict
+   # contractually ZERO model calls and ZERO writes; id-only scopes
+p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact}
+p.locate / p.contents / p.path
+p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
+p.frame_diff(a, b, scope, as_of=) -> [Fact]   # semantic diff; divergent values marked
+p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only
+```
+
+Every write returns a per-assertion Receipt; every fact carries
+`{status, source_chain, assertion_id}` provenance. MCP wrapper and the
+`arch` CLI follow as mechanical mirrors.
