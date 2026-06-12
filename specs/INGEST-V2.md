@@ -41,8 +41,12 @@ evals/harness/
   model_shim.py   (exists) gains call_many(prompts) -> parallel execution
 ```
 
-The engine's only involvement remains `World.ingest_structured(...)` (the
-gate) and the public read surface. Nothing in src/patternbuffer/ changes.
+The engine's involvement is exactly three existing public seams —
+`World.ingest_structured(...)` (the gate), `World.truth.retract(...)`
+(corrections), and `world.ingestor.add_attribute_alias(...)` (the in-memory
+canonicalization map, a non-log sidecar the harness replays from
+`registry.json`) — plus the public read surface. Nothing in
+src/patternbuffer/ changes.
 
 ## 3. Pass 0 — the registry
 
@@ -76,14 +80,33 @@ reactor lesson: `working_reactors`, not three variants); places get
 connects_to edges exactly as the text supports; the timeline names its
 origin event and known anchors.
 
-### 3.3 Seeding the gate
+### 3.3 Seeding the gate — inside the single commit (review r2)
 
-The registry pre-seeds the World before any pass-1 row arrives: entity kinds
-+ names/aliases via `ingest_structured` (timeless, `stated`), attribute
-aliases via `Ingestor.add_attribute_alias` (the canonicalization map —
-receipts fire normally when pass-1 lines use variant names), place edges as
-timeless structural rows. The fold key can no longer fragment on anything
-the registry pinned.
+Pass-1 never needs registry rows in the World: parsing and validation run
+against the in-memory `WorldRegistry` (backed by `registry.json`), not
+against World state. Registry seeding is therefore the **first phase of the
+single commit** (§4.2), not a pre-pass-1 write. The commit sequence, total
+and exact:
+
+```
+(pre-commit: all chunks staged OK; registry-escape repairs done)
+1. seed registry      entity kinds + names/aliases (timeless, stated, via
+                      ingest_structured); attribute aliases via
+                      ingestor.add_attribute_alias; place edges (timeless)
+2. replay chunks      staged items in chunk order, through the gate
+3. post-commit audit  §5.2 repair ops (add via gate, retract via tmaint)
+```
+
+A failed run (any chunk permanently failed) commits **nothing** — including
+registry seed rows; the failed-chunk test asserts the target World file is
+absent/empty. The fold key can no longer fragment on anything the registry
+pinned.
+
+**World partitioning of harness artifacts (review r2):** `WorldRegistry`
+carries `world_id`; `registry.json`, every staging file's header, and STAMP
+all record it; the pipeline refuses to seed, replay, re-grade, or stamp when
+the artifact's `world_id` differs from the target World's (whitepaper §16:
+`world_id` partitions everything — including the harness's own artifacts).
 
 **Registry durability (review r1):** `add_attribute_alias` is in-memory; the
 engine's rebuildable map reads only logged receipts. Therefore the registry
@@ -113,15 +136,27 @@ entity|attribute|value|flags
 - Defaults: canon frame, `stated`, cursor-stamped valid_from.
 - Example: `obj:memory_core|in|@place:seed_vault|vf=4.5,s=stated`
 
-`grammar.parse(lines, registry) -> (items, orphans, rejects)`: deterministic.
-A line referencing an entity id not in the registry is **quarantined** — it
-goes to `orphans` as `(chunk_id, line, entity_id)` and does **not** enter the
-item stream; orphaned lines reach the log only after pass-2 extends the
-registry and the affected chunks re-parse (014 constraint #1 — escapes never
-pollute the world they're meant to flag; review r1 blocker). Malformed lines
-go to `rejects` with line numbers. **Reject rate** = malformed nonblank lines
-÷ total nonblank output lines (orphans counted separately, they are not
-rejects); above the threshold (default 20%) the chunk fails for retry.
+`grammar.parse(lines, registry, cursor) -> (items, orphans, rejects)`:
+deterministic. **Reference validation covers all four id positions** (review
+r2): the subject entity, `@value` entity refs, `cb=` event ids, and the
+entity inside `f=knows:<entity>` frames — a line with any unregistered id in
+any position is **quarantined**: it goes to `orphans` as
+`(chunk_id, line, entity_id, position)` and does **not** enter the item
+stream; orphaned lines reach the log only after pass-2 extends the registry
+and the affected lines re-parse (014 constraint #1 — escapes never pollute
+the world they're meant to flag; review r1 blocker). `digest.frame_anoms`
+(§5.2) remains as post-commit defense-in-depth only — with parse-time
+validation it is expected empty, and a non-empty value indicates a pipeline
+bug, not extraction noise. Malformed lines go to `rejects` with line
+numbers. **Reject rate** = malformed nonblank lines ÷ total nonblank output
+lines (orphans counted separately, they are not rejects); above the
+threshold (default 20%) the chunk fails for retry.
+
+**Staged items carry explicit `valid_from`** (review r2): the cursor default
+is resolved at parse time — `parse` takes the chunk's cursor position and
+stamps it into every item that neither carries `vf=` nor `t` — so staged
+files are replay-complete and commit-time cursor state cannot drift from
+extraction-time intent.
 
 ### 4.2 Parallelism, staging, and ordering (review r1: stage-all, commit-once)
 
@@ -223,7 +258,11 @@ correction history stays visible by design.
   receipts.
 - pipeline: parallel pass-1 with a stub callable lands a byte-identical dump
   to serial (stage-all/commit-once ordering invariant); a failed chunk →
-  no commit, resumable staging; quota abort leaves staging intact.
+  no commit **including zero registry seed rows** (target World file
+  absent/empty); resumable staging; quota abort leaves staging intact;
+  `world_id` mismatch on registry.json/staging/STAMP refuses to
+  seed/replay/re-grade/stamp; staged items all carry explicit valid_from
+  (replay needs no cursor state).
 - audit: planted orphan → escape report + registry extension + re-parse,
   then commit with zero orphan rows; **repair-op routing** — `add` lands via
   the gate, `retract` via truth-maintenance, anything else rejected;
