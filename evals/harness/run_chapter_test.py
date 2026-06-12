@@ -170,9 +170,13 @@ def main() -> int:
             try:
                 w.ingest(scene, context=context)
             except QuotaExhausted as exc:
-                logger.error("quota exhausted at chunk index %d (ch%d); stopping ingestion: %s",
-                             i, chapter_no, exc)
-                break
+                # A quota-aborted world is partial: grading it would write
+                # an invalid scorecard (the run-2 trap). Stop entirely.
+                logger.error("quota exhausted at chunk index %d (ch%d); aborting "
+                             "run before grading: %s", i, chapter_no, exc)
+                print(f"QUOTA ABORT at chunk {i}; resume with --resume-from={i}; "
+                      "no scorecard written (partial world)")
+                return 1
             except Exception:
                 logger.exception("chunk failed (ch%d); continuing", chapter_no)
             logger.info("ch%d chunk: +%d rows (total %d, %.0fs)",
