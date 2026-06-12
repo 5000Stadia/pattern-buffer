@@ -197,10 +197,22 @@ class Indexes:
         by_source: dict[str, list[Assertion]] = {}
         for r in rows:
             by_source.setdefault(self._source_class(r, asserted_as_of), []).append(r)
-        winners = {
-            sc: max(rs, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
-            for sc, rs in by_source.items()
-        }
+        winners: dict[str, Assertion] = {}
+        for sc, rs in by_source.items():
+            top = max(rs, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+            # Supersession requires world-time progression: rows tied at the
+            # winner's valid_from with a DIFFERENT value are a simultaneous
+            # contradiction, not an update — flag, serve earliest-asserted
+            # (run-4 finding: log order alone must never pick a truth).
+            tied = [r for r in rs if r.valid_from == top.valid_from]
+            if len({repr(r.value) for r in tied}) > 1:
+                earliest = min(tied, key=lambda r: r.asserted_at)
+                return FoldResult(
+                    winner=earliest,
+                    conflicted=True,
+                    conflicting=tuple(r.id for r in tied),
+                )
+            winners[sc] = top
         if len(winners) == 1:
             return FoldResult(winner=next(iter(winners.values())))
 

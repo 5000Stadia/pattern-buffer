@@ -232,3 +232,29 @@ class TestAssumptionQuarantine:
         early = indexes.fold_key("obj:core", "in", valid_as_of=1.0,
                                  asserted_as_of=1)
         assert early.winner.value == "place:wrong_vault"
+
+    def test_same_valid_time_contradiction_flags(self, world_parts):
+        """Supersession requires world-time progression: two same-class rows
+        tied on valid_from with different values are a simultaneous
+        contradiction — flagged, never silently ordered by log sequence
+        (run-4 finding)."""
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        ing = roles["ingestor"]
+        a1 = buf.append(entity="place:anchor", attribute="working_reactors",
+                        value=2, valid_from=3.0, status="stated", role=ing)
+        a2 = buf.append(entity="place:anchor", attribute="working_reactors",
+                        value=3, valid_from=3.0, status="stated", role=ing)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        result = indexes.fold_key("place:anchor", "working_reactors")
+        assert result.conflicted
+        assert result.winner.id == a1.id  # earliest-asserted served
+        assert set(result.conflicting) == {a1.id, a2.id}
+        # Genuine progression (later valid_from) still supersedes silently:
+        buf.append(entity="place:anchor", attribute="working_reactors",
+                   value=3, valid_from=9.0, status="stated", role=ing)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        later = indexes.fold_key("place:anchor", "working_reactors", valid_as_of=10.0)
+        assert later.winner.value == 3 and not later.conflicted
