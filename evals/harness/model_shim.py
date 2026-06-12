@@ -90,3 +90,12 @@ def claude_model(prompt: str, schema: dict) -> dict:
             logger.warning("model shim parse failure (attempt %d): %s", attempt, exc)
             full += "\n\nYour previous reply was not valid JSON. JSON object ONLY."
     raise ModelShimError(f"model call failed after retries: {last_err}")
+
+
+def get_model():
+    """Provider switch (letter 020): PB_EVAL_PROVIDER=codex routes pipeline
+    calls through the subscription-auth HTTP shim; default stays the CLI."""
+    if os.environ.get("PB_EVAL_PROVIDER", "claude") == "codex":
+        from codex_shim import MODEL as codex_model_name, codex_model
+        return codex_model, f"codex:{codex_model_name}"
+    return claude_model, MODEL
