@@ -137,3 +137,5 @@ SPIKE-V1 §7 — evidence rank at the fold (generalizing the assumption
 quarantine); engine: `indexes._fold_state` + test; grader: two
 hashable-value fixes; INGEST-V2 spec previously amended through its own
 4-round review (raw_decode grammar rule, audit time policy).
+
+*Raw run artifacts for this run are preserved in git history at commit `2734ea2`; the working tree carries reports and scorecards only (letter 017).*

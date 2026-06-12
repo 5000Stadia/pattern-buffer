@@ -191,3 +191,5 @@ docs/INGESTION-PLAYBOOK.md was created (19 rules + §E registry-first design,
 incl. letter-014 constraints: registry escapes as a failure class,
 establish/extend interface); README/ADOPTION.md/llms.txt landed per the
 009/010 docs discipline.
+
+*Raw run artifacts for this run are preserved in git history at commit `2734ea2`; the working tree carries reports and scorecards only (letter 017).*
