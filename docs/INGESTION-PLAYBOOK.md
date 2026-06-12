@@ -151,6 +151,38 @@ cached contract/registry prefixes removes the fixed overhead. Engine changes
 required: none (asserted_at is log order — out-of-order parallel arrival is
 already legal; merge/maybe_same_as absorbs residual identity seams).
 
+### E.1 Measured durations (the baselines)
+
+Per-chunk timings from the run logs (durations include the following
+classification batch; rows/min = assertions landed per wall-clock minute):
+
+| Approach | Wall clock | Rows | Throughput | Notes |
+|---|---|---|---|---|
+| Run 1 (serial chunks, JSON, 300s cap) | ~77 min across 3 invocations | 455 | ~6 rows/min effective | ~41 min of that was burned by 4 failed attempts (timeouts + exit-1 burst) and their retries |
+| Run 1, successful calls only | ~36 min | 455 | ~13 rows/min | per-call: 176–482s |
+| Run 2 (serial chunks, JSON, contract v2, 600s cap) | in flight; 48 min for first 410 | ~2× run-1 density | ~8.6 rows/min | richer contract → bigger outputs → slower calls (275–1008s); the 1008s chunk includes one 600s timeout + successful retry |
+
+What the numbers pin down: successful-call generation runs ~45–50 tok/s
+(model-typical), so **generation speed is the floor and tokens-per-assertion
+is the lever**. Verbose JSON spends ~80–200 output tokens per assertion;
+the compact grammar spends ~25. Failed attempts are the other large term:
+every timeout costs its full cap with nothing salvaged.
+
+### E.2 Registry-first, analytical estimate (same model, same ~45 tok/s)
+
+To be validated when built; stated so the claim is checkable:
+
+| Pass | Calls | Output tokens | Est. duration |
+|---|---|---|---|
+| 0 — scaffold (whole novella in) | 1 | ~2k (registry+timeline+graph) | ~60–90s |
+| 1 — extraction (compact grammar) | ~8, parallel | ~700 assertions × 25 ≈ 17.5k total, ~2.2k/chunk | wall = slowest chunk ≈ ~90s |
+| 2 — audit (folded world + anomalies in) | 1 | ~1k corrections | ~60s |
+| **Total** | **10 calls, 3 sequential rounds** | **~20k out (vs ~80k+)** | **~4–5 min wall (vs 48–77)** |
+
+Predicted: ~10–15× wall-clock, ~4× output-token cost, and the failure term
+shrinks with the per-call output size (smaller outputs rarely hit caps;
+per-chunk retries are cheap and parallel).
+
 **Caveat:** pass-0-fits-in-context holds for a novella, not a million-word
 archive — at scale the scaffold goes hierarchical (per-arc registries merged
 through the identity machinery). Unbuilt; the natural moment is the
