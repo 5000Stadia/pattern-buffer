@@ -46,7 +46,7 @@ def main() -> int:
 
     from model_shim import claude_model, MODEL as model_name
 
-    run_dir = OUT / f"{date.today().isoformat()}-{seed_version}-v2pipeline"
+    run_dir = OUT / f"{date.today().isoformat()}-{seed_version}-v2pipeline-run4"
     run_dir.mkdir(parents=True, exist_ok=True)
     pipe = Pipeline(claude_model, WORLD_ID, run_dir, max_workers=4)
     chunk_list = [(CHAPTER_DAYS[no], text) for no, text in chunks(story)]

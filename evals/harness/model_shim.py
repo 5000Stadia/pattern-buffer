@@ -60,7 +60,7 @@ def claude_model(prompt: str, schema: dict) -> dict:
             time.sleep(15 * (attempt - 1))  # transient rate pressure backs off
         try:
             proc = subprocess.run(
-                ["claude", "-p", "--model", MODEL, "--max-turns", "1"],
+                ["claude", "-p", "--model", MODEL, "--max-turns", "8"],
                 input=full,
                 capture_output=True,
                 text=True,
