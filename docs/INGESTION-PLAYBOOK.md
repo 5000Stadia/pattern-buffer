@@ -117,9 +117,48 @@ design pipelines to lean on them rather than over-tuning the contract:
     are expected values in the grader only; the seed version is stamped on
     every scorecard and never compared across versions. *(Letters 004/006.)*
 
+## E. Design direction: registry-first ingestion (minimal turns, no accuracy loss)
+
+Where the minutes went in runs 1–2, ranked: (1) output-token volume — verbose
+per-item JSON spends 100–200 generated tokens per ~25-token assertion;
+(2) per-call fixed cost × call count — full contract re-sent per chunk
+through a fresh CLI subprocess, no prompt caching; (3) a self-inflicted
+serial chain — chunks sequence only to thread the entity roster;
+(4) all-or-nothing retries; (5) classification as its own call series.
+
+The system that falls out — three sequential rounds regardless of document
+length:
+
+- **Pass 0 — scaffold (1 turn).** A novella is ~7k tokens; read it WHOLE and
+  emit only the skeleton: entity registry (ids/names/aliases/kinds), timeline
+  + anchors, place graph. Identity becomes globally consistent by
+  construction — full-document hindsight beats any forward roster, killing
+  rules 1–2's failure modes at the root.
+- **Pass 1 — extraction (N turns, parallel).** Scene chunks extract against
+  the FIXED registry in a compact line grammar
+  (`obj:core|in|place:seed_vault|vf=4|stated|canon`), deterministically
+  parsed, malformed lines rejected at the gate. No roster threading → chunks
+  independent → wall clock ÷ parallelism. Durability rides along as a
+  per-line hint that guardrails validate, escalating only low-confidence
+  rows.
+- **Pass 2 — audit (1 turn).** Present the folded world + the gate's anomaly
+  list (open conflicts, orphans, unstamped rows, alias collisions); take
+  corrections through the proper write paths. Parallel-seam errors get
+  caught here, so parallelism costs no accuracy.
+
+Expected: ~17 sequential rounds → 3; output tokens ÷ ~4; SDK shim with
+cached contract/registry prefixes removes the fixed overhead. Engine changes
+required: none (asserted_at is log order — out-of-order parallel arrival is
+already legal; merge/maybe_same_as absorbs residual identity seams).
+
+**Caveat:** pass-0-fits-in-context holds for a novella, not a million-word
+archive — at scale the scaffold goes hierarchical (per-arc registries merged
+through the identity machinery). Unbuilt; the natural moment is the
+anchor.world production pipeline, which wants exactly this efficiency.
+
 ## Open items
 
 - Run-2 deltas (validation or refutation of rules 1–5) — pending.
 - Conversational/messy-dialogue ingestion rules — pending the micro-eval.
-- Throughput: SDK shim, parallel chunk extraction with post-hoc identity
-  reconciliation — known levers, unmeasured.
+- Registry-first ingestion (§E) — designed, unbuilt; measure against runs
+  1–2 as baselines when built.
