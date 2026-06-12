@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -24,6 +25,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 logger = logging.getLogger(__name__)
 
+_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
+
 
 # ---------------------------------------------------------------- payloads
 
@@ -31,7 +34,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Receipt:
     world_id: str
-    seq_range: list[int]
+    seq_range: list[int] | None
     rows: list[dict] = field(default_factory=list)
     frames: list[str] = field(default_factory=list)
     canonicalization_receipts: list[str] = field(default_factory=list)
@@ -96,7 +99,7 @@ class Porcelain:
         rows = [r for r in rows if r is not None]
         return Receipt(
             world_id=self._w.world_id,
-            seq_range=[min(r.seq for r in rows), max(r.seq for r in rows)] if rows else [0, 0],
+            seq_range=[min(r.seq for r in rows), max(r.seq for r in rows)] if rows else None,
             rows=[{"assertion_id": r.id, "entity": r.entity,
                    "attribute": r.attribute, "frame": r.frame} for r in rows],
             frames=sorted({r.frame for r in rows}),
@@ -140,11 +143,15 @@ class Porcelain:
         try:
             out = self._w.resolve(entity, aspect, frame)
         except ResolutionDenied as exc:
-            return {"status": "denied", "facts": [], "reason": str(exc)}
+            return {"status": "denied", "facts": [],
+                    "receipt": self._receipt([]).to_dict(), "reason": str(exc)}
         if out is UNKNOWN:
-            return {"status": "unknown", "facts": []}
+            return {"status": "unknown", "facts": [],
+                    "receipt": self._receipt([]).to_dict()}
+        rows = [r for r in out if r is not None]
         return {"status": "resolved",
-                "facts": [self._fact(r).to_dict() for r in out if r is not None]}
+                "facts": [self._fact(r).to_dict() for r in rows],
+                "receipt": self._receipt(rows).to_dict()}
 
     def retract(self, assertion_id: str, reason: str) -> Receipt:
         return self._receipt([self._w.truth.retract(assertion_id, reason)])
@@ -155,10 +162,13 @@ class Porcelain:
                  lens: str = "current_state", budget: int | None = None,
                  since: float | None = None) -> dict:
         roots = [scope] if isinstance(scope, str) else list(scope)
-        bad = [s for s in roots if ":" not in s]
+        known = {self._w.registry.resolve(r.entity)
+                 for r in self._w.buffer.visible() if not r.entity.startswith("a:")}
+        bad = [s for s in roots
+               if not _ID_RE.fullmatch(s) or self._w.registry.resolve(s) not in known]
         if bad:
-            return {"error": "snapshot scope must be entity ids (use ask for references)",
-                    "bad": bad}
+            return {"error": "snapshot scope must be KNOWN entity ids "
+                             "(use ask for references)", "bad": bad}
         m = self._w.materialize(roots, as_of=as_of, frame=frame, lens=lens,
                                 budget=budget, since=since)
         return {
@@ -284,14 +294,20 @@ class Porcelain:
                                  valid_as_of=as_of)
             if fold.winner is not None:
                 facts.append(self._fact(fold.winner).to_dict())
+        effective_as_of = plan.get("as_of") if plan.get("as_of") is not None else as_of
         if plan.get("wants_location"):
             for eid in resolved:
                 if eid:
-                    fold = self._w.state(eid, "in", frame, valid_as_of=as_of)
+                    fold = self._w.state(eid, "in", frame, valid_as_of=effective_as_of)
                     if fold.winner is not None:
                         f = self._fact(fold.winner).to_dict()
-                        f["chain"] = self._w.locate(eid, valid_as_of=as_of)
+                        f["chain"] = self._w.locate(eid, valid_as_of=effective_as_of)
                         facts.append(f)
+        if plan.get("wants_events"):
+            participants = [e for e in resolved if e]
+            for ev in self.events(participants=participants or None,
+                                  until=effective_as_of, frame=frame):
+                facts.append({"event": ev})
         answered = bool(facts)
         return Answer(
             answered=answered, facts=facts,

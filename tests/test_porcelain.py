@@ -140,3 +140,22 @@ class TestResolveAndAsk:
         assert a.answered and a.facts[0]["provenance"]["assertion_id"]
         assert a.facts[0]["chain"] == ["place:study"] or a.facts[0]["value"] == "obj:desk"
         json.dumps(a.to_dict())
+
+
+class TestReviewR4:
+    def test_snapshot_id_grammar(self, world):
+        assert "error" in world.porcelain.snapshot("the:study")
+        assert "error" in world.porcelain.snapshot("Place:Study")
+
+    def test_resolve_receipt_on_all_paths(self, world):
+        _seed(world)
+        out = world.porcelain.resolve("obj:never_seen", "contents")
+        assert "receipt" in out and out["receipt"]["seq_range"] is None
+
+    def test_ask_wants_events(self, world):
+        _seed(world)
+        world._stub.enqueue({"refer_targets": ["person:rival"], "keys": [],
+                             "wants_events": True})
+        a = world.porcelain.ask("what has the rival done?")
+        evs = [f for f in a.facts if "event" in f]
+        assert evs and evs[0]["event"]["kind"] == "theft"

@@ -95,3 +95,21 @@ every snapshot/read call); frame_diff against the mystery shape (canon
 minus knows:player yields the planted irony delta); Receipt completeness
 (every write's rows accounted); JSON round-trip on every payload; the
 existing 119-test suite untouched.
+
+
+## 5. Post-impl clarifications (review r4; part of the frozen contract)
+
+- Snapshot scope ids must match `^[a-z][a-z0-9_]*:[a-z0-9_:]+$` AND be known entities (identity-resolved, at least one row) — an unknown id is an error value, never an empty snapshot.
+- `Receipt.seq_range` is `null` for empty writes (no sentinel values).
+- `resolve()` returns `receipt` on every path (empty receipt when nothing
+  was appended).
+- `events(until=)` is INCLUSIVE: window `[since, until]`.
+- Event causality convention: event-level causality is direct rows
+  (`event:x · caused_by · event:y`) and is what `events()` serves;
+  row-level `caused_by` item fields produce provenance meta on the
+  assertion id (establishing-set machinery), a different concern.
+- `ask` location facts carry an additional `chain` key; event results
+  appear as `{event: {...}}` entries — consumers must tolerate both
+  extensions of the Fact shape.
+- `ask` executes `wants_events` (participants = resolved targets,
+  bounded by the plan's or caller's as_of) and honors the plan's `as_of`.
