@@ -5,6 +5,7 @@ is deterministic and makes no model call. Low confidence never guesses.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -48,11 +49,36 @@ class Refer:
         indexes: Indexes,
         registry: IdentityRegistry,
         model: Callable[[str, dict], Any] | None = None,
+        ingestor: "Any | None" = None,
     ) -> None:
         self._buffer = buffer
         self._indexes = indexes
         self._registry = registry
         self._model = model
+        # Alias accrual (letter 018, mechanic 2) appends through the gate's
+        # role; without an ingestor wired, resolution still works but the
+        # world does not learn its users' words.
+        self._ingestor = ingestor
+
+    def _accrue_alias(self, description: str, entity_id: str, receipt: dict) -> None:
+        """Memoize a tier-2 resolution as an alias assertion carrying the
+        resolution receipt — each synonym costs one tier-2 call once, then
+        is tier-1a forever. A learned alias never outranks an exact name
+        (by_alias hits both; exact-name uniqueness still wins tier 1a, and
+        a later collision is ordinary ambiguity -> tier 2)."""
+        if self._ingestor is None:
+            return
+        rows = self._ingestor.ingest_structured([
+            {"entity": entity_id, "attribute": "alias",
+             "value": description.strip().lower(), "timeless": True,
+             "status": "inferred"},
+        ])
+        self._buffer.append(
+            entity=rows[0].id, attribute="source",
+            value=f"refer:tier2:{json.dumps(receipt.get('signals', []))[:80]}",
+            status="inferred", role=self._ingestor._role,
+        )
+        logger.info("alias accrued: %r -> %s", description, entity_id)
 
     def __call__(
         self,
@@ -90,9 +116,18 @@ class Refer:
                 return Resolution(RESOLVED, of_kind[0],
                                   receipt={"tier": 1, "signals": ["unique_kind_in_scope"]})
             if len(of_kind) > 1:
-                return self._tier2(description, tuple(sorted(of_kind)))
+                return self._resolve_tier2(description, tuple(sorted(of_kind)))
         if len(hits) > 1:
-            return self._tier2(description, tuple(sorted(hits)))
+            return self._resolve_tier2(description, tuple(sorted(hits)))
+
+        # ---- Zero-candidate escalation (letter 018, mechanic 1): a synonym
+        # yields zero tier-1 matches; with a scope provided, that is exactly
+        # tier 2's judgment — vocabulary miss must not masquerade as absence.
+        # Scope-bounded ONLY: never world-scope for this path.
+        if scope is not None:
+            members = self._scope_members(scope, frame, as_of, asserted_as_of)
+            if members:
+                return self._resolve_tier2(description, tuple(sorted(members)))
 
         # Nothing deterministic and no candidates: underdetermined.
         return Resolution(UNDERDETERMINED, receipt={"tier": 3, "signals": []})
@@ -153,7 +188,7 @@ class Refer:
 
     # ------------------------------------------------------------- tier 2
 
-    def _tier2(self, description: str, candidates: tuple[str, ...]) -> Resolution:
+    def _resolve_tier2(self, description: str, candidates: tuple[str, ...]) -> Resolution:
         """Strict-contract cheap call judging candidates; returns a
         resolution receipt. Below the floor -> tier 3: never guess."""
         if self._model is None:
@@ -178,6 +213,8 @@ class Refer:
             "confidence": out.get("confidence", 0.0),
         }
         if out.get("entity_id") in candidates and out["confidence"] >= _TIER2_FLOOR:
-            return Resolution(RESOLVED, out["entity_id"], receipt=receipt)
+            resolution = Resolution(RESOLVED, out["entity_id"], receipt=receipt)
+            self._accrue_alias(description, out["entity_id"], receipt)
+            return resolution
         # Tier 3 contract: the ask is the host's to deliver.
         return Resolution(UNDERDETERMINED, candidates=candidates, receipt=receipt)

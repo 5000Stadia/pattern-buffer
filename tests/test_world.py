@@ -214,3 +214,56 @@ class TestWorldCharter:
         assert w2.buffer.head() == n
         assert w2.charter()["stance"] == "fiction"
         w2.close()
+
+
+class TestRefer018Extensions:
+    def test_zero_candidate_escalation_scope_bounded(self, world):
+        """A synonym (zero tier-1 hits) escalates to tier 2 with the scope's
+        members — vocabulary miss is not absence (letter 018 m.1)."""
+        _seed_study(world)
+        world.ingest_structured([
+            {"entity": "obj:cabinet", "attribute": "kind", "value": "cabinet",
+             "timeless": True},
+            {"entity": "obj:cabinet", "attribute": "in", "value": "place:study"},
+        ])
+        world._stub.enqueue({"entity_id": "obj:cabinet", "confidence": 0.9,
+                             "signals": ["synonym:cupboard~cabinet"]})
+        world._stub.enqueue({"durability": "CONSTITUTIVE", "class_confidence": 0.9})
+        r = world.refer("the cupboard", scope="place:study")
+        assert r.status == RESOLVED and r.entity_id == "obj:cabinet"
+        assert r.receipt["tier"] == 2
+
+        # Second use: tier 1a via the accrued alias — zero model calls.
+        n = len(world._stub.calls)
+        r2 = world.refer("the cupboard")
+        assert r2.status == RESOLVED and r2.entity_id == "obj:cabinet"
+        assert r2.receipt["signals"] == ["alias_exact"]
+        assert len(world._stub.calls) == n
+        # Both receipts in the log: the alias row is inferred + sourced.
+        alias_rows = [x for x in world.buffer.all_rows()
+                      if x.attribute == "alias" and x.value == "the cupboard"]
+        assert len(alias_rows) == 1 and alias_rows[0].status == "inferred"
+        src = world.buffer.visible(entity=alias_rows[0].id, attribute="source")
+        assert src and "refer:tier2" in str(src[0].value)
+
+    def test_no_world_scope_escalation(self, world):
+        """Zero candidates WITHOUT a scope stays underdetermined — the
+        escalation path is scope-bounded only (018 guard)."""
+        _seed_study(world)
+        r = world.refer("the doohickey")
+        assert r.status == UNDERDETERMINED
+
+    def test_learned_alias_never_outranks_exact_name(self, world):
+        _seed_study(world)
+        world.ingest_structured([
+            {"entity": "obj:cabinet", "attribute": "kind", "value": "cabinet",
+             "timeless": True, "aliases": ["the cupboard"]},  # learned earlier
+            {"entity": "obj:real_cupboard", "attribute": "kind", "value": "cupboard",
+             "timeless": True, "aliases": ["the cupboard"]},  # exact-named entity
+        ])
+        # Alias collision, but one entity IS kind=cupboard: the exact-kind
+        # entity wins deterministically — the learned alias never outranks
+        # the exact name/kind (the 018 guard, satisfied at tier 1c).
+        r = world.refer("the cupboard")
+        assert r.status == RESOLVED and r.entity_id == "obj:real_cupboard"
+        assert r.receipt["signals"] == ["unique_kind_in_scope"]

@@ -80,7 +80,8 @@ class World:
             self.buffer, self.classifier, self.registry, roles["ingestor"],
             model, observe_mode=(policy == OBSERVE_OR_UNKNOWN), clock=clock,
         )
-        self.refer = Refer(self.buffer, self.indexes, self.registry, model)
+        self.refer = Refer(self.buffer, self.indexes, self.registry, model,
+                           ingestor=self.ingestor)
         # The World Charter (letter 026): a fresh world's genesis write
         # asserts its self-description — stance is ontological stored
         # truth (does this world claim to describe reality?), distinct
