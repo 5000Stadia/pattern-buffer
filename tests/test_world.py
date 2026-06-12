@@ -181,3 +181,36 @@ class TestRefer:
         world.locate("obj:pipe")
         world.path("place:study", "place:hall")
         assert len(world._stub.calls) == n
+
+
+class TestWorldCharter:
+    def test_genesis_charter_and_reader(self, tmp_path):
+        from patternbuffer import World
+        w = World(tmp_path / "c.world", world_id="w:c", model=StubModel(),
+                  stance="reality", title="Dale's Reality",
+                  description="The household, tracked.")
+        c = w.charter()
+        assert c["stance"] == "reality" and c["title"] == "Dale's Reality"
+        assert c["kind"] == "world"
+        # Ordinary appended rows — amendable history, not config.
+        rows = [r for r in w.buffer.all_rows() if r.entity == "world:self"]
+        assert all(r.status == "stated" for r in rows)
+        w.close()
+
+    def test_stance_enum_fixed(self, tmp_path):
+        from patternbuffer import World
+        with pytest.raises(ValueError, match="stance"):
+            World(tmp_path / "x.world", world_id="w:x", model=StubModel(),
+                  stance="dreamscape")
+
+    def test_existing_world_not_recharted(self, tmp_path):
+        from patternbuffer import World
+        w = World(tmp_path / "c.world", world_id="w:c", model=StubModel(),
+                  stance="fiction", title="One")
+        n = w.buffer.head()
+        w.close()
+        w2 = World(tmp_path / "c.world", world_id="w:c", model=StubModel(),
+                   stance="reality", title="Two")  # ignored: not genesis
+        assert w2.buffer.head() == n
+        assert w2.charter()["stance"] == "fiction"
+        w2.close()

@@ -545,6 +545,11 @@
 {"assertion_id": "a:59", "durability": "CONSTITUTIVE", "confidence": 0.95}
 {"assertion_id": "a:590", "durability": "STATE", "confidence": 0.95}
 {"assertion_id": "a:593", "durability": "STATE", "confidence": 0.95}
+{"assertion_id": "a:595", "durability": "CONSTITUTIVE", "confidence": 1.0}
+{"assertion_id": "a:596", "durability": "CONSTITUTIVE", "confidence": 1.0}
+{"assertion_id": "a:597", "durability": "CONSTITUTIVE", "confidence": 1.0}
+{"assertion_id": "a:598", "durability": "CONSTITUTIVE", "confidence": 1.0}
+{"assertion_id": "a:599", "durability": "CONSTITUTIVE", "confidence": 1.0}
 {"assertion_id": "a:6", "durability": "CONSTITUTIVE", "confidence": 0.95}
 {"assertion_id": "a:60", "durability": "CONSTITUTIVE", "confidence": 1.0}
 {"assertion_id": "a:61", "durability": "CONSTITUTIVE", "confidence": 0.95}

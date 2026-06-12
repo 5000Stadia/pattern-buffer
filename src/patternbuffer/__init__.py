@@ -32,6 +32,8 @@ from patternbuffer.thunks import (
 from patternbuffer.tmaint import TruthMaintenance
 
 __version__ = "0.0.1"
+
+STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
 __all__ = ["World", "Materialization", "Resolution", "__version__"]
 
 
@@ -51,9 +53,14 @@ class World:
         model: Callable[[str, dict], Any] | None = None,
         policy: str = INVENT_UNDER_CANON,
         clock: Callable[[], float] = time.time,
+        stance: str = "fiction",
+        title: str = "",
+        description: str = "",
     ) -> None:
         if policy not in POLICIES:
             raise ValueError(f"unknown policy {policy!r}")
+        if stance not in STANCES:
+            raise ValueError(f"unknown stance {stance!r} (fixed enum; letter 026)")
         self.world_id = world_id
         self.policy = policy
         self.buffer = PatternBuffer(path, world_id)
@@ -74,6 +81,28 @@ class World:
             model, observe_mode=(policy == OBSERVE_OR_UNKNOWN), clock=clock,
         )
         self.refer = Refer(self.buffer, self.indexes, self.registry, model)
+        # The World Charter (letter 026): a fresh world's genesis write
+        # asserts its self-description — stance is ontological stored
+        # truth (does this world claim to describe reality?), distinct
+        # from operational policy. Ordinary appends; amendable forever.
+        if self.buffer.head() == 0:
+            charter = [
+                {"entity": "world:self", "attribute": "kind", "value": "world",
+                 "timeless": True},
+                {"entity": "world:self", "attribute": "stance", "value": stance,
+                 "timeless": True},
+            ]
+            if title:
+                charter.append({"entity": "world:self", "attribute": "title",
+                                "value": title, "timeless": True})
+            if description:
+                charter.append({"entity": "world:self", "attribute": "description",
+                                "value": description, "timeless": True})
+            self.ingestor.classify_inline = False
+            self.ingest_structured(charter)
+            self.ingestor.classify_inline = True
+            for row in self.buffer.all_rows():
+                self.classifier.set(row.id, "CONSTITUTIVE", 1.0)
 
     # Reads (deterministic, no LLM — P7).
 
@@ -102,6 +131,14 @@ class World:
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):
         return self.resolver.resolve(entity, aspect, frame, access)
+
+    def charter(self) -> dict[str, Any]:
+        """The world's self-description, read from world:self (letter 026)."""
+        out: dict[str, Any] = {}
+        for attr, result in self.indexes.current_state("world:self").items():
+            if result.winner is not None:
+                out[attr] = result.winner.value
+        return out
 
     def close(self) -> None:
         self.buffer.close()
