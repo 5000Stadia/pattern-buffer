@@ -453,3 +453,83 @@ class TestDeltaReviewGaps:
         assert report.applied_retracts == 1   # second is a drop, not a re-apply
         assert len(report.dropped_ops) == 1
         w.close()
+
+
+class TestConversationalMechanics:
+    """027 Decisions 1+2: corr promotion + speaker-source classes."""
+
+    def _world(self, tmp_path):
+        from patternbuffer import World
+        from patternbuffer.testing import StubModel, rule_classifier_fallback
+        return World(tmp_path / "h.world", world_id="w:house",
+                     model=StubModel(fallback=rule_classifier_fallback()),
+                     policy="observe_or_unknown", stance="reality",
+                     clock=lambda: 1718000000.0)
+
+    def test_corr_promotion_with_receipts(self, tmp_path):
+        from audit import promote_corrections
+        w = self._world(tmp_path)
+        w.ingest_structured([
+            {"entity": "place:office", "attribute": "bedroom_count", "value": 3,
+             "valid_from": 1.0, "source_doc": "person:dale"},
+            {"entity": "place:office", "attribute": "bedroom_count", "value": 4,
+             "valid_from": 1.0, "source_doc": "person:dale", "correction": True},
+        ])
+        assert promote_corrections(w) == 1
+        fold = w.state("place:office", "bedroom_count")
+        assert fold.winner.value == 4 and not fold.conflicted  # no simultaneity flag
+        # Receipts chain: retraction -> justified_by -> corr proposal row.
+        retr = next(r for r in w.buffer.all_rows() if r.attribute == "retracts")
+        j = w.buffer.visible(entity=retr.id, attribute="justified_by")
+        assert j and w.buffer.get(j[0].value).attribute == "correction_proposal"
+        # The wrong row STAYS in the log (shadow archive).
+        assert any(r.value == 3 for r in w.buffer.all_rows()
+                   if r.attribute == "bedroom_count")
+        w.close()
+
+    def test_corr_never_crosses_speakers(self, tmp_path):
+        from audit import promote_corrections
+        w = self._world(tmp_path)
+        w.ingest_structured([
+            {"entity": "obj:van", "attribute": "fuel", "value": "diesel",
+             "valid_from": 1.0, "source_doc": "person:dale"},
+            {"entity": "obj:van", "attribute": "fuel", "value": "gasoline",
+             "valid_from": 1.0, "source_doc": "person:meg", "correction": True},
+        ])
+        assert promote_corrections(w) == 0  # different speaker: not eligible
+        assert all(r.attribute != "retracts" for r in w.buffer.all_rows())
+        w.close()
+
+    def test_speakers_disagreeing_flag_and_ask(self, tmp_path):
+        w = self._world(tmp_path)
+        w.ingest_structured([
+            {"entity": "obj:van", "attribute": "fuel", "value": "diesel",
+             "valid_from": 1.0, "source_doc": "person:dale"},
+            {"entity": "obj:van", "attribute": "fuel", "value": "gasoline",
+             "valid_from": 5.0, "source_doc": "person:meg"},
+        ])
+        fold = w.state("obj:van", "fuel")
+        assert fold.conflicted  # cross-source: speakers disagree -> flag + ask
+        assert fold.winner.value == "diesel"  # incumbent serves
+        w.close()
+
+    def test_same_speaker_supersedes_self(self, tmp_path):
+        w = self._world(tmp_path)
+        w.ingest_structured([
+            {"entity": "obj:drill", "attribute": "in", "value": "place:garage",
+             "value_type": "entity", "valid_from": 1.0, "source_doc": "person:dale"},
+            {"entity": "obj:drill", "attribute": "in", "value": "obj:van",
+             "value_type": "entity", "valid_from": 5.0, "source_doc": "person:dale"},
+        ])
+        fold = w.state("obj:drill", "in")
+        assert not fold.conflicted and fold.winner.value == "obj:van"
+        w.close()
+
+    def test_grammar_corr_and_src_flags(self):
+        from types import SimpleNamespace
+        registry = SimpleNamespace(entities={"obj:van": object(), "person:dale": object()})
+        items, orphans, rejects = grammar.parse(
+            ["obj:van|fuel|diesel|vf=1,src=person:dale,corr"], registry, cursor=0.0)
+        assert not rejects and not orphans
+        assert items[0]["correction"] is True
+        assert items[0]["source_doc"] == "person:dale"

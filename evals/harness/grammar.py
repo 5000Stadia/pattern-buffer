@@ -183,8 +183,16 @@ def _parse_flags(text: str) -> dict[str, Any]:
             flags["status"] = status
         elif flag.startswith("doc="):
             flags["source_doc"] = flag[4:]
+        elif flag.startswith("src="):
+            # Speaker/source chain (027 Decision 2): src=person:dale makes
+            # the fold's source class speaker:person:dale.
+            flags["source_doc"] = flag[4:]
         elif flag.startswith("cb="):
             flags["caused_by"] = flag[3:]
+        elif flag == "corr":
+            # Correction PROPOSAL (027 Decision 1): marks the replacing
+            # row; pass-2 promotes to retraction of the in-window prior.
+            flags["correction"] = True
         else:
             raise ValueError(f"unknown flag {flag!r}")
     return flags

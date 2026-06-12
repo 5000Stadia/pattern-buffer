@@ -41,6 +41,7 @@ META_ATTRIBUTES = frozenset(
         "resolved_by",
         "justified_by",
         "world_defining",
+        "correction_proposal",
     }
 )
 

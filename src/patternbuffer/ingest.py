@@ -63,6 +63,7 @@ _EXTRACT_SCHEMA = {
                     "caused_by": {"type": ["string", "null"]},
                     "aliases": {"type": "array", "items": {"type": "string"}},
                     "same_as": {"type": ["string", "null"]},
+                    "correction": {"type": "boolean"},
                 },
                 "required": ["entity", "attribute", "value"],
             },
@@ -196,6 +197,15 @@ class Ingestor:
             )
         for alias in item.get("aliases", []):
             self._registry.add_alias(entity, alias, status=item.get("status", "stated"))
+        if item.get("correction"):
+            # The proposal is itself logged (auditable; the promotion's
+            # receipts chain ends here, at the utterance's chunk).
+            out.append(
+                self._buffer.append(
+                    entity=row.id, attribute="correction_proposal", value=True,
+                    status="inferred", role=self._role,
+                )
+            )
         if item.get("same_as"):
             # Late binding requested by the extractor (identity is the
             # ingestor's to resolve, §12): logged as a merge event.

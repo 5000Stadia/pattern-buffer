@@ -129,6 +129,45 @@ def _is_exact_duplicate(world: World, target) -> bool:
     return any(r.id != target.id and r.value == target.value for r in rows)
 
 
+def promote_corrections(world: World) -> int:
+    """Pass-2 correction promotion (027 Decision 1): deterministic, runs
+    before the model audit. For each visible corr-marked row, retract the
+    in-window prior on the SAME (entity, attribute, frame) key with the
+    SAME speaker-source (the riders: a correction never retracts another
+    speaker's row or leaks across keys). The promoted retraction is
+    justified_by the corr proposal — receipts down to the utterance."""
+    promoted = 0
+    for row in list(world.buffer.visible()):
+        proposals = world.buffer.visible(entity=row.id, attribute="correction_proposal")
+        if not proposals:
+            continue
+        my_class = world.indexes._source_class(row, None)
+        priors = [
+            r for r in world.buffer.visible(
+                entity=row.entity, attribute=row.attribute, frame=row.frame
+            )
+            if r.id != row.id
+            and r.asserted_at < row.asserted_at
+            and world.indexes._source_class(r, None) == my_class
+        ]
+        if not priors:
+            logger.warning("corr proposal %s: no eligible prior; left standing", row.id)
+            continue
+        prior = max(priors, key=lambda r: r.asserted_at)
+        retraction = world.truth.retract(
+            prior.id, f"correction promoted from {proposals[0].id}"
+        )
+        world.buffer.append(
+            entity=retraction.id, attribute="justified_by",
+            value=proposals[0].id, value_type="entity",
+            status="inferred", role=world.truth._role,
+        )
+        promoted += 1
+        logger.info("correction promoted: %s retracts %s (via %s)",
+                    retraction.id, prior.id, proposals[0].id)
+    return promoted
+
+
 def run_audit(
     world: World,
     registry: WorldRegistry,

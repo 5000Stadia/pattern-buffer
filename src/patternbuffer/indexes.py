@@ -82,6 +82,11 @@ class Indexes:
         for m in metas:
             if isinstance(m.value, str) and m.value.startswith("doc:"):
                 return "document"
+            if isinstance(m.value, str) and m.value.startswith("person:"):
+                # Speaker-source class (027 Decision 2): a speaker is a
+                # document that talks — same speaker supersedes self,
+                # speakers disagreeing cross-source flag + ask (§7.2).
+                return f"speaker:{m.value}"
         # stated and observed without a document chain are ONE supersession
         # class: both are rank-3 authoritative, and ordinary narrative
         # movement must supersede across them (run-4 finding: the §7.1
