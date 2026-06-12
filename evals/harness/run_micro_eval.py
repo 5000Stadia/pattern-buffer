@@ -50,10 +50,25 @@ For EACH numbered utterance, first classify its STANCE:
 
 Then emit grammar lines for declaratives/corrections only:
   entity|attribute|value|flags
-- flags: vf=<turn stamp> (use the [d.tt] stamp), src=person:<speaker>
-  (ALWAYS — every fact carries its speaker), s=stated, corr when
-  correcting, vt= for interval ends.
-- Containment/location: attribute `in`; anchor ONLY on stated containers
+
+ID FIDELITY (hard rule): copy entity ids EXACTLY as they appear in the
+registry — character for character. Ids NEVER contain '/'. If the
+registry has person:dale, the id is person:dale (never person:/dale).
+
+FLAGS — exactly these, nothing else:
+  vf=<number>   valid-from (the [d.tt] turn stamp, e.g. vf=2.10)
+  vt=<number>   valid-to (interval end)
+  src=<id>      the speaker, ALWAYS (e.g. src=person:dale)
+  s=<status>    stated | assumed (assumed already means low confidence —
+                there is NO conf flag)
+  corr          correction proposal
+Any other flag is an error and the line is rejected.
+
+EXAMPLES (correct form):
+  obj:drill|in|@place:garage|vf=0.10,src=person:dale,s=stated
+  place:rental_house|bedroom_count|4|vf=2.10,src=person:meg,s=stated,corr
+  obj:multimeter|in|@obj:car|vf=2.11,src=person:dale,s=assumed
+- Containment/location: attribute `in` with @entity values; anchor ONLY on stated containers
   — the speaker's own location NEVER anchors anything they mention.
 - Fuzzy past time ("last Tuesday sometime"): vf/vt as an honest interval
   on the day timeline (Monday of THIS week = day 0; last Tuesday = -6).
