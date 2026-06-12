@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import random
 import time
 import urllib.error
 import urllib.request
@@ -60,9 +61,6 @@ def _strict_object_schema(schema: Any) -> Any:
         out["additionalProperties"] = False
         if isinstance(out.get("properties"), dict):
             out["properties"] = {k: _strict_object_schema(v) for k, v in out["properties"].items()}
-        # The backend also requires every property to be listed in `required`.
-        if isinstance(out.get("properties"), dict):
-            out.setdefault("required", sorted(out["properties"].keys()))
     if out.get("type") == "array" and "items" in out:
         out["items"] = _strict_object_schema(out["items"])
     for key in ("oneOf", "anyOf", "allOf"):
@@ -92,7 +90,7 @@ def codex_model(prompt: str, schema: dict) -> dict:
     last_err: Exception | None = None
     for attempt in (1, 2):
         if attempt > 1:
-            time.sleep(10)
+            time.sleep(10 + random.uniform(0, 8))  # jitter: parallel workers desynchronize
         try:
             return _call_once(prompt, schema)
         except CodexAuthError:
@@ -113,8 +111,10 @@ def _call_once(prompt: str, schema: dict) -> dict:
         "stream": True,           # REQUIRED: endpoint is SSE-only
         "include": ["reasoning.encrypted_content"],  # REQUIRED for gpt-5.x
         "prompt_cache_key": _RUN_CACHE_KEY,
+        # Reference fidelity: format carries type/name/schema ONLY (no
+        # strict key; the reference never sends it).
         "text": {"format": {"type": "json_schema", "name": "output",
-                            "schema": _strict_object_schema(schema), "strict": True}},
+                            "schema": _strict_object_schema(schema)}},
     }
     if MODEL.startswith("gpt-5"):
         body["reasoning"] = {
@@ -132,6 +132,7 @@ def _call_once(prompt: str, schema: dict) -> dict:
             "User-Agent": "pattern-buffer-harness/0.1",
             "Content-Type": "application/json",
             "accept": "text/event-stream",
+            "OpenAI-Beta": "responses=experimental",
             "session_id": request_id,
             "x-client-request-id": request_id,
         },
@@ -148,28 +149,41 @@ def _call_once(prompt: str, schema: dict) -> dict:
         raise CodexShimError(f"connection failed: {exc}") from exc
 
     final, deltas = None, []
-    with resp:
-        for raw_line in resp:
-            if time.monotonic() > deadline:
-                raise CodexShimError(f"SSE read exceeded {TIMEOUT}s bound")
-            line = raw_line.decode("utf-8", "replace").strip()
-            if not line.startswith("data:"):
-                continue
-            data_str = line[5:].strip()
-            if data_str == "[DONE]":
-                break
-            try:
-                event = json.loads(data_str)
-            except json.JSONDecodeError:
-                continue
-            etype = event.get("type", "")
-            if etype == "response.output_text.delta":
-                deltas.append(event.get("delta", ""))
-            elif etype in ("response.completed", "response.done"):
-                final = event.get("response", event)
-                break
-            elif etype in ("response.failed", "error") or "server_error" in etype:
-                raise CodexShimError(f"backend error event: {json.dumps(event)[:300]}")
+    try:
+        with resp:
+            data_lines: list[str] = []
+            for raw_line in resp:
+                if time.monotonic() > deadline:
+                    raise CodexShimError(f"SSE read exceeded {TIMEOUT}s bound")
+                line = raw_line.decode("utf-8", "replace").rstrip("\r\n")
+                if line.startswith("data:"):
+                    data_lines.append(line[5:].lstrip())
+                    continue
+                if line:           # other SSE fields (event:, id:) — ignore
+                    continue
+                # Blank line = end of one SSE event; join multi-line data.
+                if not data_lines:
+                    continue
+                data_str = "\n".join(data_lines)
+                data_lines = []
+                if data_str == "[DONE]":
+                    break
+                try:
+                    event = json.loads(data_str)
+                except json.JSONDecodeError:
+                    continue
+                etype = event.get("type", "")
+                if etype == "response.output_text.delta":
+                    deltas.append(event.get("delta", ""))
+                elif etype in ("response.completed", "response.done"):
+                    final = event.get("response", event)
+                    break
+                elif etype in ("response.failed", "error") or "server_error" in etype:
+                    raise CodexShimError(f"backend error event: {json.dumps(event)[:300]}")
+    except (TimeoutError, OSError) as exc:
+        # urllib's timeout bounds each socket read, not the request; convert
+        # mid-stream stalls into retryable shim errors (letter 021 rule 2).
+        raise CodexShimError(f"stream read failed/stalled: {exc}") from exc
 
     text = ""
     if final:
