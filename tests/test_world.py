@@ -293,3 +293,61 @@ class TestFrameTargetedWrites:
         assert {r.frame for r in m.assertions} == {"plot:hidden_arc"}
         canon = world.materialize(["arc:destiny"])
         assert all(r.frame == "canon" for r in canon.assertions)  # absent, not redacted
+
+
+class TestGeneratedThroughGate:
+    """Letter 029: generated via ingest_structured — resolver authority
+    composed behind the gate; never canon, never knows:*."""
+
+    def test_generated_into_plot_frame(self, world):
+        _seed_study(world)
+        rows = world.ingest_structured([
+            {"entity": "arc:beat_7", "attribute": "summary",
+             "value": "repaired: the rival arrives early", "status": "generated"},
+        ], frame="plot:hidden_arc")
+        assert rows[0].status == "generated" and rows[0].frame == "plot:hidden_arc"
+
+    def test_generated_into_canon_refused(self, world):
+        _seed_study(world)
+        with pytest.raises(ValueError, match="029 guard"):
+            world.ingest_structured([
+                {"entity": "obj:pipe", "attribute": "color", "value": "gold",
+                 "status": "generated"},
+            ])
+
+    def test_generated_into_knows_refused(self, world):
+        _seed_study(world)
+        with pytest.raises(ValueError, match="029 guard"):
+            world.ingest_structured([
+                {"entity": "fact:x", "attribute": "known", "value": True,
+                 "status": "generated", "frame": "knows:person:marn"},
+            ])
+
+    def test_matrix_intact_at_buffer_layer(self, world):
+        """The ingestor ROLE still cannot append generated — the doorway
+        composes resolver authority; it does not widen the matrix."""
+        from patternbuffer.roles import RoleViolation, _make_engine_roles
+        with pytest.raises(RoleViolation):
+            world.buffer.append(entity="e:x", attribute="y", value=1,
+                                status="generated",
+                                role=_make_engine_roles()["ingestor"])
+
+
+def test_what_happened_window(world):
+    """occurred(kind, participants, window) composes deterministically:
+    the lens takes since+as_of; kind/agent/patient are structured rows."""
+    _seed_study(world)
+    world.ingest_structured([
+        {"entity": "event:theft", "attribute": "kind", "value": "theft", "valid_from": 5.0},
+        {"entity": "event:theft", "attribute": "agent", "value": "person:rival",
+         "value_type": "entity", "valid_from": 5.0},
+        {"entity": "event:return", "attribute": "kind", "value": "return", "valid_from": 9.0},
+        {"entity": "person:rival", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    m = world.materialize(["event:theft", "event:return", "person:rival"],
+                          lens="what_happened", since=4.0, as_of=6.0)
+    kinds = {r.value for r in m.assertions if r.attribute == "kind"
+             and r.entity.startswith("event:")}
+    assert kinds == {"theft"}  # window excludes the day-9 event
+    agents = [r for r in m.assertions if r.attribute == "agent"]
+    assert agents and agents[0].value == "person:rival"  # structured fields

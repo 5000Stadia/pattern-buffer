@@ -79,6 +79,7 @@ class World:
         self.ingestor = Ingestor(
             self.buffer, self.classifier, self.registry, roles["ingestor"],
             model, observe_mode=(policy == OBSERVE_OR_UNKNOWN), clock=clock,
+            resolver_role=roles["resolver"],
         )
         self.refer = Refer(self.buffer, self.indexes, self.registry, model,
                            ingestor=self.ingestor)

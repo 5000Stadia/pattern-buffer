@@ -94,11 +94,17 @@ class Ingestor:
         observe_mode: bool = False,
         clock: Callable[[], float] = time.time,
         classify_inline: bool = True,
+        resolver_role: WriterRole | None = None,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
         self._registry = registry
         self._role = role
+        # Letter 029: host-authored `generated` rows (arc repair into
+        # plot:-style frames) enter through THIS gate but are appended
+        # under RESOLVER authority — the API is ingest_structured, the
+        # authority stays the matrix's. Guard enforced below.
+        self._resolver_role = resolver_role
         self._model = model
         self._observe_mode = observe_mode
         self._clock = clock
@@ -163,6 +169,19 @@ class Ingestor:
         valid_from = item.get("valid_from")
         if valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
+        status = item.get("status", "stated")
+        write_role = self._role
+        if status == "generated":
+            frame_target = item.get("frame", CANON)
+            if frame_target == CANON or frame_target.startswith("knows:"):
+                raise ValueError(
+                    "generated provenance through the gate is permitted only "
+                    "into host-owned named frames (e.g. plot:*) — never canon "
+                    "or knows:* (letter 029 guard)"
+                )
+            if self._resolver_role is None:
+                raise ValueError("no resolver authority wired for generated rows")
+            write_role = self._resolver_role
         row = self._buffer.append(
             entity=entity,
             attribute=attribute,
@@ -171,9 +190,9 @@ class Ingestor:
             valid_from=None if timeless else valid_from,
             valid_to=item.get("valid_to"),
             frame=item.get("frame", CANON),
-            status=item.get("status", "stated"),
+            status=status,
             confidence=item.get("confidence"),
-            role=self._role,
+            role=write_role,
         )
         out.append(row)
         if receipt:

@@ -124,7 +124,10 @@ class Projector:
         lens: str = "current_state",
         budget: int | None = None,
         asserted_as_of: int | None = None,
+        since: float | None = None,
     ) -> Materialization:
+        """`since` (letter 029): lower bound for the what_happened lens —
+        with `as_of` it gives occurred(window=[since, as_of]) matching."""
         if lens not in LENSES:
             raise ValueError(f"unknown lens {lens!r}")
         if lens == "establishing_set":
@@ -139,7 +142,7 @@ class Projector:
             asserted_as_of=asserted_as_of, lens=lens,
         )
         if lens == "what_happened":
-            self._lens_events(m, entities)
+            self._lens_events(m, entities, since)
         elif lens == "character_sheet":
             self._lens_sheet(m, entities)
         else:
@@ -198,7 +201,8 @@ class Projector:
             return None
         return min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
 
-    def _lens_events(self, m: Materialization, entities: list[str]) -> None:
+    def _lens_events(self, m: Materialization, entities: list[str],
+                     since: float | None = None) -> None:
         in_scope = set(entities)
         events = []
         for row in self._buffer.visible(
@@ -215,8 +219,11 @@ class Projector:
                 else None
             )
             if subject in in_scope or object_ in in_scope or not in_scope:
-                if m.as_of is None or row.valid_from is None or row.valid_from <= m.as_of:
-                    events.append(row)
+                if m.as_of is not None and row.valid_from is not None and row.valid_from > m.as_of:
+                    continue
+                if since is not None and (row.valid_from is None or row.valid_from < since):
+                    continue
+                events.append(row)
         events.sort(key=lambda r: (r.valid_from if r.valid_from is not None else float("-inf"), r.seq))
         m.assertions.extend(events)
 
