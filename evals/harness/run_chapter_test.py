@@ -115,6 +115,10 @@ def main() -> int:
             skip = int(arg.split("=")[1])
         if arg.startswith("--chapters="):
             only_chapters = {int(c) for c in arg.split("=")[1].split(",")}
+    only_chunks: set[int] | None = None  # --chunks=7,8,9: exactly these indices
+    for arg in sys.argv[1:]:
+        if arg.startswith("--chunks="):
+            only_chunks = {int(c) for c in arg.split("=")[1].split(",")}
 
     story = STORY.read_text()
     for marker in BIBLE_MARKERS:
@@ -138,7 +142,8 @@ def main() -> int:
     run_dir = OUT / f"{date.today().isoformat()}-{seed_version}"
     run_dir.mkdir(parents=True, exist_ok=True)
     world_path = run_dir / "fresh_ingest.world"
-    if skip == 0 and only_chapters is None and "--grade-only" not in sys.argv:
+    if (skip == 0 and only_chapters is None and only_chunks is None
+            and "--grade-only" not in sys.argv):
         world_path.unlink(missing_ok=True)
     w = World(world_path, world_id="w:anchor_fresh", model=model)
     w.ingestor.classify_inline = False  # batch after each chunk
@@ -150,6 +155,8 @@ def main() -> int:
             if i < skip:
                 continue
             if only_chapters is not None and chapter_no not in only_chapters:
+                continue
+            if only_chunks is not None and i not in only_chunks:
                 continue
             w.ingestor.cursor.advance(CHAPTER_DAYS[chapter_no])
             context = (
