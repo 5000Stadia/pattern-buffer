@@ -1,0 +1,80 @@
+{
+ "2": [
+  {
+   "turn": "4.10",
+   "stance": "declarative"
+  },
+  {
+   "turn": "4.11",
+   "stance": "declarative"
+  },
+  {
+   "turn": "4.12",
+   "stance": "irrealis"
+  },
+  {
+   "turn": "4.13",
+   "stance": "declarative"
+  }
+ ],
+ "1": [
+  {
+   "turn": "2.10",
+   "stance": "correction"
+  },
+  {
+   "turn": "2.11",
+   "stance": "irrealis"
+  },
+  {
+   "turn": "2.12",
+   "stance": "declarative"
+  },
+  {
+   "turn": "2.13",
+   "stance": "irrealis"
+  },
+  {
+   "turn": "2.14",
+   "stance": "declarative"
+  }
+ ],
+ "0": [
+  {
+   "turn": "0.10",
+   "stance": "declarative"
+  },
+  {
+   "turn": "0.11",
+   "stance": "declarative"
+  },
+  {
+   "turn": "0.12",
+   "stance": "declarative"
+  },
+  {
+   "turn": "0.13",
+   "stance": "irrealis"
+  },
+  {
+   "turn": "0.14",
+   "stance": "declarative"
+  },
+  {
+   "turn": "0.15",
+   "stance": "irrealis"
+  },
+  {
+   "turn": "0.16",
+   "stance": "irrealis"
+  },
+  {
+   "turn": "0.17",
+   "stance": "intention"
+  },
+  {
+   "turn": "0.18",
+   "stance": "declarative"
+  }
+ ]
+}

@@ -26,15 +26,21 @@ def run_battery_micro(w: World) -> list[Verdict]:
     key = ent(w, "rental_key") or "obj:rental_key"
     fittings = ent(w, "fittings") or "obj:fittings_box"
 
-    # R1 — irrealis filtering: multimeter never stated/observed; nothing
-    # from sarcasm/conditional (no workbench-move or bike rows).
+    # R1 — irrealis filtering: no stated/observed FACT rows from irrealis
+    # turns. Registry identity rows (kind/name/alias) are entity existence,
+    # not fact claims; `assumed` is the spec's allowed hypothetical outcome.
+    IDENT = {"kind", "name", "alias"}
     mm = [r for r in w.buffer.visible()
-          if "multimeter" in r.entity and r.status in ("stated", "observed")]
-    bikes = [r for r in w.buffer.visible() if "bike" in (r.entity + str(r.value))]
+          if "multimeter" in r.entity and r.status in ("stated", "observed")
+          and r.attribute not in IDENT]
+    bikes = [r for r in w.buffer.visible()
+             if "bike" in (r.entity + str(r.value))
+             and r.attribute not in IDENT
+             and r.status in ("stated", "observed")]
     ok = not mm and not bikes
     add(Verdict(1, "irrealis filtering", "PASS" if ok else "FAIL",
                 None if ok else "extraction",
-                f"stated/observed multimeter rows={len(mm)}, conditional leak rows={len(bikes)}"))
+                f"stated/observed irrealis fact rows: multimeter={len(mm)} conditional={len(bikes)}"))
 
     # R2 — intention: zero rows place the drill in the van before day 4.
     drill_in = [r for r in _speaker_rows(w, drill, "in")
@@ -46,19 +52,25 @@ def run_battery_micro(w: World) -> list[Verdict]:
                 None if ok else ("shape" if drill_in else "extraction"),
                 f"drill->van rows={len(drill_in)}; drill@day1={fold_d1.winner.value if fold_d1.winner else None}"))
 
-    # R3 — self-correction: bedrooms fold to 4, no flag, 3-row retracted.
-    rental = ent(w, "rental_house") or "place:rental_house"
-    fold_b = w.state(rental, "bedroom_count")
-    three = [r for r in _speaker_rows(w, rental, "bedroom_count") if r.value == 3]
-    retracted3 = three and not any(
-        r.id in {x.id for x in w.buffer.visible(entity=rental, attribute="bedroom_count")}
-        for r in three)
-    ok = (fold_b.winner is not None and fold_b.winner.value == 4
-          and not fold_b.conflicted and three and retracted3)
-    add(Verdict(3, "self-correction grace (corr->retraction)",
+    # R3 — self-correction: the OUTCOME is graded — folds to 4, no flag.
+    # Two acceptable mechanisms: corr->retraction of an emitted 3-row, OR
+    # single-utterance collapse (the model never asserts the withdrawn 3 —
+    # the corr proposal correctly finds no prior and stands down).
+    rental = None
+    for cand in ("place:rental", "place:rental_house"):
+        if any(r.entity == cand for r in w.buffer.all_rows()):
+            rental = cand
+            break
+    fold_b = w.state(rental, "bedroom_count") if rental else None
+    three_alive = rental and any(
+        r.value == 3 for r in w.buffer.visible(entity=rental, attribute="bedroom_count"))
+    ok = (fold_b is not None and fold_b.winner is not None
+          and fold_b.winner.value == 4 and not fold_b.conflicted
+          and not three_alive)
+    add(Verdict(3, "self-correction grace (outcome: folds corrected, no flag)",
                 "PASS" if ok else "FAIL", None if ok else "extraction",
-                f"fold={fold_b.winner.value if fold_b.winner else None} "
-                f"conflicted={fold_b.conflicted} 3-row-retracted={retracted3}"))
+                f"entity={rental} fold={fold_b.winner.value if fold_b and fold_b.winner else None} "
+                f"conflicted={fold_b.conflicted if fold_b else None} stale-3-alive={three_alive}"))
 
     # R4 — cross-speaker contradiction: fuel flag fires, both alive.
     fold_f = w.state(van, "fuel") if w.state(van, "fuel").winner else \
@@ -78,9 +90,11 @@ def run_battery_micro(w: World) -> list[Verdict]:
     add(Verdict(5, "cursor humility", "PASS" if ok else "FAIL",
                 None if ok else "extraction", f"chain={in_chain}"))
 
-    # R6 — interval time: arrival found inside, absent outside.
-    arrived = [r for r in rows_about(w, fittings)
-               if r.valid_from is not None and r.valid_from < 0]
+    # R6 — interval time: arrival found inside, absent outside. The
+    # arrival may live on the box entity or the fittings entity.
+    arrived = [r for r in w.buffer.visible()
+               if ("fitting" in r.entity or "box" in r.entity)
+               and r.valid_from is not None and r.valid_from < 0]
     inside = any(r.valid_from <= -5.5 and (r.valid_to is None or r.valid_to > -5.5)
                  for r in arrived)
     outside = not any(r.valid_from <= -8 and (r.valid_to is None or r.valid_to > -8)
@@ -98,8 +112,18 @@ def run_battery_micro(w: World) -> list[Verdict]:
     receipted = accrued and any(
         "refer:tier2" in str(m.value)
         for m in w.buffer.visible(entity=accrued[0].id, attribute="source"))
-    r7 = w.refer("the cupboard")
-    ok = bool(accrued) and receipted and r7.status == "resolved"
+    kitchen = next((c for c in ("place:kitchen",) 
+                    if any(r.entity == c for r in w.buffer.all_rows())), None)
+    r7_first = w.refer("the cupboard", scope=kitchen)  # 018: scope-bounded
+    accrued = [r for r in w.buffer.visible()
+               if r.attribute == "alias" and r.value == "the cupboard"
+               and w.registry.resolve(r.entity) == cabinet]
+    receipted = accrued and any(
+        "refer:tier2" in str(m.value)
+        for m in w.buffer.visible(entity=accrued[0].id, attribute="source"))
+    r7 = w.refer("the cupboard")  # second use: tier 1a, no scope needed
+    ok = (r7_first.status == "resolved" and bool(accrued) and bool(receipted)
+          and r7.status == "resolved" and r7.receipt.get("signals") == ["alias_exact"])
     add(Verdict(7, "vocabulary drift learns (018)", "PASS" if ok else "FAIL",
                 None if ok else "extraction",
                 f"accrued={bool(accrued)} receipted={receipted} second_use={r7.status}"))

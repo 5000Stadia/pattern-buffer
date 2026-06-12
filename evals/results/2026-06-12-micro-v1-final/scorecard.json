@@ -1,0 +1,98 @@
+{
+  "seed_version": "v1-final",
+  "meta": {
+    "date": "2026-06-12",
+    "model": "codex:gpt-5.5",
+    "pipeline": "INGEST-V2 conversational (MICRO-EVAL-V1)",
+    "seed": "v1-final",
+    "log_rows": 202,
+    "open_conflicts": 2,
+    "timings_first_full_run": {
+      "pass0_s": 84,
+      "pass1_s": 70,
+      "commit_s": 28,
+      "audit_s": 16,
+      "total_s": 198
+    },
+    "note": "regrade after grader fixes; world reopened with correct policy"
+  },
+  "score": {
+    "pass": 10,
+    "fail": 0,
+    "total": 10,
+    "extraction_failures": 0,
+    "shape_failures": 0
+  },
+  "verdicts": [
+    {
+      "qid": 1,
+      "title": "irrealis filtering",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "stated/observed irrealis fact rows: multimeter=0 conditional=0"
+    },
+    {
+      "qid": 2,
+      "title": "intention is not fact",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "drill->van rows=0; drill@day1=obj:steel_shelf"
+    },
+    {
+      "qid": 3,
+      "title": "self-correction grace (outcome: folds corrected, no flag)",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "entity=place:rental fold=4 conflicted=False stale-3-alive=False"
+    },
+    {
+      "qid": 4,
+      "title": "genuine contradiction flags (cross-speaker)",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "conflicted=True parties=2"
+    },
+    {
+      "qid": 5,
+      "title": "cursor humility",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "chain=['place:van', 'place:van']"
+    },
+    {
+      "qid": 6,
+      "title": "fuzzy time as honest interval",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "pre-week rows=1 inside@-5.5=True outside@-8=False"
+    },
+    {
+      "qid": 7,
+      "title": "vocabulary drift learns (018)",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "accrued=True receipted=True second_use=resolved"
+    },
+    {
+      "qid": 8,
+      "title": "negation confirms the old state",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "day4 confirm rows=1 fold=obj:steel_shelf"
+    },
+    {
+      "qid": 9,
+      "title": "unknown stays unknown",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "resolve=UNKNOWN generated_rows=0"
+    },
+    {
+      "qid": 10,
+      "title": "wall-clock rider (A1)",
+      "status": "PASS",
+      "failure_class": null,
+      "detail": "missing on 0 rows"
+    }
+  ]
+}

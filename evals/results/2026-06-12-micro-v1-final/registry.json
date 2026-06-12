@@ -1,0 +1,497 @@
+{
+  "attributes": {
+    "3/4": "fitting_size",
+    "3/4_fittings": "fitting_size",
+    "all_twenty": "quantity",
+    "arrived": "arrival_time",
+    "at": "current_location",
+    "at_right_now": "current_location",
+    "bedrooms": "bedroom_count",
+    "before": "before_event",
+    "before_the_hendersons_job": "before_event",
+    "box_of": "contents",
+    "boxed": "packaging_status",
+    "confidence": "certainty",
+    "contains": "contents",
+    "could_go": "potential_location",
+    "could_go_along": "potential_location",
+    "count": "quantity",
+    "count_as_bedroom": "counts_as_bedroom",
+    "count_if_you_count_the_office": "listing_bedroom_count",
+    "diesel": "fuel_type",
+    "fittings": "contents",
+    "for_the_rental": "associated_property",
+    "from": "source",
+    "from_the_supply_house": "source",
+    "fuel": "fuel_type",
+    "gospel": "certainty",
+    "house_key_for_the_rental": "associated_property",
+    "i'll_move": "scheduled_move_time",
+    "listing_count": "listing_bedroom_count",
+    "listing_does": "counts_as_bedroom",
+    "move_to": "destination",
+    "not_gospel": "certainty",
+    "number": "quantity",
+    "planned_move": "scheduled_move_time",
+    "possible_location": "potential_location",
+    "shallow": "drawer_depth",
+    "shallow_one": "drawer_depth",
+    "show_up": "arrival_time",
+    "showed_up": "arrival_time",
+    "still_boxed": "packaging_status",
+    "three-quarter_fittings": "fitting_size",
+    "to_the_van": "destination",
+    "tomorrow": "scheduled_move_time",
+    "twenty": "quantity",
+    "van's_a_diesel": "fuel_type"
+  },
+  "entities": {
+    "doc:rental_listing": {
+      "aliases": [
+        "the listing"
+      ],
+      "anchors": [
+        "rental document"
+      ],
+      "kind": "document",
+      "names": [
+        "rental listing"
+      ]
+    },
+    "event:fuel_run": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "event",
+      "names": [
+        "fuel run"
+      ]
+    },
+    "event:hendersons_job": {
+      "aliases": [
+        "the hendersons job"
+      ],
+      "anchors": [
+        "scheduled job"
+      ],
+      "kind": "event",
+      "names": [
+        "Hendersons job"
+      ]
+    },
+    "obj:bikes": {
+      "aliases": [
+        "the bikes"
+      ],
+      "anchors": [
+        "garage items"
+      ],
+      "kind": "object",
+      "names": [
+        "bikes"
+      ]
+    },
+    "obj:box_of_3_4_fittings": {
+      "aliases": [
+        "package from the supply house",
+        "package",
+        "the package",
+        "the box"
+      ],
+      "anchors": [
+        "supply-house package",
+        "fittings container"
+      ],
+      "kind": "object",
+      "names": [
+        "box of 3/4 fittings"
+      ]
+    },
+    "obj:camping_stove": {
+      "aliases": [
+        "the camping stove"
+      ],
+      "anchors": [
+        "stove",
+        "camping equipment"
+      ],
+      "kind": "object",
+      "names": [
+        "camping stove"
+      ]
+    },
+    "obj:dale_keyring": {
+      "aliases": [
+        "my keyring"
+      ],
+      "anchors": [
+        "carried keyring"
+      ],
+      "kind": "object",
+      "names": [
+        "Dale's keyring"
+      ]
+    },
+    "obj:drill": {
+      "aliases": [
+        "the drill"
+      ],
+      "anchors": [
+        "tool"
+      ],
+      "kind": "object",
+      "names": [
+        "drill"
+      ]
+    },
+    "obj:fridge": {
+      "aliases": [
+        "the fridge"
+      ],
+      "anchors": [
+        "kitchen appliance",
+        "cabinet landmark"
+      ],
+      "kind": "object",
+      "names": [
+        "fridge"
+      ]
+    },
+    "obj:gray_bin": {
+      "aliases": [
+        "the gray bin"
+      ],
+      "anchors": [
+        "bin",
+        "attic container"
+      ],
+      "kind": "object",
+      "names": [
+        "gray bin"
+      ]
+    },
+    "obj:house_key_for_rental": {
+      "aliases": [
+        "house key",
+        "the house key",
+        "rental key"
+      ],
+      "anchors": [
+        "rental key"
+      ],
+      "kind": "object",
+      "names": [
+        "house key for the rental"
+      ]
+    },
+    "obj:kitchen_cabinet": {
+      "aliases": [
+        "the kitchen cabinet",
+        "the one by the fridge",
+        "cupboard"
+      ],
+      "anchors": [
+        "cabinet by fridge"
+      ],
+      "kind": "object",
+      "names": [
+        "kitchen cabinet"
+      ]
+    },
+    "obj:kitchen_cabinet_top_shelf": {
+      "aliases": [
+        "top shelf",
+        "the top shelf"
+      ],
+      "anchors": [
+        "cabinet compartment"
+      ],
+      "kind": "object",
+      "names": [
+        "top shelf"
+      ]
+    },
+    "obj:kitchen_shallow_drawer": {
+      "aliases": [
+        "kitchen drawer",
+        "the shallow one"
+      ],
+      "anchors": [
+        "kitchen drawer",
+        "shallow drawer"
+      ],
+      "kind": "object",
+      "names": [
+        "shallow kitchen drawer"
+      ]
+    },
+    "obj:multimeter": {
+      "aliases": [
+        "the multimeter"
+      ],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "multimeter"
+      ]
+    },
+    "obj:spare_charger": {
+      "aliases": [
+        "the spare charger"
+      ],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "spare charger"
+      ]
+    },
+    "obj:steel_shelf": {
+      "aliases": [
+        "the steel shelf"
+      ],
+      "anchors": [
+        "shelf",
+        "garage furniture"
+      ],
+      "kind": "object",
+      "names": [
+        "steel shelf"
+      ]
+    },
+    "obj:three_quarter_fittings": {
+      "aliases": [
+        "three-quarter fittings",
+        "fittings",
+        "the fittings",
+        "all twenty of them",
+        "them"
+      ],
+      "anchors": [
+        "fittings"
+      ],
+      "kind": "object",
+      "names": [
+        "3/4 fittings"
+      ]
+    },
+    "obj:torque_wrench": {
+      "aliases": [
+        "the torque wrench"
+      ],
+      "anchors": [
+        "tool"
+      ],
+      "kind": "object",
+      "names": [
+        "torque wrench"
+      ]
+    },
+    "obj:workbench": {
+      "aliases": [
+        "the workbench"
+      ],
+      "anchors": [
+        "garage furniture"
+      ],
+      "kind": "object",
+      "names": [
+        "workbench"
+      ]
+    },
+    "org:hendersons": {
+      "aliases": [
+        "the hendersons"
+      ],
+      "anchors": [
+        "job client"
+      ],
+      "kind": "organization",
+      "names": [
+        "Hendersons"
+      ]
+    },
+    "org:supply_house": {
+      "aliases": [
+        "the supply house"
+      ],
+      "anchors": [
+        "package source"
+      ],
+      "kind": "organization",
+      "names": [
+        "supply house"
+      ]
+    },
+    "person:dale": {
+      "aliases": [
+        "dale"
+      ],
+      "anchors": [
+        "speaker",
+        "logistics remark target"
+      ],
+      "kind": "person",
+      "names": [
+        "Dale"
+      ]
+    },
+    "person:meg": {
+      "aliases": [
+        "meg"
+      ],
+      "anchors": [
+        "speaker"
+      ],
+      "kind": "person",
+      "names": [
+        "Meg"
+      ]
+    },
+    "place:attic": {
+      "aliases": [
+        "the attic"
+      ],
+      "anchors": [
+        "room",
+        "storage area"
+      ],
+      "kind": "place",
+      "names": [
+        "attic"
+      ]
+    },
+    "place:car": {
+      "aliases": [
+        "the car"
+      ],
+      "anchors": [
+        "vehicle"
+      ],
+      "kind": "place",
+      "names": [
+        "car"
+      ]
+    },
+    "place:garage": {
+      "aliases": [
+        "the garage"
+      ],
+      "anchors": [
+        "room",
+        "storage area"
+      ],
+      "kind": "place",
+      "names": [
+        "garage"
+      ]
+    },
+    "place:garage_wall": {
+      "aliases": [
+        "that wall"
+      ],
+      "anchors": [
+        "garage wall",
+        "possible bike area"
+      ],
+      "kind": "place",
+      "names": [
+        "wall"
+      ]
+    },
+    "place:kitchen": {
+      "aliases": [
+        "the kitchen",
+        "kitchen"
+      ],
+      "anchors": [
+        "room with cabinet and fridge"
+      ],
+      "kind": "place",
+      "names": [
+        "kitchen"
+      ]
+    },
+    "place:office": {
+      "aliases": [
+        "the office"
+      ],
+      "anchors": [
+        "Dale location reference"
+      ],
+      "kind": "place",
+      "names": [
+        "office"
+      ]
+    },
+    "place:rental": {
+      "aliases": [
+        "the rental"
+      ],
+      "anchors": [
+        "keyed property"
+      ],
+      "kind": "place",
+      "names": [
+        "rental"
+      ]
+    },
+    "place:rental_bedrooms": {
+      "aliases": [
+        "bedrooms",
+        "3 bedrooms"
+      ],
+      "anchors": [
+        "rooms in rental"
+      ],
+      "kind": "place",
+      "names": [
+        "rental bedrooms"
+      ]
+    },
+    "place:rental_office": {
+      "aliases": [
+        "the office",
+        "office"
+      ],
+      "anchors": [
+        "room in rental"
+      ],
+      "kind": "place",
+      "names": [
+        "rental office"
+      ]
+    },
+    "place:van": {
+      "aliases": [
+        "the van"
+      ],
+      "anchors": [
+        "diesel vehicle",
+        "storage location"
+      ],
+      "kind": "place",
+      "names": [
+        "van"
+      ]
+    }
+  },
+  "places": [],
+  "timeline": {
+    "anchors": {
+      "2.10": 2.0,
+      "2.11": 2.0,
+      "2.12": 2.0,
+      "2.13": 2.0,
+      "2.14": 2.0,
+      "Friday": 4.0,
+      "Hendersons job": 1.0,
+      "Monday": 0.0,
+      "Wednesday": 2.0,
+      "day 2": 2.0,
+      "last Tuesday": -6.0,
+      "this morning": 4.0,
+      "tomorrow": 1.0
+    },
+    "origin": "Monday is day 0, explicitly marked by the heading \"Monday (day 0)\""
+  },
+  "world_id": "w:household"
+}
