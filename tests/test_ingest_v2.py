@@ -237,3 +237,127 @@ class TestAudit:
         assert {a for c in w.truth.open_conflicts() for a in c.assertion_ids} == conflicted_ids
         assert w.buffer.get(victim) is not None
         w.close()
+
+
+class TestReviewGaps:
+    """Post-impl review (RED) closure: the named test gaps."""
+
+    def test_commit_refuses_wrong_world_registry(self, tmp_path):
+        p, _ = scripted_pipeline(tmp_path, PASS1_LINES)
+        reg = make_registry()
+        p.pass1(CHUNKS, reg)
+        from registry import RegistryWorldMismatch as RWM
+        alien = make_registry()
+        alien.world_id = "w:other"
+        target = tmp_path / "z.world"
+        with pytest.raises(RWM, match="refusing to seed"):
+            p.commit(target, alien)
+        assert not target.exists()
+
+    def test_escape_repair_reparses_before_reextracting(self, tmp_path):
+        """The deterministic re-parse must repair without a second
+        extraction call when the extended registry covers the orphans."""
+        lines = dict(PASS1_LINES)
+        lines[1] = ["obj:unknown_thing|in|@place:vault|vf=1"]
+        extraction_calls = {1: 0}
+
+        def model(prompt, schema):
+            if "PASSAGE (chunk 1)" in prompt:
+                extraction_calls[1] += 1
+                return {"lines": lines[1]}
+            if "PASSAGE (chunk" in prompt:
+                return {"lines": lines[0]}
+            if "EXTENDING an existing registry" in prompt:
+                return {"entities": [{"id": "obj:unknown_thing", "kind": "object"}],
+                        "attributes": [], "timeline": {"origin": "Day 0", "anchors": []},
+                        "places": []}
+            return rule_classifier_fallback()(prompt, schema)
+
+        p = Pipeline(model, WID, tmp_path / "run", max_workers=1)
+        reg = make_registry()
+        results = p.pass1(CHUNKS, reg)
+        assert extraction_calls[1] == 1
+        results, escapes = p.repair_escapes(results, reg, CHUNKS)
+        assert escapes == 1
+        assert extraction_calls[1] == 1  # repaired by re-parse, NO second call
+        assert all(not r.orphans for r in results)
+
+    def test_serial_parallel_byte_identical(self, tmp_path):
+        dumps = []
+        for workers, name in ((1, "serial"), (3, "parallel")):
+            p, _ = scripted_pipeline(tmp_path / name, PASS1_LINES)
+            p.max_workers = workers
+            reg = make_registry()
+            p.pass1(CHUNKS, reg)
+            w = p.commit(tmp_path / f"{name}.world", reg)
+            from patternbuffer.dump import dump as dump_fn
+            dumps.append(dump_fn(w.buffer))
+            w.close()
+        assert dumps[0] == dumps[1]
+
+    def test_quota_abort_leaves_staging_intact(self, tmp_path):
+        class QuotaExhausted(RuntimeError):
+            pass
+
+        def model(prompt, schema):
+            if "PASSAGE (chunk 1)" in prompt:
+                raise QuotaExhausted("monthly limit")
+            if "PASSAGE (chunk" in prompt:
+                return {"lines": PASS1_LINES[0]}
+            return rule_classifier_fallback()(prompt, schema)
+
+        p = Pipeline(model, WID, tmp_path / "run", max_workers=1)
+        with pytest.raises(QuotaExhausted):
+            p.pass1(CHUNKS, make_registry())
+        assert (p.staging / "chunk_000.jsonl").exists()  # completed work kept
+
+    def test_variant_attribute_produces_receipt(self, tmp_path):
+        p, _ = scripted_pipeline(tmp_path, PASS1_LINES)
+        reg = make_registry()
+        p.pass1(CHUNKS, reg)
+        w = p.commit(tmp_path / "r.world", reg)
+        receipts = [r for r in w.buffer.all_rows()
+                    if r.attribute == "canonicalized_from"]
+        assert any("reactor_count->working_reactors" == r.value for r in receipts)
+        # And the fold key never fragmented:
+        fold = w.state("place:office", "working_reactors")
+        assert fold.winner is not None and fold.winner.value == 2
+        w.close()
+
+    def test_registry_replay_after_build(self, tmp_path):
+        from patternbuffer import World
+        from patternbuffer.dump import build, dump as dump_fn
+        p, _ = scripted_pipeline(tmp_path, PASS1_LINES)
+        reg = make_registry()
+        p.pass1(CHUNKS, reg)
+        w = p.commit(tmp_path / "src.world", reg)
+        text = dump_fn(w.buffer)
+        w.close()
+        rebuilt_buf = build(text, tmp_path / "rebuilt.world")
+        rebuilt_buf.close()
+        loaded = WorldRegistry.load(p.run_dir / "registry.json", expect_world_id=WID)
+        w2 = World(tmp_path / "rebuilt.world", world_id=WID,
+                   model=rule_classifier_fallback())
+        for alias, canonical in loaded.attributes.items():
+            w2.ingestor.add_attribute_alias(alias, canonical)
+        rows = w2.ingest_structured([
+            {"entity": "place:office", "attribute": "reactors_operational",
+             "value": 2, "valid_from": 9.0},
+        ])
+        assert rows[0].attribute == "working_reactors"  # replayed map held
+        w2.close()
+
+    def test_audit_add_without_time_dropped(self, tmp_path):
+        p, _ = scripted_pipeline(tmp_path, PASS1_LINES)
+        reg = make_registry()
+        p.pass1(CHUNKS, reg)
+        w = p.commit(tmp_path / "t.world", reg)
+
+        def model(prompt, schema):
+            return {"ops": ["add|obj:core|condition|sealed",       # no vf=/t -> dropped
+                            "add|obj:core|condition|sealed|vf=5"]}  # applied
+
+        report = run_audit(w, reg, model)
+        assert report.applied_adds == 1
+        assert any("no explicit time" in d for d in report.dropped_ops)
+        w.close()

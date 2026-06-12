@@ -218,8 +218,11 @@ class Pipeline:
         registry: WorldRegistry,
         chunks: list[tuple[float, str]],
     ) -> tuple[list[ChunkResult], int]:
-        """Pre-commit: extend the registry over orphaning chunks' text, then
-        re-extract those chunks. Returns (results, escape_count)."""
+        """Pre-commit escape repair (spec §5.1): extend the registry over the
+        orphaning chunks' text, then **re-parse the quarantined lines** —
+        deterministic, no model call — and re-extract a chunk only if its
+        lines still orphan. Repaired lines append after the chunk's accepted
+        items (chunk-internal order shifts deterministically)."""
         orphaned = [r for r in results if r.orphans]
         if not orphaned:
             return results, 0
@@ -231,7 +234,17 @@ class Pipeline:
         registry.save(self.run_dir / "registry.json")
         for r in orphaned:
             cursor, text = chunks[r.chunk_id]
-            repaired = self._extract_chunk(r.chunk_id, text, cursor, registry)
+            lines = [o.line for o in r.orphans]
+            items, still_orphaned, rejects = grammar.parse(lines, registry, cursor)
+            if still_orphaned or rejects:
+                logger.info("chunk %d: re-parse insufficient; re-extracting", r.chunk_id)
+                repaired = self._extract_chunk(r.chunk_id, text, cursor, registry)
+            else:
+                repaired = ChunkResult(
+                    chunk_id=r.chunk_id,
+                    items=r.items + items,
+                    rejects=r.rejects,
+                )
             results[r.chunk_id] = repaired
             self._stage(repaired)
         return results, escape_count
@@ -241,6 +254,11 @@ class Pipeline:
     def commit(self, world_path: str | Path, registry: WorldRegistry) -> World:
         """The single commit (spec §3.3): seed registry -> replay chunks in
         order. Refuses if any chunk failed or still carries orphans."""
+        if registry.world_id != self.world_id:
+            raise RegistryWorldMismatch(
+                f"registry is for {registry.world_id!r}; commit target is "
+                f"{self.world_id!r} — refusing to seed (spec §3.3)"
+            )
         results = self.load_staged()
         bad = [r for r in results if r.failed or r.orphans]
         if bad:
@@ -251,7 +269,8 @@ class Pipeline:
         world_path = Path(world_path)
         if world_path.exists():
             raise RuntimeError(f"commit target {world_path} already exists")
-        w = World(world_path, world_id=self.world_id, model=self.model)
+        registry.save(self.run_dir / "registry.json")  # the artifact always
+        w = World(world_path, world_id=self.world_id, model=self.model)  # rides beside the dump
         w.ingestor.classify_inline = False
         for alias, canonical in sorted(registry.attributes.items()):
             w.ingestor.add_attribute_alias(alias, canonical)

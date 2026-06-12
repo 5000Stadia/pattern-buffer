@@ -43,7 +43,8 @@ Rules:
 - NEVER touch assertions listed under 'conflicts' — flagged contradictions
   are deliberate open questions; leave both sides standing.
 - Additions follow the same canon-vs-knowledge and never-invent rules as
-  extraction. When in doubt, emit nothing for that anomaly.
+  extraction, and MUST carry an explicit time flag (vf=<day> or t) — an
+  add without one is dropped. When in doubt, emit nothing for that anomaly.
 
 TIMELINE: {timeline}
 
@@ -122,6 +123,7 @@ def run_audit(
         ),
         _AUDIT_SCHEMA,
     )
+    _NO_TIME = -1e12  # sentinel: detects adds that omitted vf=/t
     add_lines: list[str] = []
     for op in out["ops"]:
         op = op.strip()
@@ -146,15 +148,24 @@ def run_audit(
             logger.warning("audit op dropped (unknown op kind): %s", op)
             report.dropped_ops.append(op)
     if add_lines:
-        items, orphans, rejects = grammar.parse(add_lines, registry, cursor=0.0)
+        items, orphans, rejects = grammar.parse(add_lines, registry, cursor=_NO_TIME)
         for o in orphans:
             report.dropped_ops.append(f"add|{o.line} (orphan: {o.entity_id})")
         for j in rejects:
             report.dropped_ops.append(f"add|{j.line} (reject: {j.reason})")
-        if items:
-            world.ingest_structured(items)
+        # Audit adds must state their time explicitly (vf= or t): there is
+        # no scene cursor at audit time, and a silent day-0 default would
+        # be a fabricated valid_time.
+        timed = [it for it in items if it.get("valid_from") != _NO_TIME]
+        for it in items:
+            if it.get("valid_from") == _NO_TIME:
+                report.dropped_ops.append(
+                    f"add (no explicit time): {it['entity']}|{it['attribute']}"
+                )
+        if timed:
+            world.ingest_structured(timed)
             world.classifier.classify_all(batch_size=40)
-            report.applied_adds = len(items)
+            report.applied_adds = len(timed)
     world.truth.scan()
     logger.info("audit: +%d adds, %d retracts, %d dropped",
                 report.applied_adds, report.applied_retracts, len(report.dropped_ops))

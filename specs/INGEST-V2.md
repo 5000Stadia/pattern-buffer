@@ -234,7 +234,10 @@ add|<grammar line>                      -> World.ingest_structured (gate, role-c
 retract|<assertion_id>|<reason>         -> World.truth.retract (truth-maintenance role)
 ```
 
-No other op kinds exist; anything else in the output is a reject. The
+No other op kinds exist; anything else in the output is a reject. **Audit
+adds must carry an explicit time flag (`vf=` or `t`)** — there is no scene
+cursor at audit time, so a defaulted valid_time would be fabricated; an
+add without one is a dropped op (post-impl review note, made policy). The
 deliberate reactor contradiction must survive pass-2 — the audit prompt
 explicitly forbids ops against flagged conflicts (they are questions for the
 author, not the auditor), and the harness enforces it: a retract targeting
@@ -255,8 +258,9 @@ correction history stays visible by design.
 
 ## 7. Test plan (no-model, deterministic)
 
-- grammar: render→parse round-trip; every flag; JSON-string values
-  containing `|`/commas; reject-rate denominator (orphans excluded);
+- grammar: parse coverage of every flag and value form (there is no
+  `render()` — pass-1 emits lines; the model is the renderer); JSON-string
+  values containing `|`/commas; reject-rate denominator (orphans excluded);
   **orphan quarantine** — quarantined lines absent from the item stream and
   from any committed log.
 - registry: establish-then-extend equivalence (batch once ≡ incremental
