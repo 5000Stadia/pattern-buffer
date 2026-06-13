@@ -81,6 +81,11 @@ class World:
             self.buffer, self.classifier, self.registry, roles["ingestor"],
             model, observe_mode=(policy == OBSERVE_OR_UNKNOWN), clock=clock,
             resolver_role=roles["resolver"],
+            # Write-time containment-cycle gate (HD 002): the ancestor walk
+            # is the derived containment chain — locate folds the family.
+            containment_ancestors=lambda parent, frame, vf: set(
+                self.indexes.locate(parent, frame=frame, valid_as_of=vf)
+            ),
         )
         self.refer = Refer(self.buffer, self.indexes, self.registry, model,
                            ingestor=self.ingestor)

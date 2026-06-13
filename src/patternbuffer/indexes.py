@@ -183,7 +183,9 @@ class Indexes:
             return FoldResult(winner=earliest)
 
         if by_class[STATE]:
-            return self._fold_state(by_class[STATE], asserted_as_of)
+            return self._fold_state(
+                by_class[STATE], asserted_as_of, is_containment=(fa == _FAMILY_KEY)
+            )
 
         if by_class[DISPOSITIONAL]:
             rows = by_class[DISPOSITIONAL]
@@ -192,11 +194,18 @@ class Indexes:
         return FoldResult(winner=None)
 
     def _fold_state(
-        self, rows: list[Assertion], asserted_as_of: int | None
+        self, rows: list[Assertion], asserted_as_of: int | None,
+        is_containment: bool = False,
     ) -> FoldResult:
         """STATE: recency wins within a source class; across classes,
         agreement corroborates (serve the more precise value), disagreement
-        flags and keeps serving the prior in-class winner (spec §7)."""
+        flags and keeps serving the prior in-class winner (spec §7).
+
+        ``is_containment`` (HD 002 finding 2): for the containment/movement
+        family, relocation is inherently time-sequential — a later move
+        supersedes an earlier placement across source classes, instead of
+        raising the §7.2 cross-source flag. A genuine same-valid-time
+        cross-source disagreement still flags."""
         # Evidence rank (the assumption quarantine, generalized): provisional
         # classes never hold incumbency against authoritative ones — an
         # authored/observed fact arriving over a character's inference or a
@@ -229,6 +238,28 @@ class Indexes:
             winners[sc] = top
         if len(winners) == 1:
             return FoldResult(winner=next(iter(winners.values())))
+
+        if is_containment:
+            # Movement is time-sequential: the latest-valid move supersedes
+            # earlier placements across source classes (HD 002 finding 2).
+            # Only a same-latest-valid_from disagreement is a true
+            # contradiction — serve earliest-asserted, flag those rows.
+            top_vf = max(
+                (w.valid_from if w.valid_from is not None else float("-inf"))
+                for w in winners.values()
+            )
+            current = [
+                w for w in winners.values()
+                if (w.valid_from if w.valid_from is not None else float("-inf")) == top_vf
+            ]
+            if len({repr(w.value) for w in current}) > 1:
+                earliest = min(current, key=lambda r: r.asserted_at)
+                return FoldResult(
+                    winner=earliest,
+                    conflicted=True,
+                    conflicting=tuple(sorted(r.id for r in current)),
+                )
+            return FoldResult(winner=max(current, key=lambda r: r.asserted_at))
 
         # Multiple source classes on one key: order in-class winners by
         # arrival; the earliest-arrived class is the incumbent.

@@ -149,6 +149,43 @@ class TestCrossSource:
         assert any(c.kind == "cross_source" for c in tm.scan())
 
 
+class TestContainmentCrossSourceMove:
+    """HD 002 finding 2: a later move supersedes an earlier cross-source
+    placement (movement is time-sequential) — only a same-latest-valid-time
+    cross-source disagreement is a genuine contradiction."""
+
+    def _doc(self, buf, roles, entity, value, vf, doc="doc:letter"):
+        row = _stated(buf, roles, entity, "in", value, valid_from=vf)
+        buf.append(entity=row.id, attribute="source", value=doc,
+                   status="stated", role=roles["ingestor"])
+        return row
+
+    def test_later_direct_move_supersedes_document(self, world_parts):
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        self._doc(buf, roles, "person:marn", "place:council_tier", 4.0)  # document
+        direct = _stated(buf, roles, "person:marn", "in", "place:wellhead",
+                         valid_from=1003.0)  # direct narration, no source
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        result = indexes.fold_key("person:marn", "in")
+        assert not result.conflicted and result.winner.id == direct.id
+        # History intact, no retraction needed: as-of t=4 still council_tier.
+        early = indexes.fold_key("person:marn", "in", valid_as_of=4.0)
+        assert early.winner.value == "place:council_tier"
+
+    def test_same_valid_time_cross_source_still_flags(self, world_parts):
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        self._doc(buf, roles, "person:marn", "place:council_tier", 10.0)  # document
+        _stated(buf, roles, "person:marn", "in", "place:wellhead",
+                valid_from=10.0)  # direct, same valid-time -> real contradiction
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.9})
+        classifier.classify_all()
+        result = indexes.fold_key("person:marn", "in")
+        assert result.conflicted and len(result.conflicting) == 2
+
+
 class TestDispositionalAndRebuild:
     def test_dispositional_defeasible_by_recency(self, world_parts):
         buf, stub, classifier, indexes, tm, roles = world_parts

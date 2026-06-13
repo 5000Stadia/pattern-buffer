@@ -159,3 +159,62 @@ class TestReviewR4:
         a = world.porcelain.ask("what has the rival done?")
         evs = [f for f in a.facts if "event" in f]
         assert evs and evs[0]["event"]["kind"] == "theft"
+
+
+def _seed_spoon(w):
+    """marn in a room; a brass measuring spoon on a table in that room."""
+    w.ingestor.cursor.advance(1.0)
+    w.ingest_structured([
+        {"entity": "place:room", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "person:marn", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:marn", "attribute": "in", "value": "place:room"},
+        {"entity": "obj:table", "attribute": "kind", "value": "table", "timeless": True},
+        {"entity": "obj:table", "attribute": "in", "value": "place:room"},
+        {"entity": "obj:spoon", "attribute": "kind", "value": "spoon", "timeless": True,
+         "aliases": ["brass measuring spoon"]},
+        {"entity": "obj:spoon", "attribute": "in", "value": "obj:table"},
+    ])
+    # marn knows where the spoon is (sparse knowledge-frame copy):
+    w.ingest_structured([
+        {"entity": "obj:spoon", "attribute": "in", "value": "obj:table"},
+    ], frame="knows:person:marn")
+
+
+class TestAskReferParity:
+    """HD 003: ask()-path reference binding reaches observe-path parity."""
+
+    def test_possessive_named_reference_binds(self, world):
+        _seed_spoon(world)
+        world._stub.enqueue({"refer_targets": ["my brass measuring spoon"],
+                             "keys": [], "wants_location": True})
+        a = world.porcelain.ask("Where is my brass measuring spoon?",
+                                frame="knows:person:marn")
+        assert a.answered and a.facts[0]["value"] == "obj:table"
+
+    def test_possessive_kind_reference_binds_via_scope(self, world):
+        _seed_spoon(world)
+        world._stub.enqueue({"refer_targets": ["my spoon"],
+                             "keys": [], "wants_location": True})
+        a = world.porcelain.ask("Where is my spoon?", frame="knows:person:marn")
+        assert a.answered and a.facts[0]["value"] == "obj:table"
+
+    def test_strip_determiner(self, world):
+        strip = world.refer._strip_determiner
+        for det in ("the", "a", "an", "my", "your", "his", "her", "its",
+                    "their", "our"):
+            assert strip(f"{det} spoon") == "spoon"
+        assert strip("brass measuring spoon") == "brass measuring spoon"
+
+    def test_knowledge_absence_no_leak(self, world):
+        # A spoon marn does NOT know about: binds in canon, no in-frame fact.
+        _seed_spoon(world)
+        world.ingest_structured([
+            {"entity": "obj:fork", "attribute": "kind", "value": "fork",
+             "timeless": True, "aliases": ["silver fork"]},
+            {"entity": "obj:fork", "attribute": "in", "value": "obj:table"},
+        ])  # canon only; not copied into knows:person:marn
+        world._stub.enqueue({"refer_targets": ["my silver fork"],
+                             "keys": [], "wants_location": True})
+        a = world.porcelain.ask("Where is my silver fork?",
+                                frame="knows:person:marn")
+        assert not a.answered  # no knows:marn fact about the fork's location

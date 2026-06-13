@@ -69,6 +69,81 @@ class TestGate:
                     if r.attribute == "learned_at_wallclock"]
 
 
+class TestContainmentCycleGate:
+    """HD 002 finding 1: cycle-forming containment edges are rejected at
+    the gate (a write-time invariant), not merely caught at read time."""
+
+    def test_self_edge_rejected(self, world):
+        # The reported bug: transit prose extracted `X in X`.
+        with pytest.raises(ValueError, match="self-edge"):
+            world.ingest_structured([
+                {"entity": "place:council_tier", "attribute": "in",
+                 "value": "place:council_tier", "timeless": True},
+            ])
+        assert not [r for r in world.buffer.all_rows()
+                    if r.entity == "place:council_tier" and r.attribute == "in"]
+
+    def test_transitive_cycle_rejected(self, world):
+        world.ingest_structured([
+            {"entity": "obj:a", "attribute": "in", "value": "obj:b", "valid_from": 1.0},
+        ])
+        with pytest.raises(ValueError, match="ancestor"):
+            world.ingest_structured([
+                {"entity": "obj:b", "attribute": "in", "value": "obj:a", "valid_from": 2.0},
+            ])
+
+    def test_plain_reparent_accepted(self, world):
+        # A B C chain then A reparented under C — no cycle, must pass.
+        world.ingest_structured([
+            {"entity": "obj:a", "attribute": "in", "value": "obj:b", "valid_from": 1.0},
+            {"entity": "obj:b", "attribute": "in", "value": "obj:c", "valid_from": 1.0},
+            {"entity": "obj:a", "attribute": "in", "value": "obj:c", "valid_from": 2.0},
+        ])
+        assert world.state("obj:a", "in", valid_as_of=3.0).winner.value == "obj:c"
+
+    def test_noncontainment_self_reference_allowed(self, world):
+        # Only the containment family is a tree; a self-edge elsewhere is data.
+        rows = world.ingest_structured([
+            {"entity": "person:x", "attribute": "kind", "value": "person", "timeless": True},
+            {"entity": "person:x", "attribute": "rival_of", "value": "person:x"},
+        ])
+        assert any(r.attribute == "rival_of" for r in rows)
+
+    def test_backdated_cycle_is_documented_residual(self, world):
+        # A single write-time check cannot see a cycle that forms only at a
+        # later valid-time; the read-time locate() guard remains the
+        # backstop. Gate accepts; locate() terminates (no hang) (spec Fix 1).
+        world.ingest_structured([
+            {"entity": "obj:a", "attribute": "in", "value": "obj:b", "valid_from": 10.0},
+        ])
+        world.ingest_structured([  # back-dated: invisible to the vf=1 walk
+            {"entity": "obj:b", "attribute": "in", "value": "obj:a", "valid_from": 1.0},
+        ])
+        chain = world.locate("obj:a", valid_as_of=12.0)  # must not loop forever
+        assert isinstance(chain, list) and len(chain) <= 2
+
+    def test_deferred_classification_residual(self, world):
+        # Second documented bound (spec Fix 1): with classification deferred,
+        # the transitive walk folds unclassified rows by STATE-recency and
+        # can miss a cycle; the self-edge check still holds, and read-time
+        # locate() stays bounded. (Live play uses classify_inline=True, where
+        # the transitive check is accurate.)
+        world.ingestor.classify_inline = False
+        world.ingest_structured([
+            {"entity": "place:a", "attribute": "in", "value": "place:b", "valid_from": 1.0},
+            {"entity": "place:a", "attribute": "in", "value": "place:c", "valid_from": 2.0},
+            {"entity": "place:b", "attribute": "in", "value": "place:a", "valid_from": 3.0},
+        ])  # accepted at the gate (deferred-classify residual)
+        world.classifier.classify_all()
+        # The self-edge guarantee is unaffected even when deferred:
+        with pytest.raises(ValueError, match="self-edge"):
+            world.ingest_structured([
+                {"entity": "place:b", "attribute": "in", "value": "place:b", "valid_from": 4.0},
+            ])
+        # Read-time guard stays bounded (no hang) despite the slipped cycle:
+        assert isinstance(world.locate("place:a", valid_as_of=5.0), list)
+
+
 class TestFrames:
     def test_absence_is_structural(self, world):
         _seed_study(world)

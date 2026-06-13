@@ -21,7 +21,7 @@ from typing import Any, Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
-from patternbuffer.model import CANON, STRUCTURAL_PREDICATES, Assertion
+from patternbuffer.model import CANON, CONTAINMENT_FAMILY, STRUCTURAL_PREDICATES, Assertion
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
@@ -95,6 +95,7 @@ class Ingestor:
         clock: Callable[[], float] = time.time,
         classify_inline: bool = True,
         resolver_role: WriterRole | None = None,
+        containment_ancestors: Callable[[str, str, float | None], set[str]] | None = None,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
@@ -105,6 +106,12 @@ class Ingestor:
         # under RESOLVER authority — the API is ingest_structured, the
         # authority stays the matrix's. Guard enforced below.
         self._resolver_role = resolver_role
+        # HD 002 finding 1: cycle-forming containment edges are rejected at
+        # the gate (a write-time invariant, not a read-time symptom). The
+        # ancestor walk is injected (a thin lambda over indexes.locate) so
+        # the engine stays decoupled; when unwired, only the self-edge check
+        # runs (it needs no derived state and is always enforced).
+        self._containment_ancestors = containment_ancestors
         self._model = model
         self._observe_mode = observe_mode
         self._clock = clock
@@ -155,6 +162,32 @@ class Ingestor:
             appended.extend(self._ingest_item(item))
         return appended
 
+    def _reject_cycle(
+        self, child: str, parent: str, frame: str, valid_from: float | None
+    ) -> None:
+        """Reject a cycle-forming containment edge before it enters the log
+        (HD 002 finding 1; spec LIVE-FINDINGS §Fix 1). Both ids are already
+        identity-resolved.
+
+        Self-edges are rejected unconditionally (complete, no derived
+        state). Transitive cycles are rejected as-of the new edge's own
+        valid_from — best-effort: a back-dated edge that closes a cycle only
+        at a different valid-time is not visible to a single write-time
+        walk and remains caught by the read-time locate() guard."""
+        if child == parent:
+            raise ValueError(
+                f"cycle-forming containment edge: {child!r} cannot contain "
+                "itself (self-edge; append-only tree invariant, §4)"
+            )
+        if self._containment_ancestors is None:
+            return
+        if child in self._containment_ancestors(parent, frame, valid_from):
+            raise ValueError(
+                f"cycle-forming containment edge: {child!r} is already an "
+                f"ancestor of {parent!r} as-of valid_from={valid_from} — "
+                "containment is a single-parent tree (§4)"
+            )
+
     def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
         out: list[Assertion] = []
         attribute, receipt = self._canonicalize(item["attribute"])
@@ -169,6 +202,9 @@ class Ingestor:
         valid_from = item.get("valid_from")
         if valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
+        if attribute in CONTAINMENT_FAMILY and value_type == "entity":
+            self._reject_cycle(entity, value, item.get("frame", CANON),
+                               None if timeless else valid_from)
         status = item.get("status", "stated")
         write_role = self._role
         if status == "generated":

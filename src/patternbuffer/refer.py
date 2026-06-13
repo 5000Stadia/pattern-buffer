@@ -33,6 +33,13 @@ _TIER2_SCHEMA = {
 }
 _TIER2_FLOOR = 0.75
 
+# Leading determiners stripped before reference resolution (HD 003): a
+# possessive or article in front of a referring expression is surface
+# grammar, not identity ("my brass measuring spoon" is the spoon).
+_DETERMINERS = frozenset(
+    {"the", "a", "an", "my", "your", "his", "her", "its", "their", "our"}
+)
+
 
 @dataclass(frozen=True, slots=True)
 class Resolution:
@@ -90,7 +97,12 @@ class Refer:
         asserted_as_of: int | None = None,
     ) -> Resolution:
         # ---- Tier 1a: exact name/alias hit through the identity registry.
+        # Try the raw expression and its determiner-stripped core (HD 003):
+        # "my brass measuring spoon" misses the exact name otherwise.
+        core = self._strip_determiner(description)
         hits = self._registry.by_alias(description)
+        if core != description.strip().lower():
+            hits = hits | self._registry.by_alias(core)
         if len(hits) == 1:
             return Resolution(RESOLVED, next(iter(hits)),
                               receipt={"tier": 1, "signals": ["alias_exact"]})
@@ -152,8 +164,22 @@ class Refer:
                     )
         return None
 
+    @staticmethod
+    def _strip_determiner(description: str) -> str:
+        """Lowercase and drop a single leading article/possessive token
+        (HD 003). A no-determiner phrase passes through unchanged."""
+        text = description.strip().lower()
+        head, _, rest = text.partition(" ")
+        if head in _DETERMINERS and rest:
+            return rest.strip()
+        return text
+
     def _kind_word(self, description: str) -> str | None:
-        m = re.match(r"^the\s+([a-z][a-z_ ]*)$", description.strip().lower())
+        """A bare kind reference ("the drawer", "my spoon") → the kind
+        token. Accepts an optional leading article or possessive (HD 003);
+        broadening only adds matches, so "the X" still parses identically."""
+        det = "|".join(sorted(_DETERMINERS))
+        m = re.match(rf"^(?:{det})\s+([a-z][a-z_ ]*)$", description.strip().lower())
         return m.group(1).replace(" ", "_") if m else None
 
     def _scope_members(self, scope, frame, as_of, asserted_as_of) -> list[str]:

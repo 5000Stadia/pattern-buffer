@@ -275,10 +275,20 @@ class Porcelain:
             f"QUESTION: {question}"
         )
         plan = self._w.ingestor._model(prompt, _ASK_PLAN_SCHEMA)
+        # HD 003: identity/existence is a CANON question; only the answer is
+        # knowledge-scoped. Resolve references against canon with a scene
+        # scope mirroring the observe path — the asker (from a knows:<id>
+        # frame) plus the asker's current container chain — so co-located
+        # objects become candidates and the 018 escalation can fire. The
+        # answer keys below are still folded in the asked `frame`.
+        ask_scope: str | list[str] | None = None
+        if frame.startswith("knows:"):
+            asker = frame[len("knows:"):]
+            ask_scope = [asker, *self._w.locate(asker, valid_as_of=as_of)]
         resolved: list[str | None] = []
         asks: list[dict] = []
         for target in plan.get("refer_targets", []):
-            r = self._w.refer(target, frame=frame, as_of=as_of)
+            r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=as_of)
             if r.status == "resolved":
                 resolved.append(r.entity_id)
             else:
@@ -300,7 +310,11 @@ class Porcelain:
                     fold = self._w.state(eid, "in", frame, valid_as_of=effective_as_of)
                     if fold.winner is not None:
                         f = self._fact(fold.winner).to_dict()
-                        f["chain"] = self._w.locate(eid, valid_as_of=effective_as_of)
+                        # Frame-scope the chain like the fold beside it — a
+                        # canon-frame locate would leak containment into a
+                        # knows: answer (HD 003, incidental).
+                        f["chain"] = self._w.locate(
+                            eid, frame=frame, valid_as_of=effective_as_of)
                         facts.append(f)
         if plan.get("wants_events"):
             participants = [e for e in resolved if e]
