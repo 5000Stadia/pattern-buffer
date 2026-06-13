@@ -50,7 +50,7 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 3. ~~The chapter test, runs 1–3~~ + run 4 (in flight): substrate validated; registry-first ingestion (INGEST-V2) landed; pass-0 registry quality is the open score lever. Receipts: `evals/results/`.
 4. The shipped example world: `examples/anchor/` — a bible-verified noir mystery as a queryable database, with a zero-API-key scripted tour ("where was the memory core during the assembly?"). Stamps from the first verified run.
 5. The messy-dialogue micro-eval (the honest bridge from fiction ingestion to tracking-mode ingestion).
-6. The porcelain API (`ingest` / `snapshot` / `ask` — three verbs, a complete host integration), then host integration (adapter pattern — first host: [Kernos](https://github.com/5000Stadia/Kernos)).
+6. The porcelain API (`ingest` / `snapshot` / `ask` — three verbs, a complete host integration), then host integration (adapter pattern — intended primary host: [Kernos](https://github.com/5000Stadia/Kernos); first *live* host: [Construct](https://github.com/5000Stadia/construct), an interactive-fiction engine playing worlds on the frozen porcelain today — `pattern` → `construct` loads it → `holonovel`).
 7. The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure).
 8. The MCP wrapper — the framework-agnostic claim proven by demonstration: the same five verbs served to non-Python hosts. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
 

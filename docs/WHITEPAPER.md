@@ -348,7 +348,7 @@ Honestly open even with all four: **pacing / drama management** — making escal
 
 **The GM-renderer soft spot** *(named honestly)*: NPC agents are frame-scoped structurally — they *cannot* leak. But the GM-side renderer must see canon to run the world, so its no-spoilers guarantee is the render leash: behavioral, not structural. It is the one place in the design where mystery integrity depends on a prompt instead of an absence. Mitigation: discovery (what enters `knows:player`) is gated by the evidence graph, which *is* structural; only narration flavor rests on the leash.
 
-**Amendment (A4, 2026-06-12) — host-side structural mitigation, credited to Holodeck (the first host):** split the GM into two lanes. A *navigator* reads `plot:`/canon and emits a deterministic direction — it writes nothing and **speaks nothing**; a *narrator* receives a briefing containing zero `plot:` rows (grep-verifiable per turn) — it speaks, and cannot leak the arc because the arc is not in its window. The agent that can leak no longer holds the secret; the residual behavioral surface shrinks to one logged nudge-content pick. This is P4 applied to the GM itself — a design pattern, not an engine change; recorded because it materially shrinks the one hole this section admits.
+**Amendment (A4, 2026-06-12) — host-side structural mitigation, credited to Construct (the first host):** split the GM into two lanes. A *navigator* reads `plot:`/canon and emits a deterministic direction — it writes nothing and **speaks nothing**; a *narrator* receives a briefing containing zero `plot:` rows (grep-verifiable per turn) — it speaks, and cannot leak the arc because the arc is not in its window. The agent that can leak no longer holds the secret; the residual behavioral surface shrinks to one logged nudge-content pick. This is P4 applied to the GM itself — a design pattern, not an engine change; recorded because it materially shrinks the one hole this section admits.
 
 ---
 
@@ -574,7 +574,7 @@ The working vocabulary is maintained in [`LEXICON.md`](LEXICON.md) — two layer
 | A1 | 2026-06-11 | `asserted_at` = log sequence number permanently; wall-clock learned-at as reified meta-assertion, mandatory at the gate for STATE/EVENT in `observe_or_unknown` worlds (§3.2) | SPIKE-V1 Codex review r1–r4; Kernos CC endorsement (letter 007) |
 | A2 | 2026-06-11 | Fixed structural predicates extended: containment family as one fold key; `caused_by` and `world_defining` added (§10) | SPIKE-V1 Codex review r1–r4; Kernos CC endorsement (letter 007) |
 | A3 | 2026-06-12 | §20 survey addendum: Graphiti/Zep, XTDB, microtheories, ATMS, AriGraph, the fiction-state lineage, Intra; bounded novelty claim | Founder-requested prior-art survey; Kernos CC green-light (letter 024) |
-| A4 | 2026-06-12 | §14 GM soft spot: host-side structural mitigation (navigator/narrator two-lane split; narrator blind to `plot:`) | Holodeck (first host), relayed by Kernos CC (letter 035) |
+| A4 | 2026-06-12 | §14 GM soft spot: host-side structural mitigation (navigator/narrator two-lane split; narrator blind to `plot:`) | Construct (first host), relayed by Kernos CC (letter 035) |
 
 The instructor rulings of dev_inbox letter 002 (containment-family fold key, self-contained frames with optional inclusion edges, establishing-set qualification, mandatory STATE/EVENT `valid_time` stamping, file+`world_id` double partitioning, canonicalization receipts-in-log/map-in-sidecar) carry spike authority and are encoded in `specs/SPIKE-V1.md`; A1/A2 are the two that amend this document's text.
 
