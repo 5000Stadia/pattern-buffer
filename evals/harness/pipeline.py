@@ -287,8 +287,26 @@ class Pipeline:
         for alias, canonical in sorted(registry.attributes.items()):
             w.ingestor.add_attribute_alias(alias, canonical)
         w.ingest_structured(seed_items(registry))
+        # Per-item ingest with gate quarantine: the engine's write-time
+        # guards (e.g. the containment self-edge rejection, LIVE-FINDINGS
+        # Fix 1) raise on a malformed extracted row. Append-only means a
+        # half-applied batch can't be retried (it would duplicate the rows
+        # that landed before the raise), so we ingest one item at a time and
+        # quarantine the offenders — like orphans/rejects — rather than let
+        # one bad row abort the whole world build.
+        quarantined: list[dict] = []
         for r in results:
-            w.ingest_structured(r.items)
+            for item in r.items:
+                try:
+                    w.ingest_structured([item])
+                except ValueError as exc:
+                    quarantined.append({"item": item, "error": str(exc)})
+                    logger.warning("commit quarantine (chunk %d): %s — %s",
+                                   r.chunk_id, exc, item)
+        if quarantined:
+            (self.run_dir / "quarantined.json").write_text(
+                json.dumps(quarantined, indent=0, sort_keys=True))
+            logger.info("commit: %d item(s) quarantined at the gate", len(quarantined))
         w.classifier.classify_all(batch_size=40)
         # 036: gate same_as now proposes; promotion happens HERE, where the
         # whole world is in view (shared name anchors promote; title-only

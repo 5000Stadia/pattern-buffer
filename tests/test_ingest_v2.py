@@ -116,6 +116,27 @@ class TestPipeline:
         assert dump(w2.buffer) == first
         w2.close()
 
+    def test_commit_quarantines_gate_rejections(self, tmp_path):
+        # A self-edge from extraction is rejected by the write gate
+        # (LIVE-FINDINGS Fix 1); commit quarantines it instead of aborting
+        # the whole world build.
+        lines = {
+            0: ["obj:core|in|@place:vault|vf=4,s=stated",
+                "place:vault|in|@place:vault|vf=4,s=stated"],  # self-edge
+            1: ["place:office|reactor_count|2|vf=1"],
+        }
+        p, _ = scripted_pipeline(tmp_path, lines)
+        reg = make_registry()
+        p.pass1(CHUNKS, reg)
+        w = p.commit(tmp_path / "q.world", reg)
+        # The good rows landed; the self-edge did not.
+        assert w.state("obj:core", "in").winner.value == "place:vault"
+        vault_in = [r for r in w.buffer.all_rows()
+                    if r.entity == "place:vault" and r.attribute == "in"]
+        assert vault_in == []
+        assert (p.run_dir / "quarantined.json").exists()
+        w.close()
+
     def test_failed_chunk_commits_nothing(self, tmp_path):
         def model(prompt, schema):
             if "PASSAGE (chunk 1)" in prompt:
