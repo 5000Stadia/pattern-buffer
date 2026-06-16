@@ -1,11 +1,24 @@
 # NUMERIC-QUANTITIES-V1 — numeric quantities: change them, compare them
 
-**Status:** SPEC, pre-Codex-GREEN. Merges the founder-ruled Imp 2 (value
-typing / comparison predicates) and #20 (the `accrue` delta-counter) into one
-coherent "numbers" capability, wired on **both** sides (engine + data
-structure), per the founder's direction. **Whitepaper wins; a refinement
-within P1/P2.** Composes with ATTRIBUTE-SEMANTICS-V1 (the `accrue`
-`fold_policy` it reserved is lit up here).
+**Status:** SPEC r2 — Codex build-review RED (r1) addressed; re-review
+pending. Merges the founder-ruled Imp 2 (value typing / comparison
+predicates) and #20 (the `accrue` delta-counter) into one coherent "numbers"
+capability, wired on **both** sides (engine + data structure). **Whitepaper
+wins; a refinement within P1/P2.** Composes with ATTRIBUTE-SEMANTICS-V1 (the
+`accrue` `fold_policy` it reserved is lit up here).
+
+**r2 changelog (Codex RED r1 → fixes):** (a) **The accrue ledger must NOT
+reuse `_value_rows`** — the projector materializes `_value_rows` as separate
+facts (correct for set-valued), which would leak `gold=500`/`gold=-20` into
+snapshots instead of the folded total. The total now flows through a new
+`Materialization.quantities` channel and `FoldResult.quantity`; the ledger
+rides a separate, non-materialized `_ledger_rows`. (b) **Accrue folds before
+the EVENT/durability filter** (a delta the model classified EVENT would be
+dropped) + a deterministic `delta → STATE` classifier guardrail. (c) **Phase-2
+predicates compare in Python after folding**, not via SQL `CAST` (SQLite casts
+non-numeric literals to `0.0`, so the `value_type` guard was unsound). (d)
+`fold_policy` enum gains `accrue`; `VALUE_TYPES` and the extraction schema
+gain `delta`; non-accrue folds drop `delta` rows.
 
 **Founder decisions baked in:** int **and** float supported now; exact
 decimal **deferred** (a documented limitation, not built speculatively); the
@@ -36,7 +49,12 @@ interpretation:
 - **New `value_type = "delta"`** — a *signed numeric increment* to be
   accumulated, as opposed to `literal` (an *absolute* value). This is the
   entire data-structure change: extend `VALUE_TYPES` (a frozenset; no SQL
-  schema change). `entity`/`literal`/`unresolved` are untouched.
+  schema change), the gate's append validator and `dump.build` (both already
+  validate against `VALUE_TYPES`, so they inherit it), and the model
+  extraction schema's `value_type` enum. `entity`/`literal`/`unresolved` are
+  untouched; entity-resolution and the containment cycle gate already key on
+  `value_type == "entity"`, so a `delta` is correctly inert there. A
+  deterministic classifier guardrail maps `delta → STATE` (no model call).
 
 **Type universality principle (founder's question, answered):** give a value
 its own `value_type` *only where the engine must operate on it*. Everything
@@ -61,9 +79,17 @@ SET   →  person:you · gold · 500     value_type=literal   (absolute baseline
 −QTY  →  person:you · gold · -20      value_type=delta
 ```
 
+**Fold hook (Codex r1 #1/#3):** `fold_key` checks `fold_policy == accrue`
+**immediately after gathering visible rows and dropping unresolved
+placeholders, but BEFORE the EVENT-drop and the durability split** — accrue
+ignores durability entirely, and routing it through the EVENT filter would
+drop a delta the model happened to classify EVENT. A deterministic classifier
+guardrail (`value_type == "delta" → STATE, 1.0`) also ensures deltas never
+hit the model or land as EVENT in the sidecar.
+
 **Fold algorithm** (deterministic, append-only, as-of-correct):
-1. Gather visible candidates for the key (filtered by frame/valid_as_of/
-   asserted_as_of as every fold is).
+1. Candidates = visible rows for the key (frame/valid_as_of/asserted_as_of
+   filtered) that are `literal` (numeric) or `delta`.
 2. `baseline` = the latest **absolute literal** numeric row by
    `(valid_from, asserted_at)`, or value `0` if none.
 3. `contributing` = every **delta** row strictly after the baseline in
@@ -71,10 +97,22 @@ SET   →  person:you · gold · 500     value_type=literal   (absolute baseline
 4. `total = baseline.value + sum(d.value for d in contributing)`.
 
 **FoldResult** gains **`quantity: int | float | None`** (additive; populated
-only for `accrue` keys). `winner` = the most-recent contributing row (for
-provenance: when/who last changed it); `_value_rows` = the full ledger
-(baseline + contributing) so a host can render the transaction history.
-`functional`/`set_valued` keys leave `quantity=None` (unchanged).
+only for `accrue` keys) and a private **`_ledger_rows`** (the baseline +
+contributing rows, `compare=False`/`repr=False`, for hosts that render
+history). Crucially **`_value_rows` stays `()` for accrue** so the projector
+does NOT expand the ledger into snapshot facts. `winner` = the most-recent
+contributing row (provenance only — its `.value` is a delta, never the
+total). `functional`/`set_valued` keys leave `quantity=None` unchanged.
+
+**Surfacing the total (Codex r1 #1 — the critical fix).** A folded total is
+*derived*, not any stored row's value, so it cannot ride `m.assertions`
+(which are stored facts). `Materialization` gains **`quantities:
+list[tuple[str, str, int|float]]`** (entity, attribute, total) — a separate
+channel beside `unresolved`/`conflicted_keys`/`defaults`. The projector, on an
+accrue result (`quantity is not None`), records `(entity, attr, quantity)`
+there and does **not** append `winner` to `m.assertions`. Porcelain
+`snapshot` surfaces `quantities`; `state(entity, attr)` adds `quantity` to its
+response. This keeps `facts = stored rows` pure and totals derived.
 
 **Properties this buys (the gold pouch):**
 - Deterministic — the engine sums; the model never does mental math.
@@ -87,8 +125,9 @@ provenance: when/who last changed it); `_value_rows` = the full ledger
 **Declaration & ergonomics.** Declaring an attribute `accrue` is cheap via
 ATTRIBUTE-SEMANTICS-V1's mechanisms — a per-item hint or, for a live host,
 the `attribute_default` hook ("currency/quantity attributes default
-`fold_policy=accrue`"). A `delta` row on a **non-accrue** attribute does not
-contribute to that attribute's functional fold (it is not an absolute value);
+`fold_policy=accrue`"). A `delta` row on a **non-accrue** attribute is
+dropped by the functional fold *before* the durability split (Codex r1 #5 —
+otherwise `_fold_state` would treat the delta as a competing absolute value);
 the engine never rejects it (the rejection-test guardrail — declarations and
 types govern *folding*, never *admission*), it simply isn't summed until the
 attribute is `accrue`. Hosts model a quantity as `accrue` from its first row
@@ -101,24 +140,29 @@ Retrieval over numeric values by `>= / > / <= / < / ==`, not just equality.
 Today `value` is JSON text, so SQL equality works but ordering is
 lexicographic (`"500" < "60"`) — wrong for numbers.
 
-**Approach:** extend `PatternBuffer.visible()` with optional numeric bounds
-(`value_gte` / `value_gt` / `value_lte` / `value_lt`), implemented in SQL with
-a numeric interpretation of `value` guarded to numeric rows
-(`value_type IN ('literal','delta')` + `CAST(value AS REAL)` compare). A
-non-numeric value never satisfies a numeric bound. For an `accrue` attribute,
-the *predicate target is the folded `quantity`*, not raw rows — so a
-multi-entity numeric query folds per candidate then compares (closure-scoped,
-like the 037 read path), rather than matching individual delta rows.
+**Approach (Codex r1 #4 — fold-then-compare in Python, not SQL `CAST`).**
+SQLite `CAST(value AS REAL)` casts non-numeric literals (`"abc"`, `true`,
+`null`, objects) to `0.0`, so a `value_type` guard cannot keep them from
+satisfying bounds near zero — the SQL approach is unsound. Instead the numeric
+predicate **folds each candidate entity and compares the folded number in
+Python**, where `isinstance(v, (int, float)) and not isinstance(v, bool)`
+cleanly excludes non-numbers:
+- candidate entities = those carrying the attribute (closure-scoped, via the
+  existing indexed `visible(attribute=…)` retrieval — the 037 read path);
+- for each, the comparison target is the **folded** value: `quantity` for an
+  `accrue` attribute, else the functional fold's `winner.value`;
+- keep only candidates whose folded value is numeric and satisfies the op.
 
 **Porcelain:** a thin additive read verb `where(attribute, op, value, frame=,
-as_of=)` → entity ids whose folded value satisfies the predicate. (Single-
-entity affordability — "can I afford the torch?" — needs no new verb: read
-`state(you,"gold").quantity` and compare host-side.) No existing signature
-changes; `where` and the `visible()` kwargs are additive.
+as_of=)` → entity ids whose folded value satisfies the predicate
+(`op ∈ >=,>,<=,<,==`). Single-entity affordability ("can I afford the
+torch?") needs no new verb — read `state(you,"gold").quantity` and compare
+host-side. No existing signature changes.
 
-If numeric indexing proves a read-path cost at scale, a derived numeric
-column (SQLite generated column) is the optimization — noted, not v1 unless a
-measurement demands it.
+If the per-candidate fold proves a read-path cost at scale, a derived numeric
+column (a generated column populated only for numeric values, NULL otherwise
+— NULL never satisfies a bound) is the indexed optimization. Noted, not v1
+unless a measurement demands it.
 
 ## 4. Authority / invariants
 - **Append-only:** `delta` rows are ordinary appends; corrections are
