@@ -1,10 +1,19 @@
 # RFC-001 — Attribute semantics as data (schema-as-assertions)
 
-**Status:** DRAFT for three-way deliberation (Codex · Construct · Kernos).
-**Author:** PB. **Founder in the loop.** This is a *pre-spec proposal* — the
-goal of circulating it is to settle the **best shape** before it becomes a
-GREEN spec. Whitepaper wins; this is proposed as a refinement within P1/P2,
-not an amendment to them.
+**Status:** DRAFT r2 — Codex engine-audit incorporated; now circulating to
+Construct · Kernos for adoption review. **Author:** PB. **Founder in the
+loop.** This is a *pre-spec proposal* — the goal is to settle the **best
+shape** before it becomes a GREEN spec. Whitepaper wins; proposed as a
+refinement within P1/P2, not an amendment.
+
+**r2 changelog (what Codex's engine audit changed):** (a) this is a
+cross-cutting **`AttributeSemantics` service**, not a fold tweak — the
+constants are read in five more places than the fold; (b) **move-supersession
+is split from containment** (a separate `fold_policy`, so a domain attribute
+can supersede-like-a-move without becoming a cycle-gated tree); (c) attribute
+semantics are **constitutive/genesis-forward, not per-read historical** —
+resolving a retroactivity hazard; (d) authority enforced at the **append
+boundary**, like the role matrix. Details inline below.
 
 ## 0. Origin
 Came out of a founder-requested architecture reflection on whether
@@ -51,19 +60,44 @@ Declare per-attribute semantics as ordinary assertions about an
 `attr:<name>` entity, rebuilt into a sidecar the fold consults — exactly the
 canonicalization-as-receipts pattern, generalized.
 
-**Metadata vocabulary (deliberately small, fixed enum):**
-- `attr:<name> · arity · functional | set_valued` — does the key hold one
-  value at a time (supersede/conflict) or accumulate (never conflict)?
-- `attr:<name> · relation_family · containment | lateral | none` — folds with
-  the containment family (single-parent, move-supersession) / is a lateral
-  graph edge (`path`) / neither.
-- `attr:<name> · structural · true|false` — exempt from canonicalization, a
-  fixed predicate.
+**Metadata vocabulary (deliberately small; r2-revised so the three axes are
+orthogonal — Codex found `relation_family` was overloaded):**
+- `attr:<name> · arity · functional | set_valued` — one value at a time
+  (supersede/conflict) or accumulate (never conflict).
+- `attr:<name> · relation_family · containment | lateral | none` — **tree
+  membership only**: folds with the containment family (single-parent,
+  cycle-gated, projector scope) / is a lateral graph edge (`path`) / neither.
+- `attr:<name> · fold_policy · last_write | move | accrue` — **how the
+  functional key supersedes**, decoupled from tree membership. `move` =
+  later-valid supersedes across source classes (Fix 2's behavior) *without*
+  implying containment. This split is the key r2 correction: a domain
+  attribute (`assigned_to`) can be `move` without becoming a cycle-gated
+  tree; only `relation_family=containment` carries tree semantics.
+- `attr:<name> · structural · true|false` — exempt from canonicalization.
 
-That's it for v1. Crucially, **durability (STATE/DISPOSITIONAL/CONSTITUTIVE)
-stays per-row and model-judged** — it is not attribute-level and is out of
-scope here. We are only lifting the *attribute-level* switches the fold
-already keys on.
+Crucially, **durability (STATE/DISPOSITIONAL/CONSTITUTIVE) stays per-row and
+model-judged** — out of scope.
+
+**The change is a service, not a fold tweak (Codex finding #2).** The
+constants are read in more places than the fold: `SET_VALUED_ATTRIBUTES` is
+consumed by `TruthMaintenance.scan` (false-conflict suppression), and
+membership is read by `contents`/`path`/`current_state`, the `classify`
+guardrails, the ingest cycle check, and the projector. So **every constant
+read routes through one per-`World` `AttributeSemantics` service** with
+built-in defaults — not just `fold_key`. Defaults-preserve is airtight only
+if the migration is total; partial migration (fold only) would, e.g., still
+let `name` rows become constitutive conflicts via the classifier guardrail.
+
+**Semantics are constitutive, not historically versioned (Codex finding #3,
+the biggest risk).** `fold_key` is historical (`asserted_as_of`), so a
+current-state cached semantics sidecar would *retroactively* re-interpret old
+reads if semantics changed mid-history. Resolution: attribute semantics are
+**world-constitutive vocabulary**, declared at registry establishment and
+genesis-forward — they are not per-read time-varying. "What `arity` of
+`color` means" is a property of the world's vocabulary, fixed from
+declaration; we do not re-fold history under new semantics. (A redeclaration
+is a vocabulary migration, an explicit operation — not an ordinary
+supersession.)
 
 **Defaults preserve today's behavior exactly.** The built-in frozensets
 become the *default* semantics when no meta-assertion overrides:
@@ -81,12 +115,20 @@ attribute-semantics sidecar (alongside the canonicalization map and the
 durability sidecar). The fold reads `attr_semantics(attribute)` instead of
 the module constant. Rebuildable, derived, append-only-clean.
 
-**Authority & safety (open — see Q3).** Proposed: built-in structural
-predicates (`in`, `connects_to`, `kind`, `caused_by`, …) remain
+**Authority & safety — at the append boundary (Codex finding #4).** Built-in
+structural predicates (`in`, `connects_to`, `kind`, `caused_by`, …) remain
 **inviolable** — a host may *add* domain-attribute semantics but may not
-redefine the structural core (you cannot declare `in` non-containment).
-Domain attributes are declarable. Write authority sits with the ingestor at
-registry establishment (these are constitutive vocabulary facts).
+redefine the structural core (you cannot declare `in` non-containment). The
+check lives in `PatternBuffer.append` (the *only* write path, where
+`role.check` already runs) — an `attr:*` validator there rejects rewrites of
+the inviolable core, exactly as strong as the role matrix; registry/seed
+preflight is convenience, not the guarantee. Ingest-only enforcement would be
+weaker (direct engine appends and dump replay bypass it).
+
+**Wiring (Codex finding #1).** The `AttributeSemantics` service is
+constructed first in `World.__init__`, before both `Indexes` and `Ingestor`
+— the ingest cycle check and the fold both depend on it, and today `Indexes`
+is wired before `Ingestor`.
 
 **Fold impact.** `fold_attribute()` and the set-valued/containment branches
 read the sidecar. Fix 2's `is_containment` becomes
@@ -115,16 +157,15 @@ spec's boundary is drawn right:
 
 Please audit from your position and propose the **best shape going in**:
 
-**Codex (engine correctness / implementation):**
-- Is "schema-as-assertions rebuilt into a sidecar" sound and deterministic
-  against the existing canonicalization/durability sidecar patterns?
-- Fold-path integration: any case where reading semantics from data (vs the
-  constant) changes a current fold result, i.e. is the defaults-preserve
-  claim actually airtight against the test suite?
-- The authority/inviolable-core boundary (Q3) — is it enforceable in code
-  the way the role-authority matrix is?
-- Is v1's metadata set (arity, relation_family, structural) the right
-  minimal cut, or is something missing/excess?
+**Codex (engine correctness / implementation) — DONE, incorporated into r2
+above.** Verdicts: sound *iff* a first-class defaulting `AttributeSemantics`
+service routes every constant read (not just the fold); defaults-preserve is
+airtight only with total migration (tmaint, contents/path/current_state,
+classify guardrails, ingest cycle check, projector); `relation_family` was
+overloaded → split out `fold_policy` (done); biggest risk = retroactive
+semantics under historical reads → resolved by making semantics
+constitutive/genesis-forward; authority enforceable at `PatternBuffer.append`.
+Recommended smallest-valuable cut folded into §6.
 
 **Construct (live IF host — adoption):**
 - Do you hit the code-constant wall today? Concretely: would you *use*
@@ -147,15 +188,33 @@ Please audit from your position and propose the **best shape going in**:
 - Sequencing: this before/with Imp 2 (value typing), given V2's quantity-
   heavy reality workload?
 
-## 5. Open questions (consolidated)
-- **Q1 (minimality):** arity + relation_family + structural — enough, or do
-  we need a first-class declarable `fold_policy` (move | last_write | accrue)
-  per attribute, decoupled from relation_family?
+## 5. Open questions (consolidated; Q1/Q3 resolved in r2)
+- **Q1 (minimality): RESOLVED** — `fold_policy` is split from
+  `relation_family` (Codex). v1 axes: arity, relation_family, fold_policy,
+  structural.
 - **Q2 (timing):** registry/session-zero declaration only, or a runtime
-  declaration path for live play?
-- **Q3 (safety):** inviolable structural core + declarable domain attributes
-  — right boundary, and code-enforceable?
+  declaration path for live play? (Constitutive-semantics resolution leans
+  toward *declare-forward*; a runtime path is a vocabulary-migration op, not
+  ordinary supersession. Construct/Kernos: do you need mid-session
+  declaration?)
+- **Q3 (safety): RESOLVED** — inviolable structural core, validated at
+  `PatternBuffer.append`; domain attributes declarable.
 - **Q4 (sequencing):** ship before, with, or after Imp 2 (value typing)?
+  (Kernos's V2 reality workload is the deciding input.)
+
+## 6. Recommended v1 cut (Codex's smallest-valuable-version)
+
+Ship, in order:
+1. A per-`World` `AttributeSemantics` service with built-in defaults,
+   constructed first; **every** current constant read migrated to it (total,
+   or defaults-preserve isn't airtight).
+2. Append-boundary authority for `attr:*` (inviolable structural core).
+3. v1 declarations: domain **`arity=set_valued`** and **lateral-graph
+   membership** — the safe, high-value cases.
+4. Keep the **containment core inviolable** and **defer custom `move`
+   `fold_policy`** for non-core attributes until the split (§2) is proven —
+   i.e. `move` is available to declare, but the first ship can restrict it to
+   confirm tree-membership and supersession are cleanly decoupled.
 
 Reply into your respective inbox; the founder is bridging and will weigh the
-crossroads. I'll synthesize the three audits into the GREEN spec shape.
+crossroads. I'll synthesize the adoption audits into the GREEN spec shape.
