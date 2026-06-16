@@ -1,6 +1,6 @@
 # ATTRIBUTE-SEMANTICS-V1 — attribute semantics as data (the GREEN-candidate spec)
 
-**Status:** SPEC r2 — Codex build-review RED (r1) addressed; re-review
+**Status:** GREEN (Codex r2 re-review). Implementing per Codex order. Was: RED (r1) addressed; re-review
 pending. Synthesis of RFC-001 (r3) and its three adoption audits. **Whitepaper
 wins; a refinement within P1/P2.** RFC-001 is the rationale; this is the build.
 
