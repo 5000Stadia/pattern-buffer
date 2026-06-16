@@ -1,11 +1,23 @@
 # ATTRIBUTE-SEMANTICS-V1 — attribute semantics as data (the GREEN-candidate spec)
 
-**Status:** SPEC, pre-Codex-GREEN. Synthesis of RFC-001 (r3) and its three
-adoption audits — Codex (engine), Kernos (V2/philosophy), Construct
-(live-IF). All three GREEN on shape; every crossroads ruled. This spec is
-the implementable form; it goes to Codex for GREEN before implementation per
-the standing loop. **Whitepaper wins; a refinement within P1/P2, not an
-amendment.** RFC-001 is the rationale and the audit record; this is the build.
+**Status:** SPEC r2 — Codex build-review RED (r1) addressed; re-review
+pending. Synthesis of RFC-001 (r3) and its three adoption audits. **Whitepaper
+wins; a refinement within P1/P2.** RFC-001 is the rationale; this is the build.
+
+**r2 changelog (Codex RED r1 → fixes):** (a) **`set_valued` needs a real
+multi-value fold** — today it only suppresses conflict flagging; the fold
+still serves a single winner. Added `FoldResult.values` (additive; `.winner`
+preserved for compat) as the actual fix the cigarette-tin bug requires. (b)
+**Authority hole closed** — `dump.build` bypasses `append()` via private
+`_insert`; the `attr:*` guard now lives in a **shared insert validator** both
+paths call. (c) Three missed migration call sites added
+(`ingest._canonicalize`, the `_ingest_item` containment read, the
+`classify` durability guardrail). (d) **Emit-order rule** added (declaration
+appends before its first data row). (e) `attr:*` entities declared
+engine-meta (excluded from world-fact enumeration). (f) Fixture corrected:
+the tin bug is fixed via the multi-value fold (`state(tin,"contains").values`),
+**not** `contents()` (which is `in`/child→parent and unchanged);
+inverse-containment unification is explicitly out of v1.
 
 ## 1. Goal & the bug it fixes
 
@@ -27,9 +39,18 @@ cigarette; four are lost. The cigarette tin is the v1 regression fixture
 Declared as ordinary assertions about an `attr:<name>` entity (the
 canonicalization-as-receipts pattern generalized), rebuilt into a sidecar:
 
-- **`arity` ∈ {`functional`, `set_valued`}** — one value at a time
-  (supersede/conflict) vs accumulate (never conflict). *Default:*
-  `functional`, **except** the built-in set-valued names (below).
+- **`arity` ∈ {`functional`, `set_valued`}** — one value at a time vs
+  accumulate. *Default:* `functional`, **except** the built-in set-valued
+  names (below). **Read shape (new — Codex r1 #2/#6):** today `set_valued`
+  only suppresses conflict flagging while the fold still serves *one*
+  winner; that is why the cigarette tin loses four rows. v1 adds a genuine
+  multi-value fold: `FoldResult` gains **`values: tuple`** carrying *all*
+  current members for a `set_valued` key (per-source recency still applies —
+  a member superseded by a later row at its own key drops out). This is
+  **additive**: `.winner` is unchanged (still the most-recent member, so
+  every existing `.winner` reader — `current_state["name"]`, etc. — behaves
+  bit-for-bit as today); new consumers read `.values`. `functional` keys
+  leave `.values` empty and read `.winner` as now.
 - **`relation_family` ∈ {`containment`, `lateral`, `none`}** — **tree
   membership only**: folds with the containment family key (single-parent,
   cycle-gated, projector containment scope) / is a lateral graph edge
@@ -64,15 +85,30 @@ A per-`World` service, **constructed first** in `World.__init__` (before
 returning built-in defaults for any attribute with no declaration.
 
 **Every current constant read migrates to it — partial migration breaks the
-defaults-preserve guarantee (Codex).** Exact call sites:
+defaults-preserve guarantee (Codex). Complete call-site list (r2: + the three
+Codex r1 #1 found missed):**
 - `indexes.fold_attribute` / `fold_key` (family key; the Fix 2 `is_containment`
   branch → `relation_family == containment`).
-- `indexes._fold_state` (arity gate: `set_valued` keys never conflict).
+- `indexes._fold_state` (arity gate: `set_valued` keys never conflict **and**
+  now populate `FoldResult.values`).
 - `tmaint.scan` false-conflict suppression (today reads `SET_VALUED_ATTRIBUTES`).
 - `indexes.contents` / `path` / `current_state` (family/lateral membership).
-- `classify` guardrails (structural classification of `name`/structural keys).
-- `ingest._reject_cycle` (containment-family cycle gate).
+- `classify` guardrails — **both** the structural classification of
+  structural keys **and** the containment-family durability subrule
+  (`classify.py` "held by agents are movable → STATE"), which reads
+  `CONTAINMENT_FAMILY` today.
+- `ingest._canonicalize` (reads `STRUCTURAL_PREDICATES` to bypass alias
+  canonicalization for structural names).
+- `ingest._ingest_item` (the containment-family read that gates the
+  `_reject_cycle` call — the actual read site).
 - `project` (projector containment scope).
+
+**`attr:*` meta-assertions are engine-meta.** The new metadata predicates
+(`arity`/`relation_family`/`fold_policy`/`structural`) live on `attr:<name>`
+entities and must be excluded from world-fact enumeration exactly as `a:`
+assertion-meta rows are (`materialize`/`snapshot`/`current_state`/`refer`
+scope walks skip the `attr:` namespace; the predicates join `META_ATTRIBUTES`
+treatment). They are vocabulary declarations, never world facts.
 
 **Rebuild:** scan visible `attr:*` meta-assertions into the sidecar on load,
 exactly like the canonicalization map and the durability sidecar.
@@ -114,6 +150,14 @@ Resolution order at first sight: existing declaration → explicit hint →
 `attribute_default` hook → built-in default. The core (§5) short-circuits
 all of these.
 
+**Emit-order rule (Codex r1 #3, required for correctness):** when an undeclared
+non-core attribute is first seen in `_ingest_item`, the `attr:*` declaration
+is appended **before** the triggering data row. So at the moment the data row
+lands, the semantics already exist and the immutability check (§5) sees no
+prior folded row for that attribute. Within a single `ingest_structured`
+batch this makes first-declaration-plus-first-use coherent and order-stable;
+on rebuild, the declaration's lower `seq` guarantees it is replayed first.
+
 ## 5. Authority, safety, immutability (Codex + Kernos Q2/Q3)
 
 - **Inviolable structural core.** A fixed set (`in`, `connects_to`,
@@ -121,11 +165,17 @@ all of these.
   predicates) cannot be redeclared. A host may *add* domain-attribute
   semantics, never redefine a constitutional primitive (you cannot make `in`
   non-containment).
-- **Enforced at the append boundary** (the sole write path, where
-  `role.check` already runs): `PatternBuffer.append` rejects an `attr:*`
-  meta-assertion that targets a core attribute. Registry/ingest preflight is
-  convenience; the append check is the guarantee (direct appends and dump
-  replay also pass through it).
+- **Enforced in a shared insert validator (Codex r1 #4 — the critical fix).**
+  `append()` is *not* the only insert path: `dump.build` validates the
+  builder role then calls private `_insert` directly, bypassing `append`. So
+  the `attr:*` guard (core-redefinition + immutability) must live in a shared
+  validator that **both** `append` and `_insert` call — otherwise a tampered
+  dump could inject a forbidden `attr:*` row on replay. Replay of a *valid*
+  log passes by construction: it contains no core-redefining `attr:*` rows
+  (they were rejected at original append), and the emit-order rule put each
+  legitimate declaration at a lower `seq` than its data, so re-insertion in
+  `seq` order re-satisfies immutability. Registry/ingest preflight stays as a
+  convenience; the shared validator is the guarantee.
 - **Immutability (Kernos Q2).** *An attribute's semantics are immutable once
   its first folded (non-`attr:`) row exists.* First-declaration of a
   previously-unseen attribute is allowed at any wall-clock moment
@@ -139,11 +189,15 @@ all of these.
 ## 6. v1 cut (ship exactly this)
 
 1. `AttributeSemantics` service + built-in defaults, constructed first; total
-   migration of all §3 call sites.
-2. Append-boundary authority for `attr:*` (inviolable core; immutability).
-3. Declaration: explicit hint **and** the `attribute_default` hook (both —
-   the hook is what makes it usable for a live-IF host).
-4. Wire `arity=set_valued` and `relation_family=lateral` end to end. Keep the
+   migration of all §3 call sites; `attr:*` engine-meta exclusion.
+2. The multi-value fold: `FoldResult.values` populated for `set_valued` keys
+   (additive; `.winner` preserved) — this is the actual cigarette-tin fix.
+3. Shared insert validator (`append` + `dump._insert`) enforcing the
+   inviolable core + immutability for `attr:*`.
+4. Declaration: explicit hint **and** the `attribute_default` hook (both —
+   the hook is what makes it usable for a live-IF host), with the emit-order
+   rule.
+5. Wire `arity=set_valued` and `relation_family=lateral` end to end. Keep the
    containment core inviolable; `fold_policy=move` honored only for the core
    (custom non-core `move` recorded-but-deferred).
 
@@ -156,17 +210,26 @@ the founder-ruled next spec) are explicitly out.
 
 - **Defaults-preserve:** the full existing suite passes with zero
   declarations (bit-for-bit behavior).
-- **The motivating bug:** `obj:tin · contains · {a,b,c,d,e}` with `contains`
-  declared `set_valued` → `contents`/fold return **all five**; without the
-  declaration → today's last-write (documents the bug and the fix).
+- **The motivating bug (multi-value fold):** `obj:tin · contains · {a,b,c,d,e}`
+  with `contains` declared `set_valued` → `state(tin,"contains").values`
+  returns **all five**; without the declaration → today's single `.winner`
+  (documents the bug and the fix). **Note:** this is the multi-value fold,
+  **not** `contents()` — `contents()` is `in`/child→parent and is unchanged;
+  inverse-containment unification (making `contains` feed `contents`) is out
+  of v1.
+- **`.winner` compat:** `current_state["name"]` for a multi-name entity still
+  returns the single most-recent name in `.winner` (unchanged), while
+  `.values` now carries all names — proving the read-shape addition is
+  non-breaking.
 - **Hook path:** an `attribute_default` returning `set_valued` for `contains`
   → a model-minted `contains` row folds set-valued with no manual per-attr
-  step; the `attr:contains` meta-assertion is materialized once and is
-  rebuildable.
+  step; the `attr:contains` meta-assertion is materialized once, lands at a
+  lower `seq` than the data row (emit-order), and is rebuildable.
 - **Immutability:** declaring/hinting a different arity after a folded row
-  exists → rejected at append (migration error), original semantics hold.
-- **Inviolable core:** `attr:in · relation_family · none` → rejected at
-  append; `in` stays containment.
+  exists → rejected (migration error), original semantics hold.
+- **Inviolable core, both paths:** `attr:in · relation_family · none` →
+  rejected at `append`; **and** the same row injected into a dump → rejected
+  on `dump.build` replay (the shared-validator test — guards Codex r1 #4).
 - **Lateral membership:** a declared `lateral` domain relation participates
   in `path`; `arity=set_valued` accumulates.
 - **Rebuild:** drop the sidecar, rebuild from the log → identical semantics
