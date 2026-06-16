@@ -14,9 +14,10 @@ from dataclasses import dataclass
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
-from patternbuffer.indexes import Indexes, fold_attribute
-from patternbuffer.model import SET_VALUED_ATTRIBUTES, Assertion
+from patternbuffer.indexes import Indexes
+from patternbuffer.model import ATTR_PREFIX, Assertion
 from patternbuffer.roles import WriterRole
+from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +44,18 @@ class Conflict:
 
 class TruthMaintenance:
     def __init__(
-        self, buffer: PatternBuffer, classifier: Classifier, indexes: Indexes, role: WriterRole
+        self,
+        buffer: PatternBuffer,
+        classifier: Classifier,
+        indexes: Indexes,
+        role: WriterRole,
+        semantics: AttributeSemantics | None = None,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
         self._indexes = indexes
         self._role = role
+        self._semantics = semantics or AttributeSemantics(buffer)
         buffer.raw_connection().executescript(_SCHEMA)
 
     def scan(self) -> list[Conflict]:
@@ -56,12 +63,17 @@ class TruthMaintenance:
         table is dropped and refilled on every scan."""
         keys: set[tuple[str, str, str]] = set()
         for row in self._buffer.visible():
-            if row.entity.startswith("a:") or row.attribute in SET_VALUED_ATTRIBUTES:
+            if (
+                row.entity.startswith("a:")
+                or row.entity.startswith(ATTR_PREFIX)
+                or self._semantics.is_set_valued(row.attribute)
+            ):
                 continue
+            fold_attr = self._indexes.fold_attribute(row.attribute)
             keys.add(
                 (
                     self._indexes._resolve(row.entity),
-                    "in" if fold_attribute(row.attribute) == fold_attribute("in") else row.attribute,
+                    "in" if fold_attr == self._indexes.fold_attribute("in") else row.attribute,
                     row.frame,
                 )
             )

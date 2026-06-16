@@ -15,7 +15,8 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
-from patternbuffer.model import CONTAINMENT_FAMILY, META_ATTRIBUTES, Assertion
+from patternbuffer.model import ATTR_PREFIX, META_ATTRIBUTES, Assertion
+from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +63,15 @@ class Classifier:
     Writes the sidecar only — never the log (role matrix §12).
     """
 
-    def __init__(self, buffer: PatternBuffer, model: Callable[[str, dict], Any]) -> None:
+    def __init__(
+        self,
+        buffer: PatternBuffer,
+        model: Callable[[str, dict], Any],
+        semantics: AttributeSemantics | None = None,
+    ) -> None:
         self._buffer = buffer
         self._model = model
+        self._semantics = semantics or AttributeSemantics(buffer)
         buffer.raw_connection().executescript(_SIDECAR_SCHEMA)
 
     # ------------------------------------------------------------ judgment
@@ -73,8 +80,6 @@ class Classifier:
         """Deterministic short-circuits. Return None to defer to the model."""
         if row.entity.startswith("event:") or row.attribute == "caused_by":
             return EVENT, 1.0
-        if row.attribute in {"kind", "connects_to", "adjacent_to"}:
-            return CONSTITUTIVE, 1.0
         if row.attribute in {"name", "alias"}:
             return CONSTITUTIVE, 0.95  # identity anchors
         if row.attribute in META_ATTRIBUTES:
@@ -83,7 +88,7 @@ class Classifier:
             return EVENT, 1.0
         if row.value_type == "unresolved":
             return STATE, 1.0  # a thunk occupies its key like mutable state
-        if row.attribute in CONTAINMENT_FAMILY:
+        if self._semantics.is_containment(row.attribute):
             if row.attribute in {"held_by", "worn_by", "carried_by"}:
                 return STATE, 0.95  # things held by agents are movable
             if row.entity.startswith("place:"):
@@ -91,6 +96,8 @@ class Classifier:
                 # study does not move out of the home (fixture sub-rule).
                 return CONSTITUTIVE, 0.9
             return None  # objects: fixture vs movable is a judgment
+        if self._semantics.is_structural(row.attribute):
+            return CONSTITUTIVE, 1.0
         return None
 
     def classify(self, row: Assertion) -> Classification:
@@ -131,7 +138,7 @@ class Classifier:
             logger.exception("classifier model call failed for %s; defaulting", row.id)
             # Asymmetric default: ambiguous property -> STATE, except
             # in/within containment, which defaults CONSTITUTIVE.
-            if row.attribute in {"in", "within"}:
+            if self._semantics.is_containment(row.attribute):
                 return CONSTITUTIVE, 0.5
             return STATE, 0.5
         return durability, confidence
@@ -242,7 +249,10 @@ class Classifier:
             logger.exception("batch classification failed; defaulting batch")
         for i, row in enumerate(rows):
             durability, confidence = verdicts.get(
-                i, (CONSTITUTIVE, 0.5) if row.attribute in {"in", "within"} else (STATE, 0.5)
+                i,
+                (CONSTITUTIVE, 0.5)
+                if self._semantics.is_containment(row.attribute)
+                else (STATE, 0.5),
             )
             self._store(
                 Classification(
@@ -261,7 +271,11 @@ class Classifier:
         groups: dict[tuple, set] = {}
         rows_by_group: dict[tuple, list] = {}
         for row in self._buffer.visible():
-            if row.entity.startswith("a:") or row.value_type == "unresolved":
+            if (
+                row.entity.startswith("a:")
+                or row.entity.startswith(ATTR_PREFIX)
+                or row.value_type == "unresolved"
+            ):
                 continue
             if self.durability(row.id) != STATE:
                 continue

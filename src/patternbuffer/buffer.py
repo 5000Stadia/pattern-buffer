@@ -14,7 +14,15 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from patternbuffer.model import CANON, STATUSES, VALUE_TYPES, Assertion
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    INVIOLABLE_CORE,
+    SEMANTICS_PREDICATES,
+    STATUSES,
+    VALUE_TYPES,
+    Assertion,
+)
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
@@ -132,6 +140,7 @@ class PatternBuffer:
                 f"assertion stamped for world {row.world_id!r} cannot enter "
                 f"buffer of world {self.world_id!r}"
             )
+        self._validate_attr_semantics_insert(row)
         self._conn.execute(
             "INSERT INTO assertions (seq, id, world_id, entity, attribute, value_type,"
             " value, valid_from, valid_to, frame, status, confidence, asserted_at)"
@@ -154,6 +163,27 @@ class PatternBuffer:
         )
         self._conn.commit()
         logger.debug("append %s: (%s · %s)", row.id, row.entity, row.attribute)
+
+    def _validate_attr_semantics_insert(self, row: Assertion) -> None:
+        """Shared attr:* authority guard for append() and dump.build replay."""
+        if not row.entity.startswith(ATTR_PREFIX) or row.attribute not in SEMANTICS_PREDICATES:
+            return
+        target = row.entity[len(ATTR_PREFIX):]
+        if target in INVIOLABLE_CORE:
+            raise ValueError(
+                f"cannot declare semantics for inviolable core attribute {target!r}"
+            )
+        prior = self._conn.execute(
+            "SELECT id FROM assertions"
+            " WHERE attribute = ? AND entity NOT LIKE ? AND entity NOT LIKE ?"
+            " ORDER BY seq LIMIT 1",
+            (target, ATTR_PREFIX + "%", "a:%"),
+        ).fetchone()
+        if prior is not None:
+            raise ValueError(
+                f"cannot declare semantics for attribute {target!r} after "
+                f"folded data already exists ({prior[0]})"
+            )
 
     # ----------------------------------------------------------------- read
 

@@ -23,6 +23,7 @@ from patternbuffer.model import CANON
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.refer import Refer, Resolution
 from patternbuffer.roles import _make_engine_roles
+from patternbuffer.semantics import AttributeSemantics
 from patternbuffer.thunks import (
     INVENT_UNDER_CANON,
     OBSERVE_OR_UNKNOWN,
@@ -56,6 +57,7 @@ class World:
         stance: str = "fiction",
         title: str = "",
         description: str = "",
+        attribute_default: Callable[[str], dict | None] | None = None,
     ) -> None:
         if policy not in POLICIES:
             raise ValueError(f"unknown policy {policy!r}")
@@ -64,23 +66,31 @@ class World:
         self.world_id = world_id
         self.policy = policy
         self.buffer = PatternBuffer(path, world_id)
+        self.semantics = AttributeSemantics(self.buffer)
         roles = _make_engine_roles()
-        self.classifier = Classifier(self.buffer, model or _no_model)
+        self.classifier = Classifier(self.buffer, model or _no_model, self.semantics)
         self.registry = IdentityRegistry(self.buffer, roles["ingestor"])
-        self.indexes = Indexes(self.buffer, self.classifier, self.registry.resolve)
+        self.indexes = Indexes(
+            self.buffer, self.classifier, self.registry.resolve, self.semantics
+        )
         self.indexes.set_closure_provider(self.registry.closure)
         self.truth = TruthMaintenance(
-            self.buffer, self.classifier, self.indexes, roles["truth_maintenance"]
+            self.buffer, self.classifier, self.indexes, roles["truth_maintenance"],
+            self.semantics,
         )
         self.resolver = Resolver(
             self.buffer, self.classifier, self.indexes, roles["resolver"],
             model or _no_model, policy,
         )
-        self.projector = Projector(self.buffer, self.classifier, self.indexes)
+        self.projector = Projector(
+            self.buffer, self.classifier, self.indexes, self.semantics
+        )
         self.ingestor = Ingestor(
             self.buffer, self.classifier, self.registry, roles["ingestor"],
             model, observe_mode=(policy == OBSERVE_OR_UNKNOWN), clock=clock,
             resolver_role=roles["resolver"],
+            semantics=self.semantics,
+            attribute_default=attribute_default,
             # Write-time containment-cycle gate (HD 002): the ancestor walk
             # is the derived containment chain — locate folds the family.
             containment_ancestors=lambda parent, frame, vf: set(

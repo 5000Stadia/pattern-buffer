@@ -120,6 +120,31 @@ class TestEventsAndDiff:
         divergent = [f for f in diff2 if f["divergent"]]
         assert divergent and divergent[0]["b_value"] == "place:study"
 
+    def test_frame_diff_set_valued_is_membership_not_winner(self, world):
+        # A set-valued key diffs by membership: a member present in both
+        # frames is NOT divergent (pre-fix it compared each member to B's
+        # single winner, so every member but B's latest read as false
+        # divergence). Only a member absent from B's set is reported.
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:box", "attribute": "tag", "value": "red",
+             "arity": "set_valued"},
+            {"entity": "obj:box", "attribute": "tag", "value": "blue"},
+        ])
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "tag", "value": "red"},
+            {"entity": "obj:box", "attribute": "tag", "value": "blue"},
+        ], frame="knows:person:player")
+        tags = lambda: [f for f in world.porcelain.frame_diff(
+            "canon", "knows:person:player", ["obj:box"]) if f["attribute"] == "tag"]
+        assert tags() == []  # both members present in B -> no diff, no false divergence
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "tag", "value": "green"}])
+        out = tags()
+        assert {f["value"] for f in out} == {"green"}     # only the canon-only member
+        assert all(not f["divergent"] for f in out)       # absence, not divergence
+
 
 class TestResolveAndAsk:
     def test_resolve_typed_denied(self, world):

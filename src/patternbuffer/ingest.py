@@ -21,8 +21,9 @@ from typing import Any, Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
-from patternbuffer.model import CANON, CONTAINMENT_FAMILY, STRUCTURAL_PREDICATES, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, SEMANTICS_PREDICATES, Assertion
 from patternbuffer.roles import WriterRole
+from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,9 @@ _EXTRACT_SCHEMA = {
     "required": ["items"],
 }
 
+_SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
+_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
+
 
 @dataclass
 class SceneCursor:
@@ -96,11 +100,16 @@ class Ingestor:
         classify_inline: bool = True,
         resolver_role: WriterRole | None = None,
         containment_ancestors: Callable[[str, str, float | None], set[str]] | None = None,
+        semantics: AttributeSemantics | None = None,
+        attribute_default: Callable[[str], dict | None] | None = None,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
         self._registry = registry
         self._role = role
+        self._semantics = semantics or AttributeSemantics(buffer)
+        self._attribute_default = attribute_default
+        self._attribute_default_checked: set[str] = set()
         # Letter 029: host-authored `generated` rows (arc repair into
         # plot:-style frames) enter through THIS gate but are appended
         # under RESOLVER authority — the API is ingest_structured, the
@@ -137,10 +146,45 @@ class Ingestor:
     def _canonicalize(self, attribute: str) -> tuple[str, str | None]:
         """Returns (canonical, receipt-or-None)."""
         attr = attribute.strip().lower().replace(" ", "_")
-        if attr in STRUCTURAL_PREDICATES or attr not in self._alias_map:
+        if self._semantics.is_structural(attr) or attr not in self._alias_map:
             return attr, None
         canonical = self._alias_map[attr]
         return canonical, f"{attr}->{canonical}"
+
+    # ---------------------------------------------------- attr semantics
+
+    @staticmethod
+    def _semantics_payload(source: dict[str, Any], keys) -> dict[str, Any]:
+        return {k: source[k] for k in keys if k in source and source[k] is not None}
+
+    def _maybe_declare_attribute(self, attribute: str, item: dict[str, Any]) -> list[Assertion]:
+        """Emit first-use attr:* declarations before the triggering data row."""
+        if self._semantics.is_core(attribute) or self._semantics.is_declared(attribute):
+            return []
+        declaration = self._semantics_payload(item, _SEMANTICS_HINT_KEYS)
+        if not declaration and attribute not in self._attribute_default_checked:
+            self._attribute_default_checked.add(attribute)
+            if self._attribute_default is not None:
+                default = self._attribute_default(attribute)
+                if default:
+                    declaration = self._semantics_payload(default, _SEMANTICS_DECL_KEYS)
+        if not declaration:
+            return []
+
+        out: list[Assertion] = []
+        for predicate, value in declaration.items():
+            row = self._buffer.append(
+                entity=f"{ATTR_PREFIX}{attribute}",
+                attribute=predicate,
+                value=value,
+                status="inferred",
+                role=self._role,
+            )
+            out.append(row)
+            if self.classify_inline:
+                self._classifier.classify(row)
+        self._semantics.rebuild()
+        return out
 
     # -------------------------------------------------------- structured
 
@@ -202,7 +246,14 @@ class Ingestor:
         valid_from = item.get("valid_from")
         if valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
-        if attribute in CONTAINMENT_FAMILY and value_type == "entity":
+
+        is_manual_semantics_row = (
+            entity.startswith(ATTR_PREFIX) and attribute in SEMANTICS_PREDICATES
+        )
+        if not is_manual_semantics_row:
+            out.extend(self._maybe_declare_attribute(attribute, item))
+
+        if self._semantics.is_containment(attribute) and value_type == "entity":
             self._reject_cycle(entity, value, item.get("frame", CANON),
                                None if timeless else valid_from)
         status = item.get("status", "stated")
@@ -231,6 +282,8 @@ class Ingestor:
             role=write_role,
         )
         out.append(row)
+        if is_manual_semantics_row:
+            self._semantics.rebuild()
         if receipt:
             out.append(
                 self._buffer.append(

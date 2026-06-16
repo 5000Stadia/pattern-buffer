@@ -17,7 +17,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from patternbuffer.model import CANON, META_ATTRIBUTES
+from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -126,8 +126,12 @@ class Porcelain:
         context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
         rows = self._w.ingest(text, context=context, frame=frame)
         if source is not None:
-            fact_rows = [r for r in rows if not r.entity.startswith("a:")
-                         and r.attribute not in META_ATTRIBUTES]
+            fact_rows = [
+                r for r in rows
+                if not r.entity.startswith("a:")
+                and not r.entity.startswith(ATTR_PREFIX)
+                and r.attribute not in META_ATTRIBUTES
+            ]
             rows += self._w.ingest_structured([
                 {"entity": r.id, "attribute": "source", "value": source,
                  "status": r.status if r.status in ("stated", "observed") else "stated",
@@ -162,8 +166,12 @@ class Porcelain:
                  lens: str = "current_state", budget: int | None = None,
                  since: float | None = None) -> dict:
         roots = [scope] if isinstance(scope, str) else list(scope)
-        known = {self._w.registry.resolve(r.entity)
-                 for r in self._w.buffer.visible() if not r.entity.startswith("a:")}
+        known = {
+            self._w.registry.resolve(r.entity)
+            for r in self._w.buffer.visible()
+            if not r.entity.startswith("a:")
+            and not r.entity.startswith(ATTR_PREFIX)
+        }
         bad = [s for s in roots
                if not _ID_RE.fullmatch(s) or self._w.registry.resolve(s) not in known]
         if bad:
@@ -248,6 +256,26 @@ class Porcelain:
                 continue
             entity = self._w.registry.resolve(row.entity)
             fold_b = self._w.state(entity, row.attribute, frame=b, valid_as_of=as_of)
+
+            def _norm(value, value_type):
+                if value_type == "entity" and isinstance(value, str):
+                    return ("entity", self._w.registry.resolve(value))
+                return (value_type, value)
+
+            if self._w.semantics.is_set_valued(row.attribute):
+                # Set membership, not a single-winner comparison: an A-frame
+                # member is a diff only when absent from B's whole set
+                # (multi-value fold; otherwise every member but B's winner
+                # reads as falsely divergent).
+                b_members = {
+                    _norm(br.value, br.value_type)
+                    for br in (fold_b._value_rows
+                               or ((fold_b.winner,) if fold_b.winner else ()))
+                }
+                if _norm(row.value, row.value_type) not in b_members:
+                    out.append(self._fact(row).to_dict())  # present in A, absent from B
+                continue
+
             if fold_b.winner is None:
                 out.append(self._fact(row).to_dict())
                 continue

@@ -47,10 +47,17 @@ canonicalization-as-receipts pattern generalized), rebuilt into a sidecar:
   multi-value fold: `FoldResult` gains **`values: tuple`** carrying *all*
   current members for a `set_valued` key (per-source recency still applies —
   a member superseded by a later row at its own key drops out). This is
-  **additive**: `.winner` is unchanged (still the most-recent member, so
-  every existing `.winner` reader — `current_state["name"]`, etc. — behaves
-  bit-for-bit as today); new consumers read `.values`. `functional` keys
-  leave `.values` empty and read `.winner` as now.
+  **additive** for `functional` keys (`.winner` and `.values=()` exactly as
+  today). For the built-in **set-valued** keys (`name`/`alias`/`connects_to`/…)
+  the multi-value fold *completes* what `SET_VALUED_ATTRIBUTES` always meant:
+  `.winner` becomes the most-recent member and `conflicted` is `False`
+  (previously the single-winner fold served the *earliest* member and set
+  `conflicted=True`, which `tmaint` then suppressed — a quirk, not a
+  contract). This is a deliberate correctness improvement, pinned by
+  `test_builtin_set_valued_name_folds_to_set_not_conflict`, not a silent
+  change. Consumers that diff a set-valued key must compare **membership
+  against `.values`**, not against `.winner` (the `frame_diff` fix — Codex
+  post-impl finding #6).
 - **`relation_family` ∈ {`containment`, `lateral`, `none`}** — **tree
   membership only**: folds with the containment family key (single-parent,
   cycle-gated, projector containment scope) / is a lateral graph edge

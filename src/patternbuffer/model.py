@@ -28,6 +28,15 @@ STRUCTURAL_PREDICATES = (
     frozenset({"kind", "connects_to", "adjacent_to", "caused_by"}) | CONTAINMENT_FAMILY
 )
 
+# Attribute-semantics declarations are assertions about attr:<name> entities.
+# These low-level names live here so the buffer guard can enforce authority
+# without importing the semantics service.
+ATTR_PREFIX = "attr:"
+SEMANTICS_PREDICATES = frozenset(
+    {"arity", "relation_family", "fold_policy", "structural"}
+)
+INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as"}
+
 # The engine's own meta-attributes (subjects of these rows are assertion
 # ids or carry engine semantics).
 META_ATTRIBUTES = frozenset(
@@ -43,7 +52,7 @@ META_ATTRIBUTES = frozenset(
         "world_defining",
         "correction_proposal",
     }
-)
+) | SEMANTICS_PREDICATES
 
 # Set-valued attributes: multiple coexisting values are data, never a
 # contradiction — a conflict requires a functional key (run-4 finding:

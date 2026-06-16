@@ -31,7 +31,10 @@ from dataclasses import dataclass
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.model import (
+    ATTR_PREFIX,
     CONTAINMENT_FAMILY,
+    INVIOLABLE_CORE,
+    SEMANTICS_PREDICATES,
     SET_VALUED_ATTRIBUTES,
     STRUCTURAL_PREDICATES,
 )
@@ -47,18 +50,30 @@ ARITIES = frozenset({FUNCTIONAL, SET_VALUED})
 RELATION_FAMILIES = frozenset({CONTAINMENT, LATERAL, NONE})
 FOLD_POLICIES = frozenset({LAST_WRITE, MOVE})
 
-# The metadata predicates, asserted on ``attr:<name>`` entities.
-ATTR_PREFIX = "attr:"
-SEMANTICS_PREDICATES = frozenset({"arity", "relation_family", "fold_policy", "structural"})
-
-# Built-in lateral graph attributes (the rest of CONTAINMENT_FAMILY is the
-# tree; everything in SET_VALUED that isn't a graph edge is plain set data).
+# Built-in lateral graph attributes; everything set-valued that is not a graph
+# edge is plain set data.
 _LATERAL = frozenset({"connects_to", "adjacent_to"})
 
-# The constitutional core a host may never redeclare (spec §5). Structural
-# predicates already cover the containment family + kind/connects_to/
-# adjacent_to/caused_by; identity predicates are added explicitly.
-INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as"}
+# Names with non-default built-in semantics. Family helpers below derive their
+# seed sets through builtin_default() so behavioral constants are read in one
+# place.
+_BUILTIN_DEFAULT_ATTRIBUTES = frozenset(
+    {
+        "in",
+        "within",
+        "held_by",
+        "worn_by",
+        "carried_by",
+        "name",
+        "alias",
+        "connects_to",
+        "adjacent_to",
+        "maybe_same_as",
+        "same_as",
+        "kind",
+        "caused_by",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +105,7 @@ class AttributeSemantics:
     def __init__(self, buffer: PatternBuffer) -> None:
         self._buffer = buffer
         self._declared: dict[str, dict[str, object]] = {}
+        self._rebuilt_at = -1
         self.rebuild()
 
     def rebuild(self) -> None:
@@ -101,11 +117,17 @@ class AttributeSemantics:
                 name = row.entity[len(ATTR_PREFIX):]
                 declared.setdefault(name, {})[row.attribute] = row.value
         self._declared = declared
+        self._rebuilt_at = self._buffer.head()
+
+    def _refresh(self) -> None:
+        if self._buffer.head() != self._rebuilt_at:
+            self.rebuild()
 
     # ----------------------------------------------------------------- read
 
     def semantics(self, attribute: str) -> Semantics:
         """Declared semantics over the built-in default for one attribute."""
+        self._refresh()
         base = builtin_default(attribute)
         d = self._declared.get(attribute)
         if not d:
@@ -131,12 +153,17 @@ class AttributeSemantics:
 
     def is_declared(self, attribute: str) -> bool:
         """Whether an explicit ``attr:*`` declaration exists (vs. defaulting)."""
+        self._refresh()
         return attribute in self._declared
 
     def containment_family(self) -> set[str]:
         """All attributes that fold as the single containment key — the
         built-in family plus any declared ``relation_family=containment``."""
-        out = set(CONTAINMENT_FAMILY)
+        self._refresh()
+        out = {
+            name for name in _BUILTIN_DEFAULT_ATTRIBUTES
+            if builtin_default(name).relation_family == CONTAINMENT
+        }
         for name in self._declared:
             if self.semantics(name).relation_family == CONTAINMENT:
                 out.add(name)
@@ -144,7 +171,11 @@ class AttributeSemantics:
 
     def lateral_family(self) -> set[str]:
         """All attributes that form the lateral graph (``path``)."""
-        out = set(_LATERAL)
+        self._refresh()
+        out = {
+            name for name in _BUILTIN_DEFAULT_ATTRIBUTES
+            if builtin_default(name).relation_family == LATERAL
+        }
         for name in self._declared:
             if self.semantics(name).relation_family == LATERAL:
                 out.add(name)

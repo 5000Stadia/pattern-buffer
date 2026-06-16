@@ -17,7 +17,8 @@ from patternbuffer.classify import (
     STATE,
     Classifier,
 )
-from patternbuffer.model import CANON, CONTAINMENT_FAMILY, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
+from patternbuffer.semantics import AttributeSemantics, CONTAINMENT, builtin_default
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,13 @@ _FAMILY_KEY = "__containment__"
 
 
 def fold_attribute(attribute: str) -> str:
-    """The fold-key attribute: the containment family folds as one key."""
-    return _FAMILY_KEY if attribute in CONTAINMENT_FAMILY else attribute
+    """Built-in fold-key compatibility helper.
+
+    World-bound reads use Indexes.fold_attribute(), which includes declared
+    semantics. This free function remains for callers that only need the
+    built-in defaults.
+    """
+    return _FAMILY_KEY if builtin_default(attribute).relation_family == CONTAINMENT else attribute
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +43,8 @@ class FoldResult:
     conflicted: bool = False
     conflicting: tuple[str, ...] = ()  # assertion ids party to the conflict
     corroborated_by: tuple[str, ...] = ()
+    values: tuple = ()
+    _value_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
 
 
 @dataclass
@@ -52,9 +60,11 @@ class Indexes:
         buffer: PatternBuffer,
         classifier: Classifier,
         identity_resolve: Callable[[str], str] | None = None,
+        semantics: AttributeSemantics | None = None,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
+        self._semantics = semantics or AttributeSemantics(buffer)
         # Identity closure hook: maps any entity id to its canonical
         # representative. Installed by World wiring once the registry exists.
         self._resolve = identity_resolve or (lambda eid: eid)
@@ -71,6 +81,10 @@ class Indexes:
     def resolve_entity(self, entity: str) -> str:
         """The identity closure's canonical representative for `entity`."""
         return self._resolve(entity)
+
+    def fold_attribute(self, attribute: str) -> str:
+        """World-bound fold-key attribute, including declared semantics."""
+        return _FAMILY_KEY if self._semantics.is_containment(attribute) else attribute
 
     # -------------------------------------------------------------- helpers
 
@@ -134,9 +148,9 @@ class Indexes:
     ) -> FoldResult:
         """Serve one (entity, attribute, frame) key per the per-class rules."""
         entity = self._resolve(entity)
-        fa = fold_attribute(attribute)
+        fa = self.fold_attribute(attribute)
         closure = sorted(self._closure_of(entity))
-        attrs = sorted(CONTAINMENT_FAMILY) if fa == _FAMILY_KEY else [attribute]
+        attrs = sorted(self._semantics.containment_family()) if fa == _FAMILY_KEY else [attribute]
         candidates: list[Assertion] = []
         for row in self._buffer.visible(
             entity_in=closure, attribute_in=attrs,
@@ -165,6 +179,9 @@ class Indexes:
         if not candidates:
             return FoldResult(winner=None)
 
+        if self._semantics.is_set_valued(attribute):
+            return self._fold_set_valued(candidates)
+
         by_class = {STATE: [], DISPOSITIONAL: [], CONSTITUTIVE: []}
         for row in candidates:
             by_class.setdefault(self._classifier.durability(row.id), []).append(row)
@@ -192,6 +209,35 @@ class Indexes:
             winner = max(rows, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
             return FoldResult(winner=winner)
         return FoldResult(winner=None)
+
+    def _fold_set_valued(self, rows: list[Assertion]) -> FoldResult:
+        """Set-valued keys accumulate current members instead of conflicting.
+
+        Duplicate assertions for the same member supersede within that
+        member's own (entity, attribute, value-identity) key. The served
+        winner remains the most-recent current member for compatibility.
+        """
+        def recency(row: Assertion) -> tuple[float, int]:
+            return (row.valid_from if row.valid_from is not None else float("-inf"), row.asserted_at)
+
+        def value_identity(row: Assertion) -> tuple[str, object]:
+            if row.value_type == "entity" and isinstance(row.value, str):
+                return row.value_type, self._resolve(row.value)
+            return row.value_type, repr(row.value)
+
+        current: dict[tuple[str, str, tuple[str, object]], Assertion] = {}
+        for row in rows:
+            key = (self._resolve(row.entity), row.attribute, value_identity(row))
+            prior = current.get(key)
+            if prior is None or recency(row) > recency(prior):
+                current[key] = row
+        value_rows = tuple(sorted(current.values(), key=lambda r: (r.asserted_at, r.id)))
+        winner = max(value_rows, key=recency) if value_rows else None
+        return FoldResult(
+            winner=winner,
+            values=tuple(r.value for r in value_rows),
+            _value_rows=value_rows,
+        )
 
     def _fold_state(
         self, rows: list[Assertion], asserted_as_of: int | None,
@@ -298,13 +344,13 @@ class Indexes:
             entity_in=closure,
             frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
         ):
-            if not row.entity.startswith("a:"):
+            if not row.entity.startswith("a:") and not row.entity.startswith(ATTR_PREFIX):
                 attrs.add(row.attribute)
         out: dict[str, FoldResult] = {}
         for attr in attrs:
             result = self.fold_key(entity, attr, frame, valid_as_of, asserted_as_of)
             if result.winner is not None:
-                out[fold_attribute(attr) if attr in CONTAINMENT_FAMILY else attr] = result
+                out[self.fold_attribute(attr)] = result
         return out
 
     # ---------------------------------------------------------------- walks
@@ -348,10 +394,10 @@ class Indexes:
         candidates: set[str] = set()
         for target in sorted(self._closure_of(container)):
             for row in self._buffer.visible(
-                attribute_in=sorted(CONTAINMENT_FAMILY), value=target,
+                attribute_in=sorted(self._semantics.containment_family()), value=target,
                 frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
             ):
-                if not row.entity.startswith("a:"):
+                if not row.entity.startswith("a:") and not row.entity.startswith(ATTR_PREFIX):
                     candidates.add(self._resolve(row.entity))
         for eid in candidates:
             result = self.fold_key(eid, "in", frame, valid_as_of, asserted_as_of)
@@ -375,7 +421,12 @@ class Indexes:
         a, b = self._resolve(a), self._resolve(b)
         edges: dict[str, set[str]] = {}
         for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=frame):
-            if row.attribute in {"connects_to", "adjacent_to"} and row.value_type == "entity":
+            if (
+                row.attribute in self._semantics.lateral_family()
+                and row.value_type == "entity"
+                and not row.entity.startswith("a:")
+                and not row.entity.startswith(ATTR_PREFIX)
+            ):
                 x, y = self._resolve(row.entity), self._resolve(row.value)
                 edges.setdefault(x, set()).add(y)
                 edges.setdefault(y, set()).add(x)

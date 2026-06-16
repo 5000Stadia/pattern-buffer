@@ -373,3 +373,70 @@ class TestAssumptionQuarantine:
         before = buf.rows_read
         assert indexes.contents("obj:drawer") == ["obj:pipe"]
         assert buf.rows_read - before < 50
+
+
+class TestAttributeSemanticsMultiValue:
+    def _world(self, tmp_path, **kw):
+        from patternbuffer import World
+        from patternbuffer.testing import rule_classifier_fallback
+
+        return World(
+            tmp_path / "sem.world",
+            world_id="w:sem",
+            model=StubModel(fallback=rule_classifier_fallback()),
+            **kw,
+        )
+
+    def test_declared_set_valued_contains_keeps_all_members(self, tmp_path):
+        w = self._world(tmp_path)
+        try:
+            w.ingest_structured([
+                {
+                    "entity": "obj:tin",
+                    "attribute": "contains",
+                    "value": f"obj:cig_{i}",
+                    "arity": "set_valued",
+                }
+                for i in range(1, 6)
+            ])
+            fold = w.state("obj:tin", "contains")
+            assert fold.winner.value == "obj:cig_5"
+            assert set(fold.values) == {f"obj:cig_{i}" for i in range(1, 6)}
+        finally:
+            w.close()
+
+    def test_undeclared_contains_remains_single_winner(self, tmp_path):
+        w = self._world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "obj:tin", "attribute": "contains", "value": f"obj:cig_{i}"}
+                for i in range(1, 6)
+            ])
+            fold = w.state("obj:tin", "contains")
+            assert fold.winner is not None
+            assert fold.winner.value in {f"obj:cig_{i}" for i in range(1, 6)}
+            assert fold.values == ()
+        finally:
+            w.close()
+
+    def test_builtin_set_valued_name_preserves_winner_and_exposes_values(self, tmp_path):
+        w = self._world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "obj:meter", "attribute": "name", "value": "master meter", "timeless": True},
+                {
+                    "entity": "obj:meter",
+                    "attribute": "name",
+                    "value": "the master meter",
+                    "timeless": True,
+                },
+            ])
+            fold = w.indexes.current_state("obj:meter")["name"]
+            assert fold.winner.value == "the master meter"
+            assert fold.values == ("master meter", "the master meter")
+            materialized = w.materialize(["obj:meter"])
+            assert {
+                r.value for r in materialized.assertions if r.attribute == "name"
+            } == {"master meter", "the master meter"}
+        finally:
+            w.close()

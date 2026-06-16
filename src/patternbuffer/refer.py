@@ -14,7 +14,7 @@ from typing import Any, Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import CANON
+from patternbuffer.model import ATTR_PREFIX, CANON
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +193,7 @@ class Refer:
                         valid_as_of=as_of, asserted_as_of=asserted_as_of,
                     )
                     if not r.entity.startswith("a:")
+                    and not r.entity.startswith(ATTR_PREFIX)
                 }
             )
         roots = [scope] if isinstance(scope, str) else list(scope)

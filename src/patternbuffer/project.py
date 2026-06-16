@@ -15,7 +15,8 @@ from dataclasses import dataclass, field
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, EVENT, STATE, Classifier
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import CANON, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
+from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +53,17 @@ class Materialization:
 
 
 class Projector:
-    def __init__(self, buffer: PatternBuffer, classifier: Classifier, indexes: Indexes) -> None:
+    def __init__(
+        self,
+        buffer: PatternBuffer,
+        classifier: Classifier,
+        indexes: Indexes,
+        semantics: AttributeSemantics | None = None,
+    ) -> None:
         self._buffer = buffer
         self._classifier = classifier
         self._indexes = indexes
+        self._semantics = semantics or AttributeSemantics(buffer)
 
     # ------------------------------------------------------------ scoping
 
@@ -80,15 +88,17 @@ class Projector:
     def _establishing_scope(self, scope: str | list[str], frame: str,
                             valid_as_of: float | None, asserted_as_of: int | None) -> list[str]:
         """Subtree membership by establishing containment edges."""
-        from patternbuffer.model import CONTAINMENT_FAMILY
-
         roots = {self._indexes.resolve_entity(r)
                  for r in ([scope] if isinstance(scope, str) else scope)}
         by_entity: dict[str, list[Assertion]] = {}
         for row in self._buffer.visible(
             frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of
         ):
-            if row.attribute in CONTAINMENT_FAMILY and not row.entity.startswith("a:"):
+            if (
+                row.attribute in self._semantics.containment_family()
+                and not row.entity.startswith("a:")
+                and not row.entity.startswith(ATTR_PREFIX)
+            ):
                 by_entity.setdefault(self._indexes.resolve_entity(row.entity), []).append(row)
         parent: dict[str, str] = {}
         for entity, rows in by_entity.items():
@@ -157,28 +167,29 @@ class Projector:
                 entity, m.frame, m.as_of, m.asserted_as_of
             )
             for attr, result in sorted(folded.items()):
-                row = result.winner
-                if row is None:
+                rows = result._value_rows or (
+                    (result.winner,) if result.winner is not None else ()
+                )
+                if not rows:
                     continue
                 if result.conflicted:
                     m.conflicted_keys.append((entity, attr))
-                if row.value_type == "unresolved":
-                    m.unresolved.append((entity, attr))
-                    continue  # the frontier is named, never painted (§10)
-                durability = self._classifier.durability(row.id)
-                if establishing and durability == STATE:
-                    row = self._establishing_state(entity, attr, m) or None
-                    if row is None:
-                        continue
-                m.assertions.append(row)
+                for row in rows:
+                    if row.value_type == "unresolved":
+                        m.unresolved.append((entity, attr))
+                        continue  # the frontier is named, never painted (§10)
+                    durability = self._classifier.durability(row.id)
+                    if establishing and durability == STATE and not result._value_rows:
+                        row = self._establishing_state(entity, attr, m) or None
+                        if row is None:
+                            continue
+                    m.assertions.append(row)
 
     def _establishing_state(
         self, entity: str, attr: str, m: Materialization
     ) -> Assertion | None:
         """First STATE by (valid_from, asserted_at) with no caused_by edge
         to an EVENT — the world at rest (spec §9.1); honors world_defining."""
-        from patternbuffer.indexes import fold_attribute
-
         rows = [
             r
             for r in self._buffer.visible(
@@ -186,7 +197,9 @@ class Projector:
                 valid_as_of=m.as_of, asserted_as_of=m.asserted_as_of,
             )
             if self._indexes.resolve_entity(r.entity) == entity
-            and fold_attribute(r.attribute) == attr  # attr is already fold-keyed
+            and not r.entity.startswith("a:")
+            and not r.entity.startswith(ATTR_PREFIX)
+            and self._indexes.fold_attribute(r.attribute) == attr  # already fold-keyed
             and r.value_type != "unresolved"
             and self._classifier.durability(r.id) == STATE
         ]
@@ -210,7 +223,7 @@ class Projector:
         ):
             if self._classifier.durability(row.id) != EVENT:
                 continue
-            if row.entity.startswith("a:"):
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
                 continue  # meta rows ride with their subjects
             subject = self._indexes.resolve_entity(row.entity)
             object_ = (
@@ -234,12 +247,13 @@ class Projector:
             for attr, result in sorted(folded.items()):
                 if result.winner is None:
                     continue
-                if result.winner.value_type == "unresolved":
-                    m.unresolved.append((entity, attr))
-                    continue
                 if result.conflicted:
                     m.conflicted_keys.append((entity, attr))
-                m.assertions.append(result.winner)
+                for row in result._value_rows or (result.winner,):
+                    if row.value_type == "unresolved":
+                        m.unresolved.append((entity, attr))
+                        continue
+                    m.assertions.append(row)
 
     # --------------------------------------------------- defaults + budget
 

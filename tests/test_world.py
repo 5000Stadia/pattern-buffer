@@ -291,6 +291,171 @@ class TestWorldCharter:
         w2.close()
 
 
+class TestAttributeSemantics:
+    def _world(self, tmp_path, name="sem", **kw):
+        return World(
+            tmp_path / f"{name}.world",
+            world_id=f"w:{name}",
+            model=StubModel(fallback=rule_classifier_fallback()),
+            **kw,
+        )
+
+    def test_attribute_default_declares_once_before_first_data_and_rebuilds(self, tmp_path):
+        def default(attribute):
+            if attribute == "contains":
+                return {"arity": "set_valued"}
+            return None
+
+        w = self._world(tmp_path, "hook", attribute_default=default)
+        try:
+            w.ingest_structured([
+                {"entity": "obj:tin", "attribute": "contains", "value": "obj:cig_1"},
+                {"entity": "obj:tin", "attribute": "contains", "value": "obj:cig_2"},
+            ])
+            decls = [
+                r for r in w.buffer.all_rows()
+                if r.entity == "attr:contains" and r.attribute == "arity"
+            ]
+            data = [
+                r for r in w.buffer.all_rows()
+                if r.entity == "obj:tin" and r.attribute == "contains"
+            ]
+            assert len(decls) == 1
+            assert decls[0].seq < min(r.seq for r in data)
+            assert set(w.state("obj:tin", "contains").values) == {
+                "obj:cig_1",
+                "obj:cig_2",
+            }
+            assert all(
+                not r.entity.startswith("attr:")
+                for r in w.materialize(["obj:tin"]).assertions
+            )
+
+            from patternbuffer.dump import build, dump as dump_fn
+
+            text = dump_fn(w.buffer)
+        finally:
+            w.close()
+
+        rebuilt = build(text, tmp_path / "rebuilt.world")
+        rebuilt.close()
+        w2 = World(
+            tmp_path / "rebuilt.world",
+            world_id="w:hook",
+            model=StubModel(fallback=rule_classifier_fallback()),
+        )
+        try:
+            assert set(w2.state("obj:tin", "contains").values) == {
+                "obj:cig_1",
+                "obj:cig_2",
+            }
+        finally:
+            w2.close()
+
+    def test_late_semantics_hint_after_data_is_rejected(self, tmp_path):
+        w = self._world(tmp_path, "immutable")
+        try:
+            w.ingest_structured([
+                {"entity": "obj:tin", "attribute": "contains", "value": "obj:cig_1"},
+            ])
+            with pytest.raises(ValueError, match="after folded data"):
+                w.ingest_structured([
+                    {
+                        "entity": "obj:tin",
+                        "attribute": "contains",
+                        "value": "obj:cig_2",
+                        "arity": "set_valued",
+                    },
+                ])
+            fold = w.state("obj:tin", "contains")
+            assert fold.winner.value == "obj:cig_1"
+            assert fold.values == ()
+        finally:
+            w.close()
+
+    def test_inviolable_core_rejected_on_append_and_dump_replay(self, tmp_path):
+        from patternbuffer.buffer import PatternBuffer
+        from patternbuffer.dump import build
+        from patternbuffer.roles import _make_engine_roles
+        import json
+
+        buf = PatternBuffer(tmp_path / "core.world", world_id="w:core")
+        try:
+            with pytest.raises(ValueError, match="inviolable core"):
+                buf.append(
+                    entity="attr:in",
+                    attribute="relation_family",
+                    value="none",
+                    status="stated",
+                    role=_make_engine_roles()["ingestor"],
+                )
+        finally:
+            buf.close()
+
+        row = {
+            "seq": 1,
+            "id": "a:1",
+            "world_id": "w:core",
+            "entity": "attr:in",
+            "attribute": "relation_family",
+            "value_type": "literal",
+            "value": "none",
+            "valid_from": None,
+            "valid_to": None,
+            "frame": "canon",
+            "status": "stated",
+            "confidence": None,
+            "asserted_at": 1,
+        }
+        with pytest.raises(ValueError, match="inviolable core"):
+            build(json.dumps(row, sort_keys=True) + "\n", tmp_path / "core_replay.world")
+
+    def test_declared_lateral_relation_participates_in_path(self, tmp_path):
+        w = self._world(tmp_path, "lateral")
+        try:
+            w.ingest_structured([
+                {
+                    "entity": "place:a",
+                    "attribute": "portal_to",
+                    "value": "place:b",
+                    "relation_family": "lateral",
+                    "arity": "set_valued",
+                    "timeless": True,
+                },
+                {
+                    "entity": "place:b",
+                    "attribute": "portal_to",
+                    "value": "place:c",
+                    "timeless": True,
+                },
+            ])
+            assert w.path("place:a", "place:c") == ["place:a", "place:b", "place:c"]
+        finally:
+            w.close()
+
+    def test_builtin_set_valued_name_folds_to_set_not_conflict(self, tmp_path):
+        # The multi-value fold completes what SET_VALUED_ATTRIBUTES always
+        # meant: two names are data, not a dispute. (Pre-RFC the fold served
+        # one winner + conflicted and tmaint suppressed the flag; now the set
+        # folds honestly — winner = most-recent member, all members in values.)
+        w = self._world(tmp_path, "names")
+        try:
+            w.ingest_structured([
+                {"entity": "person:x", "attribute": "kind", "value": "person",
+                 "timeless": True},
+                {"entity": "person:x", "attribute": "name", "value": "Ilsa",
+                 "valid_from": 1.0},
+                {"entity": "person:x", "attribute": "name", "value": "The Clerk",
+                 "valid_from": 2.0},
+            ])
+            fold = w.state("person:x", "name")
+            assert not fold.conflicted
+            assert fold.winner.value == "The Clerk"            # most-recent member
+            assert set(fold.values) == {"Ilsa", "The Clerk"}   # all members surface
+        finally:
+            w.close()
+
+
 class TestRefer018Extensions:
     def test_zero_candidate_escalation_scope_bounded(self, world):
         """A synonym (zero tier-1 hits) escalates to tier 2 with the scope's
