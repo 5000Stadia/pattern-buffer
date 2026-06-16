@@ -41,6 +41,8 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 - **[docs/WHITEPAPER.md](docs/WHITEPAPER.md)** — the canonical, comprehensive design reference. Principles, primitives, durability, frames, provenance, thunks, reference resolution, ingestion discipline, identity, the operation algebra, projection, both modes, embedding hazards, evaluation, and the decision record. Start here.
 - **[docs/LEXICON.md](docs/LEXICON.md)** — the working vocabulary and its naming discipline.
 - **[docs/ADOPTION.md](docs/ADOPTION.md)** — for agents (and humans) integrating the library: exact signatures, typed outcomes, the three-seam recipe, MUST/NEVER rules.
+- **[docs/HOST-DISCIPLINE.md](docs/HOST-DISCIPLINE.md)** — the adopter's discipline brief: the seven categories every fact must be classified along to ingest with fidelity, and the structural retrieval strategies (the four correlation axes + the correlation sweep) to surface every relevant, related detail for any subject.
+- **[docs/INGESTION-PLAYBOOK.md](docs/INGESTION-PLAYBOOK.md)** — evidence-based rules for deserializing narrative into a world: the extractor contract, feeding mechanics, what the gate guards, and measured ingestion baselines.
 - **[docs/reference/assertion-world-model-original.md](docs/reference/assertion-world-model-original.md)** — the framework-agnostic design document this project was founded on, preserved verbatim for lineage.
 
 ## The road
