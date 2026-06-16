@@ -1,10 +1,14 @@
 # RFC-001 — Attribute semantics as data (schema-as-assertions)
 
-**Status:** DRAFT r2 — Codex engine-audit incorporated; now circulating to
-Construct · Kernos for adoption review. **Author:** PB. **Founder in the
-loop.** This is a *pre-spec proposal* — the goal is to settle the **best
-shape** before it becomes a GREEN spec. Whitepaper wins; proposed as a
-refinement within P1/P2, not an amendment.
+**Status:** DRAFT r3 — Codex engine-audit + Kernos V2/philosophy audit
+incorporated; **Construct adoption audit pending** before GREEN. **Author:**
+PB. **Founder in the loop.** A *pre-spec proposal* — settling the **best
+shape** before it becomes a GREEN spec. Whitepaper wins; a refinement within
+P1/P2, not an amendment.
+
+**Audit status:** Codex (engine) ✅ folded into r2. Kernos (V2/philosophy) ✅
+GREEN-on-shape, two sharpenings folded into r3 (the rejection-test in §2.1;
+the Q2 resolution). Construct (live-IF adoption) ⏳ pending.
 
 **r2 changelog (what Codex's engine audit changed):** (a) this is a
 cross-cutting **`AttributeSemantics` service**, not a fold tweak — the
@@ -135,6 +139,34 @@ read the sidecar. Fix 2's `is_containment` becomes
 `relation_family == containment` *from data*. No porcelain signature changes
 (additive internals).
 
+### 2.1 Philosophy guardrail — the rejection test (Kernos)
+
+The substrate's covenant: **it never rejects a fact for not fitting a shape**
+(contradictions survive as flagged contradictions, never rejections). The
+single test that keeps "declared semantics" on the grain and away from
+"enforced schema":
+
+> **Does a declaration ever cause an assertion to be rejected or silently
+> dropped?** If no → it governs how a fact *folds* (grain-aligned, fine). If
+> yes → it governs whether a fact is *admitted* (rigid schema, forbidden).
+
+RFC-001 passes: `exits · arity · set_valued` rejects nothing — it changes how
+rows fold (accumulate vs supersede); every assertion is still admitted. The
+*only* rejection in the design is the inviolable-core guard (you can't
+redeclare `in` as non-containment), which is **authority-on-vocabulary**, not
+schema-on-world-facts — exactly parallel to the role matrix guarding write
+authority.
+
+**The seam to keep holy:** attribute-level metadata is for what is *genuinely
+invariant about the vocabulary* (every `connects_to` is lateral — that's what
+the word means); **durability stays row-level** because it is *contingent
+about the instance* (a `color` row is constitutive for a painted-by-design
+object, mere state for a mood ring). The drift signal for any future metadata
+addition: *is this genuinely invariant for every instance of the attribute?*
+Lifting an instance-contingent property (durability above all) up to the
+attribute level would be schema rigidity returning — the RFC refuses it; hold
+that line.
+
 ## 3. Related items from the reflection (scope boundary, for the deliberation)
 
 Not part of v1; listed so reviewers can weigh sequencing and whether the
@@ -192,15 +224,29 @@ Recommended smallest-valuable cut folded into §6.
 - **Q1 (minimality): RESOLVED** — `fold_policy` is split from
   `relation_family` (Codex). v1 axes: arity, relation_family, fold_policy,
   structural.
-- **Q2 (timing):** registry/session-zero declaration only, or a runtime
-  declaration path for live play? (Constitutive-semantics resolution leans
-  toward *declare-forward*; a runtime path is a vocabulary-migration op, not
-  ordinary supersession. Construct/Kernos: do you need mid-session
-  declaration?)
+- **Q2 (timing): RESOLVED (Kernos)** — the session-zero-vs-runtime binary is
+  false. The real seam is **first-declaration vs redeclaration**:
+  - *First declaration of a previously-unseen attribute* — allowed at any
+    wall-clock moment, including deep in the world's life. It is
+    genesis-forward *for that attribute's own timeline*; there is **no**
+    retroactivity hazard because no folded history exists under other
+    semantics. V2's "vocabulary grows as the world is observed" needs exactly
+    this, and it costs nothing.
+  - *Redeclaration of an attribute that already has folded history* — a
+    distinct, explicit **vocabulary-migration op** (re-fold-under-new-
+    semantics, or require a new name), never an ordinary supersession.
+  - **Engine rule:** *an attribute's semantics are immutable once its first
+    folded row exists, unless an explicit migration is invoked.* This gives
+    V2 its runtime declaration while preserving Codex's retroactivity fix.
 - **Q3 (safety): RESOLVED** — inviolable structural core, validated at
   `PatternBuffer.append`; domain attributes declarable.
-- **Q4 (sequencing):** ship before, with, or after Imp 2 (value typing)?
-  (Kernos's V2 reality workload is the deciding input.)
+- **Q4 (sequencing): Kernos recommends 001 first, Imp 2 immediately after, as
+  separate back-to-back specs; founder's roadmap decides.** RFC-001 is the
+  enabling floor (you can't declare a quantity workload's attributes without
+  it); Imp 2 (range predicates over scalars) is the single biggest
+  fiction-vs-reality divergence — nice-to-have for Construct, near load-
+  bearing for V2. **Do not** bloat RFC-001 with value-typing hints: 001 owns
+  *fold behavior*, Imp 2 owns *value comparability*. Clean seams.
 
 ## 6. Recommended v1 cut (Codex's smallest-valuable-version)
 
