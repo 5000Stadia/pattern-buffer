@@ -240,13 +240,13 @@ Recommended smallest-valuable cut folded into §6.
     V2 its runtime declaration while preserving Codex's retroactivity fix.
 - **Q3 (safety): RESOLVED** — inviolable structural core, validated at
   `PatternBuffer.append`; domain attributes declarable.
-- **Q4 (sequencing): Kernos recommends 001 first, Imp 2 immediately after, as
-  separate back-to-back specs; founder's roadmap decides.** RFC-001 is the
-  enabling floor (you can't declare a quantity workload's attributes without
-  it); Imp 2 (range predicates over scalars) is the single biggest
-  fiction-vs-reality divergence — nice-to-have for Construct, near load-
-  bearing for V2. **Do not** bloat RFC-001 with value-typing hints: 001 owns
-  *fold behavior*, Imp 2 owns *value comparability*. Clean seams.
+- **Q4 (sequencing): RULED by the founder (letter 043)** — **001 first, then
+  value-typing (Imp 2) as the very next spec, back-to-back, kept separate.**
+  V2's quantity-heavy reality workload is confirmed real and near, so
+  range/comparison predicates over scalar literals (`temperature > 50`,
+  `cost > $X`) are a near-term V2 requirement, not a someday-nicety. **Do
+  not** bloat RFC-001 with value-typing hints: 001 owns *fold behavior*,
+  Imp 2 owns *value comparability*. Clean seams.
 
 ## 6. Recommended v1 cut (Codex's smallest-valuable-version)
 
