@@ -147,11 +147,20 @@ three namings + an operational test:
   longer know" is the *established-unknowable* state (`deny`) **inside a
   `knows:` frame**, superseding the old belief — a positive assertion in my
   frame. So *stale belief* needs no new mechanism (frame axis × time axis).
-- **Confidence = temporal salience.** It is a *derived ranking* over present
-  facts (provenance rank × recency × corroboration), computed under the same
-  membrane as salience — **never a stored `confidence: 0.6` fact** (that would
-  be the derived→asserted leak). A host that wants decay computes it; never logs
-  it.
+- **Confidence — two distinct things; the membrane-test separates them
+  (Codex engine-audit catch).**
+  - *Source-confidence-at-assertion* — how sure the **observer/extractor** was
+    *when it asserted this* (the assertion row's `confidence` field). This is
+    **irreducible provenance (P5)** — the engine cannot recompute "the extractor
+    was 0.7 sure" from other facts — so by the membrane-test it is a legitimate
+    **stored input**, exactly like `status`.
+  - *Derived current-confidence / decay* — how sure we should be **now**, given
+    recency × corroboration × that provenance. This **is** recomputable → it is
+    the temporal analogue of salience and is **never stored** (a logged
+    `confidence: 0.6` *as a fresh fact about current belief* would be the
+    derived→asserted leak). A host that wants decay computes it; never logs it.
+  The stored input feeds the derived output; storing the input is provenance,
+  storing the output is the breach.
 - **Observed completeness is a positive fact, never read from missing rows.**
   "The keyring has 3 keys — is there a 4th?" stays `unknown` by default
   (never-invent-the-negative), but a host may assert `keyring · count · 3
