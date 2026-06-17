@@ -21,7 +21,9 @@ from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
-LENSES = frozenset({"establishing_set", "current_state", "what_happened", "character_sheet"})
+LENSES = frozenset(
+    {"establishing_set", "current_state", "what_happened", "character_sheet", "situation"}
+)
 
 # Kind defaults: render-coherence fills, never fact claims (whitepaper
 # §3.1). Deliberately tiny in the spike.
@@ -159,13 +161,29 @@ class Projector:
             self._lens_events(m, entities, since)
         elif lens == "character_sheet":
             self._lens_sheet(m, entities)
+        elif lens == "situation":
+            self._lens_situation(m, entities, budget)
         else:
             self._lens_state(m, entities, establishing=(lens == "establishing_set"))
         self._fill_defaults(m)
-        self._shape_to_budget(m, budget)
+        if lens != "situation":
+            # situation budgets its live-events bucket internally and never
+            # truncates the standing-truth floor (SITUATION-LENS-V1 §Overflow).
+            self._shape_to_budget(m, budget)
         return m
 
-    def _lens_state(self, m: Materialization, entities: list[str], establishing: bool) -> None:
+    def _lens_state(
+        self,
+        m: Materialization,
+        entities: list[str],
+        establishing: bool,
+        served: dict[str, str] | None = None,
+    ) -> None:
+        """Standing truth. When `served` is supplied (situation lens), it
+        collects the ids of the rows the fold actually serves now, tagged
+        ``"concrete"`` (a surviving effect) or ``"open"`` (an unresolved
+        winner = an open thread) — the set the live-event walk reaches back
+        from (SITUATION-LENS-V1)."""
         for entity in entities:
             folded = self._indexes.current_state(
                 entity, m.frame, m.as_of, m.asserted_as_of
@@ -175,6 +193,11 @@ class Projector:
                     if result.conflicted:
                         m.conflicted_keys.append((entity, attr))
                     m.quantities.append((entity, attr, result.quantity))
+                    if served is not None:
+                        # accrue serves the total via quantities; the ledger
+                        # rows are its live effects.
+                        for r in result._ledger_rows:
+                            served[r.id] = "concrete"
                     continue
                 rows = result._value_rows or (
                     (result.winner,) if result.winner is not None else ()
@@ -183,15 +206,26 @@ class Projector:
                     continue
                 if result.conflicted:
                     m.conflicted_keys.append((entity, attr))
+                    if served is not None:
+                        # both sides are standing truth; both are served.
+                        for cid in result.conflicting:
+                            served[cid] = "concrete"
                 for row in rows:
                     if row.value_type == "unresolved":
                         m.unresolved.append((entity, attr))
+                        if served is not None:
+                            # an unresolved winner with no resolved_by is the
+                            # open-thread state (fold_key already drops spent
+                            # thunks): mark it open.
+                            served[row.id] = "open"
                         continue  # the frontier is named, never painted (§10)
                     durability = self._classifier.durability(row.id)
                     if establishing and durability == STATE and not result._value_rows:
                         row = self._establishing_state(entity, attr, m) or None
                         if row is None:
                             continue
+                    if served is not None:
+                        served[row.id] = "concrete"
                     m.assertions.append(row)
 
     def _establishing_state(
@@ -222,6 +256,64 @@ class Projector:
         if not qualifying:
             return None
         return min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+
+    def _lens_situation(
+        self, m: Materialization, entities: list[str], budget: int | None
+    ) -> None:
+        """Re-entry retrieval (SITUATION-LENS-V1): the standing-truth floor
+        plus only the *live* events anchored to the scope; closed history is
+        dropped. Liveness is derived every read from present facts — an event
+        is live iff it has an open thread (a) or a still-served effect (b) —
+        and nothing is stored (the membrane, A6)."""
+        served: dict[str, str] = {}
+        self._lens_state(m, entities, establishing=False, served=served)
+        floor = len(m.assertions)
+        if not served:
+            return
+        # One batched walk: served effect/thread rows -> their causing events.
+        # caused_by sits on the EFFECT row (entity = effect-row id, value =
+        # event entity); a row in `served` carrying one means its event has a
+        # surviving effect (b) or, for an "open" row, an open thread (a).
+        # Anchoring is therefore implicit: an event surfaces only because it
+        # produced a still-served fact ABOUT a scope entity — never because a
+        # mobile participant merely stands in scope.
+        live_events: set[str] = set()
+        for meta in self._buffer.visible(
+            entity_in=sorted(served),
+            attribute="caused_by",
+            value_type="entity",
+            frame=m.frame,
+            asserted_as_of=m.asserted_as_of,
+        ):
+            if isinstance(meta.value, str):
+                live_events.add(self._indexes.resolve_entity(meta.value))
+        if not live_events:
+            return
+        # Emit the EVENT-durability rows for the live events, recency-ordered.
+        event_rows: list[Assertion] = []
+        for row in self._buffer.visible(
+            frame=m.frame, valid_as_of=None, asserted_as_of=m.asserted_as_of
+        ):
+            if self._classifier.durability(row.id) != EVENT:
+                continue
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            if self._indexes.resolve_entity(row.entity) not in live_events:
+                continue
+            if m.as_of is not None and row.valid_from is not None and row.valid_from > m.as_of:
+                continue
+            event_rows.append(row)
+        event_rows.sort(
+            key=lambda r: (r.valid_from if r.valid_from is not None else float("-inf"), r.seq)
+        )
+        if budget is not None:
+            # The floor is never truncated; the live-events bucket yields to
+            # budget, keeping the most-recent (recency, not popularity).
+            keep = max(0, budget - floor)
+            if len(event_rows) > keep:
+                m.truncated += len(event_rows) - keep
+                event_rows = event_rows[len(event_rows) - keep:]
+        m.assertions.extend(event_rows)
 
     def _lens_events(self, m: Materialization, entities: list[str],
                      since: float | None = None) -> None:

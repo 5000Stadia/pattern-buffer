@@ -314,6 +314,10 @@ class Ingestor:
                 self._buffer.append(
                     entity=row.id, attribute="caused_by", value=str(item["caused_by"]),
                     value_type="entity", status="inferred", role=self._role,
+                    # The effect-edge rides in its effect's frame: a non-canon
+                    # effect's cause must be reachable from a frame-scoped read
+                    # (else the situation lens false-deads it — Codex post-impl).
+                    frame=item.get("frame", CANON),
                 )
             )
         if self._observe_mode and not timeless:

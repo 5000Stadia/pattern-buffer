@@ -22,9 +22,15 @@ Pre-v1, the surface is malleable; this file is revised as worlds reveal needs.
 
 ---
 
-## Building now (passed all three)
+## Specced, paused (pre-implementation)
+| Item | Characteristic | Shape | Status |
+|---|---|---|---|
+| **multi-frame `confidence`** | trust over an observer's *effective* knowledge = own frame ∪ `public` | `frame` accepts a list; per-frame fold, union at the scoring layer (mirrors multi-frame `frame_diff`) | CONFIDENCE-MULTIFRAME-V1 specced; Codex-RED on one finding (single-frame list must delegate to the str path so the reduction invariant holds). Paused when the conversation turned to the liveness/situation work; resume with that one fix. |
+
+## Shipped
 | Item | Characteristic | Shape | Spec |
 |---|---|---|---|
+| **`situation` lens** | re-entry retrieval: standing truth ∪ *live* threads, closed history dropped; liveness = open thread (a) OR surviving un-superseded effect (b); effect-driven anchoring; recency overflow over a protected floor | a 5th `materialize` lens; derived every read, nothing stored; proven against a 3-domain adversarial battery ((a)+(b) shown exhaustive for engine-knowable present relevance) | SITUATION-LENS-V1 |
 | **aggregate** | emergent collection properties (total weight, headcount, value, max level) | bounded derive-don't-store rollup over `contents` (sum/count/min/max/avg) | WORLD-RETRIEVAL-V2 |
 | **multi-frame `frame_diff`** (#25) | an observer's *effective* knowledge = own frame ∪ `public` | `b`-side accepts a frame list; union-of-presences | WORLD-RETRIEVAL-V2 |
 
@@ -52,15 +58,27 @@ them for a deliberate discussion after the lined-up work — never auto-build.**
 The passive ones are afternoon-jobs added when a real need shapes them; no
 urgency, no loss in waiting.
 
-| Item | Imprint | Passive/Invasive | Fails on |
+**Refined rule (founder).** *Passive AND contextually-likely-for-use → it's in*
+(dormant cost ~zero, the shape is wanted). *Passive but not contextually likely*
+→ **tossed**, not parked (below). *Invasive* → held + surfaced for a deliberate
+discussion, never auto-built.
+
+### Held — invasive (surface for discussion, never auto-build)
+| Item | Imprint | Why invasive | Fails on |
 |---|---|---|---|
-| **Nested belief** (frames-about-frames) | **heavy — a new dimension** | **INVASIVE** (expands the frame model + threads belief-depth into reads, used or not) | overlap + shape + bulk — *the "multidimensional knowledge tracker" risk* |
-| **General query** (`where x.foo and y.bar>3`) | medium-heavy — a query engine | **INVASIVE** (overlap/"which read?" exists on sight) | overlap + shape + P7. Trigger: a forbidden host full-log scan |
-| **Native exact-decimal value-type** | medium — value layer | **INVASIVE** (every value path must handle it, used or not) | already solved by minor-units |
-| **accrue min/max/avg folds** | light — a fold-policy value | **passive** (dormant unless declared) | reflexive need (thin) |
-| **Salience tuning (config)** | light — defaulted weights | **passive** (learned version would be invasive) | premature |
-| **Set/accrue confidence** | light — a `confidence` branch | **passive** | no need + unclear best-default |
-| **Freshness-horizon verb** | light — a thin read | **passive** (whisker of redundancy w/ `last_observed_at`) | redundant |
+| **Nested belief** (frames-about-frames) | **heavy — a new dimension** | expands the frame model + threads belief-depth into reads, used or not | overlap + shape + bulk — *the "multidimensional knowledge tracker" risk* |
+| **General query** (`where x.foo and y.bar>3`) | medium-heavy — a query engine | overlap/"which read?" exists on sight | overlap + shape + P7. Trigger: a forbidden host full-log scan |
+| **Native exact-decimal value-type** | medium — value layer | every value path must handle it, used or not | already solved by minor-units |
+
+### Pending founder read
+| Item | Imprint | Note |
+|---|---|---|
+| **Salience tuning (config)** | light — defaulted weights, passive | weakly-likely at best; ship the config object now or stay tossed until a host misranks. Learned/adaptive version is invasive (held above). |
+
+### Tossed — passive but not contextually likely (decided against, not parked)
+- **accrue min/max/avg folds** — a delta-ledger rarely wants min/max/avg; thin reflexive need.
+- **Set/accrue confidence** — best-default shape unclear (trust over a *set* of values? a running total?); no live need.
+- **Freshness-horizon verb** — redundant with `last_observed_at` already on `confidence`.
 
 ## Resolved — actively decided against (not parked)
 - **Frame-inclusion edges (#15.3)** — superseded by **flat-frames + read-union**:
