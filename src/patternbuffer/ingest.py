@@ -256,6 +256,17 @@ class Ingestor:
         if self._semantics.is_containment(attribute) and value_type == "entity":
             self._reject_cycle(entity, value, item.get("frame", CANON),
                                None if timeless else valid_from)
+        if (
+            self._semantics.is_lateral(attribute)
+            and value_type == "entity"
+            and entity == value
+        ):
+            # A lateral self-loop (X connects_to X / adjacent_to X) is
+            # extraction noise — it adds no edge any walk can use. Reject it
+            # at the gate, the same class as the containment self-edge (#19).
+            raise ValueError(
+                f"lateral self-loop: {entity!r} cannot {attribute} itself"
+            )
         status = item.get("status", "stated")
         write_role = self._role
         if status == "generated":

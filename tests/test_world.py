@@ -83,6 +83,17 @@ class TestContainmentCycleGate:
         assert not [r for r in world.buffer.all_rows()
                     if r.entity == "place:council_tier" and r.attribute == "in"]
 
+    def test_lateral_self_loop_rejected(self, world):
+        # #19: a lateral self-loop (X connects_to X) is extraction noise —
+        # no walk can use it. Rejected at the gate like the containment case.
+        with pytest.raises(ValueError, match="self-loop"):
+            world.ingest_structured([
+                {"entity": "place:wellhead", "attribute": "connects_to",
+                 "value": "place:wellhead", "timeless": True},
+            ])
+        assert not [r for r in world.buffer.all_rows()
+                    if r.attribute == "connects_to"]
+
     def test_transitive_cycle_rejected(self, world):
         world.ingest_structured([
             {"entity": "obj:a", "attribute": "in", "value": "obj:b", "valid_from": 1.0},
