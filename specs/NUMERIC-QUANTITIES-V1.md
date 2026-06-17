@@ -1,6 +1,6 @@
 # NUMERIC-QUANTITIES-V1 — numeric quantities: change them, compare them
 
-**Status:** SPEC r3 — Codex r2 left findings 1/3/4/5 resolved; r3 fixes the
+**Status:** GREEN (Codex r3 re-review). Implementing per Codex order. r3 — Codex r2 left findings 1/3/4/5 resolved; r3 fixes the
 remainder (stale `_value_rows`-as-ledger text → `_ledger_rows`; `frame_diff`/
 `ask` accrue-awareness; the `visible()`-kwargs contradiction removed).
 Re-review pending. Merges the founder-ruled Imp 2 (value typing / comparison
