@@ -1,6 +1,11 @@
 # WORLD-RETRIEVAL-V1 — neighborhood retrieval + salience (the intelligent read)
 
-**Status:** SPEC r2 — Codex review RED (r1) addressed; re-review pending. The
+**Status:** SPEC r3 — Codex r2 left 3/4 resolved; r3 fixes the last: salience
+uses **absolute** (not candidate-relative) normalization so a per-entity score
+is cacheable; `event_participation` reads indexed visible event rows (events
+are EVENT-dropped by `fold_key`); `incoming_refs` iterates the full identity
+closure; `max_fanout` added to the signature; `classifier_version` counter
+pins cache invalidation. Re-review pending. The
 *shape* passed r1 (bounded, P7, additive, derive-don't-store all GREEN); the
 RED was operational — the existing surfaces this would reuse (`path()`,
 `events()`, incoming-ref counting) scan global state, so reusing them as-is
@@ -40,7 +45,7 @@ A new porcelain read verb (additive; LLM-free; P7):
 
 ```
 neighborhood(entity, depth=1, frame="canon", as_of=None,
-             edge_kinds=None, budget=None) -> dict
+             edge_kinds=None, max_fanout=64, budget=None) -> dict
 ```
 
 Returns the subject's own folded state plus the structurally-connected
@@ -90,15 +95,22 @@ using indexed `visible(...)` filters (never the whole log), and have
 - `lateral_neighbors(entity, frame, as_of)` — one hop over
   `connects_to`/`adjacent_to` from `entity`'s closure (not the whole graph as
   `path()` builds).
-- `event_participation(entity, frame, as_of)` — events whose folded
-  agent/patient is `entity`'s closure (scoped, not all `event:` rows).
-- `caused_by_of(event_ids, …)` — the `caused_by` edge(s) of given events (a
-  one-hop traversal helper; today only a private row-effect check exists).
+- `event_participation(entity, frame, as_of)` — events whose `agent`/`patient`
+  row points at `entity`'s closure. **Events are EVENT-classified and
+  `fold_key` drops EVENT rows, so this does NOT fold** — it reads indexed
+  visible rows directly: `visible(attribute_in=["agent","patient"],
+  value=<closure id>, frame, valid_as_of)` per closure id, collecting the
+  `event:` subjects. (Scoped, not all `event:` rows.)
+- `caused_by_of(event_ids, …)` — the `caused_by` edge(s) of given events via
+  `visible(entity_in=event_ids, attribute="caused_by")` (a one-hop traversal
+  helper; today only a private row-effect check exists).
 - `incoming_refs(entity, frame, as_of)` — entities with an entity-valued row
-  whose value is in `entity`'s closure. **Needs a cheap reverse lookup:** add
-  a value-leading index (`ix_assertions_value`) and an additive
-  `value_type=` filter to `visible()`, so this is
-  `visible(value=entity, value_type="entity")` — indexed, not a Python scan.
+  whose value is in `entity`'s **identity closure** (iterate every closure id,
+  not just the canonical entity). **Needs a cheap reverse lookup:** add a
+  value-leading index (`ix_assertions_value`) and an additive `value_type=`
+  filter to `visible()`, so this is `visible(value=<closure id>,
+  value_type="entity")` per id — indexed, not a Python scan. The `value=`
+  match is against the JSON-encoded value (as `visible(value=…)` already does).
 `path()`/`events()` stay as-is for their own callers; neighborhood uses these
 bounded helpers instead.
 
@@ -122,31 +134,38 @@ computed from (all closure-scoped, no model call):
 - **delta-from-baseline** — whether it has changed from a CONSTITUTIVE/
   establishing baseline (movement/change draws attention).
 
-**The fixed formula (pinned — Codex r1).** Each component normalized to
-`[0,1]` over the closure-scoped candidate set, combined by a documented
-constant weight table:
+**The fixed formula — ABSOLUTE normalization (Codex r2, the key fix).**
+Candidate-relative normalization is incoherent for a cacheable per-entity
+score (an entity would rank differently in different neighborhoods). So each
+component is an **absolute** function of the entity alone, in `[0,1]`, making
+`salience(entity, frame, as_of)` a stable, cacheable scalar; *ranking is just
+sorting by it*.
 ```
 salience = 0.40*recency + 0.25*reference_frequency
          + 0.20*reinforcement + 0.15*delta_from_baseline
 ```
-- `recency` = rank of the entity's max `asserted_at` among candidates.
-- `reference_frequency` = `len(incoming_refs(entity))`, normalized.
-- `reinforcement` = count of distinct `valid_from` across the entity's
-  visible rows, normalized.
-- `delta_from_baseline` = 1.0 if any STATE/move row supersedes the entity's
+- `recency` = `max_asserted_at(entity) / head` (0..1; newer → higher), a
+  stable function of the entity's last touch vs the current log head.
+- `reference_frequency` = `min(1, log1p(incoming_ref_count) / log1p(REF_SCALE))`
+  — absolute log-scaled count of incoming entity refs (constant `REF_SCALE`).
+- `reinforcement` = `min(1, log1p(distinct_valid_times) / log1p(REINF_SCALE))`.
+- `delta_from_baseline` = 1.0 if a STATE/move row supersedes the entity's
   establishing baseline, else 0.0.
-Weights live in one module-level constant table, tunable, documented — not
-magic numbers scattered in code.
+Weights and the two scale constants live in one module-level table — tunable,
+documented, not scattered magic. No candidate set enters the formula or the
+API.
 
-**Caching + invalidation (pinned — Codex r1).** Salience is **cached in a
-rebuildable derived sidecar** (mirroring the classifier/semantics sidecars),
-never written to the log (P2). The cache key includes **log head +
-frame + as_of + identity-closure version**, and the cache is invalidated on
-**classifier-sidecar mutation** too (`classify.set`/`promote_accruals`/
-`rebuild` change durability without moving the log head, which shifts
-`delta_from_baseline` and the budget spine). When in doubt, recompute —
-salience is cheap and closure-scoped. It powers `neighborhood`'s ranking and
-`materialize`'s budget ordering; a host may also call it directly.
+**Caching + invalidation (pinned).** Salience caches in a **rebuildable
+derived sidecar** (mirroring the classifier/semantics sidecars), never written
+to the log (P2). Cache entry key = `(entity, frame, as_of)`; each entry stores
+the `head` and `classifier_version` it was computed at, and is recomputed when
+either differs. **`classifier_version`** is a counter the `Classifier` bumps
+on every sidecar mutation (`set`/`promote_accruals`/`rebuild`) — durability can
+change `delta_from_baseline`/the budget spine without moving the log head.
+Identity-closure changes need no separate version: a `same_as`/merge/retract is
+an append, so it moves `head`. When in doubt, recompute — it's cheap and
+closure-scoped. Salience powers `neighborhood`'s ranking and `materialize`'s
+budget ordering; a host may also call it directly.
 
 **Honest bound:** salience is a heuristic, not truth. A fact unmentioned for
 three campaign-years has *zero salience and full validity* (whitepaper §13) —
