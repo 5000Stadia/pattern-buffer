@@ -1,6 +1,10 @@
 # RFC-002 — The Unknown: a doctrine for deliberation
 
-**Status:** DRAFT for three-way deliberation (Kernos · Construct · Codex).
+**Status:** DELIBERATION — **Kernos ✅ GREEN** (audit 044: complete for a
+changing reality, no new primitives; three sharpenings + the membrane-test
+folded into §4.2). **Codex (engine audit) ⏳** + **Construct (consumer) ⏳**
+pending. The One Ring worked example (§7.5) is the founder-approved canonical
+illustration. Three-way deliberation (Kernos · Construct · Codex).
 **Origin:** a founder design conversation on how the substrate must treat the
 unknown. The goal of circulating this is to **ratify (or correct) the doctrine
 before broader adoption locks the shape** — and, if ratified, fold it into the
@@ -56,6 +60,29 @@ knowledge gaps, false belief) — but always *relationally* (the shadow cast by
 two sets of real facts), never *absolutely* (a structured void you store,
 enumerate, or invent).
 
+### 2.1 The relational unknown generalizes to N observers (the frame lattice)
+
+Known/unknown is relative to a *frame*, and **every observer is a frame** (P4):
+the player, *and each NPC*, has its own `knows:<id>`. `frame_diff` runs between
+**any two frames**, so multi-perspective knowledge is a full lattice computed
+from presences:
+- `frame_diff(canon, knows:marn)` → what's true that Marn doesn't know;
+- `frame_diff(knows:marn, knows:player)` → what Marn knows that the player
+  doesn't, and the reverse;
+- N NPCs → the whole who-knows-what matrix, each an as-of `frame_diff`, **none
+  stored as a negative.**
+
+This clarifies a three-tier layering: **canon** (what is true; no single
+observer holds all of it) ⊋ **public** (common knowledge) ⊆ an observer's
+effective knowledge (`public` + their private `knows:<id>`). An observer's
+unknown = what's true but absent from both — relational, never stored.
+
+**Boundary:** this is clean for **first-order** knowledge (what each agent
+knows). **Nested belief** ("Marn knows that the player doesn't know X" —
+second-order theory of mind) needs frames-about-frames and is **deferred unless
+a host proves the need** — first-order multi-observer covers ~all of D&D,
+mystery, and social dynamics.
+
 ## 3. Sharpening #2 — the one fenced channel for expectation
 
 The substrate is not purely ascetic about the unobserved: `kind` carries
@@ -78,6 +105,60 @@ The guard is the **membrane between *derived/expected* and *stored/asserted***
 (P1/P2 + provenance). Keeping it perfectly intact is what makes this a
 discovery engine, not a hallucination engine. The failure mode to police is
 membrane-leakage, not unknown-reasoning.
+
+### 4.1 Non-goal — NO materialized multidimensional knowledge grid (founder)
+
+The frame lattice (§2.1) is a *projection*, never a stored structure. The
+trap to refuse: materializing a (fact × observer × time × confidence ×
+belief-depth) grid — it explodes combinatorially **and** forces storing
+*absence* ("Marn doesn't know Y"). We store **one flat, sparse log of
+presences**; the knowledge dimensions are **computed on demand** (`frame_diff`,
+`as_of`, the `confidence` field) and discarded. Dimensionality lives in the
+*queries*, never in the *data*. Consequences:
+- **First-order multi-observer knowledge needs ZERO new machinery** — frames +
+  `frame_diff` already give it.
+- **Frames stay sparse** (each holds only that observer's delta from common
+  knowledge); #4 inheritance is therefore a *flattening*, not a new dimension.
+- **Defer every dimension a domain doesn't force**: nested belief (theory of
+  mind), per-observer confidence decay, belief-about-belief — **not built**
+  until a real workload drags it out. Crossing this line is what turns a clean
+  world-log into an epistemic-logic engine.
+
+### 4.2 Kernos sharpenings (audit 044 — folded; complete for a changing reality)
+
+Kernos ratified the doctrine and showed it needs **no new primitives**, only
+three namings + an operational test:
+
+- **The membrane-test** (sibling to RFC-001's rejection-test, the one-line
+  guard against every breach):
+  > *Could the engine recompute this row from other present facts? If yes, it
+  > is derived and must not be stored. Only an irreducible observation may be a
+  > fact.*
+  Staleness, confidence, salience, "doesn't know," presumed-empty — all
+  recomputable → none stored.
+- **Absence is relational across TWO axes — frames AND time.** §2.1 developed
+  the frame axis; the time axis is its analogue: *freshness-diff* — "is this
+  presence still current?" = *has it been refreshed by a later observation
+  within horizon H?* Lapsed observation ("value was X when last seen, now
+  unknown") is a **time-scoped presence** whose staleness is **derived (now − t),
+  never stored** — decay-to-unknown is read-time relational computation, not a
+  stored void.
+- **The three states are frame-relative**, not canon-only. "I know that I no
+  longer know" is the *established-unknowable* state (`deny`) **inside a
+  `knows:` frame**, superseding the old belief — a positive assertion in my
+  frame. So *stale belief* needs no new mechanism (frame axis × time axis).
+- **Confidence = temporal salience.** It is a *derived ranking* over present
+  facts (provenance rank × recency × corroboration), computed under the same
+  membrane as salience — **never a stored `confidence: 0.6` fact** (that would
+  be the derived→asserted leak). A host that wants decay computes it; never logs
+  it.
+- **Observed completeness is a positive fact, never read from missing rows.**
+  "The keyring has 3 keys — is there a 4th?" stays `unknown` by default
+  (never-invent-the-negative), but a host may assert `keyring · count · 3
+  (observed)` / a `contents_complete_as_of` stamp; then "is there a 4th?" is
+  answered *relationally* (asserted count vs the queried 4th). Closed-world
+  *answers* without a closed-world *assumption* — emptiness/completeness as a
+  present fact, never an inference from absence.
 
 ## 5. Consequences (what the doctrine commits us to)
 
@@ -126,6 +207,38 @@ membrane-leakage, not unknown-reasoning.
   **paints the frontier**? Include the in-flight WORLD-RETRIEVAL read layer.
 - Is the `default`-provenance fence actually unbreakable (no role can promote
   `default`/`generated` to canon)?
+
+## 7.5 Worked example — the One Ring (the doctrine in one story)
+
+LotR is structurally a knowledge-divergence engine; it exercises every part of
+the doctrine and proves it stays sparse (no grid).
+
+**Canon (observer-independent, a handful of rows):** `one_ring · is ·
+the_one_ring` (timeless); `· master · sauron`; `· power · corrupts_bearer`;
+`· destroyed_by · mount_doom_fire`; `· in · <gollum→bilbo→frodo→…→unmade>`
+(valid_time). No single observer holds all of it.
+
+**The lattice — only where the story makes it load-bearing:**
+- **Sauron** — knows the *nature* completely, the *location* not at all
+  (`knows:sauron` has no `in` row → "where?" → `unknown` *to him*); plus a
+  **false belief** `knows:sauron · one_ring · bearer · a_mighty_lord (assumed)`.
+  The plan works because `frame_diff(canon, knows:sauron)` is enormous.
+- **Gandalf** — the **time axis**: `t_party: … is · assumed{maybe a Great
+  Ring}` → `t_fire: … is · the_one_ring (observed)`. As-of, not a new state.
+- **Boromir** — **false belief, not ignorance**: `knows:boromir · one_ring ·
+  usable_as_weapon · true` — a *present wrong row* vs canon.
+- **Bilbo / the Shire** — *incomplete*: `kind · magic_ring`, never
+  `is=the_one_ring`.
+- **Tom Bombadil** — a **`deny` thunk in canon**: `one_ring · power_over ·
+  tom_bombadil · unresolved{deny, "unexplained in the tale"}`.
+
+**The anti-bloat proof:** the Bree merchant, the orc, Farmer Maggot — *nothing*
+stored about their Ring-knowledge (not "doesn't know" — silence). Knowledge is
+tracked in the ~six places it's dramatically load-bearing; everywhere else it's
+honest `unknown`, computed by `frame_diff` never stored. The three distinctions
+are unmistakable here: **ignorance** (absence → `unknown`) ≠ **false belief**
+(a divergent *present* row) ≠ **canonically unknowable** (`deny` + reason).
+None stores "X doesn't know Y."
 
 ## 7. If ratified
 Fold §2 (relational absence) + §4 (the membrane) into the whitepaper as a
