@@ -41,13 +41,26 @@ Pre-v1, the surface is malleable; this file is revised as worlds reveal needs.
 |---|---|---|---|
 | **confidence / freshness read** (C) | belief that ages; "is this still current?" (reality / V2) | a *derived read under the membrane* — confidence = temporal salience (recency × corroboration × provenance), freshness = `now − t`; Kernos-shaped | read-layer, host-computable today; no overlap → a clean follow-on, not bundled with V2 |
 
-## Deferred — and the axis each fails (this is the real why)
-| Item | Characteristic | Fails on | Note |
+## Deferred — passive vs invasive, and the axis each fails
+
+**The discriminator (founder).** *Passive* = a dormant branch / optional verb /
+policy value that does nothing if unused — pre-building costs ~nothing and it
+provides shape the moment it's used. *Invasive* = it touches a core path, the
+shared mental model, or overlaps an existing thing, so it imposes cost **whether
+or not anyone calls it**. **Founder directive: hold the invasive ones; surface
+them for a deliberate discussion after the lined-up work — never auto-build.**
+The passive ones are afternoon-jobs added when a real need shapes them; no
+urgency, no loss in waiting.
+
+| Item | Imprint | Passive/Invasive | Fails on |
 |---|---|---|---|
-| **Nested belief** (frames-about-frames) | "A knows that B doesn't know X" — 2nd-order theory of mind | **overlap + shape-confidence** | a *second* knowledge model competing with the clean "one observer = one frame"; the combinatorial/"multidimensional knowledge tracker" risk; composition (belief-depth, recursive `frame_diff`) not confidently knowable. Additive path: a `knows:A:about:B` namespace — build only on a demonstrated need. |
-| **General query / multi-condition retrieval** | arbitrary filtered retrieval (`where x.foo and y.bar>3`) | **overlap + shape-confidence** | overlaps `where`/`neighborhood`/`state`; huge operator design space; the P7 query-engine risk. Trigger: a *forbidden host-side full-log scan* appearing. |
-| **accrue min/max/avg folds** | non-sum aggregates over a delta ledger | **reflexive need (thin)** | niche; additive `fold_policy` values when a workload wants them. |
-| **Salience tuning / learned salience** | per-domain relevance weighting | **reflexive need (thin)** | the fixed formula works; tuning is premature without usage data. |
+| **Nested belief** (frames-about-frames) | **heavy — a new dimension** | **INVASIVE** (expands the frame model + threads belief-depth into reads, used or not) | overlap + shape + bulk — *the "multidimensional knowledge tracker" risk* |
+| **General query** (`where x.foo and y.bar>3`) | medium-heavy — a query engine | **INVASIVE** (overlap/"which read?" exists on sight) | overlap + shape + P7. Trigger: a forbidden host full-log scan |
+| **Native exact-decimal value-type** | medium — value layer | **INVASIVE** (every value path must handle it, used or not) | already solved by minor-units |
+| **accrue min/max/avg folds** | light — a fold-policy value | **passive** (dormant unless declared) | reflexive need (thin) |
+| **Salience tuning (config)** | light — defaulted weights | **passive** (learned version would be invasive) | premature |
+| **Set/accrue confidence** | light — a `confidence` branch | **passive** | no need + unclear best-default |
+| **Freshness-horizon verb** | light — a thin read | **passive** (whisker of redundancy w/ `last_observed_at`) | redundant |
 
 ## Resolved — actively decided against (not parked)
 - **Frame-inclusion edges (#15.3)** — superseded by **flat-frames + read-union**:

@@ -130,6 +130,8 @@ p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
 p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursive=False) -> dict
    # op in sum, count, min, max, avg; numeric rollup over contents()
 p.locate / p.contents / p.path
+p.confidence(entity, attribute, frame=, as_of=) -> {score, status, last_observed_at, corroboration, conflicted}
+   # derived trust over a functional key; never stored; functional-only (set/accrue -> score None)
 p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]

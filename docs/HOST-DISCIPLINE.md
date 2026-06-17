@@ -180,6 +180,25 @@ current-confidence, salience, "doesn't know," presumed-empty are all
 recomputable → none stored. (Source-confidence *at assertion* is different — it
 is irreducible provenance, legitimately the row's `confidence` field.)
 
+### Standing patterns (numbers, completeness, trust)
+
+- **Exact money / precision → integer minor-units.** Numbers are int *or*
+  float already (`12.5`, `0.7` work). For *exact* money, model the minor unit
+  as an integer (`$19.99 → 1999`): integer arithmetic is exact, the `accrue`
+  ledger sums without float error, and no new type is needed.
+- **Observed completeness → a positive fact, never read from absence.** "Is
+  there a 4th key?" is honest `unknown` by default. If a character *counts*,
+  assert it (`keyring · count · 3 (observed)` / a `complete_as_of` stamp); the
+  "4th?" question is then relational (the asserted count vs the query), never an
+  inference from missing rows. Closed-world *answers* without a closed-world
+  *assumption*.
+- **Trust / staleness → `confidence`, computed, never stored.** `confidence(e,
+  attr)` returns a derived trust score (provenance × recency × corroboration)
+  plus `last_observed_at`; compute *staleness* as `your_clock − last_observed_at`
+  host-side. A three-campaign-years-stale fact has low confidence and **full
+  validity** — never delete it, never store a decaying `confidence` row (the
+  membrane).
+
 ## Feeding mechanics (summary; depth in INGESTION-PLAYBOOK.md)
 
 - **Scaffold identity first.** Establish a registry (ids/names/aliases/kinds
