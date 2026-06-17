@@ -157,6 +157,11 @@ pairs — **computed on demand, nothing materialized.** Record a character's
 knowledge **only where load-bearing**; the 44th NPC who learned nothing has no
 rows and reads as honest silence.
 
+For effective knowledge that includes common/public facts, pass a b-frame
+union: `frame_diff(canon, [knows:X, public], scope)`. A fact is covered if any
+b-frame agrees; private false belief is reported only when no public/common
+frame corrects it.
+
 **The perception-write pattern (how a character learns during play).** When an
 observer perceives or is told a fact, write **that one row** into their frame —
 `knows:<id> · attribute · value`, the value **frozen at perception time** —
@@ -235,13 +240,14 @@ perspective, and reading what comes back honestly.
    | one fact (a key's value) | `state(entity, attribute, …)` | the folded winner + conflict flag |
    | everything about a subject | `snapshot(ids, lens=…)` / `materialize` | a coherent bundle of folded facts |
    | entities satisfying a numeric bound | `where(attribute, op, value, …)` | ids whose folded numeric value matches |
+   | a collection rollup | `aggregate(container, attribute, op, …)` | sum/count/min/max/avg over numeric folded values of `contents()` |
    | where something is | `locate(entity)` | containment chain, nearest container first |
    | what's inside / co-located | `contents(container)` | members (emptiness = `[]`, derived) |
    | is X reachable from Y | `path(a, b)` | a route, or `None` (no false connectivity) |
    | what structurally matters around X | `neighborhood(entity, depth=…, …)` | X's folded state plus bounded, salience-ranked correlates |
    | how likely X should survive a budget | `salience(entity, …)` | a derived ranking score, not truth |
    | what happened (to whom) | `events(participants=…, kind=, since=, until=)` | the event spine, filtered |
-   | what A knows that B doesn't | `frame_diff(a, b, scope)` | divergent/absent facts (dramatic irony) |
+   | what A knows that B doesn't | `frame_diff(a, b, scope)` | divergent/absent facts; `b` may be a frame union |
    | a natural-language question | `ask(question, frame=, as_of=)` | one parse + refer + folds → `Answer` |
    | force a deferred aspect | `resolve(entity, aspect)` | the thunk's resolution per policy |
 

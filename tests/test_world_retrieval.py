@@ -42,6 +42,175 @@ def _neighbor_ids(out):
     return [n["entity"] for n in out["neighbors"]]
 
 
+class TestAggregate:
+    def test_numeric_ops_over_direct_members(self, world):
+        world.ingest_structured([
+            {"entity": "obj:backpack", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:anvil", "attribute": "kind", "value": "item",
+             "timeless": True},
+            {"entity": "obj:anvil", "attribute": "in", "value": "obj:backpack",
+             "valid_from": 1.0},
+            {"entity": "obj:anvil", "attribute": "weight", "value": 7,
+             "valid_from": 1.0},
+            {"entity": "obj:book", "attribute": "kind", "value": "item",
+             "timeless": True},
+            {"entity": "obj:book", "attribute": "in", "value": "obj:backpack",
+             "valid_from": 1.0},
+            {"entity": "obj:book", "attribute": "weight", "value": 3,
+             "valid_from": 1.0},
+            {"entity": "obj:feather", "attribute": "kind", "value": "item",
+             "timeless": True},
+            {"entity": "obj:feather", "attribute": "in", "value": "obj:backpack",
+             "valid_from": 1.0},
+            {"entity": "obj:feather", "attribute": "weight", "value": 2,
+             "valid_from": 1.0},
+        ])
+        assert world.aggregate("obj:backpack", "weight", "sum") == {
+            "op": "sum",
+            "value": 12,
+            "count": 3,
+            "members": ["obj:anvil", "obj:book", "obj:feather"],
+            "container": "obj:backpack",
+        }
+        assert world.aggregate("obj:backpack", "weight", "count")["value"] == 3
+        assert world.aggregate("obj:backpack", "weight", "min")["value"] == 2
+        assert world.aggregate("obj:backpack", "weight", "max")["value"] == 7
+        assert world.aggregate("obj:backpack", "weight", "avg")["value"] == 4.0
+
+    def test_empty_container_returns_empty_rollups(self, world):
+        world.ingest_structured([
+            {"entity": "obj:empty", "attribute": "kind", "value": "container",
+             "timeless": True},
+        ])
+        assert world.aggregate("obj:empty", "weight", "sum") == {
+            "op": "sum",
+            "value": 0,
+            "count": 0,
+            "members": [],
+            "container": "obj:empty",
+        }
+        assert world.aggregate("obj:empty", "weight", "count")["value"] == 0
+        assert world.aggregate("obj:empty", "weight", "min")["value"] is None
+        assert world.aggregate("obj:empty", "weight", "max")["value"] is None
+        assert world.aggregate("obj:empty", "weight", "avg")["value"] is None
+
+    def test_recursive_subtree_is_opt_in(self, world):
+        world.ingest_structured([
+            {"entity": "obj:bag", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:pouch", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:pouch", "attribute": "in", "value": "obj:bag",
+             "valid_from": 1.0},
+            {"entity": "obj:apple", "attribute": "kind", "value": "item",
+             "timeless": True},
+            {"entity": "obj:apple", "attribute": "in", "value": "obj:bag",
+             "valid_from": 1.0},
+            {"entity": "obj:apple", "attribute": "weight", "value": 2,
+             "valid_from": 1.0},
+            {"entity": "obj:ring", "attribute": "kind", "value": "item",
+             "timeless": True},
+            {"entity": "obj:ring", "attribute": "in", "value": "obj:pouch",
+             "valid_from": 1.0},
+            {"entity": "obj:ring", "attribute": "weight", "value": 5,
+             "valid_from": 1.0},
+        ])
+        direct = world.aggregate("obj:bag", "weight", "sum")
+        recursive = world.aggregate("obj:bag", "weight", "sum", recursive=True)
+        assert direct["value"] == 2
+        assert direct["members"] == ["obj:apple"]
+        assert recursive["value"] == 7
+        assert recursive["members"] == ["obj:apple", "obj:ring"]
+
+    def test_accrue_member_uses_folded_quantity(self, world):
+        world.ingest_structured([
+            {"entity": "place:party", "attribute": "kind", "value": "room",
+             "timeless": True},
+            {"entity": "person:rich", "attribute": "kind", "value": "person",
+             "timeless": True},
+            {"entity": "person:rich", "attribute": "in", "value": "place:party",
+             "valid_from": 1.0},
+            {"entity": "person:rich", "attribute": "gold", "value": 100,
+             "fold_policy": "accrue", "valid_from": 1.0},
+            {"entity": "person:rich", "attribute": "gold", "value": -25,
+             "value_type": "delta", "valid_from": 2.0},
+            {"entity": "person:poor", "attribute": "kind", "value": "person",
+             "timeless": True},
+            {"entity": "person:poor", "attribute": "in", "value": "place:party",
+             "valid_from": 1.0},
+            {"entity": "person:poor", "attribute": "gold", "value": 10,
+             "valid_from": 1.0},
+        ])
+        out = world.aggregate("place:party", "gold", "sum")
+        assert out["value"] == 85
+        assert out["count"] == 2
+        assert out["members"] == ["person:poor", "person:rich"]
+
+    def test_non_numeric_missing_and_set_valued_members_are_skipped(self, world):
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:numeric", "attribute": "in", "value": "obj:box",
+             "valid_from": 1.0},
+            {"entity": "obj:numeric", "attribute": "weight", "value": 4,
+             "valid_from": 1.0},
+            {"entity": "obj:wordy", "attribute": "in", "value": "obj:box",
+             "valid_from": 1.0},
+            {"entity": "obj:wordy", "attribute": "weight", "value": "heavy",
+             "valid_from": 1.0},
+            {"entity": "obj:boolean", "attribute": "in", "value": "obj:box",
+             "valid_from": 1.0},
+            {"entity": "obj:boolean", "attribute": "weight", "value": True,
+             "valid_from": 1.0},
+            {"entity": "obj:missing", "attribute": "in", "value": "obj:box",
+             "valid_from": 1.0},
+            {"entity": "obj:numeric", "attribute": "tag", "value": 10,
+             "arity": "set_valued", "valid_from": 1.0},
+            {"entity": "obj:wordy", "attribute": "tag", "value": 20,
+             "valid_from": 1.0},
+        ])
+        assert world.aggregate("obj:box", "weight", "sum") == {
+            "op": "sum",
+            "value": 4,
+            "count": 1,
+            "members": ["obj:numeric"],
+            "container": "obj:box",
+        }
+        assert world.aggregate("obj:box", "tag", "sum") == {
+            "op": "sum",
+            "value": 0,
+            "count": 0,
+            "members": [],
+            "container": "obj:box",
+        }
+
+    def test_frame_and_as_of_are_honored(self, world):
+        world.ingest_structured([
+            {"entity": "obj:bag", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:stone", "attribute": "in", "value": "obj:bag",
+             "valid_from": 1.0},
+            {"entity": "obj:stone", "attribute": "weight", "value": 5,
+             "valid_from": 1.0},
+            {"entity": "obj:gem", "attribute": "in", "value": "obj:bag",
+             "valid_from": 10.0},
+            {"entity": "obj:gem", "attribute": "weight", "value": 7,
+             "valid_from": 10.0},
+        ])
+        world.ingest_structured([
+            {"entity": "obj:stone", "attribute": "in", "value": "obj:bag",
+             "valid_from": 1.0},
+            {"entity": "obj:stone", "attribute": "weight", "value": 2,
+             "valid_from": 1.0},
+        ], frame="knows:person:marn")
+        assert world.aggregate(
+            "obj:bag", "weight", "sum", frame="knows:person:marn"
+        )["value"] == 2
+        assert world.aggregate("obj:bag", "weight", "sum", as_of=5.0)["value"] == 5
+        assert world.aggregate("obj:bag", "weight", "sum", as_of=11.0)["value"] == 12
+
+
 class TestNeighborhood:
     def test_one_hop_returns_subject_location_contents_and_relations(self, world):
         _seed_neighborhood(world)

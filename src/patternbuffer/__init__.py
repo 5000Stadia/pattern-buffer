@@ -148,6 +148,9 @@ class World:
     def neighborhood(self, entity: str, **kw) -> dict:
         return self.indexes.neighborhood(entity, **kw)
 
+    def aggregate(self, container: str, member_attribute: str, op: str, **kw) -> dict:
+        return self.indexes.aggregate(container, member_attribute, op, **kw)
+
     def materialize(self, scope, **kw) -> Materialization:
         return self.projector.materialize(scope, **kw)
 

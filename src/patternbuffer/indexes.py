@@ -473,6 +473,74 @@ class Indexes:
                 members.add(eid)
         return sorted(members)
 
+    def aggregate(
+        self,
+        container: str,
+        member_attribute: str,
+        op: str,
+        frame: str = CANON,
+        as_of: float | None = None,
+        recursive: bool = False,
+        asserted_as_of: int | None = None,
+    ) -> dict[str, Any]:
+        """Bounded numeric rollup over a container's folded member values."""
+        if op not in {"sum", "count", "min", "max", "avg"}:
+            raise ValueError(f"unknown aggregate operator {op!r}")
+
+        subject = self._resolve(container)
+
+        def members() -> list[str]:
+            direct = self.contents(subject, frame, as_of, asserted_as_of)
+            if not recursive:
+                return direct
+            out: list[str] = []
+            seen = {subject}
+            queue = list(direct)
+            while queue:
+                member = self._resolve(queue.pop(0))
+                if member in seen:
+                    continue
+                seen.add(member)
+                out.append(member)
+                queue.extend(self.contents(member, frame, as_of, asserted_as_of))
+            return out
+
+        contributing: list[str] = []
+        values: list[int | float] = []
+        if not self._semantics.is_set_valued(member_attribute):
+            for member in members():
+                folded = self.fold_key(
+                    member, member_attribute, frame, as_of, asserted_as_of
+                )
+                if self._semantics.is_accrue(member_attribute):
+                    value = folded.quantity
+                elif folded.winner is not None:
+                    value = folded.winner.value
+                else:
+                    value = None
+                if self._is_numeric(value):
+                    contributing.append(member)
+                    values.append(value)
+
+        count = len(values)
+        if op == "count":
+            value = count
+        elif op == "sum":
+            value = sum(values) if values else 0
+        elif op == "min":
+            value = min(values) if values else None
+        elif op == "max":
+            value = max(values) if values else None
+        else:
+            value = (sum(values) / count) if count else None
+        return {
+            "op": op,
+            "value": value,
+            "count": count,
+            "members": contributing,
+            "container": subject,
+        }
+
     def lateral_neighbors(
         self,
         entity: str,

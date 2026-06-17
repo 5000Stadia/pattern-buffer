@@ -268,6 +268,20 @@ class Porcelain:
                 out.append(entity)
         return out
 
+    def aggregate(
+        self,
+        container: str,
+        member_attribute: str,
+        op: str,
+        frame: str = CANON,
+        as_of: float | None = None,
+        recursive: bool = False,
+    ) -> dict:
+        return self._w.aggregate(
+            container, member_attribute, op,
+            frame=frame, as_of=as_of, recursive=recursive,
+        )
+
     def locate(self, entity: str, as_of: float | None = None) -> list[str]:
         return self._w.locate(entity, valid_as_of=as_of)
 
@@ -337,67 +351,164 @@ class Porcelain:
                                  for x in e["agents"] + e["patients"]}]
         return sorted(out, key=lambda e: (e["t"] if e["t"] is not None else float("-inf")))
 
-    def frame_diff(self, a: str, b: str, scope, as_of: float | None = None) -> list[dict]:
+    def frame_diff(self, a: str, b: str | list[str], scope,
+                   as_of: float | None = None) -> list[dict]:
         """Semantic fact diff: keys folded in `a`, absent or divergent in
         `b`. Never compares assertion ids (frames are sparse copies)."""
+        if isinstance(b, str):
+            roots = [scope] if isinstance(scope, str) else list(scope)
+            m_a = self._w.materialize(roots, frame=a, as_of=as_of)
+            out: list[dict] = []
+            for entity, attribute, quantity in m_a.quantities:
+                fold_a = self._w.state(entity, attribute, frame=a, valid_as_of=as_of)
+                if fold_a.winner is None:
+                    continue
+                fold_b = self._w.state(entity, attribute, frame=b, valid_as_of=as_of)
+                if fold_b.quantity is None:
+                    out.append(
+                        self._quantity_fact(
+                            fold_a.winner, quantity, entity=entity, attribute=attribute
+                        ).to_dict()
+                    )
+                elif fold_b.quantity != quantity:
+                    out.append(
+                        self._quantity_fact(
+                            fold_a.winner, quantity, entity=entity, attribute=attribute,
+                            divergent=True, b_value=fold_b.quantity,
+                        ).to_dict()
+                    )
+            for row in m_a.assertions:
+                if row.status == "default" or row.value_type == "unresolved":
+                    continue
+                if self._w.semantics.is_accrue(row.attribute):
+                    continue
+                entity = self._w.registry.resolve(row.entity)
+                fold_b = self._w.state(entity, row.attribute, frame=b, valid_as_of=as_of)
+
+                def _norm(value, value_type):
+                    if value_type == "entity" and isinstance(value, str):
+                        return ("entity", self._w.registry.resolve(value))
+                    return (value_type, value)
+
+                if self._w.semantics.is_set_valued(row.attribute):
+                    # Set membership, not a single-winner comparison: an A-frame
+                    # member is a diff only when absent from B's whole set
+                    # (multi-value fold; otherwise every member but B's winner
+                    # reads as falsely divergent).
+                    b_members = {
+                        _norm(br.value, br.value_type)
+                        for br in (fold_b._value_rows
+                                   or ((fold_b.winner,) if fold_b.winner else ()))
+                    }
+                    if _norm(row.value, row.value_type) not in b_members:
+                        out.append(self._fact(row).to_dict())  # present in A, absent from B
+                    continue
+
+                if fold_b.winner is None:
+                    out.append(self._fact(row).to_dict())
+                    continue
+                va, vb = row.value, fold_b.winner.value
+                if row.value_type == "entity" and fold_b.winner.value_type == "entity":
+                    equivalent = self._w.registry.resolve(va) == self._w.registry.resolve(vb)
+                else:
+                    equivalent = va == vb
+                if not equivalent:
+                    out.append(self._fact(row, divergent=True, b_value=vb).to_dict())
+            return out
+
+        b_frames = list(b)
         roots = [scope] if isinstance(scope, str) else list(scope)
         m_a = self._w.materialize(roots, frame=a, as_of=as_of)
         out: list[dict] = []
+
+        def _norm(value, value_type):
+            if value_type == "entity" and isinstance(value, str):
+                return ("entity", self._w.registry.resolve(value))
+            return (value_type, value)
+
+        def _equivalent(row, other) -> bool:
+            if row.value_type == "entity" and other.value_type == "entity":
+                return self._w.registry.resolve(row.value) == self._w.registry.resolve(other.value)
+            return row.value == other.value
+
+        def _recency(row) -> tuple[float, int]:
+            return (row.valid_from if row.valid_from is not None else float("-inf"),
+                    row.asserted_at)
+
         for entity, attribute, quantity in m_a.quantities:
             fold_a = self._w.state(entity, attribute, frame=a, valid_as_of=as_of)
             if fold_a.winner is None:
                 continue
-            fold_b = self._w.state(entity, attribute, frame=b, valid_as_of=as_of)
-            if fold_b.quantity is None:
+            covered = False
+            held = False
+            divergent: tuple[tuple[float, int], int | float] | None = None
+            for b_frame in b_frames:
+                fold_b = self._w.state(entity, attribute, frame=b_frame, valid_as_of=as_of)
+                if fold_b.quantity == quantity:
+                    covered = True
+                    break
+                if fold_b.quantity is not None and fold_b.winner is not None:
+                    held = True
+                    candidate = (_recency(fold_b.winner), fold_b.quantity)
+                    if divergent is None or candidate[0] > divergent[0]:
+                        divergent = candidate
+            if covered:
+                continue
+            if not held:
                 out.append(
                     self._quantity_fact(
                         fold_a.winner, quantity, entity=entity, attribute=attribute
                     ).to_dict()
                 )
-            elif fold_b.quantity != quantity:
+            else:
                 out.append(
                     self._quantity_fact(
                         fold_a.winner, quantity, entity=entity, attribute=attribute,
-                        divergent=True, b_value=fold_b.quantity,
+                        divergent=True, b_value=divergent[1],
                     ).to_dict()
                 )
+
         for row in m_a.assertions:
             if row.status == "default" or row.value_type == "unresolved":
                 continue
             if self._w.semantics.is_accrue(row.attribute):
                 continue
             entity = self._w.registry.resolve(row.entity)
-            fold_b = self._w.state(entity, row.attribute, frame=b, valid_as_of=as_of)
-
-            def _norm(value, value_type):
-                if value_type == "entity" and isinstance(value, str):
-                    return ("entity", self._w.registry.resolve(value))
-                return (value_type, value)
-
             if self._w.semantics.is_set_valued(row.attribute):
-                # Set membership, not a single-winner comparison: an A-frame
-                # member is a diff only when absent from B's whole set
-                # (multi-value fold; otherwise every member but B's winner
-                # reads as falsely divergent).
-                b_members = {
-                    _norm(br.value, br.value_type)
-                    for br in (fold_b._value_rows
-                               or ((fold_b.winner,) if fold_b.winner else ()))
-                }
+                b_members = set()
+                for b_frame in b_frames:
+                    fold_b = self._w.state(entity, row.attribute, frame=b_frame,
+                                           valid_as_of=as_of)
+                    b_members.update(
+                        _norm(br.value, br.value_type)
+                        for br in (fold_b._value_rows
+                                   or ((fold_b.winner,) if fold_b.winner else ()))
+                    )
                 if _norm(row.value, row.value_type) not in b_members:
-                    out.append(self._fact(row).to_dict())  # present in A, absent from B
+                    out.append(self._fact(row).to_dict())
                 continue
 
-            if fold_b.winner is None:
-                out.append(self._fact(row).to_dict())
+            held = False
+            covered = False
+            divergent: tuple[tuple[float, int], Any] | None = None
+            for b_frame in b_frames:
+                fold_b = self._w.state(entity, row.attribute, frame=b_frame,
+                                       valid_as_of=as_of)
+                if fold_b.winner is None:
+                    continue
+                held = True
+                if _equivalent(row, fold_b.winner):
+                    covered = True
+                    break
+                candidate = (_recency(fold_b.winner), fold_b.winner.value)
+                if divergent is None or candidate[0] > divergent[0]:
+                    divergent = candidate
+            if covered:
                 continue
-            va, vb = row.value, fold_b.winner.value
-            if row.value_type == "entity" and fold_b.winner.value_type == "entity":
-                equivalent = self._w.registry.resolve(va) == self._w.registry.resolve(vb)
+            if not held:
+                out.append(self._fact(row).to_dict())
             else:
-                equivalent = va == vb
-            if not equivalent:
-                out.append(self._fact(row, divergent=True, b_value=vb).to_dict())
+                out.append(self._fact(row, divergent=True, b_value=divergent[1]).to_dict())
         return out
 
     # ------------------------------------------------------------- ask

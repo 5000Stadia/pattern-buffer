@@ -124,6 +124,31 @@ class TestZeroModelReads:
         assert world.porcelain.state("obj:pipe", "in")["status"] == "known"
         assert world.porcelain.state("obj:pipe", "smell")["status"] == "unknown"
 
+    def test_aggregate_is_json_serializable_and_read_only(self, world):
+        world.ingest_structured([
+            {"entity": "obj:pack", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:rope", "attribute": "in", "value": "obj:pack",
+             "valid_from": 1.0},
+            {"entity": "obj:rope", "attribute": "weight", "value": 4,
+             "valid_from": 1.0},
+            {"entity": "obj:hook", "attribute": "in", "value": "obj:pack",
+             "valid_from": 1.0},
+            {"entity": "obj:hook", "attribute": "weight", "value": 6,
+             "valid_from": 1.0},
+        ])
+        head = world.buffer.head()
+        out = world.porcelain.aggregate("obj:pack", "weight", "sum")
+        assert out == {
+            "op": "sum",
+            "value": 10,
+            "count": 2,
+            "members": ["obj:hook", "obj:rope"],
+            "container": "obj:pack",
+        }
+        assert world.buffer.head() == head
+        json.dumps(out)
+
 
 class TestEventsAndDiff:
     def test_events_participants_all_of(self, world):
@@ -146,6 +171,50 @@ class TestEventsAndDiff:
         diff2 = world.porcelain.frame_diff("canon", "knows:person:player", ["obj:pipe"])
         divergent = [f for f in diff2 if f["divergent"]]
         assert divergent and divergent[0]["b_value"] == "place:study"
+
+    def test_frame_diff_b_frame_union_covers_absent_and_divergent(self, world):
+        world.ingest_structured([
+            {"entity": "obj:case", "attribute": "kind", "value": "case",
+             "timeless": True},
+            {"entity": "obj:case", "attribute": "color", "value": "red",
+             "valid_from": 1.0},
+            {"entity": "obj:case", "attribute": "code", "value": "alpha",
+             "valid_from": 1.0},
+            {"entity": "obj:case", "attribute": "temperature", "value": 10,
+             "valid_from": 1.0},
+            {"entity": "obj:case", "attribute": "status", "value": "open",
+             "valid_from": 1.0},
+        ])
+        world.ingest_structured([
+            {"entity": "obj:case", "attribute": "color", "value": "red",
+             "valid_from": 1.0},
+            {"entity": "obj:case", "attribute": "status", "value": "open",
+             "valid_from": 1.0},
+        ], frame="public")
+        world.ingest_structured([
+            {"entity": "obj:case", "attribute": "temperature", "value": 99,
+             "valid_from": 1.0},
+            {"entity": "obj:case", "attribute": "status", "value": "closed",
+             "valid_from": 1.0},
+        ], frame="knows:person:o")
+
+        diff = world.porcelain.frame_diff(
+            "canon", ["knows:person:o", "public"], ["obj:case"]
+        )
+        by_attr = {f["attribute"]: f for f in diff if f["entity"] == "obj:case"}
+        assert "color" not in by_attr          # covered by public
+        assert by_attr["code"]["divergent"] is False
+        assert by_attr["temperature"]["divergent"] is True
+        assert by_attr["temperature"]["b_value"] == 99
+        assert "status" not in by_attr         # wrong private value corrected by public
+
+        single = world.porcelain.frame_diff("canon", "knows:person:o", ["obj:case"])
+        single_by_attr = {
+            f["attribute"]: f for f in single if f["entity"] == "obj:case"
+        }
+        assert single_by_attr["color"]["divergent"] is False
+        assert single_by_attr["status"]["divergent"] is True
+        assert single_by_attr["status"]["b_value"] == "closed"
 
     def test_frame_diff_set_valued_is_membership_not_winner(self, world):
         # A set-valued key diffs by membership: a member present in both
@@ -171,6 +240,30 @@ class TestEventsAndDiff:
         out = tags()
         assert {f["value"] for f in out} == {"green"}     # only the canon-only member
         assert all(not f["divergent"] for f in out)       # absence, not divergence
+
+    def test_frame_diff_list_b_unions_set_membership(self, world):
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "kind", "value": "container",
+             "timeless": True},
+            {"entity": "obj:box", "attribute": "tag", "value": "red",
+             "arity": "set_valued"},
+            {"entity": "obj:box", "attribute": "tag", "value": "blue"},
+            {"entity": "obj:box", "attribute": "tag", "value": "green"},
+        ])
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "tag", "value": "red"},
+        ], frame="public")
+        world.ingest_structured([
+            {"entity": "obj:box", "attribute": "tag", "value": "blue"},
+        ], frame="knows:person:o")
+        tags = [
+            f for f in world.porcelain.frame_diff(
+                "canon", ["knows:person:o", "public"], ["obj:box"]
+            )
+            if f["attribute"] == "tag"
+        ]
+        assert {f["value"] for f in tags} == {"green"}
+        assert all(not f["divergent"] for f in tags)
 
 
 class TestNumericQuantities:
@@ -202,6 +295,32 @@ class TestNumericQuantities:
         assert gold[0]["b_value"] == 500
         assert gold[0]["divergent"] is True
         assert all(f["value"] != -20 for f in gold)
+
+    def test_frame_diff_list_b_covers_accrue_quantity_from_any_frame(self, world):
+        _seed_gold(world)
+        world.ingest_structured([
+            {
+                "entity": "person:you",
+                "attribute": "gold",
+                "value": 500,
+                "valid_from": 1.0,
+            },
+        ], frame="knows:person:player")
+        world.ingest_structured([
+            {
+                "entity": "person:you",
+                "attribute": "gold",
+                "value": 480,
+                "valid_from": 2.0,
+            },
+        ], frame="public")
+        diff = world.porcelain.frame_diff(
+            "canon", ["knows:person:player", "public"], ["person:you"]
+        )
+        assert [
+            f for f in diff
+            if (f["entity"], f["attribute"]) == ("person:you", "gold")
+        ] == []
 
     def test_ask_returns_accrue_total(self, world):
         _seed_gold(world)

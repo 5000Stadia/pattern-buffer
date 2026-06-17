@@ -127,11 +127,13 @@ p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=) -> dict
 p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact, quantity?}
 p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
    # op in >=, >, <=, <, ==; compares folded numeric values
+p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursive=False) -> dict
+   # op in sum, count, min, max, avg; numeric rollup over contents()
 p.locate / p.contents / p.path
 p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
-p.frame_diff(a, b, scope, as_of=) -> [Fact]   # semantic diff; divergent values marked
+p.frame_diff(a, b, scope, as_of=) -> [Fact]   # b is str|list[str]; divergent values marked
 p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only
 ```
 
