@@ -1,6 +1,6 @@
 # WORLD-RETRIEVAL-V1 — neighborhood retrieval + salience (the intelligent read)
 
-**Status:** SPEC r3 — Codex r2 left 3/4 resolved; r3 fixes the last: salience
+**Status:** GREEN (Codex r3: A-D resolved; E = bump classifier_version at _store(), applied verbatim). r3 — Codex r2 left 3/4 resolved; r3 fixes the last: salience
 uses **absolute** (not candidate-relative) normalization so a per-entity score
 is cacheable; `event_participation` reads indexed visible event rows (events
 are EVENT-dropped by `fold_key`); `incoming_refs` iterates the full identity
@@ -160,8 +160,10 @@ derived sidecar** (mirroring the classifier/semantics sidecars), never written
 to the log (P2). Cache entry key = `(entity, frame, as_of)`; each entry stores
 the `head` and `classifier_version` it was computed at, and is recomputed when
 either differs. **`classifier_version`** is a counter the `Classifier` bumps
-on every sidecar mutation (`set`/`promote_accruals`/`rebuild`) — durability can
-change `delta_from_baseline`/the budget spine without moving the log head.
+at **`_store()`** — the single sidecar-write funnel that *all* mutation paths
+route through (`classify`/`classify_all`/`set`/`promote_accruals`/`rebuild`),
+so the cache can't stale on a durability change while the log head stays put
+(bumping only the high-level methods would miss `classify`/`classify_all`).
 Identity-closure changes need no separate version: a `same_as`/merge/retract is
 an append, so it moves `head`. When in doubt, recompute — it's cheap and
 closure-scoped. Salience powers `neighborhood`'s ranking and `materialize`'s
