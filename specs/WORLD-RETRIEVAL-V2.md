@@ -1,6 +1,6 @@
 # WORLD-RETRIEVAL-V2 — aggregates + multi-frame knowledge reads
 
-**Status:** SPEC, pre-Codex-GREEN. Two read-layer additions the generalized
+**Status:** GREEN (Codex r1: all points GREEN except set-valued aggregate handling, now pinned = skip set-valued like non-numeric). Implementing. Two read-layer additions the generalized
 world-tracker reflexively needs, both **derive-don't-store**, **additive**, and
 **non-overlapping** with existing verbs (the dilution test): a bounded
 *aggregate* read over collections, and the *multi-frame* `frame_diff` that
@@ -25,9 +25,14 @@ aggregate(container, member_attribute, op,
 - **Members** = the container's `contents()` (closure-scoped, the 037 indexed
   read). `recursive=True` walks the whole containment subtree (bounded by the
   tree; visited-set guarded) — default `False` = direct members only.
-- For each member, **fold `member_attribute`** (its current value via
-  `state`/`fold_key`, incl. `quantity` for accrue keys); collect the numeric
-  ones (`isinstance(v,(int,float)) and not bool`, the same guard as `where`).
+- For each member, reduce its **folded scalar value** of `member_attribute`:
+  `quantity` for an **accrue** key, else `winner.value` for a **functional**
+  key. Collect the numeric ones (`isinstance(v,(int,float)) and not bool`, the
+  same guard as `where`). **A `set_valued` member-attribute is SKIPPED**
+  (Codex r1): a set has no single scalar value, so it is a non-contributing
+  member, exactly like a non-numeric or missing value — never the winner
+  (arbitrary) and never flattened (a different operation). Flattened
+  set-aggregation is a future explicit option (e.g. `op="sum_all"`), not v1.
 - `sum`/`min`/`max`/`avg` reduce the numeric values; `count` = number of
   members carrying a numeric value at that key.
 - Output: `{"op": op, "value": <number|None>, "count": <int>,
