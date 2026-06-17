@@ -55,8 +55,19 @@ world.salience(entity, frame="canon", as_of=None) -> float
 world.neighborhood(entity, depth=1, frame="canon", as_of=None,
                    edge_kinds=None, max_fanout=64, budget=None) -> dict
 world.materialize(scope, as_of=None, frame="canon",
-                  lens="current_state",        # | establishing_set | what_happened | character_sheet
+                  lens="current_state",        # | establishing_set | what_happened | character_sheet | situation
                   budget=None, asserted_as_of=None) -> Materialization
+#   lens="situation" (re-entry): standing-truth fold ∪ only the LIVE events
+#   anchored to the scope, closed history dropped. Live = an open thread OR a
+#   still-served (un-superseded) produced effect; anchored by where the live
+#   effect sits (walk back via caused_by), not by who participated. The
+#   standing-truth floor is never truncated by budget; live events yield to it
+#   by recency. Derived every read, nothing stored.
+world.confidence(entity, attribute, frame="canon", as_of=None,
+                 asserted_as_of=None) -> dict
+#   frame accepts str | list[str]: a list is trust over an observer's EFFECTIVE
+#   knowledge = the read-union of those frames (knows:O ∪ public), mirroring
+#   multi-frame frame_diff. Derived; functional-only.
 world.refer(description, scope=None, frame="canon",
             constraints=None, as_of=None) -> Resolution
 ```
@@ -124,6 +135,7 @@ p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, fa
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=) -> dict
    # contractually ZERO model calls and ZERO writes; id-only scopes; includes quantities
+   # lens="situation": re-entry view — standing truth ∪ live threads, closed history dropped
 p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact, quantity?}
 p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
    # op in >=, >, <=, <, ==; compares folded numeric values
@@ -132,6 +144,8 @@ p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursiv
 p.locate / p.contents / p.path
 p.confidence(entity, attribute, frame=, as_of=) -> {score, status, last_observed_at, corroboration, conflicted}
    # derived trust over a functional key; never stored; functional-only (set/accrue -> score None)
+   # frame is str | list[str]: a list = trust over the read-union (knows:O ∪ public);
+   # cross-frame agreement raises corroboration, disagreement is conflict (score halved)
 p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
