@@ -63,6 +63,11 @@ world.materialize(scope, as_of=None, frame="canon",
 #   effect sits (walk back via caused_by), not by who participated. The
 #   standing-truth floor is never truncated by budget; live events yield to it
 #   by recency. Derived every read, nothing stored.
+#   ADOPTER NOTE: the lens is only as live as your caused_by links. An event
+#   with no caused_by-bound surviving effect (or open thread) about a scope
+#   entity reads as DEAD and won't surface — fail-safe, not an error, but it
+#   means situation returns the standing floor only until you wire durable
+#   consequences to their causing event. Model the residue, link it, it lights up.
 world.confidence(entity, attribute, frame="canon", as_of=None,
                  asserted_as_of=None) -> dict
 #   frame accepts str | list[str]: a list is trust over an observer's EFFECTIVE
