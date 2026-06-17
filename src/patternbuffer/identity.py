@@ -10,12 +10,37 @@ identity. A bad merge is repaired forward by retracting the edge.
 from __future__ import annotations
 
 import logging
+import re
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.model import CANON, CONTAINMENT_FAMILY
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
+
+# Content-token normalization for the alias-specificity test (IDENTITY-RECALL-V1
+# §3): a discriminative alias has >=2 *informative* tokens after dropping
+# articles, possessives, honorific/title prefixes, and punctuation.
+_ARTICLES = frozenset({"the", "a", "an"})
+_HONORIFICS = frozenset({
+    "mr", "mrs", "ms", "dr", "sir", "lord", "lady", "master", "mister",
+    "madam", "prof", "professor", "captain", "king", "queen", "saint", "st",
+})
+
+
+def _content_tokens(text: str) -> list[str]:
+    """Normalized informative tokens of a name/alias string."""
+    t = text.strip().lower()
+    t = re.sub(r"'s\b", "", t)          # drop possessive 's
+    t = re.sub(r"[^\w\s]", " ", t)      # punctuation -> space
+    out = []
+    for tok in t.split():
+        if len(tok) <= 1:               # stray single chars (possessive remnants)
+            continue
+        if tok in _ARTICLES or tok in _HONORIFICS:
+            continue
+        out.append(tok)
+    return out
 
 
 class IdentityRegistry:
@@ -27,6 +52,14 @@ class IdentityRegistry:
         # AttributeSemantics, for the declared containment family the merge
         # veto consults; falls back to the base family if not wired.
         self._semantics = semantics
+        # Late-bound kind fold provider (entity -> FoldResult), wired by World
+        # after Indexes exists (mirrors indexes.set_closure_provider). The
+        # recall gate reads kind through it; absent provider => kind unknown.
+        self._kind_of = None
+
+    def set_kind_provider(self, fn) -> None:
+        """Install the kind-fold lookup the recall gate consults (§2)."""
+        self._kind_of = fn
 
     # --------------------------------------------------------------- write
 
@@ -167,31 +200,139 @@ class IdentityRegistry:
                 out.add(row.value.strip().lower())
         return out
 
+    def typed_name_anchors(self, entity: str) -> set[tuple[str, str]]:
+        """NAME-class anchors as ``(attribute, normalized_text)`` (IDENTITY-
+        RECALL-V1 §3): like name_anchors but keeps the name-vs-alias kind so
+        the recall gate can weight a proper name above a casual alias.
+        ``normalized_text`` is ``strip().lower()`` (the grouping key)."""
+        closure = self.closure(entity)
+        out: set[tuple[str, str]] = set()
+        for row in self._buffer.visible():
+            if row.entity in closure and row.attribute in ("name", "alias") \
+                    and isinstance(row.value, str):
+                out.add((row.attribute, row.value.strip().lower()))
+        return out
+
+    def _kind_state(self, a: str, b: str) -> str:
+        """Kind relation for the recall gate (§2): 'conflict' (a contested or
+        differing kind — never a merge basis), 'present_equal' (both folded
+        kinds present and equal), or 'noncommittal' (equal-or-absent)."""
+        if self._kind_of is None:
+            return "noncommittal"
+        ka, kb = self._kind_of(a), self._kind_of(b)
+        if (ka is not None and ka.conflicted) or (kb is not None and kb.conflicted):
+            return "conflict"
+
+        def _kind_value(fold):
+            if fold is None or fold.winner is None:
+                return None
+            v = fold.winner.value
+            # entity-valued kinds resolve through identity (§2): two kind
+            # entities later merged are the same kind, not a conflict.
+            if fold.winner.value_type == "entity" and isinstance(v, str):
+                return self.resolve(v)
+            return v
+
+        va, vb = _kind_value(ka), _kind_value(kb)
+        if va is not None and vb is not None:
+            return "present_equal" if va == vb else "conflict"
+        return "noncommittal"
+
+    def _mergeable(self, a: str, b: str) -> bool:
+        """The single discriminativeness gate (§1), used by BOTH promotion
+        paths so a weak proposal one path declines can't be merged by the
+        other. A shared proper `name` merges at any length under
+        non-conflicting kind; a shared `alias` merges only if specific
+        (>=2 content tokens) AND kind is present-and-equal."""
+        if self.resolve(a) == self.resolve(b):
+            return False
+        if self.containment_related(a, b):
+            return False
+        ta, tb = self.typed_name_anchors(a), self.typed_name_anchors(b)
+        shared = {t for (_, t) in ta} & {t for (_, t) in tb}
+        if not shared:
+            return False
+        kind = self._kind_state(a, b)
+        if kind == "conflict":
+            return False
+        for text in shared:
+            name_strength = ("name", text) in ta or ("name", text) in tb
+            if name_strength:
+                return True  # non-conflicting kind already ensured
+            if kind == "present_equal" and len(_content_tokens(text)) >= 2:
+                return True
+        return False
+
+    def _has_proposal(self, a: str, b: str) -> bool:
+        """A visible maybe_same_as already relates a's closure to b's."""
+        clos_a, clos_b = self.closure(a), self.closure(b)
+        for row in self._buffer.visible(attribute="maybe_same_as"):
+            if not isinstance(row.value, str):
+                continue
+            if (row.entity in clos_a and row.value in clos_b) or \
+                    (row.entity in clos_b and row.value in clos_a):
+                return True
+        return False
+
     def promote_identity_proposals(self) -> int:
-        """Whole-world promotion pass (036): a maybe_same_as proposal
-        whose two sides share a NAME-class anchor promotes to a logged
-        merge event; title-only candidates stay proposals (for tier-2 or
-        explicit confirmation). Returns merges performed."""
+        """Whole-world promotion pass (036): a maybe_same_as proposal promotes
+        to a logged merge iff the unified gate `_mergeable` holds (proper-name
+        or specific-alias-with-equal-kind, never a casual single-token alias,
+        never a containment pair). Otherwise it stays a proposal for explicit
+        host confirmation (#31). Returns merges performed."""
         promoted = 0
         for row in list(self._buffer.visible(attribute="maybe_same_as")):
             a, b = row.entity, row.value
             if not isinstance(b, str):
                 continue
-            if self.resolve(a) == self.resolve(b):
-                continue  # already merged
-            if self.containment_related(a, b):
-                continue  # veto: never promote a container↔contents pair (010)
-            shared = self.name_anchors(a) & self.name_anchors(b)
-            if shared:
+            if self._mergeable(a, b):
                 ev = self._buffer.visible(entity=row.id, attribute="evidence")
                 self.merge(a, b, evidence=(
-                    f"promoted from {row.id}: shared name anchor(s) "
-                    f"{sorted(shared)[:3]}"
+                    f"promoted from {row.id}: gated coreference"
                     + (f"; proposal evidence: {ev[0].value}" if ev else "")))
                 promoted += 1
         if promoted:
             logger.info("identity promotion: %d merge(s)", promoted)
         return promoted
+
+    def reconcile(self) -> int:
+        """Global coreference finalize pass (IDENTITY-RECALL-V1): discover
+        cross-closure candidates by shared NAME-class text — the cross-chunk
+        coreferents that never co-occurred in one extraction pass and so never
+        got a within-chunk proposal — and resolve them through the same gate.
+        Mergeable candidates merge; the rest are recorded as (deduped)
+        maybe_same_as proposals for host adjudication. Then promote any
+        pre-existing within-chunk proposals through the same gate. Idempotent.
+        Returns merges performed."""
+        text_to_closures: dict[str, set[str]] = {}
+        for row in self._buffer.visible():
+            if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
+                continue
+            if row.entity.startswith("a:"):
+                continue
+            rep = self.resolve(row.entity)
+            text_to_closures.setdefault(row.value.strip().lower(), set()).add(rep)
+
+        merged = 0
+        for _text, reps in text_to_closures.items():
+            members = sorted(reps)
+            if len(members) < 2:
+                continue
+            for i in range(len(members)):
+                for j in range(i + 1, len(members)):
+                    a, b = members[i], members[j]
+                    if self.resolve(a) == self.resolve(b):
+                        continue  # collapsed by an earlier merge this pass
+                    if self._mergeable(a, b):
+                        self.merge(a, b, evidence="reconcile: gated shared-anchor coreference")
+                        merged += 1
+                    elif not self.containment_related(a, b) and not self._has_proposal(a, b):
+                        self.maybe_same_as(a, b, evidence="reconcile: shared anchor, gate declined (adjudicate)")
+
+        merged += self.promote_identity_proposals()
+        if merged:
+            logger.info("identity reconcile: %d merge(s)", merged)
+        return merged
 
     def by_alias(self, alias: str, asserted_as_of: int | None = None) -> set[str]:
         needle = alias.strip().lower()

@@ -75,6 +75,7 @@ class World:
             self.buffer, self.classifier, self.registry.resolve, self.semantics
         )
         self.indexes.set_closure_provider(self.registry.closure)
+        self.registry.set_kind_provider(lambda e: self.indexes.fold_key(e, "kind"))
         self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
         self.indexes.set_salience_provider(self.salience_index.salience)
         self.truth = TruthMaintenance(
