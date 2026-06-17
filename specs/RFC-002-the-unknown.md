@@ -1,10 +1,11 @@
 # RFC-002 — The Unknown: a doctrine for deliberation
 
-**Status:** DELIBERATION — **Kernos ✅ GREEN** (audit 044: complete for a
-changing reality, no new primitives; three sharpenings + the membrane-test
-folded into §4.2). **Codex (engine audit) ⏳** + **Construct (consumer) ⏳**
-pending. The One Ring worked example (§7.5) is the founder-approved canonical
-illustration. Three-way deliberation (Kernos · Construct · Codex).
+**Status:** RATIFIED — all three legs GREEN: **Kernos** (044), **Construct**
+(007), **Codex** engine audit (membrane clean; one confidence clarification
+folded). Ratified into the whitepaper as **amendment A6** (after P4) +
+HOST-DISCIPLINE.md (the unknown / per-observer knowledge / perception-write
+pattern) + LEXICON. #4 frame-inheritance resolved: **flat-frames + read-union**
+(below). The One Ring (§7.5) is the canonical illustration.
 **Origin:** a founder design conversation on how the substrate must treat the
 unknown. The goal of circulating this is to **ratify (or correct) the doctrine
 before broader adoption locks the shape** — and, if ratified, fold it into the
@@ -248,6 +249,22 @@ honest `unknown`, computed by `frame_diff` never stored. The three distinctions
 are unmistakable here: **ignorance** (absence → `unknown`) ≠ **false belief**
 (a divergent *present* row) ≠ **canonically unknowable** (`deny` + reason).
 None stores "X doesn't know Y."
+
+## 7.6 #4 frame-inheritance — RESOLVED: flat-frames + read-union
+
+The doctrine settles #4. **Lock flat frames:** each frame stores only its own
+rows (what that observer specifically knows); **never** store an inheritance
+delta or a "doesn't-know" negative. Common knowledge is written **once** to a
+shared `public` frame; an observer's *effective* knowledge is the **read-time
+union** `knows:O ∪ public`, computed never stored. "Does O know F?" =
+`F ∈ (knows:O ∪ public)`. This makes the perception-write pattern (record one
+frozen row on perception) and common knowledge both free — no × N copy, the
+unknown stays pure row-absence, `frame_diff` against the union computes it.
+
+**Engine half (small, additive):** `frame_diff` and the frame reads accept a
+*list* of frames on the observer side, so `frame_diff(canon, [knows:O, public])`
+is the effective-knowledge gap in one call. Read-only; stores nothing. (A host
+can already compute the union today; this is ergonomic.)
 
 ## 7. If ratified
 Fold §2 (relational absence) + §4 (the membrane) into the whitepaper as a

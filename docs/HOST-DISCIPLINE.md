@@ -133,6 +133,48 @@ the log and is stable forever, across processes. This is how "my office
 walls, color unknown" becomes "blue" the day it's painted, with everything
 before that honestly unresolved.
 
+### The unknown, and knowledge per observer (the doctrine — whitepaper A6)
+
+The substrate discovers what *is*; it never stores or infers what is not. The
+unknown has **three positive states**, and choosing the right one is a host
+responsibility:
+- **Unestablished** — no row. A query returns honest `unknown`. (Most things.)
+- **Established-deferred** — an `unresolved` thunk: a real placeholder the
+  resolver will later force (the box whose contents you'll define on open).
+- **Established-unknowable** — a `deny` thunk **with a reason**: a *positive
+  assertion that the thing is canonically unknown* (the mystery box that stays
+  shut — everyone who looked inside died). Use `deny`, **not** an absent row
+  (which reads as deferred and the resolver would invent an answer), and
+  **not** a "mysterious" tag (a stored property → a membrane breach).
+
+**Knowledge is per observer, sparse, and never a grid.** Each observer (player,
+*each* NPC) is a `knows:<id>` frame holding only what *that* observer knows.
+What an observer does **not** know is **structural absence** — never a stored
+"X doesn't know Y" row. "What does X not know that's true?" is computed:
+`frame_diff(canon, knows:X)` (dramatic irony); inter-character gaps are
+`frame_diff(knows:A, knows:B)`. With N NPCs this is the same operation over more
+pairs — **computed on demand, nothing materialized.** Record a character's
+knowledge **only where load-bearing**; the 44th NPC who learned nothing has no
+rows and reads as honest silence.
+
+**The perception-write pattern (how a character learns during play).** When an
+observer perceives or is told a fact, write **that one row** into their frame —
+`knows:<id> · attribute · value`, the value **frozen at perception time** —
+sparse, per-event, never a canon copy, never × N. Frozen is deliberate: if
+canon later changes, their frame still holds the old value, and
+`frame_diff(canon, knows:<id>)` surfaces it as **stale/false belief** — a
+feature, not a bug. Do **not** store a marker that resolves to *current* canon
+(it would silently auto-update what the character "knows"). Optionally log a
+perception `event:` with `caused_by` as causal scaffolding; the frame row is the
+durable fact.
+
+**The membrane-test — the one guard against bloat and fabrication:** *could the
+engine recompute this row from other present facts? If yes, it is derived —
+never store it; only an irreducible observation may be a fact.* Staleness,
+current-confidence, salience, "doesn't know," presumed-empty are all
+recomputable → none stored. (Source-confidence *at assertion* is different — it
+is irreducible provenance, legitimately the row's `confidence` field.)
+
 ## Feeding mechanics (summary; depth in INGESTION-PLAYBOOK.md)
 
 - **Scaffold identity first.** Establish a registry (ids/names/aliases/kinds
