@@ -274,6 +274,7 @@ The complete write surface is small:
 ```
 assert(entity, kind)                      bring a thing into existence
 set(entity, attribute, value, …)          attach a fact (one assertion)
+delta(entity, attribute, signed_number)   append a numeric change for an accrue fold
 relate(subject, relation, object)         add an edge; for single-parent relations
                                           this IS the move operation (supersedes prior)
 event(kind, agents, patients, t, effects) reify an occurrence; effects are relates/sets
@@ -322,6 +323,13 @@ materialize(scope, as_of, frame, lens, budget) → materialization
 - `character_sheet` — one entity's accumulated card, frame-respecting.
 
 **Algorithm:** select in-scope, in-frame assertions valid at `as_of` per lens → fold STATE by supersession per (entity, attribute, frame) key — *per frame; a belief fold never overwrites canon* → walk the containment tree for the spatial spine, ordered by depth and salience → fill gaps from kind-defaults, every fill marked `default` → resolve forced thunks via the resolver (which feeds new assertions back through classification — the system is closed under its own operations) → shape to budget.
+
+**Numeric quantities:** an attribute may declare `fold_policy=accrue`. Its
+fold ignores durability and computes a derived total from the latest numeric
+`literal` baseline plus later signed `delta` rows. The total is served as a
+quantity, not as a stored assertion; the append-only ledger remains the audit
+trail. Integers and floats are supported in v1; exact decimal arithmetic is a
+future extension.
 
 **The budget invariant:** the CONSTITUTIVE spine is budget-exempt. Compress DISPOSITIONAL color, summarize peripheral STATE, digest EVENT chains — never compact identity and structure. (Anchored summarization with the anchor formally bound to the constitutive layer.)
 

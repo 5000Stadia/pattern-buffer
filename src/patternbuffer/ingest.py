@@ -54,7 +54,7 @@ _EXTRACT_SCHEMA = {
                     "entity": {"type": "string"},
                     "attribute": {"type": "string"},
                     "value": {},
-                    "value_type": {"enum": ["entity", "literal", "unresolved"]},
+                    "value_type": {"enum": ["entity", "literal", "unresolved", "delta"]},
                     "frame": {"type": "string"},
                     "status": {"enum": ["stated", "observed", "inferred", "assumed"]},
                     "timeless": {"type": "boolean"},

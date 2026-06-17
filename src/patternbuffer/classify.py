@@ -78,6 +78,8 @@ class Classifier:
 
     def _guardrails(self, row: Assertion) -> tuple[str, float] | None:
         """Deterministic short-circuits. Return None to defer to the model."""
+        if row.value_type == "delta":
+            return STATE, 1.0
         if row.entity.startswith("event:") or row.attribute == "caused_by":
             return EVENT, 1.0
         if row.attribute in {"name", "alias"}:
@@ -274,9 +276,10 @@ class Classifier:
             if (
                 row.entity.startswith("a:")
                 or row.entity.startswith(ATTR_PREFIX)
-                or row.value_type == "unresolved"
+                or row.value_type in ("unresolved", "delta")
+                or self._semantics.is_accrue(row.attribute)
             ):
-                continue
+                continue  # deltas / accrue quantities are summed, never a habit
             if self.durability(row.id) != STATE:
                 continue
             key = (row.entity, row.attribute, row.frame, repr(row.value))

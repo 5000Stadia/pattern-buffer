@@ -60,7 +60,7 @@ META_ATTRIBUTES = frozenset(
 SET_VALUED_ATTRIBUTES = frozenset({"name", "alias", "connects_to", "adjacent_to",
                                    "maybe_same_as", "same_as"})
 
-VALUE_TYPES = frozenset({"entity", "literal", "unresolved"})
+VALUE_TYPES = frozenset({"entity", "literal", "unresolved", "delta"})
 
 CANON = "canon"
 

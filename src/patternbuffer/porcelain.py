@@ -117,6 +117,29 @@ class Porcelain:
             divergent=divergent, b_value=b_value,
         )
 
+    def _quantity_fact(
+        self,
+        row,
+        quantity: int | float,
+        *,
+        entity: str | None = None,
+        attribute: str | None = None,
+        divergent: bool = False,
+        b_value: Any = None,
+    ) -> Fact:
+        chain = [m.value for m in self._w.buffer.visible(entity=row.id, attribute="source")]
+        return Fact(
+            entity=entity or row.entity, attribute=attribute or row.attribute,
+            value=quantity, valid=[row.valid_from, row.valid_to],
+            provenance={"status": row.status, "source_chain": chain,
+                        "assertion_id": row.id},
+            divergent=divergent, b_value=b_value,
+        )
+
+    @staticmethod
+    def _is_numeric(value: object) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
     # -------------------------------------------------------------- writes
 
     def ingest(self, text: str, source: str | None = None, scene: str | None = None,
@@ -184,6 +207,10 @@ class Porcelain:
             "charter": self._w.charter(),
             "frame": m.frame, "lens": m.lens, "as_of": m.as_of,
             "facts": [self._fact(r).to_dict() for r in m.assertions],
+            "quantities": [
+                {"entity": e, "attribute": a, "value": v}
+                for e, a, v in m.quantities
+            ],
             "unresolved": [list(u) for u in m.unresolved],
             "conflicted": [list(c) for c in m.conflicted_keys],
             "defaults": [asdict(d) for d in m.defaults],
@@ -195,10 +222,50 @@ class Porcelain:
         fold = self._w.state(entity, attribute, frame, valid_as_of=as_of)
         if fold.winner is None:
             return {"status": "unknown"}
+        # Accrue: the host-facing value is the derived total, not the last
+        # delta row — keep `fact.value` consistent with ask()/snapshot().
+        fact = (self._quantity_fact(fold.winner, fold.quantity)
+                if fold.quantity is not None else self._fact(fold.winner))
         out = {"status": "conflicted" if fold.conflicted else "known",
-               "fact": self._fact(fold.winner).to_dict()}
+               "fact": fact.to_dict()}
+        if fold.quantity is not None:
+            out["quantity"] = fold.quantity
         if fold.conflicted:
             out["conflicting"] = list(fold.conflicting)
+        return out
+
+    def where(self, attribute: str, op: str, value, frame: str = CANON,
+              as_of: float | None = None) -> list[str]:
+        comparators = {
+            ">=": lambda a, b: a >= b,
+            ">": lambda a, b: a > b,
+            "<=": lambda a, b: a <= b,
+            "<": lambda a, b: a < b,
+            "==": lambda a, b: a == b,
+        }
+        if op not in comparators:
+            raise ValueError(f"unknown comparison operator {op!r}")
+        if not self._is_numeric(value):
+            return []
+        candidates = {
+            self._w.registry.resolve(r.entity)
+            for r in self._w.buffer.visible(
+                attribute=attribute, frame=frame, valid_as_of=as_of
+            )
+            if not r.entity.startswith("a:")
+            and not r.entity.startswith(ATTR_PREFIX)
+        }
+        out: list[str] = []
+        for entity in sorted(candidates):
+            fold = self._w.state(entity, attribute, frame, valid_as_of=as_of)
+            if fold.quantity is not None:
+                target = fold.quantity
+            elif fold.winner is not None:
+                target = fold.winner.value
+            else:
+                continue
+            if self._is_numeric(target) and comparators[op](target, value):
+                out.append(entity)
         return out
 
     def locate(self, entity: str, as_of: float | None = None) -> list[str]:
@@ -251,8 +318,28 @@ class Porcelain:
         roots = [scope] if isinstance(scope, str) else list(scope)
         m_a = self._w.materialize(roots, frame=a, as_of=as_of)
         out: list[dict] = []
+        for entity, attribute, quantity in m_a.quantities:
+            fold_a = self._w.state(entity, attribute, frame=a, valid_as_of=as_of)
+            if fold_a.winner is None:
+                continue
+            fold_b = self._w.state(entity, attribute, frame=b, valid_as_of=as_of)
+            if fold_b.quantity is None:
+                out.append(
+                    self._quantity_fact(
+                        fold_a.winner, quantity, entity=entity, attribute=attribute
+                    ).to_dict()
+                )
+            elif fold_b.quantity != quantity:
+                out.append(
+                    self._quantity_fact(
+                        fold_a.winner, quantity, entity=entity, attribute=attribute,
+                        divergent=True, b_value=fold_b.quantity,
+                    ).to_dict()
+                )
         for row in m_a.assertions:
             if row.status == "default" or row.value_type == "unresolved":
+                continue
+            if self._w.semantics.is_accrue(row.attribute):
                 continue
             entity = self._w.registry.resolve(row.entity)
             fold_b = self._w.state(entity, row.attribute, frame=b, valid_as_of=as_of)
@@ -330,7 +417,12 @@ class Porcelain:
             fold = self._w.state(resolved[idx], key["attribute"], frame,
                                  valid_as_of=as_of)
             if fold.winner is not None:
-                facts.append(self._fact(fold.winner).to_dict())
+                if fold.quantity is not None:
+                    facts.append(
+                        self._quantity_fact(fold.winner, fold.quantity).to_dict()
+                    )
+                else:
+                    facts.append(self._fact(fold.winner).to_dict())
         effective_as_of = plan.get("as_of") if plan.get("as_of") is not None else as_of
         if plan.get("wants_location"):
             for eid in resolved:

@@ -49,6 +49,7 @@ class Materialization:
     defaults: list[DefaultFill] = field(default_factory=list)
     conflicted_keys: list[tuple[str, str]] = field(default_factory=list)
     unresolved: list[tuple[str, str]] = field(default_factory=list)  # the visible frontier
+    quantities: list[tuple[str, str, int | float]] = field(default_factory=list)
     truncated: int = 0  # rows dropped to budget (never CONSTITUTIVE)
 
 
@@ -167,6 +168,11 @@ class Projector:
                 entity, m.frame, m.as_of, m.asserted_as_of
             )
             for attr, result in sorted(folded.items()):
+                if result.quantity is not None:
+                    if result.conflicted:
+                        m.conflicted_keys.append((entity, attr))
+                    m.quantities.append((entity, attr, result.quantity))
+                    continue
                 rows = result._value_rows or (
                     (result.winner,) if result.winner is not None else ()
                 )
@@ -246,6 +252,11 @@ class Projector:
             folded = self._indexes.current_state(entity, m.frame, m.as_of, m.asserted_as_of)
             for attr, result in sorted(folded.items()):
                 if result.winner is None:
+                    continue
+                if result.quantity is not None:
+                    if result.conflicted:
+                        m.conflicted_keys.append((entity, attr))
+                    m.quantities.append((entity, attr, result.quantity))
                     continue
                 if result.conflicted:
                     m.conflicted_keys.append((entity, attr))

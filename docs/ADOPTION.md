@@ -67,11 +67,25 @@ Domain outcomes are values you must branch on:
   never guesses below its confidence floor.
 - `FoldResult.conflicted` — the key is under an open truth-maintenance flag;
   `winner` is the engine's holding answer, `conflicting` lists both sides.
+- `FoldResult.quantity` — for attributes declared `fold_policy="accrue"`,
+  the folded numeric total. The `winner` is provenance for the latest ledger
+  row, not the value a host should read.
 - `resolve()` returns the module-level sentinel `UNKNOWN` in
   `observe_or_unknown` worlds when nothing was observed. "I don't know" is a
   representable answer; treat it as one.
 - `Materialization.unresolved` names the frontier in scope; `defaults` are
   render-coherence fills marked `default` — never facts.
+- `Materialization.quantities` carries derived totals as `(entity,
+  attribute, value)` tuples. These totals are not stored assertions.
+
+### Numeric quantities
+
+For fungible counts such as gold, ammo, liters, or charges, declare the
+attribute with `fold_policy="accrue"` before its first data row. A `literal`
+numeric row is an absolute baseline; a `value_type="delta"` row is a signed
+increment. The fold computes `baseline + later deltas`, with the ledger
+available as `FoldResult._ledger_rows` for audit. `int` and `float` are
+supported; exact decimal/fixed-point money is deferred.
 
 ## MUST / NEVER
 
@@ -106,8 +120,10 @@ p.ingest_structured(items, frame=None) -> Receipt
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=) -> dict
-   # contractually ZERO model calls and ZERO writes; id-only scopes
-p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact}
+   # contractually ZERO model calls and ZERO writes; id-only scopes; includes quantities
+p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact, quantity?}
+p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
+   # op in >=, >, <=, <, ==; compares folded numeric values
 p.locate / p.contents / p.path
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
 p.frame_diff(a, b, scope, as_of=) -> [Fact]   # semantic diff; divergent values marked

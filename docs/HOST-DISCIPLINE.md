@@ -58,7 +58,8 @@ findable and correlatable.
    for what a thing is) and stable domain vocabulary otherwise. Know whether
    a key is **functional** (one value at a time — `color`, `in`: later
    supersedes earlier) or **set-valued** (`alias`, `connects_to`: values
-   accumulate, never conflict). **Why:** the fold is key-local. Two names
+   accumulate, never conflict), and whether a numeric quantity is
+   **accrue** (absolute baseline plus signed deltas). **Why:** the fold is key-local. Two names
    for the same attribute (`wall_color` vs `color`) split a fact across keys
    the corroborate/conflict machinery will never see meet. (The gate
    canonicalizes a built-in set for you — lean on it, but don't fragment
@@ -66,9 +67,13 @@ findable and correlatable.
 
 3. **Value & value_type.** `entity` when the value is another id (so walks
    and correlations traverse it); `literal` for scalars/structured;
+   `delta` for a signed numeric increment on an `accrue` attribute;
    `unresolved` for a deliberately-deferred aspect (a *thunk* — see §below).
    Express approximate quantities as **structured bounds** (`{"gte":
    40000}`) so a later precise reading *refines* rather than *contradicts*.
+   For fungible quantities, use `fold_policy="accrue"` and numeric
+   `literal`/`delta` rows; the engine sums int/float values and keeps the
+   ledger append-only.
 
 4. **Time — both axes, deliberately.** `valid_from`/`valid_to` is **world
    time** (when it was true in the world); the engine separately records
@@ -187,6 +192,7 @@ perspective, and reading what comes back honestly.
    |---|---|---|
    | one fact (a key's value) | `state(entity, attribute, …)` | the folded winner + conflict flag |
    | everything about a subject | `snapshot(ids, lens=…)` / `materialize` | a coherent bundle of folded facts |
+   | entities satisfying a numeric bound | `where(attribute, op, value, …)` | ids whose folded numeric value matches |
    | where something is | `locate(entity)` | containment chain, nearest container first |
    | what's inside / co-located | `contents(container)` | members (emptiness = `[]`, derived) |
    | is X reachable from Y | `path(a, b)` | a route, or `None` (no false connectivity) |
@@ -242,7 +248,8 @@ perspective, and reading what comes back honestly.
 7. **Honor the typed outcomes.** `underdetermined` refer → your ask to the
    user. `UNKNOWN` from `resolve` in a tracking world → "I don't know" is a
    representable, correct answer. `Materialization.unresolved` names the
-   frontier (thunks in scope) and `defaults` are coherence fills, not facts.
+   frontier (thunks in scope), `defaults` are coherence fills, not facts,
+   and `quantities` are derived totals, not stored ledger rows.
    Branch on these; don't coerce them into a guess.
 
 8. **Never cache derived truth host-side.** Location, emptiness, current

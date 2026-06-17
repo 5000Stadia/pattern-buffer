@@ -233,6 +233,10 @@ class Resolver:
                 row = result.winner
                 if row is None or row.value_type == "unresolved":
                     continue
+                if result.quantity is not None:
+                    continue  # an accrue running total is not a scene-invention
+                              # constraint, and its winner is a delta row, never
+                              # the value (never inherit a delta as a constraint)
                 if self._classifier.durability(row.id) in {CONSTITUTIVE, DISPOSITIONAL}:
                     constraints.append(f"{holder} · {attr} · {json.dumps(row.value)}")
         return constraints

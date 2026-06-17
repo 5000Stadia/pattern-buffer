@@ -6,7 +6,7 @@ from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.indexes import Indexes
 from patternbuffer.roles import _make_engine_roles
-from patternbuffer.testing import StubModel
+from patternbuffer.testing import StubModel, rule_classifier_fallback
 from patternbuffer.tmaint import TruthMaintenance
 
 
@@ -402,6 +402,210 @@ class TestAttributeSemanticsMultiValue:
             fold = w.state("obj:tin", "contains")
             assert fold.winner.value == "obj:cig_5"
             assert set(fold.values) == {f"obj:cig_{i}" for i in range(1, 6)}
+        finally:
+            w.close()
+
+
+class TestNumericQuantities:
+    def _world(self, tmp_path, name="qty"):
+        from patternbuffer import World
+
+        return World(
+            tmp_path / f"{name}.world",
+            world_id=f"w:{name}",
+            model=StubModel(fallback=rule_classifier_fallback()),
+        )
+
+    def test_gold_ledger_folds_to_quantity(self, tmp_path):
+        w = self._world(tmp_path, "gold")
+        try:
+            w.ingest_structured([
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": 500,
+                    "fold_policy": "accrue",
+                    "valid_from": 1.0,
+                },
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": -20,
+                    "value_type": "delta",
+                    "valid_from": 2.0,
+                },
+            ])
+            fold = w.state("person:you", "gold")
+            assert fold.quantity == 480
+            assert isinstance(fold.quantity, int)
+            assert fold.winner.value == -20
+            assert len(fold._ledger_rows) == 2
+            assert fold._value_rows == ()
+
+            early = w.state("person:you", "gold", valid_as_of=1.5)
+            assert early.quantity == 500
+            assert len(early._ledger_rows) == 1
+        finally:
+            w.close()
+
+    def test_stray_delta_does_not_suppress_unresolved_thunk(self, tmp_path):
+        # Post-impl review #1: a value_type=delta on a NON-accrue attribute
+        # must be dropped BEFORE the thunk filter, or it makes an unresolved
+        # placeholder look resolved and the key folds to nothing.
+        from patternbuffer.thunks import INVENT_UNDER_CANON
+
+        w = self._world(tmp_path, "thunk")
+        try:
+            w.ingest_structured([
+                {"entity": "obj:box", "attribute": "contents",
+                 "value": {"policy": INVENT_UNDER_CANON}, "value_type": "unresolved",
+                 "valid_from": 1.0, "status": "assumed"},
+                {"entity": "obj:box", "attribute": "contents",
+                 "value": -1, "value_type": "delta", "valid_from": 2.0},
+            ])
+            fold = w.state("obj:box", "contents")
+            assert fold.winner is not None
+            assert fold.winner.value_type == "unresolved"  # thunk survived
+        finally:
+            w.close()
+
+    def test_delta_composition_and_retraction_correction(self, tmp_path):
+        w = self._world(tmp_path, "compose")
+        try:
+            rows = w.ingest_structured([
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": 500,
+                    "value_type": "delta",
+                    "fold_policy": "accrue",
+                    "valid_from": 1.0,
+                },
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": 300,
+                    "value_type": "delta",
+                    "valid_from": 2.0,
+                },
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": -20,
+                    "value_type": "delta",
+                    "valid_from": 3.0,
+                },
+            ])
+            assert w.state("person:you", "gold").quantity == 780
+            spend = next(r for r in rows if r.attribute == "gold" and r.value == -20)
+            w.truth.retract(spend.id, "correction: spend did not happen")
+            assert w.state("person:you", "gold").quantity == 800
+        finally:
+            w.close()
+
+    def test_concurrent_deltas_same_valid_time_both_count(self, tmp_path):
+        w = self._world(tmp_path, "concurrent")
+        try:
+            w.ingest_structured([
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": 500,
+                    "fold_policy": "accrue",
+                    "valid_from": 1.0,
+                },
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": -20,
+                    "value_type": "delta",
+                    "valid_from": 2.0,
+                },
+                {
+                    "entity": "person:you",
+                    "attribute": "gold",
+                    "value": -20,
+                    "value_type": "delta",
+                    "valid_from": 2.0,
+                },
+            ])
+            fold = w.state("person:you", "gold")
+            assert fold.quantity == 460
+            assert [r.value for r in fold._ledger_rows] == [500, -20, -20]
+        finally:
+            w.close()
+
+    def test_int_and_float_quantities(self, tmp_path):
+        w = self._world(tmp_path, "float")
+        try:
+            w.ingest_structured([
+                {
+                    "entity": "place:cistern",
+                    "attribute": "liters",
+                    "value": 40000.0,
+                    "fold_policy": "accrue",
+                    "valid_from": 1.0,
+                },
+                {
+                    "entity": "place:cistern",
+                    "attribute": "liters",
+                    "value": -1250.5,
+                    "value_type": "delta",
+                    "valid_from": 2.0,
+                },
+            ])
+            fold = w.state("place:cistern", "liters")
+            assert fold.quantity == 38749.5
+            assert isinstance(fold.quantity, float)
+        finally:
+            w.close()
+
+    def test_delta_on_non_accrue_is_ignored_not_rejected(self, tmp_path):
+        w = self._world(tmp_path, "nonaccrue")
+        try:
+            w.ingest_structured([
+                {
+                    "entity": "obj:meter",
+                    "attribute": "charge",
+                    "value": 5,
+                    "value_type": "delta",
+                    "valid_from": 1.0,
+                },
+            ])
+            ignored = w.state("obj:meter", "charge")
+            assert ignored.winner is None
+            assert ignored.quantity is None
+
+            w.ingest_structured([
+                {
+                    "entity": "obj:meter",
+                    "attribute": "charges",
+                    "value": 5,
+                    "value_type": "delta",
+                    "fold_policy": "accrue",
+                    "valid_from": 1.0,
+                },
+            ])
+            assert w.state("obj:meter", "charges").quantity == 5
+        finally:
+            w.close()
+
+    def test_functional_with_data_cannot_become_accrue(self, tmp_path):
+        w = self._world(tmp_path, "immutable_accrue")
+        try:
+            w.ingest_structured([
+                {"entity": "person:you", "attribute": "score", "value": 10},
+            ])
+            with pytest.raises(ValueError, match="after folded data"):
+                w.ingest_structured([
+                    {
+                        "entity": "person:you",
+                        "attribute": "score",
+                        "value": 5,
+                        "value_type": "delta",
+                        "fold_policy": "accrue",
+                    },
+                ])
         finally:
             w.close()
 

@@ -18,6 +18,9 @@ The working vocabulary for pattern-buffer. One name per concept, used identicall
 | **`Frame`** | Perspective scope on every assertion: `canon`, `knows:<entity>`, named frames. Carries knowledge, contested truth, and privacy by structural absence. | RDF named-graph heritage; kept plain deliberately. |
 | **`Thunk`** | An explicitly unresolved aspect with a resolution policy. Forced exactly once; memoized forever. Thunks can move without resolving. | CS-canonical (lazy evaluation). |
 | **`frontier`** | The explicitly-unresolved region: the thunk table plus everything below the resolution floor. Where nothing has been established, the system serves no invented detail. | Robotics-canonical (occupancy-grid mapping); heritage is the lidar ingestion parallel. |
+| **`delta`** | A `value_type` for a signed numeric increment. It is admitted like any other row and only folds into totals for attributes declared `accrue`. | Plain math/database vocabulary. |
+| **`accrue`** | A fold policy for fungible quantities: latest absolute numeric baseline plus later signed deltas. | Accounting-canonical. |
+| **`quantity` / `ledger`** | The derived numeric total / the append-only rows that produced it. Totals surface through `FoldResult.quantity` and `Materialization.quantities`; the ledger remains ordinary assertions. | Plain accounting. |
 | **`Anchor`** | Composite identity signals on an entity: names/aliases, roles, recurring locations, distinguishing features. | Plain. |
 | **`Scene cursor`** | The ingest-time "where is the narrated action happening" pose. The largest single precision multiplier in ingestion. | Heritage: lidar pose estimation, not Trek. |
 | **`arch`** | The operator's inspection CLI: dump the buffer, query as-of, audit provenance — without touching the world. | Trek: "Computer, arch!" — the operator's control interface inside the simulation. Allowed in code as a tool nickname, not an API symbol. |

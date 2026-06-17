@@ -40,6 +40,33 @@ def _seed(w):
     ], frame="knows:person:player")
 
 
+def _seed_gold(w):
+    w.ingestor.cursor.advance(1.0)
+    w.ingest_structured([
+        {
+            "entity": "person:you",
+            "attribute": "kind",
+            "value": "person",
+            "timeless": True,
+            "aliases": ["you"],
+        },
+        {
+            "entity": "person:you",
+            "attribute": "gold",
+            "value": 500,
+            "fold_policy": "accrue",
+            "valid_from": 1.0,
+        },
+        {
+            "entity": "person:you",
+            "attribute": "gold",
+            "value": -20,
+            "value_type": "delta",
+            "valid_from": 2.0,
+        },
+    ])
+
+
 class TestReceipts:
     def test_per_assertion_accounting(self, world):
         r = world.porcelain.ingest_structured([
@@ -144,6 +171,90 @@ class TestEventsAndDiff:
         out = tags()
         assert {f["value"] for f in out} == {"green"}     # only the canon-only member
         assert all(not f["divergent"] for f in out)       # absence, not divergence
+
+
+class TestNumericQuantities:
+    def test_snapshot_surfaces_quantity_not_ledger_rows(self, world):
+        _seed_gold(world)
+        snap = world.porcelain.snapshot("person:you")
+        assert snap["quantities"] == [
+            {"entity": "person:you", "attribute": "gold", "value": 480}
+        ]
+        assert not [f for f in snap["facts"] if f["attribute"] == "gold"]
+        json.dumps(snap)
+
+    def test_frame_diff_compares_accrue_quantities(self, world):
+        _seed_gold(world)
+        world.ingest_structured([
+            {
+                "entity": "person:you",
+                "attribute": "gold",
+                "value": 500,
+                "valid_from": 1.0,
+            },
+        ], frame="knows:person:player")
+        diff = world.porcelain.frame_diff(
+            "canon", "knows:person:player", ["person:you"]
+        )
+        gold = [f for f in diff if (f["entity"], f["attribute"]) == ("person:you", "gold")]
+        assert len(gold) == 1
+        assert gold[0]["value"] == 480
+        assert gold[0]["b_value"] == 500
+        assert gold[0]["divergent"] is True
+        assert all(f["value"] != -20 for f in gold)
+
+    def test_ask_returns_accrue_total(self, world):
+        _seed_gold(world)
+        world._stub.enqueue({
+            "refer_targets": ["you"],
+            "keys": [{"target_index": 0, "attribute": "gold"}],
+            "wants_location": False,
+            "wants_events": False,
+        })
+        answer = world.porcelain.ask("how much gold do I have?")
+        assert answer.answered
+        assert answer.facts[0]["attribute"] == "gold"
+        assert answer.facts[0]["value"] == 480
+
+    def test_where_numeric_predicate_folds_before_compare(self, world):
+        world.ingest_structured([
+            {
+                "entity": "person:rich",
+                "attribute": "gold",
+                "value": 150,
+                "fold_policy": "accrue",
+                "valid_from": 1.0,
+            },
+            {
+                "entity": "person:rich",
+                "attribute": "gold",
+                "value": -20,
+                "value_type": "delta",
+                "valid_from": 2.0,
+            },
+            {
+                "entity": "person:poor",
+                "attribute": "gold",
+                "value": 90,
+                "valid_from": 1.0,
+            },
+            {
+                "entity": "person:future",
+                "attribute": "gold",
+                "value": 150,
+                "valid_from": 10.0,
+            },
+            {"entity": "person:wordy", "attribute": "rank", "value": "high"},
+            {"entity": "person:boolean", "attribute": "score", "value": True},
+            {"entity": "person:numeric", "attribute": "score", "value": 3},
+        ])
+        assert world.porcelain.where("gold", ">=", 100, as_of=5.0) == ["person:rich"]
+        assert world.porcelain.where("gold", ">=", 100) == [
+            "person:future",
+            "person:rich",
+        ]
+        assert world.porcelain.where("rank", ">=", 0) == []
+        assert world.porcelain.where("score", ">", 0) == ["person:numeric"]
 
 
 class TestResolveAndAsk:

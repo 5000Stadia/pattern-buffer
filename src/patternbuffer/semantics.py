@@ -44,11 +44,11 @@ logger = logging.getLogger(__name__)
 # Axis values (fixed enums).
 FUNCTIONAL, SET_VALUED = "functional", "set_valued"
 CONTAINMENT, LATERAL, NONE = "containment", "lateral", "none"
-LAST_WRITE, MOVE = "last_write", "move"
+LAST_WRITE, MOVE, ACCRUE = "last_write", "move", "accrue"
 
 ARITIES = frozenset({FUNCTIONAL, SET_VALUED})
 RELATION_FAMILIES = frozenset({CONTAINMENT, LATERAL, NONE})
-FOLD_POLICIES = frozenset({LAST_WRITE, MOVE})
+FOLD_POLICIES = frozenset({LAST_WRITE, MOVE, ACCRUE})
 
 # Built-in lateral graph attributes; everything set-valued that is not a graph
 # edge is plain set data.
@@ -147,6 +147,9 @@ class AttributeSemantics:
 
     def is_lateral(self, attribute: str) -> bool:
         return self.semantics(attribute).relation_family == LATERAL
+
+    def is_accrue(self, attribute: str) -> bool:
+        return self.semantics(attribute).fold_policy == ACCRUE
 
     def is_structural(self, attribute: str) -> bool:
         return self.semantics(attribute).structural

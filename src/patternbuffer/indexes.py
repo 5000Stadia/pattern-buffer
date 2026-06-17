@@ -45,6 +45,8 @@ class FoldResult:
     corroborated_by: tuple[str, ...] = ()
     values: tuple = ()
     _value_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
+    quantity: int | float | None = None
+    _ledger_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
 
 
 @dataclass
@@ -128,6 +130,10 @@ class Indexes:
                 return True
         return False
 
+    @staticmethod
+    def _is_numeric(value: object) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
     def _is_event_effect(self, row: Assertion, asserted_as_of: int | None) -> bool:
         """True iff the row carries a caused_by edge to an EVENT (spec §9.1)."""
         return bool(
@@ -159,6 +165,20 @@ class Indexes:
             if self._classifier.durability(row.id) == EVENT:
                 continue  # events never fold
             candidates.append(row)
+        if not candidates:
+            return FoldResult(winner=None)
+
+        # Accrue reads raw numeric literal/delta rows (it filters to numbers
+        # internally and ignores unresolved/thunk machinery), so it branches
+        # before the thunk filter. Deltas are STATE by guardrail, never EVENT,
+        # so the gather-loop EVENT drop above leaves the ledger intact.
+        if self._semantics.is_accrue(attribute):
+            return self._fold_accrue(candidates)
+
+        # A `delta` on a NON-accrue attribute is not an absolute value — drop
+        # it before the thunk filter so it can neither suppress an unresolved
+        # placeholder nor compete in _fold_state.
+        candidates = [r for r in candidates if r.value_type != "delta"]
         if not candidates:
             return FoldResult(winner=None)
 
@@ -209,6 +229,42 @@ class Indexes:
             winner = max(rows, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
             return FoldResult(winner=winner)
         return FoldResult(winner=None)
+
+    def _fold_accrue(self, rows: list[Assertion]) -> FoldResult:
+        """Accrue quantities: latest absolute numeric baseline plus later
+        signed numeric deltas. The ledger is provenance-only; the derived
+        quantity is surfaced separately from stored facts."""
+        def recency(row: Assertion) -> tuple[float, int]:
+            return (
+                row.valid_from if row.valid_from is not None else float("-inf"),
+                row.asserted_at,
+            )
+
+        literals = [
+            r for r in rows
+            if r.value_type == "literal" and self._is_numeric(r.value)
+        ]
+        deltas = [
+            r for r in rows
+            if r.value_type == "delta" and self._is_numeric(r.value)
+        ]
+        baseline = max(literals, key=recency) if literals else None
+        baseline_value: int | float = baseline.value if baseline is not None else 0
+        baseline_key = recency(baseline) if baseline is not None else None
+        contributing = [
+            r for r in deltas if baseline_key is None or recency(r) > baseline_key
+        ]
+        contributing.sort(key=recency)
+        if baseline is None and not contributing:
+            return FoldResult(winner=None)
+        total = baseline_value + sum(r.value for r in contributing)
+        winner = contributing[-1] if contributing else baseline
+        ledger_rows = ((baseline,) if baseline is not None else ()) + tuple(contributing)
+        return FoldResult(
+            winner=winner,
+            quantity=total,
+            _ledger_rows=ledger_rows,
+        )
 
     def _fold_set_valued(self, rows: list[Assertion]) -> FoldResult:
         """Set-valued keys accumulate current members instead of conflicting.
