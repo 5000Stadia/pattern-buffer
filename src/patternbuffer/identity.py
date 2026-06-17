@@ -12,16 +12,21 @@ from __future__ import annotations
 import logging
 
 from patternbuffer.buffer import PatternBuffer
-from patternbuffer.model import CANON
+from patternbuffer.model import CANON, CONTAINMENT_FAMILY
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
 
 
 class IdentityRegistry:
-    def __init__(self, buffer: PatternBuffer, ingestor: WriterRole) -> None:
+    def __init__(
+        self, buffer: PatternBuffer, ingestor: WriterRole, semantics=None
+    ) -> None:
         self._buffer = buffer
         self._ingestor = ingestor
+        # AttributeSemantics, for the declared containment family the merge
+        # veto consults; falls back to the base family if not wired.
+        self._semantics = semantics
 
     # --------------------------------------------------------------- write
 
@@ -31,9 +36,46 @@ class IdentityRegistry:
             status=status, role=self._ingestor,
         )
 
-    def merge(self, a: str, b: str, evidence: str) -> str:
+    def _containment_family(self) -> set[str]:
+        if self._semantics is not None:
+            return self._semantics.containment_family()
+        return set(CONTAINMENT_FAMILY)
+
+    def containment_related(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
+        """True iff a visible containment/location edge relates a member of
+        a's closure to a member of b's closure (either direction). A thing is
+        never identical to what holds it — this is the merge veto (010): an
+        in/contains/holds edge between two entities is a hard bar to merging
+        them. Membrane-clean: computed from present edges, never stored."""
+        family = self._containment_family()
+        clos_a = self.closure(a, asserted_as_of)
+        clos_b = self.closure(b, asserted_as_of)
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+            if row.attribute not in family or row.value_type != "entity":
+                continue
+            if not isinstance(row.value, str):
+                continue
+            e, v = row.entity, row.value
+            if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
+                return True
+        return False
+
+    def merge(self, a: str, b: str, evidence: str) -> str | None:
         """Identity merge, logged as an event (auditable, reversible by
-        retraction). Returns the merge event's entity id."""
+        retraction). Returns the merge event's entity id, or None if vetoed.
+
+        Non-bypassable containment veto (010): two entities related by a
+        containment/location edge are never the same thing (a container is
+        not its contents). The veto lives here so a direct/manual merge()
+        cannot bypass it — not only at the ingest same_as→maybe_same_as gate.
+        A vetoed pair is left distinct; the bad proposal stays unpromoted and
+        is repaired forward by retracting the offending edge."""
+        if self.containment_related(a, b):
+            logger.warning(
+                "merge vetoed: %s and %s are containment-related (a thing is "
+                "not what holds it); leaving distinct (%s)", a, b, evidence
+            )
+            return None
         event_id = f"event:merge_{self._buffer.head() + 1}"
         self._buffer.append(
             entity=event_id, attribute="kind", value="identity_merge",
@@ -137,6 +179,8 @@ class IdentityRegistry:
                 continue
             if self.resolve(a) == self.resolve(b):
                 continue  # already merged
+            if self.containment_related(a, b):
+                continue  # veto: never promote a container↔contents pair (010)
             shared = self.name_anchors(a) & self.name_anchors(b)
             if shared:
                 ev = self._buffer.visible(entity=row.id, attribute="evidence")

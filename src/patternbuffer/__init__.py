@@ -70,7 +70,7 @@ class World:
         self.semantics = AttributeSemantics(self.buffer)
         roles = _make_engine_roles()
         self.classifier = Classifier(self.buffer, model or _no_model, self.semantics)
-        self.registry = IdentityRegistry(self.buffer, roles["ingestor"])
+        self.registry = IdentityRegistry(self.buffer, roles["ingestor"], self.semantics)
         self.indexes = Indexes(
             self.buffer, self.classifier, self.registry.resolve, self.semantics
         )
