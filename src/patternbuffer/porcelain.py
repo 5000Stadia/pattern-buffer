@@ -296,6 +296,15 @@ class Porcelain:
     ) -> float:
         return self._w.salience(entity, frame=frame, as_of=as_of)
 
+    def confidence(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str = CANON,
+        as_of: float | None = None,
+    ) -> dict:
+        return self._w.confidence(entity, attribute, frame=frame, as_of=as_of)
+
     def neighborhood(
         self,
         entity: str,

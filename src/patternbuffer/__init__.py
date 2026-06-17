@@ -145,6 +145,19 @@ class World:
     ) -> float:
         return self.salience_index.salience(entity, frame, as_of)
 
+    def confidence(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str = CANON,
+        as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> dict:
+        return self.indexes.confidence(
+            entity, attribute, frame=frame, as_of=as_of,
+            asserted_as_of=asserted_as_of,
+        )
+
     def neighborhood(self, entity: str, **kw) -> dict:
         return self.indexes.neighborhood(entity, **kw)
 

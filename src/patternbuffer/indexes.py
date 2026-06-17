@@ -6,6 +6,7 @@ rebuildable — these are views over the buffer, never truth.
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -25,6 +26,25 @@ logger = logging.getLogger(__name__)
 _FAMILY_KEY = "__containment__"
 _NEIGHBORHOOD_EDGES = frozenset({"containment", "lateral", "relations", "events"})
 _NEIGHBORHOOD_DEPTH_CAP = 3
+CONFIDENCE_PARAMS = {
+    # CONFIDENCE-V1: fixed, tunable read-layer weights. These scores are
+    # derived on demand and are never stored in the assertion log or sidecar.
+    "weights": {
+        "provenance": 0.45,
+        "recency": 0.30,
+        "corroboration": 0.25,
+    },
+    "provenance": {
+        "stated": 1.0,
+        "observed": 1.0,
+        "inferred": 0.6,
+        "assumed": 0.3,
+        "generated": 0.4,
+        "default": 0.0,
+    },
+    "recency_scale": 10.0,
+    "corroboration_scale": 4.0,
+}
 
 
 def fold_attribute(attribute: str) -> str:
@@ -150,6 +170,45 @@ class Indexes:
             )
         )
 
+    @staticmethod
+    def _empty_confidence() -> dict:
+        return {
+            "score": None,
+            "status": None,
+            "last_observed_at": None,
+            "corroboration": 0,
+            "conflicted": False,
+        }
+
+    def _confidence_values_equivalent(self, left: Assertion, right: Assertion) -> bool:
+        # Corroboration is "same value" (post-impl review): STRICT equivalence,
+        # not the loose approximate-bounds agreement — a {gte:40} bound must not
+        # count as corroborating a precise 42.
+        if left.value_type != right.value_type:
+            return False
+        if left.value_type == "entity" and isinstance(left.value, str) \
+                and isinstance(right.value, str):
+            return self._resolve(left.value) == self._resolve(right.value)
+        return left.value == right.value
+
+    def _visible_key_rows(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str,
+        valid_as_of: float | None,
+        asserted_as_of: int | None,
+    ) -> list[Assertion]:
+        fa = self.fold_attribute(attribute)
+        attrs = sorted(self._semantics.containment_family()) if fa == _FAMILY_KEY else [attribute]
+        return self._buffer.visible(
+            entity_in=sorted(self._closure_of(entity)),
+            attribute_in=attrs,
+            frame=frame,
+            valid_as_of=valid_as_of,
+            asserted_as_of=asserted_as_of,
+        )
+
     # ----------------------------------------------------------------- fold
 
     def fold_key(
@@ -237,6 +296,102 @@ class Indexes:
             winner = max(rows, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
             return FoldResult(winner=winner)
         return FoldResult(winner=None)
+
+    def confidence(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str = CANON,
+        as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> dict:
+        """Derived trust score for one functional folded key.
+
+        CONFIDENCE-V1 is compute-only: it reads the visible closure and the
+        functional fold, writes nothing, and returns ``None`` fields for
+        absent, set-valued, or accrue keys.
+
+        Identity closure is computed at current head (consistent with
+        ``fold_key``/``current_state`` engine-wide), so under ``asserted_as_of``
+        a later merge can change a historical confidence read — a known,
+        shared limitation, not a confidence-specific one.
+        """
+        entity = self._resolve(entity)
+        if self._semantics.is_set_valued(attribute) or self._semantics.is_accrue(attribute):
+            return self._empty_confidence()
+
+        fold = self.fold_key(
+            entity,
+            attribute,
+            frame=frame,
+            valid_as_of=as_of,
+            asserted_as_of=asserted_as_of,
+        )
+        winner = fold.winner
+        if winner is None:
+            return self._empty_confidence()
+
+        params = CONFIDENCE_PARAMS
+        provenance = params["provenance"].get(winner.status, 0.0)
+        if winner.confidence is not None:
+            # Clamp the source-confidence field to [0,1] before flooring — the
+            # gate accepts any float, and a garbage negative must not zero a
+            # stated fact (post-impl review).
+            provenance = min(provenance, max(0.0, min(1.0, winner.confidence)))
+
+        if winner.valid_from is None:
+            recency = 1.0
+        else:
+            ref = as_of
+            if ref is None:
+                closure_rows = self._buffer.visible(
+                    entity_in=sorted(self._closure_of(entity)),
+                    frame=frame,
+                    asserted_as_of=asserted_as_of,
+                )
+                ref = max(
+                    (row.valid_from for row in closure_rows if row.valid_from is not None),
+                    default=winner.valid_from,
+                )
+            age = max(0.0, float(ref) - float(winner.valid_from))
+            recency = 1.0 / (1.0 + age / params["recency_scale"])
+
+        source_classes = {self._source_class(winner, asserted_as_of)}
+        for assertion_id in fold.corroborated_by:
+            row = self._buffer.get(assertion_id)
+            if row is not None:
+                source_classes.add(self._source_class(row, asserted_as_of))
+        for row in self._visible_key_rows(
+            entity,
+            attribute,
+            frame=frame,
+            valid_as_of=as_of,
+            asserted_as_of=asserted_as_of,
+        ):
+            if self._confidence_values_equivalent(row, winner):
+                source_classes.add(self._source_class(row, asserted_as_of))
+
+        corroboration = max(0, len(source_classes) - 1)
+        corroboration_score = (
+            math.log1p(corroboration) / math.log1p(params["corroboration_scale"])
+        )
+
+        weights = params["weights"]
+        score = (
+            weights["provenance"] * provenance
+            + weights["recency"] * recency
+            + weights["corroboration"] * corroboration_score
+        )
+        if fold.conflicted:
+            score *= 0.5
+        score = min(1.0, max(0.0, score))
+        return {
+            "score": score,
+            "status": winner.status,
+            "last_observed_at": winner.valid_from,
+            "corroboration": corroboration,
+            "conflicted": fold.conflicted,
+        }
 
     def _fold_accrue(self, rows: list[Assertion]) -> FoldResult:
         """Accrue quantities: latest absolute numeric baseline plus later
