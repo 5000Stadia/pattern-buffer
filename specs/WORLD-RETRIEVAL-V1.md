@@ -1,6 +1,14 @@
 # WORLD-RETRIEVAL-V1 — neighborhood retrieval + salience (the intelligent read)
 
-**Status:** SPEC, pre-Codex-GREEN. Completes the read half of the substrate:
+**Status:** SPEC r2 — Codex review RED (r1) addressed; re-review pending. The
+*shape* passed r1 (bounded, P7, additive, derive-don't-store all GREEN); the
+RED was operational — the existing surfaces this would reuse (`path()`,
+`events()`, incoming-ref counting) scan global state, so reusing them as-is
+would break this spec's own closure-scoped bound. r2 adds the bounded one-hop
+index helpers, pins the salience formula + cache invalidation, builds salience
+first, and *replaces* the materialize budget ordering.
+
+Completes the read half of the substrate:
 "surface the relevant detail about a subject and the things it's connected
 to." The core read of a *generalized* world-relational tracker — every domain
 (a life-assistant world model, a work/life/location tracker, a D&D campaign, a
@@ -67,7 +75,32 @@ Output shape (JSON-serializable, additive — no existing payload changes):
 
 `neighbors` is salience-ranked (Part B); `budget` drops the lowest-salience
 neighbors first (never the subject, never CONSTITUTIVE spine — the §10 budget
-invariant).
+invariant). **Budget shapes OUTPUT only — it never gates expansion** (Codex
+r1): traversal is bounded by `depth` + a **visited set** (each identity-closed
+id expanded at most once) + a **per-hop fanout cap** (`max_fanout`, default
+e.g. 64; what's dropped is reported in `truncated`). Depth alone is not a
+bound — `contents()`/lateral fanout can be wide.
+
+### 2.5 Bounded one-hop index helpers (build these FIRST — Codex r1)
+
+The existing reads this packages scan global state, which would break the
+bound. Add deterministic, closure-scoped one-hop helpers on `Indexes`, each
+using indexed `visible(...)` filters (never the whole log), and have
+`neighborhood` walk over **folded** results, not raw visible rows:
+- `lateral_neighbors(entity, frame, as_of)` — one hop over
+  `connects_to`/`adjacent_to` from `entity`'s closure (not the whole graph as
+  `path()` builds).
+- `event_participation(entity, frame, as_of)` — events whose folded
+  agent/patient is `entity`'s closure (scoped, not all `event:` rows).
+- `caused_by_of(event_ids, …)` — the `caused_by` edge(s) of given events (a
+  one-hop traversal helper; today only a private row-effect check exists).
+- `incoming_refs(entity, frame, as_of)` — entities with an entity-valued row
+  whose value is in `entity`'s closure. **Needs a cheap reverse lookup:** add
+  a value-leading index (`ix_assertions_value`) and an additive
+  `value_type=` filter to `visible()`, so this is
+  `visible(value=entity, value_type="entity")` — indexed, not a Python scan.
+`path()`/`events()` stay as-is for their own callers; neighborhood uses these
+bounded helpers instead.
 
 ## 3. Part B — salience (the ranking, made real)
 
@@ -89,10 +122,31 @@ computed from (all closure-scoped, no model call):
 - **delta-from-baseline** — whether it has changed from a CONSTITUTIVE/
   establishing baseline (movement/change draws attention).
 
-The exact weighting is a fixed, documented formula (tunable constant table,
-not magic). Salience is **cached in a rebuildable derived index**, never
-written to the log (P2). It powers `neighborhood`'s ranking and `materialize`'s
-budget ordering; a host may also call it directly.
+**The fixed formula (pinned — Codex r1).** Each component normalized to
+`[0,1]` over the closure-scoped candidate set, combined by a documented
+constant weight table:
+```
+salience = 0.40*recency + 0.25*reference_frequency
+         + 0.20*reinforcement + 0.15*delta_from_baseline
+```
+- `recency` = rank of the entity's max `asserted_at` among candidates.
+- `reference_frequency` = `len(incoming_refs(entity))`, normalized.
+- `reinforcement` = count of distinct `valid_from` across the entity's
+  visible rows, normalized.
+- `delta_from_baseline` = 1.0 if any STATE/move row supersedes the entity's
+  establishing baseline, else 0.0.
+Weights live in one module-level constant table, tunable, documented — not
+magic numbers scattered in code.
+
+**Caching + invalidation (pinned — Codex r1).** Salience is **cached in a
+rebuildable derived sidecar** (mirroring the classifier/semantics sidecars),
+never written to the log (P2). The cache key includes **log head +
+frame + as_of + identity-closure version**, and the cache is invalidated on
+**classifier-sidecar mutation** too (`classify.set`/`promote_accruals`/
+`rebuild` change durability without moving the log head, which shifts
+`delta_from_baseline` and the budget spine). When in doubt, recompute —
+salience is cheap and closure-scoped. It powers `neighborhood`'s ranking and
+`materialize`'s budget ordering; a host may also call it directly.
 
 **Honest bound:** salience is a heuristic, not truth. A fact unmentioned for
 three campaign-years has *zero salience and full validity* (whitepaper §13) —
@@ -123,6 +177,26 @@ ranking never gates correctness; `state`/`snapshot` still serve everything.
   unreferenced one; salience never alters what `state` serves.
 - Rebuild: drop the salience index, rebuild → identical ranking.
 - Defaults-preserve: full suite green; existing reads unchanged.
+
+## 5.5 Implementation order (Codex r1 — salience before neighborhood)
+
+`neighborhood` ranking and the `materialize` budget both depend on salience,
+so build bottom-up:
+1. **Bounded one-hop index helpers** (§2.5): `lateral_neighbors`,
+   `event_participation`, `caused_by_of`, `incoming_refs` (+ the
+   `ix_assertions_value` index and the additive `visible(value_type=)` filter).
+2. **Salience** — the pinned formula + the rebuildable sidecar with the
+   pinned cache key/invalidation. Tests first (it's the foundation).
+3. **Replace** `materialize`'s budget ordering (today: `all_rows()` global
+   reference counts, ignoring frame/as_of/closure) **with** salience,
+   preserving the CONSTITUTIVE-spine exemption (a *replacement*, not a mirror).
+4. **`neighborhood`** traversal (visited set + per-hop fanout cap) + ranking +
+   budget shaping.
+5. **Porcelain/World verbs** + docs.
+
+A trivial deterministic salience may scaffold neighborhood traversal tests,
+but the real formula must land before ship (the ranking + budget behavior
+depend on it).
 
 ## 6. Out of scope
 - Arbitrary attribute/pattern queries (`where x.foo='bar' and y.baz>3`) — host-
