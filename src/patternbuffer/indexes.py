@@ -301,7 +301,7 @@ class Indexes:
         self,
         entity: str,
         attribute: str,
-        frame: str = CANON,
+        frame: str | list[str] = CANON,
         as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> dict:
@@ -311,11 +311,20 @@ class Indexes:
         functional fold, writes nothing, and returns ``None`` fields for
         absent, set-valued, or accrue keys.
 
+        ``frame`` may be a list of frames (CONFIDENCE-MULTIFRAME-V1): trust
+        over an observer's *effective* knowledge = the read-union of those
+        frames (``knows:O ∪ public``), mirroring multi-frame ``frame_diff``.
+        A deduped single-frame list reduces to the str path byte-for-byte.
+
         Identity closure is computed at current head (consistent with
         ``fold_key``/``current_state`` engine-wide), so under ``asserted_as_of``
         a later merge can change a historical confidence read — a known,
         shared limitation, not a confidence-specific one.
         """
+        if not isinstance(frame, str):
+            return self._confidence_multiframe(
+                entity, attribute, list(frame), as_of, asserted_as_of
+            )
         entity = self._resolve(entity)
         if self._semantics.is_set_valued(attribute) or self._semantics.is_accrue(attribute):
             return self._empty_confidence()
@@ -391,6 +400,127 @@ class Indexes:
             "last_observed_at": winner.valid_from,
             "corroboration": corroboration,
             "conflicted": fold.conflicted,
+        }
+
+    def _confidence_multiframe(
+        self,
+        entity: str,
+        attribute: str,
+        frames: list[str],
+        as_of: float | None,
+        asserted_as_of: int | None,
+    ) -> dict:
+        """Confidence over the read-union of `frames` (CONFIDENCE-MULTIFRAME-V1).
+
+        The effective winner is the most-recent across the per-frame folds;
+        conflict is any per-frame conflict OR a cross-frame value
+        disagreement; corroboration unions each fold's V1 source classes with
+        the strict cross-frame scan. Derived, writes nothing (the membrane)."""
+        # Dedup preserving order; a single distinct frame delegates to the str
+        # path so the reduction invariant is byte-identical (Codex r1).
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for f in frames:
+            if f not in seen:
+                seen.add(f)
+                ordered.append(f)
+        if len(ordered) <= 1:
+            return self.confidence(
+                entity, attribute, ordered[0] if ordered else CANON, as_of, asserted_as_of
+            )
+
+        entity = self._resolve(entity)
+        if self._semantics.is_set_valued(attribute) or self._semantics.is_accrue(attribute):
+            return self._empty_confidence()
+
+        folds: list[tuple[str, FoldResult]] = []
+        for f in ordered:
+            fold = self.fold_key(
+                entity, attribute, frame=f, valid_as_of=as_of, asserted_as_of=asserted_as_of
+            )
+            if fold.winner is not None:
+                folds.append((f, fold))
+        if not folds:
+            return self._empty_confidence()
+
+        def recency_key(fold: FoldResult) -> tuple[float, int]:
+            w = fold.winner
+            return (w.valid_from if w.valid_from is not None else float("-inf"), w.asserted_at)
+
+        winner = max(folds, key=lambda ff: recency_key(ff[1]))[1].winner
+
+        # Conflict: any per-frame conflict, or two frames' winners disagree
+        # (strict, entity-resolved — the effective belief is contested).
+        conflicted = any(fold.conflicted for _, fold in folds)
+        if not conflicted:
+            for i in range(len(folds)):
+                if conflicted:
+                    break
+                for j in range(i + 1, len(folds)):
+                    if not self._confidence_values_equivalent(
+                        folds[i][1].winner, folds[j][1].winner
+                    ):
+                        conflicted = True
+                        break
+
+        params = CONFIDENCE_PARAMS
+        provenance = params["provenance"].get(winner.status, 0.0)
+        if winner.confidence is not None:
+            provenance = min(provenance, max(0.0, min(1.0, winner.confidence)))
+
+        if winner.valid_from is None:
+            recency = 1.0
+        else:
+            ref = as_of
+            if ref is None:
+                closure = sorted(self._closure_of(entity))
+                refs = [
+                    row.valid_from
+                    for f in ordered
+                    for row in self._buffer.visible(
+                        entity_in=closure, frame=f, asserted_as_of=asserted_as_of
+                    )
+                    if row.valid_from is not None
+                ]
+                ref = max(refs) if refs else winner.valid_from
+            age = max(0.0, float(ref) - float(winner.valid_from))
+            recency = 1.0 / (1.0 + age / params["recency_scale"])
+
+        # Corroboration: each fold's V1 source classes (winner + corroborated_by)
+        # unioned with the strict cross-frame scan (rows == effective winner).
+        source_classes: set[str] = set()
+        for _, fold in folds:
+            source_classes.add(self._source_class(fold.winner, asserted_as_of))
+            for assertion_id in fold.corroborated_by:
+                row = self._buffer.get(assertion_id)
+                if row is not None:
+                    source_classes.add(self._source_class(row, asserted_as_of))
+        for f in ordered:
+            for row in self._visible_key_rows(
+                entity, attribute, frame=f, valid_as_of=as_of, asserted_as_of=asserted_as_of
+            ):
+                if self._confidence_values_equivalent(row, winner):
+                    source_classes.add(self._source_class(row, asserted_as_of))
+        corroboration = max(0, len(source_classes) - 1)
+        corroboration_score = (
+            math.log1p(corroboration) / math.log1p(params["corroboration_scale"])
+        )
+
+        weights = params["weights"]
+        score = (
+            weights["provenance"] * provenance
+            + weights["recency"] * recency
+            + weights["corroboration"] * corroboration_score
+        )
+        if conflicted:
+            score *= 0.5
+        score = min(1.0, max(0.0, score))
+        return {
+            "score": score,
+            "status": winner.status,
+            "last_observed_at": winner.valid_from,
+            "corroboration": corroboration,
+            "conflicted": conflicted,
         }
 
     def _fold_accrue(self, rows: list[Assertion]) -> FoldResult:

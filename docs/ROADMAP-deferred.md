@@ -22,14 +22,10 @@ Pre-v1, the surface is malleable; this file is revised as worlds reveal needs.
 
 ---
 
-## Specced, paused (pre-implementation)
-| Item | Characteristic | Shape | Status |
-|---|---|---|---|
-| **multi-frame `confidence`** | trust over an observer's *effective* knowledge = own frame ∪ `public` | `frame` accepts a list; per-frame fold, union at the scoring layer (mirrors multi-frame `frame_diff`) | CONFIDENCE-MULTIFRAME-V1 specced; Codex-RED on one finding (single-frame list must delegate to the str path so the reduction invariant holds). Paused when the conversation turned to the liveness/situation work; resume with that one fix. |
-
 ## Shipped
 | Item | Characteristic | Shape | Spec |
 |---|---|---|---|
+| **multi-frame `confidence`** | trust over an observer's *effective* knowledge = own frame ∪ `public` | `frame` accepts a list; per-frame fold, effective winner = most-recent, conflict = any per-frame conflict or cross-frame disagreement, corroboration = union of per-fold V1 classes + strict cross-frame scan; a deduped single-frame list delegates to the str path (reduction invariant) | CONFIDENCE-MULTIFRAME-V1 |
 | **`situation` lens** | re-entry retrieval: standing truth ∪ *live* threads, closed history dropped; liveness = open thread (a) OR surviving un-superseded effect (b); effect-driven anchoring; recency overflow over a protected floor | a 5th `materialize` lens; derived every read, nothing stored; proven against a 3-domain adversarial battery ((a)+(b) shown exhaustive for engine-knowable present relevance) | SITUATION-LENS-V1 |
 | **aggregate** | emergent collection properties (total weight, headcount, value, max level) | bounded derive-don't-store rollup over `contents` (sum/count/min/max/avg) | WORLD-RETRIEVAL-V2 |
 | **multi-frame `frame_diff`** (#25) | an observer's *effective* knowledge = own frame ∪ `public` | `b`-side accepts a frame list; union-of-presences | WORLD-RETRIEVAL-V2 |

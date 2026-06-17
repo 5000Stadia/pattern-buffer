@@ -149,7 +149,7 @@ class World:
         self,
         entity: str,
         attribute: str,
-        frame: str = CANON,
+        frame: str | list[str] = CANON,
         as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> dict:

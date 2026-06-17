@@ -300,9 +300,11 @@ class Porcelain:
         self,
         entity: str,
         attribute: str,
-        frame: str = CANON,
+        frame: str | list[str] = CANON,
         as_of: float | None = None,
     ) -> dict:
+        # frame may be a list: trust over an observer's effective knowledge
+        # (knows:O ∪ public), mirroring multi-frame frame_diff.
         return self._w.confidence(entity, attribute, frame=frame, as_of=as_of)
 
     def neighborhood(

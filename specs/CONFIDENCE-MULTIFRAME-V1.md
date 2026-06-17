@@ -28,8 +28,11 @@ effective-knowledge model is live), so it ships rather than waits.
 - **`str` path: byte-for-byte unchanged.** Today's behavior, today's tests.
 - **`list[str]` path:** confidence over the read-union of the listed frames.
 
-A single-element list `[f]` MUST reduce to exactly `confidence(frame=f)` (the
-reduction invariant — a clean test anchor).
+A single-element (or fully-deduped-to-one) list `[f]` MUST reduce to exactly
+`confidence(frame=f)` (the reduction invariant — a clean test anchor).
+**Implementation guarantee (Codex r1):** a deduped single-frame list
+**delegates to the str path** outright, so the reduction is byte-identical and
+cannot drift from V1's `corroborated_by` accumulation.
 
 ## Algorithm (list path)
 
@@ -52,11 +55,15 @@ Reuses `fold_key` per frame; unions only at the scoring layer. No new fold.
    `age = ref - winner.valid_from`. When `as_of` is None, `ref` is the max
    `valid_from` over the closure rows visible in **any** listed frame (the union
    analogue of V1's single-frame closure reference).
-5. **Corroboration.** Distinct `_source_class` values, across the visible key
-   rows of **all** listed frames, whose value is strictly-equivalent to the
-   effective winner — minus 1. Cross-frame corroboration is the point: private +
-   public agreement raises trust. (Source rows carry a single `frame` column, so
-   the union is a clean set with no physical double-count.)
+5. **Corroboration.** Distinct `_source_class` values minus 1, taken over the
+   union of: (i) each contributing per-frame fold's winner source class **and
+   its V1 `corroborated_by` rows** (so list-path corroboration is a superset of
+   what each single-frame read would count — Codex r1), plus (ii) the strict
+   cross-frame scan — the visible key rows of **all** listed frames whose value
+   is strictly-equivalent to the effective winner. Cross-frame corroboration is
+   the point: private + public agreement raises trust. (Source rows carry a
+   single `frame` column, so the union is a clean set with no physical
+   double-count.)
 6. **Return** the same dict shape as V1:
    `{score, status, last_observed_at, corroboration, conflicted}` where `status`
    is the effective winner's status and `last_observed_at` its `valid_from`.
