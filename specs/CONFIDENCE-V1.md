@@ -1,6 +1,6 @@
 # CONFIDENCE-V1 — the confidence/freshness read (temporal trust, derived)
 
-**Status:** SPEC, pre-Codex-GREEN. The deliberated "strong follow-on" (RFC-002
+**Status:** GREEN (Codex r1; corroboration pinned as de-duplicated distinct source classes). Implementing. The deliberated "strong follow-on" (RFC-002
 §4.2; ROADMAP-deferred C). A real-world tracker's beliefs **age** — "how sure
 should I be of this *now*, given how it was observed, how recently, and whether
 anything corroborates it?" Kernos's framing: **confidence = temporal salience**
@@ -44,9 +44,13 @@ Operates on the **functional** fold winner for the key. Returns:
     given, else the max `valid_from` in the entity's closure — the entity's
     "current time"); normalized so newer → higher (e.g.
     `1 / (1 + (ref - valid_from)/RECENCY_SCALE)`); `1.0` for a timeless winner.
-  - **corroboration** — count of independent agreeing rows on the key
-    (`FoldResult.corroborated_by` + same-value visible rows across distinct
-    source classes), log-scaled (`log1p(n)/log1p(CORROB_SCALE)`).
+  - **corroboration** — a **de-duplicated** count of *independent agreeing
+    source classes* (Codex r1): take the union of the winner's source class +
+    `FoldResult.corroborated_by` rows' source classes + any same-value visible
+    rows' source classes, as a **set of distinct `_source_class` values**, so a
+    row counted via `corroborated_by` is never recounted in the same-value scan.
+    `n = len(that set) - 1` (agreeing sources *beyond* the winner's own);
+    log-scaled (`log1p(n)/log1p(CORROB_SCALE)`).
 - **`last_observed_at`** = the winner's `valid_from` — the host computes
   staleness/age against *its own* clock (the engine doesn't presume a global
   "now" beyond the closure's latest fact; freshness is the host's reference,
