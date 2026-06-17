@@ -1,7 +1,9 @@
 # NUMERIC-QUANTITIES-V1 — numeric quantities: change them, compare them
 
-**Status:** SPEC r2 — Codex build-review RED (r1) addressed; re-review
-pending. Merges the founder-ruled Imp 2 (value typing / comparison
+**Status:** SPEC r3 — Codex r2 left findings 1/3/4/5 resolved; r3 fixes the
+remainder (stale `_value_rows`-as-ledger text → `_ledger_rows`; `frame_diff`/
+`ask` accrue-awareness; the `visible()`-kwargs contradiction removed).
+Re-review pending. Merges the founder-ruled Imp 2 (value typing / comparison
 predicates) and #20 (the `accrue` delta-counter) into one coherent "numbers"
 capability, wired on **both** sides (engine + data structure). **Whitepaper
 wins; a refinement within P1/P2.** Composes with ATTRIBUTE-SEMANTICS-V1 (the
@@ -114,9 +116,21 @@ there and does **not** append `winner` to `m.assertions`. Porcelain
 `snapshot` surfaces `quantities`; `state(entity, attr)` adds `quantity` to its
 response. This keeps `facts = stored rows` pure and totals derived.
 
+**Other read consumers that must learn accrue (Codex r2 NEW-1).** Because an
+accrue total is not in `m.assertions` and `winner.value` is a delta, two
+porcelain reads need accrue-awareness or they go wrong:
+- **`frame_diff`**: today it iterates `m_a.assertions` and compares each
+  `row.value` to B's `winner.value`. For accrue keys it must instead diff the
+  folded **`quantity`** — compare A's `quantity` (from `m_a.quantities`) to
+  B's folded `quantity`, reporting the key when they differ. (A delta row must
+  never be compared as a raw fact.)
+- **`ask`**: when the asked key folds to an accrue result, the answer's value
+  is the `quantity`, not `_fact(winner)` (which would return the last delta).
+  `ask` surfaces the total for accrue keys.
+
 **Properties this buys (the gold pouch):**
 - Deterministic — the engine sums; the model never does mental math.
-- Append-only ledger — every find/spend is one row; `_value_rows` is the
+- Append-only ledger — every find/spend is one row; `_ledger_rows` is the
   auditable history; a wrong entry is fixed by retracting it (excluded by
   `visible()`), never by mutation.
 - Concurrency-safe — two `−20` deltas both count; no last-write loss.
@@ -170,15 +184,22 @@ unless a measurement demands it.
 - **No new authority:** deltas enter through the gate under the normal
   ingestor/observer roles.
 - **Frozen porcelain:** additive only (`value_type='delta'`,
-  `FoldResult.quantity`, `where`, numeric `visible()` kwargs).
+  `FoldResult.quantity`, `Materialization.quantities`, the `where` verb;
+  `snapshot`/`state` payloads gain a `quantities`/`quantity` key without
+  changing existing keys). Phase 2 needs **no** `visible()` signature change —
+  it folds candidates and compares in Python.
 - **Derive-don't-store:** the running total is *computed* by the fold, never
   authored; the ledger is the rows.
 - **Rejection-test guardrail:** numeric typing/policy never rejects a fact.
 
 ## 5. Tests
 - **The gold ledger:** declare `gold` accrue; `gold·500 (literal)`,
-  `gold·-20 (delta)` → `state(you,"gold").quantity == 480`; `_value_rows` is
-  the 2-row ledger; as-of before the spend → `500`.
+  `gold·-20 (delta)` → `state(you,"gold").quantity == 480`; the result's
+  `_ledger_rows` is the 2-row ledger and `_value_rows` is empty (no ledger
+  leak into snapshots); as-of before the spend → `500`.
+- **Snapshot surfaces the total, not the deltas:** `snapshot([you])` reports
+  `gold=480` via `quantities`, and the delta/literal rows do NOT appear in
+  the fact list.
 - **+/- composition:** `+500`, `+300`, `-20` with no absolute → `780`;
   retract the `-20` → `800` (correction via retraction, not mutation).
 - **Concurrency:** two `-20` deltas at distinct asserted_at, same valid_from →
@@ -190,6 +211,11 @@ unless a measurement demands it.
 - **Immutability:** a functional attribute with folded data can't be
   redeclared accrue (rejected at append) — consistent with
   ATTRIBUTE-SEMANTICS-V1.
+- **frame_diff over accrue:** `gold` accrue, canon total 480 vs
+  `knows:player` total 500 → `frame_diff` reports the `gold` key as differing
+  (quantity 480 vs 500), and never reports a raw delta row.
+- **ask over accrue:** `ask("how much gold?")` on an accrue key returns the
+  **total** (480), not the last delta (-20).
 - **Phase 2 predicates:** `where("gold", ">=", 100)` returns only entities
   whose folded quantity qualifies; non-numeric attributes never match a
   numeric bound; `as_of` respected.
@@ -207,8 +233,9 @@ Once wired, reflect the nuances for future adopters:
 - **HOST-DISCIPLINE.md:** add the quantity axis to ingestion (when to model a
   scalar `accrue` quantity vs enumerated set-valued members vs a plain
   functional literal) and to retrieval (`.quantity`, the ledger, `where`).
-- **ADOPTION.md:** `value_type='delta'`, `FoldResult.quantity`, `where`, the
-  numeric `visible()` kwargs, the int/float-yes / decimal-deferred note.
+- **ADOPTION.md:** `value_type='delta'`, `FoldResult.quantity`,
+  `Materialization.quantities`, the `where` verb, the int/float-yes /
+  decimal-deferred note.
 - **LEXICON.md:** `delta`, `accrue`, "quantity / ledger".
 - **WHITEPAPER.md:** a short note in the operation-algebra / fold section that
   `accrue` is a fold policy summing signed deltas over a baseline (amendment
