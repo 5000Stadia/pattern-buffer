@@ -424,10 +424,14 @@ class Indexes:
             if f not in seen:
                 seen.add(f)
                 ordered.append(f)
-        if len(ordered) <= 1:
-            return self.confidence(
-                entity, attribute, ordered[0] if ordered else CANON, as_of, asserted_as_of
-            )
+        if not ordered:
+            # An empty frame list names no knowledge — empty, never a canon
+            # read (Codex post-impl finding 1).
+            return self._empty_confidence()
+        if len(ordered) == 1:
+            # Reduction: a single distinct frame is byte-identical to the str
+            # path (and inherits its full V1 corroboration recovery).
+            return self.confidence(entity, attribute, ordered[0], as_of, asserted_as_of)
 
         entity = self._resolve(entity)
         if self._semantics.is_set_valued(attribute) or self._semantics.is_accrue(attribute):
@@ -486,21 +490,38 @@ class Indexes:
             age = max(0.0, float(ref) - float(winner.valid_from))
             recency = 1.0 / (1.0 + age / params["recency_scale"])
 
-        # Corroboration: each fold's V1 source classes (winner + corroborated_by)
-        # unioned with the strict cross-frame scan (rows == effective winner).
+        # Corroboration: distinct source classes attesting the EFFECTIVE served
+        # value (Codex post-impl finding 2). Counting sources that back a
+        # *different* per-frame value would inflate trust in a contested value;
+        # those are conflict, not corroboration. This is the strict cross-frame
+        # scan against the effective winner (recovers every agreeing frame's
+        # incumbents — V1's recovery) unioned with the V1 loose-refinement
+        # `corroborated_by` of only the folds that serve the effective value.
+        # A per-call memo collapses _source_class's repeated visible() reads.
+        sc_memo: dict[str, str] = {}
+
+        def source_class(row: Assertion) -> str:
+            cached = sc_memo.get(row.id)
+            if cached is None:
+                cached = self._source_class(row, asserted_as_of)
+                sc_memo[row.id] = cached
+            return cached
+
         source_classes: set[str] = set()
-        for _, fold in folds:
-            source_classes.add(self._source_class(fold.winner, asserted_as_of))
-            for assertion_id in fold.corroborated_by:
-                row = self._buffer.get(assertion_id)
-                if row is not None:
-                    source_classes.add(self._source_class(row, asserted_as_of))
         for f in ordered:
             for row in self._visible_key_rows(
                 entity, attribute, frame=f, valid_as_of=as_of, asserted_as_of=asserted_as_of
             ):
                 if self._confidence_values_equivalent(row, winner):
-                    source_classes.add(self._source_class(row, asserted_as_of))
+                    source_classes.add(source_class(row))
+        for _, fold in folds:
+            if not self._confidence_values_equivalent(fold.winner, winner):
+                continue  # this frame serves a different value — not corroboration
+            source_classes.add(source_class(fold.winner))
+            for assertion_id in fold.corroborated_by:
+                row = self._buffer.get(assertion_id)
+                if row is not None:
+                    source_classes.add(source_class(row))
         corroboration = max(0, len(source_classes) - 1)
         corroboration_score = (
             math.log1p(corroboration) / math.log1p(params["corroboration_scale"])

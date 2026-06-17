@@ -38,6 +38,9 @@ cannot drift from V1's `corroborated_by` accumulation.
 
 Reuses `fold_key` per frame; unions only at the scoring layer. No new fold.
 
+0. **Degenerate lists.** An empty (or fully-deduped-empty) frame list names no
+   knowledge → `_empty_confidence()` (never a canon read). A deduped
+   single-frame list delegates to the str path.
 1. **Per-frame fold.** Dedup the frame list (order-preserving). For each frame,
    `fold = fold_key(entity, attribute, frame, valid_as_of=as_of, asserted_as_of=...)`.
    Set-valued / accrue attributes return `_empty_confidence()` up front, same as
@@ -55,13 +58,18 @@ Reuses `fold_key` per frame; unions only at the scoring layer. No new fold.
    `age = ref - winner.valid_from`. When `as_of` is None, `ref` is the max
    `valid_from` over the closure rows visible in **any** listed frame (the union
    analogue of V1's single-frame closure reference).
-5. **Corroboration.** Distinct `_source_class` values minus 1, taken over the
-   union of: (i) each contributing per-frame fold's winner source class **and
-   its V1 `corroborated_by` rows** (so list-path corroboration is a superset of
-   what each single-frame read would count — Codex r1), plus (ii) the strict
-   cross-frame scan — the visible key rows of **all** listed frames whose value
-   is strictly-equivalent to the effective winner. Cross-frame corroboration is
-   the point: private + public agreement raises trust. (Source rows carry a
+5. **Corroboration.** Distinct `_source_class` values minus 1, counting only
+   sources that attest the **effective served value** — never sources backing a
+   *different* per-frame value (those are conflict, not corroboration; counting
+   them would inflate trust in a contested value). Concretely the union of:
+   (i) the strict cross-frame scan — the visible key rows of **all** listed
+   frames whose value is strictly-equivalent to the effective winner (this
+   recovers every agreeing frame's incumbents, exactly V1's recovery); plus
+   (ii) the V1 loose-refinement `corroborated_by` rows of **only** the per-frame
+   folds whose own winner is strictly-equivalent to the effective winner. This
+   makes list-path corroboration a superset of the **effective frame's**
+   single-frame corroboration (not of a frame that serves a different value),
+   and cross-frame agreement raises trust as intended. (Source rows carry a
    single `frame` column, so the union is a clean set with no physical
    double-count.)
 6. **Return** the same dict shape as V1:

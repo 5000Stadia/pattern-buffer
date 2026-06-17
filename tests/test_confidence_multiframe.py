@@ -50,22 +50,48 @@ def test_cross_frame_agreement_corroborates_and_lifts_score(world):
     assert union["score"] > single["score"]       # agreement raises trust
 
 
-def test_cross_frame_disagreement_is_conflicted_and_halved(world):
+def test_cross_frame_disagreement_is_conflicted_and_exactly_halved(world):
+    # knows:olwe says frodo @5; public says bilbo @6 -> contested, and the
+    # effective winner is the most-recent (bilbo @6).
     world.ingest_structured([
         {"entity": "obj:ring", "attribute": "bearer", "value": "frodo",
          "valid_from": 5.0, "frame": "knows:olwe"},
         {"entity": "obj:ring", "attribute": "bearer", "value": "bilbo",
-         "valid_from": 5.0, "frame": "public"},
+         "valid_from": 6.0, "frame": "public"},
     ])
     union = world.confidence(
-        "obj:ring", "bearer", frame=["knows:olwe", "public"], as_of=5.0
+        "obj:ring", "bearer", frame=["knows:olwe", "public"], as_of=6.0
     )
-    # the private belief and the public claim disagree -> a contested belief
     assert union["conflicted"] is True
-    # halving: strictly below the same key read in a single, unconflicted frame
-    single = world.confidence("obj:ring", "bearer", frame="knows:olwe", as_of=5.0)
-    assert single["conflicted"] is False
-    assert union["score"] < single["score"]
+    # the effective served value is bilbo (the freshest), with corroboration 0
+    assert union["status"] == "stated"
+    assert union["last_observed_at"] == 6.0
+    assert union["corroboration"] == 0
+    # exact halving: identical effective winner + corroboration read in a single
+    # unconflicted frame (public alone) scores 2x the conflicted union.
+    control = world.confidence("obj:ring", "bearer", frame="public", as_of=6.0)
+    assert control["conflicted"] is False
+    assert control["last_observed_at"] == 6.0
+    assert union["score"] == pytest.approx(0.5 * control["score"])
+
+
+def test_a_conflicting_frame_source_does_not_corroborate(world):
+    # public agrees with the effective winner from a distinct source; knows:rk
+    # backs a different value. Only the agreeing source corroborates.
+    world.ingest_structured([
+        {"entity": "obj:ring", "attribute": "bearer", "value": "bilbo",
+         "valid_from": 6.0, "source_doc": "person:sam", "frame": "knows:olwe"},
+        {"entity": "obj:ring", "attribute": "bearer", "value": "bilbo",
+         "valid_from": 6.0, "source_doc": "person:rosie", "frame": "public"},
+        {"entity": "obj:ring", "attribute": "bearer", "value": "gollum",
+         "valid_from": 5.0, "source_doc": "person:liar", "frame": "knows:rk"},
+    ])
+    out = world.confidence(
+        "obj:ring", "bearer", frame=["knows:olwe", "public", "knows:rk"], as_of=6.0
+    )
+    assert out["conflicted"] is True            # gollum disagrees with bilbo
+    # sam + rosie attest bilbo (the served value); liar's gollum does NOT count
+    assert out["corroboration"] == 1
 
 
 def test_union_recency_uses_the_freshest_observation(world):
@@ -86,6 +112,10 @@ def test_union_recency_uses_the_freshest_observation(world):
     assert union["score"] > stale["score"]        # recency lifts the union
 
 
+_EMPTY = {"score": None, "status": None, "last_observed_at": None,
+          "corroboration": 0, "conflicted": False}
+
+
 def test_absent_in_all_frames_is_empty(world):
     world.ingest_structured([
         {"entity": "obj:ring", "attribute": "bearer", "value": "frodo",
@@ -94,8 +124,18 @@ def test_absent_in_all_frames_is_empty(world):
     out = world.confidence(
         "obj:ring", "bearer", frame=["knows:nobody", "knows:noone"], as_of=5.0
     )
-    assert out["score"] is None
-    assert out["status"] is None
+    assert out == _EMPTY
+
+
+def test_empty_frame_list_is_empty_not_canon(world):
+    # a canon fact exists; an empty frame list names no knowledge and must NOT
+    # fall through to a canon read (Codex post-impl finding 1).
+    world.ingest_structured([
+        {"entity": "obj:ring", "attribute": "bearer", "value": "frodo", "valid_from": 5.0},
+    ])
+    assert world.confidence("obj:ring", "bearer", frame=[], as_of=5.0) == _EMPTY
+    # contrast: the canon str read does find it
+    assert world.confidence("obj:ring", "bearer", as_of=5.0)["status"] == "stated"
 
 
 def test_set_and_accrue_keys_return_none_under_a_frame_list(world):
@@ -109,8 +149,21 @@ def test_set_and_accrue_keys_return_none_under_a_frame_list(world):
     ])
     s = world.confidence("person:olwe", "carries", frame=["knows:olwe", "public"], as_of=1.0)
     g = world.confidence("person:olwe", "gold", frame=["knows:olwe", "public"], as_of=1.0)
-    assert s["score"] is None
-    assert g["score"] is None
+    assert s == _EMPTY
+    assert g == _EMPTY
+
+
+def test_union_recency_branch_with_as_of_none(world):
+    # exercises the as_of=None union-closure reference branch
+    world.ingest_structured([
+        {"entity": "obj:torch", "attribute": "state", "value": "lit",
+         "valid_from": 1.0, "frame": "knows:olwe"},
+        {"entity": "obj:torch", "attribute": "state", "value": "lit",
+         "valid_from": 9.0, "frame": "public"},
+    ])
+    out = world.confidence("obj:torch", "state", frame=["knows:olwe", "public"])
+    assert out["last_observed_at"] == 9.0      # freshest across frames
+    assert out["score"] is not None            # no crash on the union ref
 
 
 def test_multiframe_read_writes_nothing(world):
