@@ -51,6 +51,9 @@ world.locate(entity) -> list[str]              # containment chain, nearest firs
 world.contents(container) -> list[str]         # emptiness is [] — derived, never stored
 world.state(entity, attribute, frame="canon", valid_as_of=None, asserted_as_of=None) -> FoldResult
 world.path(a, b) -> list[str] | None           # None = not connected; proximity is not connectivity
+world.salience(entity, frame="canon", as_of=None) -> float
+world.neighborhood(entity, depth=1, frame="canon", as_of=None,
+                   edge_kinds=None, max_fanout=64, budget=None) -> dict
 world.materialize(scope, as_of=None, frame="canon",
                   lens="current_state",        # | establishing_set | what_happened | character_sheet
                   budget=None, asserted_as_of=None) -> Materialization
@@ -125,6 +128,8 @@ p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted,
 p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
    # op in >=, >, <=, <, ==; compares folded numeric values
 p.locate / p.contents / p.path
+p.salience(entity, frame=, as_of=) -> float
+p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
 p.frame_diff(a, b, scope, as_of=) -> [Fact]   # semantic diff; divergent values marked
 p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only

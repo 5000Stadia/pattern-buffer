@@ -196,6 +196,8 @@ perspective, and reading what comes back honestly.
    | where something is | `locate(entity)` | containment chain, nearest container first |
    | what's inside / co-located | `contents(container)` | members (emptiness = `[]`, derived) |
    | is X reachable from Y | `path(a, b)` | a route, or `None` (no false connectivity) |
+   | what structurally matters around X | `neighborhood(entity, depth=…, …)` | X's folded state plus bounded, salience-ranked correlates |
+   | how likely X should survive a budget | `salience(entity, …)` | a derived ranking score, not truth |
    | what happened (to whom) | `events(participants=…, kind=, since=, until=)` | the event spine, filtered |
    | what A knows that B doesn't | `frame_diff(a, b, scope)` | divergent/absent facts (dramatic irony) |
    | a natural-language question | `ask(question, frame=, as_of=)` | one parse + refer + folds → `Answer` |
@@ -238,43 +240,46 @@ perspective, and reading what comes back honestly.
    `generated`/`default` value is render-coherence fill, **never a fact** —
    do not promote it.
 
-6. **Scope by closure, not by log scan.** Query the subject *and its
+6. **Use `neighborhood` for the common correlation sweep.** It packages the
+   fixed structural axes — containment, lateral graph, entity-valued
+   relations, and participant/causal event edges — into one bounded read.
+   Set `edge_kinds` when you need only a subset, and use `budget` only to
+   shape the returned neighbor list; it never invents, resolves, or paints
+   the frontier. `salience()` is the same derived scorer used for ranking
+   and materialization budgets.
+
+7. **Scope by closure, not by log scan.** Query the subject *and its
    containment/identity closure*; let the engine's indexes do the
    retrieval. The read path is built so a fold costs the size of the
    subject's closure, not the size of the log — so never re-scan the whole
    world host-side to find correlates. Ask the structured verb; it already
    walks the index.
 
-7. **Honor the typed outcomes.** `underdetermined` refer → your ask to the
+8. **Honor the typed outcomes.** `underdetermined` refer → your ask to the
    user. `UNKNOWN` from `resolve` in a tracking world → "I don't know" is a
    representable, correct answer. `Materialization.unresolved` names the
    frontier (thunks in scope), `defaults` are coherence fills, not facts,
    and `quantities` are derived totals, not stored ledger rows.
    Branch on these; don't coerce them into a guess.
 
-8. **Never cache derived truth host-side.** Location, emptiness, current
+9. **Never cache derived truth host-side.** Location, emptiness, current
    state, salience, staleness — re-query them. They are cheap, as-of-correct
    on every call, and the moment you cache one you've recreated the
    fragmentation the substrate exists to prevent.
 
 ## The correlation sweep — assembling everything relevant about a subject X
 
-A concrete recipe the host can run to surface a subject and its correlates:
+Use the engine's packaged bounded read for the usual case:
 
 ```
-1. id   = refer("…X…", scope, frame).entity_id          # canonical identity
-2. self = snapshot([id], frame=, as_of=, lens=…)         # X's own folded state
-3. up   = locate(id, as_of=)                             # where X is
-   down = contents(id, as_of=)                           # what X holds / who's in X
-4. hist = events(participants=[id], since=, until=, frame=)   # X's history…
-   …then follow each event's caused_by to its causes     # …and why
-5. gap  = frame_diff(canon, knows:id, scope)             # what X doesn't know (if X is an agent)
-6. for every entity-valued fact in (self), recurse one hop as relevance warrants
+1. id = refer("…X…", scope, frame).entity_id
+2. nb = neighborhood(id, depth=1, frame=, as_of=, budget=)
 ```
 
-Each step reads a different structure; together they are the subject's full,
-honest neighborhood — with provenance on every fact and nothing fabricated
-to fill a gap.
+For specialized reads, compose the same primitives (`snapshot`, `locate`,
+`contents`, `events`, `frame_diff`) directly. `neighborhood` is the default
+replacement for a host-side correlation sweep because it is identity-closed,
+frame/as-of scoped, fanout/depth bounded, and provenance-preserving.
 
 ---
 
@@ -288,8 +293,9 @@ to fill a gap.
   answers and route `underdetermined`/conflict to the consumer.
 - **MUST** surface provenance and conflict; **NEVER** present a `conflicted`
   winner as settled or promote a `generated`/`default` to a fact.
-- **NEVER** full-text-scan the log host-side for correlates — walk the
-  structural edges (`locate`/`contents`/`path`/`events`/`caused_by`/closure).
+- **NEVER** full-text-scan the log host-side for correlates — use
+  `neighborhood()` or walk the structural edges
+  (`locate`/`contents`/`path`/`events`/`caused_by`/closure).
 - **NEVER** cache a derived value as truth; re-query.
 
 The summary: **ingest along seven axes so nothing is invisible; retrieve

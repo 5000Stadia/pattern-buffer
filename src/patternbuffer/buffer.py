@@ -51,6 +51,8 @@ CREATE INDEX IF NOT EXISTS ix_assertions_key
   ON assertions (entity, attribute, frame);
 CREATE INDEX IF NOT EXISTS ix_assertions_attr_value
   ON assertions (attribute, value);
+CREATE INDEX IF NOT EXISTS ix_assertions_value
+  ON assertions (value);
 CREATE INDEX IF NOT EXISTS ix_assertions_frame
   ON assertions (frame, attribute);
 CREATE TRIGGER IF NOT EXISTS assertions_append_only_update
@@ -209,6 +211,7 @@ class PatternBuffer:
         attribute: str | None = None,
         attribute_in: list[str] | None = None,
         value: Any | None = None,
+        value_type: str | None = None,
         frame: str | None = None,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
@@ -243,6 +246,9 @@ class PatternBuffer:
         if value is not None:
             clauses.append("a.value = ?")
             params.append(json.dumps(value, sort_keys=True))
+        if value_type is not None:
+            clauses.append("a.value_type = ?")
+            params.append(value_type)
         if frame is not None:
             clauses.append("a.frame = ?")
             params.append(frame)

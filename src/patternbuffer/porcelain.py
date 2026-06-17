@@ -277,6 +277,31 @@ class Porcelain:
     def path(self, a: str, b: str) -> list[str] | None:
         return self._w.path(a, b)
 
+    def salience(
+        self, entity: str, frame: str = CANON, as_of: float | None = None
+    ) -> float:
+        return self._w.salience(entity, frame=frame, as_of=as_of)
+
+    def neighborhood(
+        self,
+        entity: str,
+        depth: int = 1,
+        frame: str = CANON,
+        as_of: float | None = None,
+        edge_kinds: list[str] | None = None,
+        max_fanout: int = 64,
+        budget: int | None = None,
+    ) -> dict:
+        return self._w.neighborhood(
+            entity,
+            depth=depth,
+            frame=frame,
+            as_of=as_of,
+            edge_kinds=edge_kinds,
+            max_fanout=max_fanout,
+            budget=budget,
+        )
+
     def events(self, kind: str | None = None,
                participants: str | list[str] | None = None,
                since: float | None = None, until: float | None = None,

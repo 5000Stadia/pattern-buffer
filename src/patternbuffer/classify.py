@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS sidecar_classification (
   class_confidence REAL NOT NULL,
   needs_review     INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS sidecar_classifier_meta (
+  key   TEXT PRIMARY KEY,
+  value INTEGER NOT NULL
+);
 """
 
 _MODEL_SCHEMA = {
@@ -72,7 +76,13 @@ class Classifier:
         self._buffer = buffer
         self._model = model
         self._semantics = semantics or AttributeSemantics(buffer)
-        buffer.raw_connection().executescript(_SIDECAR_SCHEMA)
+        conn = buffer.raw_connection()
+        conn.executescript(_SIDECAR_SCHEMA)
+        conn.execute(
+            "INSERT OR IGNORE INTO sidecar_classifier_meta (key, value)"
+            " VALUES ('version', 0)"
+        )
+        conn.commit()
 
     # ------------------------------------------------------------ judgment
 
@@ -148,13 +158,25 @@ class Classifier:
     # ------------------------------------------------------------- sidecar
 
     def _store(self, c: Classification) -> None:
-        self._buffer.raw_connection().execute(
+        conn = self._buffer.raw_connection()
+        conn.execute(
             "INSERT OR REPLACE INTO sidecar_classification"
             " (assertion_id, durability, class_confidence, needs_review)"
             " VALUES (?, ?, ?, ?)",
             (c.assertion_id, c.durability, c.class_confidence, int(c.needs_review)),
         )
-        self._buffer.raw_connection().commit()
+        conn.execute(
+            "UPDATE sidecar_classifier_meta SET value = value + 1"
+            " WHERE key = 'version'"
+        )
+        conn.commit()
+
+    @property
+    def version(self) -> int:
+        row = self._buffer.raw_connection().execute(
+            "SELECT value FROM sidecar_classifier_meta WHERE key = 'version'"
+        ).fetchone()
+        return int(row[0]) if row else 0
 
     def set(self, assertion_id: str, durability: str, confidence: float = 1.0) -> None:
         """Judgment injection for components that hold the world context

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from typing import Callable
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, EVENT, STATE, Classifier
@@ -60,11 +61,13 @@ class Projector:
         classifier: Classifier,
         indexes: Indexes,
         semantics: AttributeSemantics | None = None,
+        salience: Callable[[str, str, float | None], float] | None = None,
     ) -> None:
         self._buffer = buffer
         self._classifier = classifier
         self._indexes = indexes
         self._semantics = semantics or AttributeSemantics(buffer)
+        self._salience = salience or (lambda entity, frame, as_of: 0.0)
 
     # ------------------------------------------------------------ scoping
 
@@ -287,20 +290,19 @@ class Projector:
 
     def _shape_to_budget(self, m: Materialization, budget: int | None) -> None:
         """The budget invariant: the CONSTITUTIVE spine is exempt; compress
-        the rest by salience (recency + reference frequency), never drop
-        identity and structure (§13)."""
+        the rest by salience, never drop identity and structure (§13)."""
         if budget is None or len(m.assertions) <= budget:
             return
         spine = [
             r for r in m.assertions if self._classifier.durability(r.id) == CONSTITUTIVE
         ]
         rest = [r for r in m.assertions if r not in spine]
-        refs: dict[str, int] = {}
-        for row in self._buffer.all_rows():
-            if row.value_type == "entity" and isinstance(row.value, str):
-                refs[row.value] = refs.get(row.value, 0) + 1
         rest.sort(  # salience: projection-time ranking, never stored (P1)
-            key=lambda r: (refs.get(r.entity, 0), r.asserted_at), reverse=True
+            key=lambda r: (
+                self._salience(self._indexes.resolve_entity(r.entity), m.frame, m.as_of),
+                r.asserted_at,
+            ),
+            reverse=True,
         )
         keep = max(0, budget - len(spine))
         m.truncated = len(rest) - keep

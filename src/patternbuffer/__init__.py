@@ -23,6 +23,7 @@ from patternbuffer.model import CANON
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.refer import Refer, Resolution
 from patternbuffer.roles import _make_engine_roles
+from patternbuffer.salience import SalienceIndex
 from patternbuffer.semantics import AttributeSemantics
 from patternbuffer.thunks import (
     INVENT_UNDER_CANON,
@@ -74,6 +75,8 @@ class World:
             self.buffer, self.classifier, self.registry.resolve, self.semantics
         )
         self.indexes.set_closure_provider(self.registry.closure)
+        self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
+        self.indexes.set_salience_provider(self.salience_index.salience)
         self.truth = TruthMaintenance(
             self.buffer, self.classifier, self.indexes, roles["truth_maintenance"],
             self.semantics,
@@ -83,7 +86,8 @@ class World:
             model or _no_model, policy,
         )
         self.projector = Projector(
-            self.buffer, self.classifier, self.indexes, self.semantics
+            self.buffer, self.classifier, self.indexes, self.semantics,
+            self.salience_index.salience,
         )
         self.ingestor = Ingestor(
             self.buffer, self.classifier, self.registry, roles["ingestor"],
@@ -135,6 +139,14 @@ class World:
 
     def path(self, a: str, b: str, **kw) -> list[str] | None:
         return self.indexes.path(a, b, **kw)
+
+    def salience(
+        self, entity: str, frame: str = CANON, as_of: float | None = None
+    ) -> float:
+        return self.salience_index.salience(entity, frame, as_of)
+
+    def neighborhood(self, entity: str, **kw) -> dict:
+        return self.indexes.neighborhood(entity, **kw)
 
     def materialize(self, scope, **kw) -> Materialization:
         return self.projector.materialize(scope, **kw)
