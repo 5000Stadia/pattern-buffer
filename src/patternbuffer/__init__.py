@@ -141,6 +141,9 @@ class World:
     def path(self, a: str, b: str, **kw) -> list[str] | None:
         return self.indexes.path(a, b, **kw)
 
+    def route(self, a: str, b: str, **kw) -> dict:
+        return self.indexes.route(a, b, **kw)
+
     def salience(
         self, entity: str, frame: str = CANON, as_of: float | None = None
     ) -> float:

@@ -293,6 +293,14 @@ class Porcelain:
         # (valid_to passed) drops; history is preserved (PATH-TEMPORAL-V1).
         return self._w.path(a, b, valid_as_of=as_of)
 
+    def route(self, a: str, b: str, frame: str = CANON, as_of: float | None = None) -> dict:
+        """Passability-aware route (RFC-003): {route, status, segments}. Status
+        per segment is clear|blocked|obscured (removed is temporal/diagnostic);
+        blocked carries obstructing-fact evidence, obscured a computed
+        unknown_basis. The engine derives status from portal facts under the
+        host's declared traversal policy; the host supplies the words."""
+        return self._w.route(a, b, frame=frame, valid_as_of=as_of)
+
     # ----------------------------------- host reconciliation (MERGE-RECONCILE-VERB-V1)
 
     def reconcile(self) -> dict:
