@@ -314,9 +314,17 @@ class Porcelain:
 
     def merge(self, a: str, b: str, evidence: str) -> dict:
         """Assert a merge (no proposal required) through the guarded path.
-        Host-authoritative past the soft heuristic, but the hard containment
-        veto is absolute (a `vetoed` Receipt names the blocking edge)."""
+        Host-authoritative past the soft heuristic, but the hard vetoes
+        (containment, distinct_from) are absolute (a `vetoed` Receipt names the
+        blocking edge)."""
         return self._w.registry.guarded_merge(a, b, evidence)
+
+    def reject(self, a: str, b: str) -> dict:
+        """Assert these are definitively different (`distinct_from`) — the
+        sticky separation that keeps two same-named entities (two Clays) apart
+        on every future reconcile. Returns a Receipt
+        (rejected | noop_already_distinct | conflict_already_merged)."""
+        return self._w.registry.reject(a, b)
 
     def salience(
         self, entity: str, frame: str = CANON, as_of: float | None = None

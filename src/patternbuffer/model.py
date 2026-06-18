@@ -35,7 +35,7 @@ ATTR_PREFIX = "attr:"
 SEMANTICS_PREDICATES = frozenset(
     {"arity", "relation_family", "fold_policy", "structural"}
 )
-INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as"}
+INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from"}
 
 # The engine's own meta-attributes (subjects of these rows are assertion
 # ids or carry engine semantics).
@@ -46,6 +46,7 @@ META_ATTRIBUTES = frozenset(
         "source",
         "same_as",
         "maybe_same_as",
+        "distinct_from",
         "canonicalized_from",
         "resolved_by",
         "justified_by",
@@ -58,7 +59,7 @@ META_ATTRIBUTES = frozenset(
 # contradiction — a conflict requires a functional key (run-4 finding:
 # 62 of 77 flags were names/aliases/edges misread as disputes).
 SET_VALUED_ATTRIBUTES = frozenset({"name", "alias", "connects_to", "adjacent_to",
-                                   "maybe_same_as", "same_as"})
+                                   "maybe_same_as", "same_as", "distinct_from"})
 
 VALUE_TYPES = frozenset({"entity", "literal", "unresolved", "delta"})
 

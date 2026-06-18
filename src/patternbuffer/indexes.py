@@ -18,7 +18,7 @@ from patternbuffer.classify import (
     STATE,
     Classifier,
 )
-from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, Assertion
 from patternbuffer.semantics import AttributeSemantics, CONTAINMENT, builtin_default
 
 logger = logging.getLogger(__name__)
@@ -714,8 +714,12 @@ class Indexes:
             entity_in=closure,
             frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
         ):
-            if not row.entity.startswith("a:") and not row.entity.startswith(ATTR_PREFIX):
-                attrs.add(row.attribute)
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            if row.attribute in META_ATTRIBUTES:
+                continue  # identity/meta edges (same_as, distinct_from, …) are
+                          # machinery, not materialized facts (membrane)
+            attrs.add(row.attribute)
         out: dict[str, FoldResult] = {}
         for attr in attrs:
             result = self.fold_key(entity, attr, frame, valid_as_of, asserted_as_of)

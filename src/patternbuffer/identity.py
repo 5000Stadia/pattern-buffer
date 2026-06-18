@@ -13,8 +13,11 @@ import logging
 import re
 
 from patternbuffer.buffer import PatternBuffer
-from patternbuffer.model import CANON, CONTAINMENT_FAMILY
+from patternbuffer.model import ATTR_PREFIX, CANON, CONTAINMENT_FAMILY, META_ATTRIBUTES
 from patternbuffer.roles import WriterRole
+
+# Identity edges — never a "relating edge" for the distinctness signal.
+_IDENTITY_ATTRS = frozenset({"same_as", "maybe_same_as", "distinct_from"})
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +98,67 @@ class IdentityRegistry:
                 out.append(f"{e}·{row.attribute}·{v}")
         return out
 
+    def distinct_block(self, a: str, b: str, asserted_as_of: int | None = None) -> list[str]:
+        """`distinct_from` edge descriptor(s) relating a's closure to b's — the
+        explicit anti-merge primitive (V2 §1, the mirror of `same_as`). A
+        non-empty list is a HARD veto: the author declared these definitively
+        not the same. Membrane-clean."""
+        clos_a = self.closure(a, asserted_as_of)
+        clos_b = self.closure(b, asserted_as_of)
+        out: list[str] = []
+        for row in self._buffer.visible(attribute="distinct_from", asserted_as_of=asserted_as_of):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            e, v = row.entity, row.value
+            if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
+                out.append(f"{e}·distinct_from·{v}")
+        return out
+
+    def relating_edges_between(self, a: str, b: str, asserted_as_of: int | None = None) -> list[str]:
+        """Visible NON-identity, NON-containment, entity-valued edges relating
+        a's closure to b's (V2 §3a) — the soft "related ⇒ probably distinct"
+        signal (round-robin: any relating edge is evidence against identity).
+        Spans the lateral family and generic relations (`father_of`, `ally_of`,
+        …). Containment is the *hard* veto, handled separately; identity/meta
+        rows and `kind` are excluded. Membrane-clean."""
+        family = self._containment_family()
+        clos_a = self.closure(a, asserted_as_of)
+        clos_b = self.closure(b, asserted_as_of)
+        out: list[str] = []
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            if row.attribute in family or row.attribute in _IDENTITY_ATTRS:
+                continue
+            if row.attribute in META_ATTRIBUTES or row.attribute in ("kind", "caused_by"):
+                continue  # structural/meta edges are not domain relating edges
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            e, v = row.entity, row.value
+            if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
+                out.append(f"{e}·{row.attribute}·{v}")
+        return out
+
+    def _kind_values(self, entity: str) -> set[str]:
+        """Lowercased folded-kind value(s) for an entity (winner + contested),
+        entity-resolved — the set a §3b non-distinctive-anchor check compares a
+        shared name against."""
+        fold = self._kind_of(entity) if self._kind_of is not None else None
+        if fold is None or fold.winner is None:
+            return set()
+
+        def _norm(value, value_type):
+            v = self.resolve(value) if value_type == "entity" and isinstance(value, str) else value
+            return str(v).strip().lower()
+
+        vals = {_norm(fold.winner.value, fold.winner.value_type)}
+        if fold.conflicted:
+            for cid in fold.conflicting:
+                row = self._buffer.get(cid)
+                if row is not None:
+                    vals.add(_norm(row.value, row.value_type))
+        return vals
+
     def containment_related(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
         return bool(self.containment_block(a, b, asserted_as_of))
 
@@ -112,6 +176,12 @@ class IdentityRegistry:
             logger.warning(
                 "merge vetoed: %s and %s are containment-related (a thing is "
                 "not what holds it); leaving distinct (%s)", a, b, evidence
+            )
+            return None
+        if self.distinct_block(a, b):
+            logger.warning(
+                "merge vetoed: %s and %s are marked distinct_from; leaving "
+                "distinct (%s)", a, b, evidence
             )
             return None
         event_id = f"event:merge_{self._buffer.head() + 1}"
@@ -244,14 +314,20 @@ class IdentityRegistry:
         return "noncommittal"
 
     def _mergeable(self, a: str, b: str) -> bool:
-        """The single discriminativeness gate (§1), used by BOTH promotion
-        paths so a weak proposal one path declines can't be merged by the
-        other. A shared proper `name` merges at any length under
-        non-conflicting kind; a shared `alias` merges only if specific
-        (>=2 content tokens) AND kind is present-and-equal."""
+        """The single AUTO-merge gate (used by promote + reconcile), now
+        precision-biased (V2 §3): the author individuates through structure and
+        the engine only auto-merges the obvious. Any distinctness signal
+        downgrades to a proposal — a shared proper `name` merges at any length
+        under non-conflicting kind, a shared `alias` merges only if specific
+        (>=2 content tokens) with present-equal kind, BUT not if a relating edge
+        joins them or the shared anchor is just the type word."""
         if self.resolve(a) == self.resolve(b):
             return False
-        if self.containment_related(a, b):
+        if self.containment_related(a, b):     # hard: a thing is not its container
+            return False
+        if self.distinct_block(a, b):          # hard: explicitly marked distinct (§1)
+            return False
+        if self.relating_edges_between(a, b):  # soft: related ⇒ probably distinct (§3a)
             return False
         ta, tb = self.typed_name_anchors(a), self.typed_name_anchors(b)
         shared = {t for (_, t) in ta} & {t for (_, t) in tb}
@@ -260,7 +336,13 @@ class IdentityRegistry:
         kind = self._kind_state(a, b)
         if kind == "conflict":
             return False
+        # §3b: a shared anchor whose text is just the entity's kind value (the
+        # *type word*, e.g. name "bedroom" on kind bedroom) is non-distinctive —
+        # it does not drive an auto-merge.
+        kinds = self._kind_values(a) | self._kind_values(b)
         for text in shared:
+            if text in kinds:
+                continue  # non-distinctive type-word anchor
             name_strength = ("name", text) in ta or ("name", text) in tb
             if name_strength:
                 return True  # non-conflicting kind already ensured
@@ -331,7 +413,12 @@ class IdentityRegistry:
                     if self._mergeable(a, b):
                         self.merge(a, b, evidence="reconcile: gated shared-anchor coreference")
                         merged += 1
-                    elif not self.containment_related(a, b) and not self._has_proposal(a, b):
+                    elif (not self.containment_related(a, b)
+                          and not self.distinct_block(a, b)
+                          and not self._has_proposal(a, b)):
+                        # soft-declined (relating edge / non-distinctive anchor /
+                        # kind) → adjudicable proposal; HARD-blocked (containment /
+                        # distinct_from) pairs are settled, never re-proposed.
                         self.maybe_same_as(a, b, evidence="reconcile: shared anchor, gate declined (adjudicate)")
 
         merged += self.promote_identity_proposals()
@@ -343,21 +430,59 @@ class IdentityRegistry:
 
     def guarded_merge(self, a: str, b: str, evidence: str) -> dict:
         """Host-authoritative merge through the guarded path (MERGE-RECONCILE-
-        VERB-V1). Skips the soft discriminativeness heuristic (the host has
-        judged) but NOT the hard containment veto. Returns a Receipt."""
+        VERB-V1/V2). Skips the soft discriminativeness heuristic (the host has
+        judged) but NOT the hard vetoes — containment AND `distinct_from`.
+        Returns a Receipt."""
         ra = self.resolve(a)
         if ra == self.resolve(b):
             return self._receipt("noop_already_merged", ra)
         blocks = self.containment_block(a, b)
         if blocks:
             return self._receipt("vetoed", ra, reason="containment", blocking_edges=blocks)
+        dblocks = self.distinct_block(a, b)
+        if dblocks:
+            return self._receipt("vetoed", ra, reason="distinct_from", blocking_edges=dblocks)
         event_id = self.merge(a, b, evidence)
-        if event_id is None:  # defensive: merge() re-checks the veto
+        if event_id is None:  # defensive: merge() re-checks both hard vetoes
             return self._receipt(
-                "vetoed", ra, reason="containment",
-                blocking_edges=self.containment_block(a, b),
+                "vetoed", ra, reason="containment_or_distinct",
+                blocking_edges=self.containment_block(a, b) + self.distinct_block(a, b),
             )
         return self._receipt("merged", self.resolve(a), merge_event_id=event_id)
+
+    def reject(self, a: str, b: str) -> dict:
+        """Assert `distinct_from(a, b)` — the sticky "these are definitively
+        different" call (V2 §2), complement of confirm/merge. `reconcile`/
+        `proposals` never re-surface the pair after this."""
+        ra = self.resolve(a)
+        if ra == self.resolve(b):
+            # contradiction: can't be distinct AND already merged — name the
+            # same_as / merge-event ids to retract first; write nothing.
+            return self._receipt(
+                "conflict_already_merged", ra, reason="already_merged",
+                blocking_edges=self._same_as_path_ids(a, b),
+            )
+        if self.distinct_block(a, b):
+            return self._receipt("noop_already_distinct", ra)
+        self._buffer.append(
+            entity=ra, attribute="distinct_from", value=self.resolve(b),
+            value_type="entity", status="stated", role=self._ingestor,
+        )
+        return self._receipt("rejected", ra)
+
+    def _same_as_path_ids(self, a: str, b: str) -> list[str]:
+        """Visible `same_as` assertion ids + their merge-event ids within the
+        (now shared) closure of a and b — what the host retracts to undo the
+        merge before asserting distinctness (V2 §2)."""
+        clos = self.closure(a)
+        out: list[str] = []
+        for row in self._buffer.visible(attribute="same_as"):
+            if (row.entity in clos and isinstance(row.value, str) and row.value in clos):
+                out.append(row.id)
+                for m in self._buffer.visible(entity=row.id, attribute="caused_by", value_type="entity"):
+                    if isinstance(m.value, str):
+                        out.append(m.value)
+        return out
 
     def confirm(self, a: str, b: str) -> dict:
         """Promote an existing maybe_same_as proposal through the guarded path.
@@ -453,6 +578,8 @@ class IdentityRegistry:
             ra, rb = self.resolve(row.entity), self.resolve(row.value)
             if ra == rb:
                 continue  # collapsed since proposed
+            if self.distinct_block(ra, rb):
+                continue  # settled distinct (rejected) — never re-surface (V2 §2)
             key = tuple(sorted([ra, rb]))
             if key in seen:
                 continue
