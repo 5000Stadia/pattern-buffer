@@ -70,6 +70,22 @@ def test_proposal_reason_kind_conflict_carries_pair(world):
     assert pr["auto_decline_reason"] == "kind_conflict: object↔place"
 
 
+def test_kind_conflict_pair_surfaces_contested_set(world):
+    # C-015: a contested kind side must not collapse to "contested" and hide a
+    # same-kind (person↔person) overlap — a real confirm candidate.
+    world.ingest_structured([
+        {"entity": "person:tovan", "attribute": "kind", "value": "person", "valid_from": 1.0},
+        {"entity": "person:tovan", "attribute": "kind", "value": "narrator", "valid_from": 1.0},
+        {"entity": "person:tovan", "attribute": "alias", "value": "the chronicler"},
+        {"entity": "person:tovan_voss", "attribute": "kind", "value": "person", "valid_from": 1.0},
+        {"entity": "person:tovan_voss", "attribute": "alias", "value": "the chronicler"},
+    ])
+    world.registry.maybe_same_as("person:tovan", "person:tovan_voss", evidence="seed")
+    props = world.porcelain.proposals()
+    pr = [p for p in props if {p["a"], p["b"]} == {"person:tovan", "person:tovan_voss"}][0]
+    assert pr["auto_decline_reason"] == "kind_conflict: narrator/person↔person"
+
+
 def test_proposal_reason_containment(world):
     world.ingest_structured([
         {"entity": "obj:drawer", "attribute": "kind", "value": "object", "timeless": True},

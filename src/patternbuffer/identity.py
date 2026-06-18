@@ -392,25 +392,35 @@ class IdentityRegistry:
             "blocking_edges": list(blocking_edges) if blocking_edges else [],
         }
 
+    def _kind_label(self, entity: str) -> str | None:
+        """The folded-kind label for one entity: the winner's value, or the
+        '/'-joined value SET when the kind fold is contested (so a contested
+        side never hides a same-kind overlap — C-015). None if kind absent."""
+        fold = self._kind_of(entity) if self._kind_of is not None else None
+        if fold is None or fold.winner is None:
+            return None
+
+        def _norm(value, value_type):
+            return self.resolve(value) if value_type == "entity" and isinstance(value, str) else value
+
+        vals = {str(_norm(fold.winner.value, fold.winner.value_type))}
+        if fold.conflicted:
+            for cid in fold.conflicting:
+                row = self._buffer.get(cid)
+                if row is not None:
+                    vals.add(str(_norm(row.value, row.value_type)))
+        return "/".join(sorted(vals))
+
     def _kind_pair(self, a: str, b: str) -> str | None:
-        """The sorted folded-kind pair for a kind_conflict reason (C-014),
-        e.g. 'object↔place'; None when a kind fold is contested."""
-        if self._kind_of is None:
+        """The sorted folded-kind pair for a kind_conflict reason, e.g.
+        'object↔place' or (contested) 'narrator/person↔person' (C-014/015).
+        The folded kind is the *agnostic* plausibility signal — same-kind is a
+        confirm candidate, different-kind a likely reject — without the engine
+        parsing host id namespaces."""
+        la, lb = self._kind_label(a), self._kind_label(b)
+        if la is None or lb is None:
             return None
-        ka, kb = self._kind_of(a), self._kind_of(b)
-        if (ka is not None and ka.conflicted) or (kb is not None and kb.conflicted):
-            return None
-
-        def _val(fold):
-            if fold is None or fold.winner is None:
-                return None
-            v = fold.winner.value
-            return self.resolve(v) if fold.winner.value_type == "entity" and isinstance(v, str) else v
-
-        va, vb = _val(ka), _val(kb)
-        if va is None or vb is None:
-            return None
-        return "↔".join(sorted([str(va), str(vb)]))
+        return "↔".join(sorted([la, lb]))
 
     def decline_reason(self, a: str, b: str) -> str | None:
         """Why the auto-gate did NOT merge a residual proposal (recomputed,
