@@ -291,6 +291,31 @@ class Porcelain:
     def path(self, a: str, b: str) -> list[str] | None:
         return self._w.path(a, b)
 
+    # ----------------------------------- host reconciliation (MERGE-RECONCILE-VERB-V1)
+
+    def reconcile(self) -> dict:
+        """Run the global coreference finalize pass and return the count
+        merged plus the residual proposals to adjudicate. Host-invoked; never
+        auto-run by ingest. Zero model calls."""
+        merges = self._w.registry.reconcile()
+        return {"merges": merges, "proposals": self._w.registry.enumerate_proposals()}
+
+    def proposals(self) -> list[dict]:
+        """Visible un-promoted maybe_same_as as adjudicable proposals, each
+        with a recomputed `auto_decline_reason` (the kind-pair on conflict)."""
+        return self._w.registry.enumerate_proposals()
+
+    def confirm(self, a: str, b: str) -> dict:
+        """Promote an existing proposal through the guarded path. Returns a
+        Receipt; `no_proposal` if none relates them."""
+        return self._w.registry.confirm(a, b)
+
+    def merge(self, a: str, b: str, evidence: str) -> dict:
+        """Assert a merge (no proposal required) through the guarded path.
+        Host-authoritative past the soft heuristic, but the hard containment
+        veto is absolute (a `vetoed` Receipt names the blocking edge)."""
+        return self._w.registry.guarded_merge(a, b, evidence)
+
     def salience(
         self, entity: str, frame: str = CANON, as_of: float | None = None
     ) -> float:

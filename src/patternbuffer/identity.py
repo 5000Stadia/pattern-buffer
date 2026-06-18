@@ -74,15 +74,17 @@ class IdentityRegistry:
             return self._semantics.containment_family()
         return set(CONTAINMENT_FAMILY)
 
-    def containment_related(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
-        """True iff a visible containment/location edge relates a member of
-        a's closure to a member of b's closure (either direction). A thing is
-        never identical to what holds it — this is the merge veto (010): an
-        in/contains/holds edge between two entities is a hard bar to merging
-        them. Membrane-clean: computed from present edges, never stored."""
+    def containment_block(self, a: str, b: str, asserted_as_of: int | None = None) -> list[str]:
+        """The containment/location edge descriptor(s) relating a member of a's
+        closure to a member of b's closure (either direction). A non-empty list
+        is the merge veto (010): a thing is never identical to what holds it.
+        Descriptors `entity·attr·value` name the blocking edge so a receipt can
+        tell the host which edge to retract (MERGE-RECONCILE-VERB-V1). Membrane-
+        clean: computed from present edges, never stored."""
         family = self._containment_family()
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
+        out: list[str] = []
         for row in self._buffer.visible(asserted_as_of=asserted_as_of):
             if row.attribute not in family or row.value_type != "entity":
                 continue
@@ -90,8 +92,11 @@ class IdentityRegistry:
                 continue
             e, v = row.entity, row.value
             if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
-                return True
-        return False
+                out.append(f"{e}·{row.attribute}·{v}")
+        return out
+
+    def containment_related(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
+        return bool(self.containment_block(a, b, asserted_as_of))
 
     def merge(self, a: str, b: str, evidence: str) -> str | None:
         """Identity merge, logged as an event (auditable, reversible by
@@ -333,6 +338,122 @@ class IdentityRegistry:
         if merged:
             logger.info("identity reconcile: %d merge(s)", merged)
         return merged
+
+    # ------------------------------------ host reconciliation surface (#31)
+
+    def guarded_merge(self, a: str, b: str, evidence: str) -> dict:
+        """Host-authoritative merge through the guarded path (MERGE-RECONCILE-
+        VERB-V1). Skips the soft discriminativeness heuristic (the host has
+        judged) but NOT the hard containment veto. Returns a Receipt."""
+        ra = self.resolve(a)
+        if ra == self.resolve(b):
+            return self._receipt("noop_already_merged", ra)
+        blocks = self.containment_block(a, b)
+        if blocks:
+            return self._receipt("vetoed", ra, reason="containment", blocking_edges=blocks)
+        event_id = self.merge(a, b, evidence)
+        if event_id is None:  # defensive: merge() re-checks the veto
+            return self._receipt(
+                "vetoed", ra, reason="containment",
+                blocking_edges=self.containment_block(a, b),
+            )
+        return self._receipt("merged", self.resolve(a), merge_event_id=event_id)
+
+    def confirm(self, a: str, b: str) -> dict:
+        """Promote an existing maybe_same_as proposal through the guarded path.
+        Already merged => `noop_already_merged`; otherwise a missing live
+        proposal => `no_proposal` (never a silent merge — keeps confirm=
+        promote-judged honest vs merge=assert-new). C-014 / Codex post-impl."""
+        ra = self.resolve(a)
+        if ra == self.resolve(b):
+            return self._receipt("noop_already_merged", ra)
+        if not self._has_proposal(a, b):
+            return self._receipt("no_proposal", ra)
+        ev = None
+        for row in self._buffer.visible(attribute="maybe_same_as"):
+            if not isinstance(row.value, str):
+                continue
+            clos_a, clos_b = self.closure(a), self.closure(b)
+            if (row.entity in clos_a and row.value in clos_b) or \
+                    (row.entity in clos_b and row.value in clos_a):
+                evr = self._buffer.visible(entity=row.id, attribute="evidence")
+                ev = evr[0].value if evr else None
+                break
+        return self.guarded_merge(a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}")
+
+    @staticmethod
+    def _receipt(outcome, canonical_id, merge_event_id=None, reason=None,
+                 blocking_edges=None) -> dict:
+        return {
+            "outcome": outcome,
+            "canonical_id": canonical_id,
+            "merge_event_id": merge_event_id,
+            "reason": reason,
+            "blocking_edges": list(blocking_edges) if blocking_edges else [],
+        }
+
+    def _kind_pair(self, a: str, b: str) -> str | None:
+        """The sorted folded-kind pair for a kind_conflict reason (C-014),
+        e.g. 'object↔place'; None when a kind fold is contested."""
+        if self._kind_of is None:
+            return None
+        ka, kb = self._kind_of(a), self._kind_of(b)
+        if (ka is not None and ka.conflicted) or (kb is not None and kb.conflicted):
+            return None
+
+        def _val(fold):
+            if fold is None or fold.winner is None:
+                return None
+            v = fold.winner.value
+            return self.resolve(v) if fold.winner.value_type == "entity" and isinstance(v, str) else v
+
+        va, vb = _val(ka), _val(kb)
+        if va is None or vb is None:
+            return None
+        return "↔".join(sorted([str(va), str(vb)]))
+
+    def decline_reason(self, a: str, b: str) -> str | None:
+        """Why the auto-gate did NOT merge a residual proposal (recomputed,
+        never stored) — the host's triage signal. C-013/014."""
+        if self.containment_related(a, b):
+            return "containment"
+        kind = self._kind_state(a, b)
+        if kind == "conflict":
+            pair = self._kind_pair(a, b)
+            return f"kind_conflict: {pair}" if pair else "kind_conflict: contested"
+        ta, tb = self.typed_name_anchors(a), self.typed_name_anchors(b)
+        shared = {t for (_, t) in ta} & {t for (_, t) in tb}
+        if any(("name", t) in ta or ("name", t) in tb for t in shared):
+            return None  # name-strength + non-conflicting kind would have merged
+        if not any(len(_content_tokens(t)) >= 2 for t in shared):
+            return "alias_not_specific"
+        if kind != "present_equal":
+            return "kind_absent"
+        return None
+
+    def enumerate_proposals(self) -> list[dict]:
+        """Visible un-promoted maybe_same_as as adjudicable proposals, each
+        with its recomputed `auto_decline_reason`. De-duplicated by closure
+        pair; stale (already-merged) proposals are skipped."""
+        out: list[dict] = []
+        seen: set[tuple[str, str]] = set()
+        for row in self._buffer.visible(attribute="maybe_same_as"):
+            if not isinstance(row.value, str):
+                continue
+            ra, rb = self.resolve(row.entity), self.resolve(row.value)
+            if ra == rb:
+                continue  # collapsed since proposed
+            key = tuple(sorted([ra, rb]))
+            if key in seen:
+                continue
+            seen.add(key)
+            evr = self._buffer.visible(entity=row.id, attribute="evidence")
+            out.append({
+                "a": ra, "b": rb,
+                "evidence": evr[0].value if evr else None,
+                "auto_decline_reason": self.decline_reason(ra, rb),
+            })
+        return out
 
     def by_alias(self, alias: str, asserted_as_of: int | None = None) -> set[str]:
         needle = alias.strip().lower()
