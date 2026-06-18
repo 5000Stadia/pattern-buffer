@@ -547,24 +547,124 @@ class IdentityRegistry:
             return None
         return "↔".join(sorted([la, lb]))
 
-    def decline_reason(self, a: str, b: str) -> str | None:
-        """Why the auto-gate did NOT merge a residual proposal (recomputed,
-        never stored) — the host's triage signal. C-013/014."""
-        if self.containment_related(a, b):
+    # -------------------------------------- structured triage (TRIAGE-CONTEXT-V1)
+
+    def _relation_family(self, attribute: str) -> str:
+        """Declared structural relation family of an attribute (containment /
+        lateral / none), with a membership fallback when semantics is unwired."""
+        if self._semantics is not None:
+            return self._semantics.semantics(attribute).relation_family
+        if attribute in self._containment_family():
             return "containment"
-        kind = self._kind_state(a, b)
-        if kind == "conflict":
-            pair = self._kind_pair(a, b)
-            return f"kind_conflict: {pair}" if pair else "kind_conflict: contested"
+        if attribute in ("connects_to", "adjacent_to"):
+            return "lateral"
+        return "none"
+
+    def _relating_rows_between(self, a: str, b: str) -> list[dict]:
+        """All relating edges between a's closure and b's — containment INCLUDED
+        — as `{attribute, relation_family, assertion_id}`. The decisive triage
+        evidence (round-robin: any relating edge is evidence against identity).
+        Excludes identity/meta/kind/caused_by edges and a:/attr: subjects."""
+        clos_a, clos_b = self.closure(a), self.closure(b)
+        out: list[dict] = []
+        for row in self._buffer.visible():
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            if row.attribute in _IDENTITY_ATTRS or row.attribute in META_ATTRIBUTES:
+                continue
+            if row.attribute in ("kind", "caused_by"):
+                continue
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            e, v = row.entity, row.value
+            if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
+                out.append({
+                    "attribute": row.attribute,
+                    "relation_family": self._relation_family(row.attribute),
+                    "assertion_id": row.id,
+                })
+        return out
+
+    def _kind_context(self, entity: str) -> dict:
+        """Per-side kind context for triage: `{entity, value, conflicted}`."""
+        fold = self._kind_of(entity) if self._kind_of is not None else None
+        if fold is None or fold.winner is None:
+            return {"entity": self.resolve(entity), "value": None, "conflicted": False}
+        v = fold.winner.value
+        if fold.winner.value_type == "entity" and isinstance(v, str):
+            v = self.resolve(v)
+        return {"entity": self.resolve(entity), "value": v, "conflicted": bool(fold.conflicted)}
+
+    def _candidate_bindings(self, a: str, b: str) -> list[str]:
+        """All visible `maybe_same_as` assertion ids relating the closures
+        (live bindings are not unique — plural, Codex r1)."""
+        clos_a, clos_b = self.closure(a), self.closure(b)
+        out: list[str] = []
+        for row in self._buffer.visible(attribute="maybe_same_as"):
+            if not isinstance(row.value, str):
+                continue
+            if (row.entity in clos_a and row.value in clos_b) or \
+                    (row.entity in clos_b and row.value in clos_a):
+                out.append(row.id)
+        return out
+
+    def _decline_context(self, a: str, b: str) -> dict:
+        """The single source of truth for why the auto-gate did not merge a
+        proposal — `code` in the exact order `_mergeable` fails, plus the
+        structured evidence. `decline_reason()` formats its string from this."""
+        related = self._relating_rows_between(a, b)
+        containment = [r for r in related if r["relation_family"] == "containment"]
         ta, tb = self.typed_name_anchors(a), self.typed_name_anchors(b)
         shared = {t for (_, t) in ta} & {t for (_, t) in tb}
-        if any(("name", t) in ta or ("name", t) in tb for t in shared):
-            return None  # name-strength + non-conflicting kind would have merged
-        if not any(len(_content_tokens(t)) >= 2 for t in shared):
-            return "alias_not_specific"
-        if kind != "present_equal":
-            return "kind_absent"
-        return None
+        kind = self._kind_state(a, b)
+
+        if containment:
+            code = "containment"
+        elif any(r["relation_family"] != "containment" for r in related):
+            code = "relating_edge"
+        elif not shared:
+            code = "no_shared_anchor"
+        elif kind == "conflict":
+            code = "kind_conflict"
+        else:
+            kinds = self._kind_values(a) | self._kind_values(b)
+            distinctive = [t for t in shared if t not in kinds]
+            name_texts = ({t for (attr, t) in ta if attr == "name"}
+                          | {t for (attr, t) in tb if attr == "name"})
+            if any(t in name_texts for t in distinctive):
+                code = None          # a distinctive name merges at any length (mirror _mergeable)
+            elif not distinctive:
+                code = "non_distinctive"
+            elif not any(len(_content_tokens(t)) >= 2 for t in distinctive):
+                code = "alias_not_specific"
+            elif kind != "present_equal":
+                code = "kind_absent"
+            else:
+                code = None          # specific alias + present-equal kind would have merged
+        return {
+            "code": code,
+            "kinds": [self._kind_context(a), self._kind_context(b)],
+            "related_rows": related,
+            "candidate_bindings": self._candidate_bindings(a, b),
+        }
+
+    def decline_reason(self, a: str, b: str) -> str | None:
+        """Display/back-compat string, formatted from `_decline_context`'s code
+        so string and struct never diverge (recomputed, never stored)."""
+        return self._format_decline(a, b, self._decline_context(a, b))
+
+    def _format_decline(self, a: str, b: str, ctx: dict) -> str | None:
+        code = ctx["code"]
+        if code is None:
+            return None
+        if code == "kind_conflict":
+            pair = self._kind_pair(a, b)
+            return f"kind_conflict: {pair}" if pair else "kind_conflict: contested"
+        if code == "relating_edge":
+            attrs = sorted({r["attribute"] for r in ctx["related_rows"]
+                            if r["relation_family"] != "containment"})
+            return f"relating_edge: {attrs[0]}" if attrs else "relating_edge"
+        return code
 
     def enumerate_proposals(self) -> list[dict]:
         """Visible un-promoted maybe_same_as as adjudicable proposals, each
@@ -585,10 +685,12 @@ class IdentityRegistry:
                 continue
             seen.add(key)
             evr = self._buffer.visible(entity=row.id, attribute="evidence")
+            ctx = self._decline_context(ra, rb)
             out.append({
                 "a": ra, "b": rb,
                 "evidence": evr[0].value if evr else None,
-                "auto_decline_reason": self.decline_reason(ra, rb),
+                "auto_decline_reason": self._format_decline(ra, rb, ctx),  # display/back-compat
+                "auto_decline": ctx,                                # structured machine surface
             })
         return out
 
