@@ -153,6 +153,16 @@ p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
 p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursive=False) -> dict
    # op in sum, count, min, max, avg; numeric rollup over contents()
 p.locate / p.contents / p.path
+p.route(a, b, frame="canon", as_of=None) -> {route, status, segments}
+   # passability-aware routing (RFC-003). status/segment: clear|blocked|obscured
+   # (removed is temporal/diagnostic, in former_passages). A blocked segment
+   # carries obstructing-fact `evidence`; an obscured one a computed
+   # `unknown_basis`. Two-pass: a clear route if one exists, else a structural
+   # route with flagged segments, else no_path. Obstruction = ordinary facts on a
+   # PORTAL entity (a door's state, a guarded_by relation); traversability is
+   # DERIVED, never stored. A portal kind gates passage only under a host-declared
+   # `traversal:<kind>` policy (blocks_when_state / blocks_when_relation), scoped
+   # to the kind; no policy => clear (no engine guess). The host supplies the words.
 p.confidence(entity, attribute, frame=, as_of=) -> {score, status, last_observed_at, corroboration, conflicted}
    # derived trust over a functional key; never stored; functional-only (set/accrue -> score None)
    # frame is str | list[str]: a list = trust over the read-union (knows:O ∪ public);
