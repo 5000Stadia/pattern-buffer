@@ -334,6 +334,50 @@ class Porcelain:
         (rejected | noop_already_distinct | conflict_already_merged)."""
         return self._w.registry.reject(a, b)
 
+    # ------------------------------------ AKA-CORRELATION-V1 (opt-in identity)
+
+    def correlate(self, a: str, b: str, evidence: str, at: float | None = None) -> dict:
+        """Correlate two entities as facets of one identity (non-collapsing
+        `aka`), without merging them — the reveal/dual-persona/amalgamation call.
+        `at` is the reveal's valid_from. Returns a Receipt
+        (correlated | noop_already_correlated | vetoed_distinct). The hard
+        `distinct_from` veto is absolute."""
+        return self._w.registry.correlate(a, b, evidence, valid_from=at)
+
+    def correlations(self, entity: str, as_of: float | None = None,
+                     frame: str = CANON) -> list[str]:
+        """The facets correlated with `entity` as-of (the `aka` set minus its own
+        same_as closure), first-seen ordered. Before a reveal's valid_from this
+        is empty — the mystery is intact. Zero writes."""
+        return self._w.registry.correlations(entity, valid_as_of=as_of, frame=frame)
+
+    def state_union(self, entity: str, attribute: str, frame: str = CANON,
+                    as_of: float | None = None) -> dict:
+        """The explicit correlated read: fold `attribute` over `entity` ∪ its
+        correlated facets, as-of. Same shape as `state`. NOT a default read —
+        `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
+        uncorrelated view (no leak)."""
+        fold = self._w.state_union(entity, attribute, frame, valid_as_of=as_of)
+        if fold.winner is None:
+            return {"status": "unknown"}
+        fact = (self._quantity_fact(fold.winner, fold.quantity)
+                if fold.quantity is not None else self._fact(fold.winner))
+        out = {"status": "conflicted" if fold.conflicted else "known",
+               "fact": fact.to_dict()}
+        if fold.quantity is not None:
+            out["quantity"] = fold.quantity
+        if fold.conflicted:
+            out["conflicting"] = list(fold.conflicting)
+        return out
+
+    def correlation_conflicts(self, as_of: float | None = None,
+                              frame: str = CANON) -> list[dict]:
+        """Pairs carrying both an `aka` and a `distinct_from` (a raw-authored
+        contradiction) for host adjudication. The guarded `correlate()` prevents
+        these at the source; this surfaces any that slipped in via raw ingest.
+        `aka` rows are filtered by `as_of`/`frame`; `distinct_from` is global."""
+        return self._w.registry.correlation_conflicts(valid_as_of=as_of, frame=frame)
+
     def salience(
         self, entity: str, frame: str = CANON, as_of: float | None = None
     ) -> float:

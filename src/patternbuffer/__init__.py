@@ -75,6 +75,7 @@ class World:
             self.buffer, self.classifier, self.registry.resolve, self.semantics
         )
         self.indexes.set_closure_provider(self.registry.closure)
+        self.indexes.set_correlation_provider(self.registry.correlation_set)
         self.registry.set_kind_provider(lambda e: self.indexes.fold_key(e, "kind"))
         self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
         self.indexes.set_salience_provider(self.salience_index.salience)
@@ -137,6 +138,19 @@ class World:
 
     def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
+
+    # AKA-CORRELATION-V1 — the explicit, opt-in correlated identity surface.
+    def state_union(self, entity: str, attribute: str, frame: str = CANON, **kw):
+        return self.indexes.state_union(entity, attribute, frame, **kw)
+
+    def correlations(self, entity: str, **kw) -> list[str]:
+        return self.registry.correlations(entity, **kw)
+
+    def correlate(self, a: str, b: str, evidence: str, **kw) -> dict:
+        return self.registry.correlate(a, b, evidence, **kw)
+
+    def correlation_conflicts(self, **kw) -> list[dict]:
+        return self.registry.correlation_conflicts(**kw)
 
     def path(self, a: str, b: str, **kw) -> list[str] | None:
         return self.indexes.path(a, b, **kw)

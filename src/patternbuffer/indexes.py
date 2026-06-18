@@ -93,6 +93,12 @@ class Indexes:
         # representative. Installed by World wiring once the registry exists.
         self._resolve = identity_resolve or (lambda eid: eid)
         self._closure_of = lambda eid: {eid}
+        # AKA-CORRELATION-V1: the non-collapsing correlation set (aka-component),
+        # injected by World from the registry. Default => just the entity, so
+        # state_union with no aka edges is identical to fold_key.
+        self._correlation_of = (
+            lambda eid, valid_as_of=None, asserted_as_of=None, frame=CANON: {eid}
+        )
         self._salience = lambda eid, frame=CANON, as_of=None: 0.0
 
     def set_identity_resolver(self, fn: Callable[[str], str]) -> None:
@@ -102,6 +108,11 @@ class Indexes:
         """Identity-closure lookup for indexed (read-path) retrieval —
         installed by World wiring alongside the resolver (037)."""
         self._closure_of = fn
+
+    def set_correlation_provider(self, fn: Callable[..., set]) -> None:
+        """`aka`-correlation-set lookup (AKA-CORRELATION-V1) — installed by World
+        wiring from the registry's correlation_set. Read only by state_union."""
+        self._correlation_of = fn
 
     def set_salience_provider(
         self, fn: Callable[[str, str, float | None], float]
@@ -223,6 +234,25 @@ class Indexes:
         entity = self._resolve(entity)
         fa = self.fold_attribute(attribute)
         closure = sorted(self._closure_of(entity))
+        return self._fold_over_closure(
+            closure, attribute, fa, frame, valid_as_of, asserted_as_of
+        )
+
+    def _fold_over_closure(
+        self,
+        closure: list[str],
+        attribute: str,
+        fa: str,
+        frame: str,
+        valid_as_of: float | None,
+        asserted_as_of: int | None,
+    ) -> FoldResult:
+        """Fold one attribute over a fixed set of subject ids (the entity's
+        `same_as` closure for `fold_key`; the union of correlated facets'
+        closures for `state_union`). Identical fold semantics either way — so a
+        correlated-union read returns exactly what the normal fold would have
+        served had the rows been authored on one closure (AKA-CORRELATION-V1 §3,
+        the retrieval-invariance invariant)."""
         attrs = sorted(self._semantics.containment_family()) if fa == _FAMILY_KEY else [attribute]
         candidates: list[Assertion] = []
         for row in self._buffer.visible(
@@ -296,6 +326,33 @@ class Indexes:
             winner = max(rows, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
             return FoldResult(winner=winner)
         return FoldResult(winner=None)
+
+    def state_union(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> FoldResult:
+        """The explicit, opt-in correlated read (AKA-CORRELATION-V1 §3): fold one
+        attribute over the union of subject rows across the entity's `aka`
+        correlation set (each facet expanded through its own `same_as` closure),
+        as-of. With no visible `aka` edge the correlation set is just the entity,
+        so this is byte-for-byte `fold_key`. NEVER consulted by any default read;
+        nothing stored. The reveal is valid-time-gated: as-of-before the reveal,
+        the correlation set is the lone entity → the pre-reveal (uncorrelated)
+        view, never leaking the post-reveal identity."""
+        cset = self._correlation_of(
+            entity, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of, frame=frame
+        )
+        union: set[str] = set()
+        for facet in cset:
+            union |= self._closure_of(facet)
+        fa = self.fold_attribute(attribute)
+        return self._fold_over_closure(
+            sorted(union), attribute, fa, frame, valid_as_of, asserted_as_of
+        )
 
     def confidence(
         self,

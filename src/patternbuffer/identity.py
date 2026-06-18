@@ -17,7 +17,7 @@ from patternbuffer.model import ATTR_PREFIX, CANON, CONTAINMENT_FAMILY, META_ATT
 from patternbuffer.roles import WriterRole
 
 # Identity edges — never a "relating edge" for the distinctness signal.
-_IDENTITY_ATTRS = frozenset({"same_as", "maybe_same_as", "distinct_from"})
+_IDENTITY_ATTRS = frozenset({"same_as", "maybe_same_as", "distinct_from", "aka"})
 
 logger = logging.getLogger(__name__)
 
@@ -705,3 +705,148 @@ class IdentityRegistry:
             if isinstance(row.value, str) and row.value.strip().lower() == needle:
                 hits.add(self.resolve(row.entity, asserted_as_of))
         return hits
+
+    # ----------------------------------- AKA-CORRELATION-V1 (the third lane)
+    # `aka` is the NON-collapsing identity relation — between `same_as`
+    # (collapse) and `distinct_from` (separate). It NEVER enters resolve()/
+    # closure() (those read `same_as` only) and NEVER folds by default. It is
+    # read only through the explicit, valid-time-gated walkers below.
+
+    def correlation_set(
+        self,
+        entity: str,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+        frame: str = CANON,
+    ) -> set[str]:
+        """The connected component of `entity` over visible `aka` edges, each
+        independently as-of/frame filtered (transitive — an edge not yet valid
+        is never traversed, so no future reveal leaks backward). Computed fresh;
+        never stored; never elects a canonical id. Default => {entity}.
+
+        Closure-aware throughout (Cx 057 #1): the start frontier is the entity's
+        whole `same_as` closure, and a reached correlated node is expanded
+        through ITS `same_as` closure before traversing further — so an `aka`
+        edge attached to any closure member is found from any other member
+        (retrieval-invariance across the identity model)."""
+        edges: dict[str, set[str]] = {}
+        for row in self._buffer.visible(
+            attribute="aka", frame=frame,
+            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+        ):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            edges.setdefault(row.entity, set()).add(row.value)
+            edges.setdefault(row.value, set()).add(row.entity)
+        out = set(self.closure(entity, asserted_as_of))
+        frontier = list(out)
+        while frontier:
+            for nxt in edges.get(frontier.pop(), ()):
+                if nxt not in out:
+                    for member in self.closure(nxt, asserted_as_of):
+                        if member not in out:
+                            out.add(member)
+                            frontier.append(member)
+        return out
+
+    def correlations(
+        self,
+        entity: str,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+        frame: str = CANON,
+    ) -> list[str]:
+        """The facets correlated with `entity` as-of — the correlation set minus
+        the entity's own `same_as` closure. Ordered first-seen/log order with a
+        lexical tie-break (never a canonical election — Cx 056). Writes nothing."""
+        cset = self.correlation_set(entity, valid_as_of, asserted_as_of, frame)
+        own = self.closure(entity, asserted_as_of)
+        facets = cset - own
+        if not facets:
+            return []
+        first_seen: dict[str, int] = {}
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+            if row.entity in facets and row.entity not in first_seen:
+                first_seen[row.entity] = row.seq
+            if (row.value_type == "entity" and isinstance(row.value, str)
+                    and row.value in facets and row.value not in first_seen):
+                first_seen[row.value] = row.seq
+        return sorted(facets, key=lambda e: (first_seen.get(e, 1 << 62), e))
+
+    def _aka_relates(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
+        """Whether b is already in a's correlation COMPONENT (Cx 057 #2): the
+        transitive connected component, not a one-edge test — so `correlate(A,C)`
+        with A-aka-B-aka-C is a noop, matching the read semantics. valid_as_of is
+        unfiltered here (any visible aka edge, regardless of reveal time, means
+        the pair is already correlated — a duplicate append is redundant)."""
+        comp = self.correlation_set(a, valid_as_of=None, asserted_as_of=asserted_as_of)
+        return bool(self.closure(b, asserted_as_of) & comp)
+
+    def correlate(
+        self, a: str, b: str, evidence: str, valid_from: float | None = None
+    ) -> dict:
+        """The guarded host correlate verb (mirror of guarded_merge): append a
+        non-collapsing `aka` edge unless the pair is marked `distinct_from`
+        (hard veto — a contradiction the host must adjudicate). `valid_from` is
+        the reveal time. Returns a Receipt:
+        `correlated | noop_already_correlated | vetoed_distinct`."""
+        ra = self.resolve(a)
+        dblocks = self.distinct_block(a, b)
+        if dblocks:
+            return self._receipt(
+                "vetoed_distinct", ra, reason="distinct_from", blocking_edges=dblocks
+            )
+        if self._aka_relates(a, b):
+            return self._receipt("noop_already_correlated", ra)
+        edge = self._buffer.append(
+            entity=a, attribute="aka", value=b, value_type="entity",
+            status="stated", role=self._ingestor, valid_from=valid_from,
+        )
+        self._buffer.append(
+            entity=edge.id, attribute="evidence", value=evidence,
+            status="stated", role=self._ingestor,
+        )
+        rec = self._receipt("correlated", ra)
+        rec["aka_assertion_id"] = edge.id
+        logger.info("correlate %s aka %s (%s)", a, b, evidence)
+        return rec
+
+    def correlation_conflicts(
+        self,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+        frame: str = CANON,
+    ) -> list[dict]:
+        """Pairs carrying BOTH an `aka` and a `distinct_from` between their
+        closures (closure-aware, bidirectional) — a contradiction surfaced for
+        host adjudication (a raw `aka` authored over a `distinct_from`). The
+        guarded `correlate()` prevents this at the source; this read catches the
+        raw-ingest path. Deduped by resolved pair.
+
+        The `aka` rows are filtered by `valid_as_of`/`frame`/`asserted_as_of`
+        (Cx 057 #3) — an as-of-before-reveal view shows no conflict. NOTE:
+        `distinct_from` is global by current engine convention (asserted-axis
+        only), so the distinctness side is not valid-time scoped."""
+        out: list[dict] = []
+        seen: set[tuple[str, str]] = set()
+        for row in self._buffer.visible(
+            attribute="aka", frame=frame,
+            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+        ):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            a, b = row.entity, row.value
+            dblocks = self.distinct_block(a, b, asserted_as_of)
+            if not dblocks:
+                continue
+            key = tuple(sorted([self.resolve(a, asserted_as_of),
+                                self.resolve(b, asserted_as_of)]))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append({
+                "a": a, "b": b,
+                "aka_edge": f"{a}·aka·{b}",
+                "distinct_edges": dblocks,
+            })
+        return out

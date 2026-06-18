@@ -193,6 +193,24 @@ p.confidence(entity, attribute, frame=, as_of=) -> {score, status, last_observed
    # derived trust over a functional key; never stored; functional-only (set/accrue -> score None)
    # frame is str | list[str]: a list = trust over the read-union (knows:O ∪ public);
    # cross-frame agreement raises corroboration, disagreement is conflict (score halved)
+p.correlate(a, b, evidence, at=None) -> Receipt
+   # AKA-CORRELATION-V1: link two entities as facets of one identity (non-collapsing
+   # `aka`) WITHOUT merging — reveals, dual personas, amalgamation. `at` = the reveal's
+   # valid_from. Outcomes: correlated | noop_already_correlated | vetoed_distinct
+   # (the hard distinct_from veto is absolute). NOT a merge: resolve()/closure() and
+   # every DEFAULT read ignore aka; each entity keeps its own rows.
+p.correlations(entity, as_of=None, frame="canon") -> [entity_id]
+   # the facets correlated with entity as-of (first-seen ordered). Empty before a
+   # reveal's valid_from — the mystery is intact. Zero writes.
+p.state_union(entity, attribute, frame="canon", as_of=None) -> {status, fact, quantity?, conflicting?}
+   # the EXPLICIT correlated read: fold attribute over entity ∪ its aka facets, as-of.
+   # Same shape as p.state. Returns the SAME view whether facts were on one entity or
+   # split across correlated facets (retrieval-invariance). NOT a default read —
+   # state/snapshot/ask never union; as-of-before a reveal returns the uncorrelated view.
+   # Divergent facets use existing fold conflict semantics (no new blanket rule).
+p.correlation_conflicts(as_of=None, frame="canon") -> [{a, b, aka_edge, distinct_edges}]
+   # raw aka authored over a distinct_from (a contradiction) surfaced for adjudication;
+   # the guarded correlate() prevents it at the source.
 p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
