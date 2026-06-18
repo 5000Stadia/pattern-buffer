@@ -23,6 +23,18 @@ from your side the engine is indistinguishable from sqlite3.
        return your_provider.complete(prompt, json_schema=schema)
    world = World("campaign.world", world_id="w:campaign", model=shim)
    ```
+   The engine calls this callable **synchronously and unbounded** — every model
+   path (extraction, classification, thunk resolution, `refer` tier-2, `ask`)
+   blocks until your shim returns. **Bounding the call is yours, not the
+   engine's** (see MUST/NEVER): a hung provider read will wedge the calling
+   build until *your* timeout fires, so wrap the shim in your own runtime's
+   deadline (and recycle the worker — a blocked socket read can't be cancelled
+   in-thread, only abandoned). The engine cannot bound it for you without
+   reaching into process-global signal state or leaking the very thread it
+   couldn't kill — both worse than honest blocking, both violations of "the
+   engine never reaches into the host." Best of all, avoid the call: rows you
+   know are durable should be declared `structural` via `attribute_default` so
+   the classifier skips the model entirely.
 2. **The binding table** — your scoping unit (workspace, channel, space) →
    `world_id`. Many scopes → one world is allowed; one scope → many worlds is
    not. Fiction scopes bind to private worlds; all real-life scopes bind to
@@ -132,6 +144,13 @@ supported; exact decimal/fixed-point money is deferred.
 - **MUST**, in `observe_or_unknown` worlds, let the gate stamp wall-clock
   learned-at meta-assertions (it does this automatically; do not strip them —
   staleness decay computes from them).
+- **MUST** bound the model callable in your own runtime. The engine invokes it
+  synchronously and unbounded on every model path; it deliberately adds no
+  timeout (a real cancellable deadline can only live where you own the
+  worker/process — the engine could only abandon-and-leak the thread or hijack
+  process signals, both forbidden). A flaky provider's blocked read otherwise
+  hangs the build indefinitely. Prefer declaring known-durable rows `structural`
+  so the classifier never calls the model at all.
 
 ## THE PORCELAIN (frozen at porcelain-v0.1; additive-only henceforth)
 
