@@ -1204,13 +1204,22 @@ class Indexes:
         a: str,
         b: str,
         frame: str = CANON,
+        valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> list[str] | None:
         """BFS over the lateral graph (connects_to/adjacent_to, undirected).
-        None = no path: vertical proximity is not connectivity."""
+        None = no path: vertical proximity is not connectivity.
+
+        ``valid_as_of`` (PATH-TEMPORAL-V1): when given, edges are filtered to
+        those valid at that time, so a severed edge (one whose ``valid_to`` has
+        passed) drops from current routing while remaining visible to an earlier
+        as-of query — `removed` is derived from temporal validity, never a
+        stored flag. Default ``None`` = no bound (unchanged)."""
         a, b = self._resolve(a), self._resolve(b)
         edges: dict[str, set[str]] = {}
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=frame):
+        for row in self._buffer.visible(
+            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of, frame=frame
+        ):
             if (
                 row.attribute in self._semantics.lateral_family()
                 and row.value_type == "entity"

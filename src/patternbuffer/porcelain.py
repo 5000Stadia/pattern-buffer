@@ -288,8 +288,10 @@ class Porcelain:
     def contents(self, container: str, as_of: float | None = None) -> list[str]:
         return self._w.contents(container, valid_as_of=as_of)
 
-    def path(self, a: str, b: str) -> list[str] | None:
-        return self._w.path(a, b)
+    def path(self, a: str, b: str, as_of: float | None = None) -> list[str] | None:
+        # as_of routes as the graph stood at that time: a severed edge
+        # (valid_to passed) drops; history is preserved (PATH-TEMPORAL-V1).
+        return self._w.path(a, b, valid_as_of=as_of)
 
     # ----------------------------------- host reconciliation (MERGE-RECONCILE-VERB-V1)
 

@@ -50,7 +50,13 @@ world.truth.retract(assertion_or_id, reason) -> Assertion  # corrections append
 world.locate(entity) -> list[str]              # containment chain, nearest first
 world.contents(container) -> list[str]         # emptiness is [] — derived, never stored
 world.state(entity, attribute, frame="canon", valid_as_of=None, asserted_as_of=None) -> FoldResult
-world.path(a, b) -> list[str] | None           # None = not connected; proximity is not connectivity
+world.path(a, b, valid_as_of=None) -> list[str] | None   # None = not connected; proximity is not connectivity
+#   valid_as_of=T routes as the lateral graph stood at T: a SEVERED edge (its
+#   connects_to/adjacent_to given a valid_to at the failure) drops from current
+#   routing, while an earlier as-of still shows it (history preserved). Removal
+#   is temporal, never a stored flag. NOTE: connects_to is a many-to-many
+#   passage edge (path unions all current edges, no recency-fold) — to retire an
+#   edge, end it with valid_to; a later connects_to does NOT supersede an old one.
 world.salience(entity, frame="canon", as_of=None) -> float
 world.neighborhood(entity, depth=1, frame="canon", as_of=None,
                    edge_kinds=None, max_fanout=64, budget=None) -> dict
