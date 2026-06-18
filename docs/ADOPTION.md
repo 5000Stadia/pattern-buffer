@@ -150,7 +150,14 @@ supported; exact decimal/fixed-point money is deferred.
   worker/process — the engine could only abandon-and-leak the thread or hijack
   process signals, both forbidden). A flaky provider's blocked read otherwise
   hangs the build indefinitely. Prefer declaring known-durable rows `structural`
-  so the classifier never calls the model at all.
+  so the classifier never calls the model at all. A wedged build is **truth-safe
+  but not atomic**: `ingest_structured` appends a row then classifies it inline,
+  so a timed-out classifier can leave a committed log prefix and an unclassified
+  sidecar row. Truth is intact (the log is append-only, the sidecar rebuildable,
+  unclassified reads fall back to `STATE`) — but a killed bulk build is **not** an
+  all-or-nothing artifact. If atomic scenario publication matters, build in a
+  staging world; after recycling a timed-out model worker, finish classification
+  before serving or swapping the world.
 
 ## THE PORCELAIN (frozen at porcelain-v0.1; additive-only henceforth)
 
