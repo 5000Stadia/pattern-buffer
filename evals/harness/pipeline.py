@@ -300,9 +300,18 @@ class Pipeline:
                 try:
                     w.ingest_structured([item])
                 except ValueError as exc:
+                    # genuine gate failure (e.g. generated-into-canon) still raises
                     quarantined.append({"item": item, "error": str(exc)})
                     logger.warning("commit quarantine (chunk %d): %s — %s",
                                    r.chunk_id, exc, item)
+                else:
+                    # INGEST-HARDENING-V1: a structurally-invalid edge (cycle /
+                    # self-edge / lateral self-loop) is now SKIPPED (not raised)
+                    # with a typed receipt — surface those as quarantine too.
+                    for s in w.ingestor.last_skipped:
+                        quarantined.append({"item": item, "error": s.reason})
+                        logger.warning("commit quarantine (chunk %d): skipped %s — %s",
+                                       r.chunk_id, item, s.reason)
         if quarantined:
             (self.run_dir / "quarantined.json").write_text(
                 json.dumps(quarantined, indent=0, sort_keys=True))

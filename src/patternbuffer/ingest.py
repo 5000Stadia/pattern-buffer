@@ -79,6 +79,19 @@ _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
 _SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
 
 
+@dataclass(frozen=True)
+class SkipRecord:
+    """An edge skipped at the gate (INGEST-HARDENING-V1 Part B): a single
+    structurally-invalid edge (cycle / self-edge / lateral self-loop) dropped
+    with a reason, while the rest of the chunk ingests. No silent caps — the
+    host reads these off the porcelain Receipt's `skipped`."""
+
+    entity: str
+    attribute: str
+    value: Any
+    reason: str
+
+
 @dataclass
 class SceneCursor:
     """The ingest-time pose: where on the timeline the narrated action is."""
@@ -128,6 +141,10 @@ class Ingestor:
         self._clock = clock
         self.classify_inline = classify_inline  # harness defers to batch
         self.cursor = SceneCursor()
+        # INGEST-HARDENING-V1: per-call batched-classify collector + skip records.
+        self._classify_collect: list[Assertion] | None = None
+        self._skipped: list[SkipRecord] | None = None
+        self.last_skipped: list[SkipRecord] = []
         self._alias_map: dict[str, str] = dict(_BUILTIN_ALIASES)
         self._rebuild_alias_map()
 
@@ -191,7 +208,8 @@ class Ingestor:
     # -------------------------------------------------------- structured
 
     def ingest_structured(
-        self, items: list[dict[str, Any]], frame: str | None = None
+        self, items: list[dict[str, Any]], frame: str | None = None,
+        classify: str = "inline",
     ) -> list[Assertion]:
         """The no-model gate entry: pre-extracted items, full discipline.
         Synthetic test content only — never bible-derived (spec §6).
@@ -200,39 +218,87 @@ class Ingestor:
         the sanctioned doorway to named-frame authoring (knows:<id>
         session-zero seeding, plot: arcs). Frame is a TARGET only; every
         other gate discipline (provenance, canonicalization, cursor,
-        roles) applies unchanged. Per-item frames still win."""
-        appended: list[Assertion] = []
-        for item in items:
-            if frame is not None and "frame" not in item:
-                item = {**item, "frame": frame}
-            appended.extend(self._ingest_item(item))
-        return appended
+        roles) applies unchanged. Per-item frames still win.
 
-    def _reject_cycle(
+        ``classify`` (INGEST-HARDENING-V1 Part A): durability classification mode.
+        ``"inline"`` (default) classifies each row per-row as it lands (unchanged).
+        ``"batch"`` defers during the call and runs ONE batch model call over the
+        call's model-needing rows at the end — the first-class form of the
+        manual ``classify_inline=False`` + ``classify_all`` recipe (~65% build-time
+        cut). ``"defer"`` skips classification entirely (the host runs
+        ``classify_all`` later over the whole build). ``batch``/``defer`` inherit
+        the deferred-classification residual (the read-time ``locate()`` guard
+        remains the transitive-cycle backstop, as in the harness build)."""
+        if classify not in ("inline", "batch", "defer"):
+            raise ValueError(f"unknown classify mode {classify!r}")
+        self._skipped = []
+        collect: list[Assertion] | None = [] if classify == "batch" else None
+        prev_inline = self.classify_inline
+        if classify in ("batch", "defer"):
+            self.classify_inline = False
+        self._classify_collect = collect
+        try:
+            appended: list[Assertion] = []
+            for item in items:
+                if frame is not None and "frame" not in item:
+                    item = {**item, "frame": frame}
+                appended.extend(self._ingest_item(item))
+            if classify == "batch" and collect:
+                self._classifier.classify_rows(collect)
+            return appended
+        finally:
+            # Always reflect THIS call's skips, even if an item raised mid-batch
+            # (Cx final: no stale carryover from a prior call).
+            self.classify_inline = prev_inline
+            self._classify_collect = None
+            self.last_skipped = list(self._skipped or [])
+            self._skipped = None
+
+    def _cycle_reason(
         self, child: str, parent: str, frame: str, valid_from: float | None
-    ) -> None:
-        """Reject a cycle-forming containment edge before it enters the log
-        (HD 002 finding 1; spec LIVE-FINDINGS §Fix 1). Both ids are already
-        identity-resolved.
-
-        Self-edges are rejected unconditionally (complete, no derived
-        state). Transitive cycles are rejected as-of the new edge's own
-        valid_from — best-effort: a back-dated edge that closes a cycle only
-        at a different valid-time is not visible to a single write-time
-        walk and remains caught by the read-time locate() guard."""
+    ) -> str | None:
+        """The reason a containment edge would form a cycle, or None (HD 002
+        finding 1). Both ids are already identity-resolved. Self-edges are
+        detected unconditionally (no derived state). Transitive cycles are
+        detected as-of the new edge's valid_from — best-effort: a back-dated
+        edge closing a cycle only at a different valid-time isn't visible to a
+        single write-time walk and remains caught by the read-time locate()
+        guard. INGEST-HARDENING-V1: returns the reason; the caller SKIPS the
+        single edge (typed receipt) rather than aborting the chunk."""
         if child == parent:
-            raise ValueError(
-                f"cycle-forming containment edge: {child!r} cannot contain "
-                "itself (self-edge; append-only tree invariant, §4)"
-            )
+            return (f"cycle-forming containment edge: {child!r} cannot contain "
+                    "itself (self-edge; append-only tree invariant, §4)")
         if self._containment_ancestors is None:
-            return
+            return None
         if child in self._containment_ancestors(parent, frame, valid_from):
-            raise ValueError(
-                f"cycle-forming containment edge: {child!r} is already an "
-                f"ancestor of {parent!r} as-of valid_from={valid_from} — "
-                "containment is a single-parent tree (§4)"
-            )
+            return (f"cycle-forming containment edge: {child!r} is already an "
+                    f"ancestor of {parent!r} as-of valid_from={valid_from} — "
+                    "containment is a single-parent tree (§4)")
+        return None
+
+    def _edge_skip_reason(
+        self, entity: str, attribute: str, value: Any, value_type: str,
+        frame: str, valid_from: float | None,
+    ) -> str | None:
+        """The reason a single structural edge is invalid (containment cycle /
+        self-edge / lateral self-loop), or None (INGEST-HARDENING-V1 Part B).
+        Only structurally-invalid SINGLE edges are skippable; every other gate
+        failure still raises."""
+        if value_type != "entity" or not isinstance(value, str):
+            return None
+        if self._semantics.is_containment(attribute):
+            return self._cycle_reason(entity, value, frame, valid_from)
+        if self._semantics.is_lateral(attribute) and entity == value:
+            # A lateral self-loop (X connects_to X) is extraction noise — it
+            # adds no edge any walk can use (#19).
+            return f"lateral self-loop: {entity!r} cannot {attribute} itself"
+        return None
+
+    def _record_skip(self, entity: str, attribute: str, value: Any, reason: str) -> None:
+        logger.warning("ingest skipped edge: %s · %s · %r — %s",
+                       entity, attribute, value, reason)
+        if self._skipped is not None:
+            self._skipped.append(SkipRecord(entity, attribute, value, reason))
 
     def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
         out: list[Assertion] = []
@@ -249,26 +315,9 @@ class Ingestor:
         if valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
 
-        is_manual_semantics_row = (
-            entity.startswith(ATTR_PREFIX) and attribute in SEMANTICS_PREDICATES
-        )
-        if not is_manual_semantics_row:
-            out.extend(self._maybe_declare_attribute(attribute, item))
-
-        if self._semantics.is_containment(attribute) and value_type == "entity":
-            self._reject_cycle(entity, value, item.get("frame", CANON),
-                               None if timeless else valid_from)
-        if (
-            self._semantics.is_lateral(attribute)
-            and value_type == "entity"
-            and entity == value
-        ):
-            # A lateral self-loop (X connects_to X / adjacent_to X) is
-            # extraction noise — it adds no edge any walk can use. Reject it
-            # at the gate, the same class as the containment self-edge (#19).
-            raise ValueError(
-                f"lateral self-loop: {entity!r} cannot {attribute} itself"
-            )
+        # Authority gate FIRST (INGEST-HARDENING-V1 Cx final): an authority
+        # violation (generated-into-canon/knows:) must RAISE even if the row is
+        # also a structurally-invalid edge — the skip must never swallow it.
         status = item.get("status", "stated")
         write_role = self._role
         if status == "generated":
@@ -282,6 +331,25 @@ class Ingestor:
             if self._resolver_role is None:
                 raise ValueError("no resolver authority wired for generated rows")
             write_role = self._resolver_role
+
+        # Edge-granular structural guard (Part B): a single invalid edge
+        # (containment cycle / self-edge / lateral self-loop) is SKIPPED with a
+        # typed receipt — the invariant holds (it never enters) and the rest of
+        # the chunk still ingests. (Authority failures already raised above.)
+        skip = self._edge_skip_reason(
+            entity, attribute, value, value_type,
+            item.get("frame", CANON), None if timeless else valid_from,
+        )
+        if skip is not None:
+            self._record_skip(entity, attribute, value, skip)
+            return out  # nothing appended
+
+        is_manual_semantics_row = (
+            entity.startswith(ATTR_PREFIX) and attribute in SEMANTICS_PREDICATES
+        )
+        if not is_manual_semantics_row:
+            out.extend(self._maybe_declare_attribute(attribute, item))
+
         row = self._buffer.append(
             entity=entity,
             attribute=attribute,
@@ -349,6 +417,8 @@ class Ingestor:
                                          evidence="extractor late binding")
         if self.classify_inline:
             self._classifier.classify(row)
+        elif self._classify_collect is not None:
+            self._classify_collect.append(row)   # batched at end of the call
         return out
 
     # ---------------------------------------------------------- extracted

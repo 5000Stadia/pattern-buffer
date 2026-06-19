@@ -220,8 +220,16 @@ class Classifier:
             for row in pending:
                 self.classify(row)
             return len(pending)
+        return self.classify_rows(pending, batch_size)
+
+    def classify_rows(self, rows: list[Assertion], batch_size: int | None = None) -> int:
+        """Classify a SPECIFIC set of rows (INGEST-HARDENING-V1): guardrails
+        resolve immediately with zero model calls; model-needing rows go to one
+        batch call (or `batch_size` chunks). The shared core of `classify_all`'s
+        batch path and the opt-in batched ingest. Already-classified rows skip."""
+        rows = [r for r in rows if self.get(r.id) is None]
         deferred: list[Assertion] = []
-        for row in pending:
+        for row in rows:
             verdict = self._guardrails(row)
             if verdict is not None:
                 durability, confidence = verdict
@@ -233,9 +241,11 @@ class Classifier:
                 )
             else:
                 deferred.append(row)
-        for start in range(0, len(deferred), batch_size):
-            self._classify_batch(deferred[start : start + batch_size])
-        return len(pending)
+        if deferred:
+            step = batch_size or len(deferred)
+            for start in range(0, len(deferred), step):
+                self._classify_batch(deferred[start : start + step])
+        return len(rows)
 
     def _classify_batch(self, rows: list[Assertion]) -> None:
         listing = "\n".join(

@@ -39,6 +39,9 @@ class Receipt:
     frames: list[str] = field(default_factory=list)
     canonicalization_receipts: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    # INGEST-HARDENING-V1 Part B: edges skipped at the gate (cycle / self-edge /
+    # lateral self-loop) — the host audits exactly what was dropped (no silent cap).
+    skipped: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -163,8 +166,16 @@ class Porcelain:
             ])
         return self._receipt(rows)
 
-    def ingest_structured(self, items: list[dict], frame: str | None = None) -> Receipt:
-        return self._receipt(self._w.ingest_structured(items, frame=frame))
+    def ingest_structured(self, items: list[dict], frame: str | None = None,
+                          classify: str = "inline") -> Receipt:
+        rows = self._w.ingest_structured(items, frame=frame, classify=classify)
+        receipt = self._receipt(rows)
+        receipt.skipped = [
+            {"entity": s.entity, "attribute": s.attribute,
+             "value": s.value, "reason": s.reason}
+            for s in self._w.ingestor.last_skipped
+        ]
+        return receipt
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON) -> dict:
         try:

@@ -167,7 +167,15 @@ supported; exact decimal/fixed-point money is deferred.
 ```python
 p = world.porcelain
 p.ingest(text, source=None, scene=None, at=None, frame=None) -> Receipt
-p.ingest_structured(items, frame=None) -> Receipt
+p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer") -> Receipt
+   # INGEST-HARDENING-V1: classify="batch" defers durability + runs ONE batch model
+   # call per ingest call (the first-class form of classify_inline=False + classify_all;
+   # ~65% build-time cut on generate-path builds) — use it for bulk/scenario ingest.
+   # "inline" (default) = per-row; "defer" = no classify (host runs classify_all later).
+   # The Receipt's `skipped: [{entity, attribute, value, reason}]` lists edges dropped
+   # at the gate (containment cycle / self-edge / lateral self-loop) — edge-granular:
+   # one bad edge is skipped, the rest of the chunk still ingests (no silent cap; other
+   # gate failures still raise).
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=) -> dict

@@ -10,6 +10,7 @@ no model call at all.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
@@ -60,15 +61,32 @@ def rule_classifier_fallback(movable_prefixes: tuple[str, ...] = ("obj:",)):
     are structure; everything else movable is STATE. Raises on non-classify
     prompts so unscripted extraction/resolution still fails loudly."""
 
+    def _durability(subject: str) -> str:
+        if subject.startswith("place:") or subject.split(":")[-1] in {"desk", "drawer"}:
+            return "CONSTITUTIVE"
+        return "STATE"
+
     def fallback(prompt: str, schema: dict[str, Any]) -> Any:
         if not prompt.startswith("Classify the lifetime"):
             raise StubModelExhausted(f"unscripted non-classify call: {prompt[:80]!r}")
+        # Batch path (INGEST-HARDENING-V1): the schema asks for `verdicts` and the
+        # prompt lists facts as "N. entity · attribute · value".
+        if "verdicts" in schema.get("properties", {}):
+            verdicts = []
+            for line in prompt.splitlines():
+                m = re.match(r"\s*(\d+)\.\s+(\S+)\s+·", line)
+                if m:
+                    verdicts.append({
+                        "index": int(m.group(1)),
+                        "durability": _durability(m.group(2)),
+                        "class_confidence": 0.9,
+                    })
+            return {"verdicts": verdicts}
+        # Per-row path.
         subject = ""
         for line in prompt.splitlines():
             if line.startswith("Subject: "):
                 subject = line.removeprefix("Subject: ")
-        if subject.startswith("place:") or subject.split(":")[-1] in {"desk", "drawer"}:
-            return {"durability": "CONSTITUTIVE", "class_confidence": 0.9}
-        return {"durability": "STATE", "class_confidence": 0.9}
+        return {"durability": _durability(subject), "class_confidence": 0.9}
 
     return fallback

@@ -201,8 +201,9 @@ class World:
     def ingest(self, text: str, context: str = "", frame: str | None = None) -> list:
         return self.ingestor.ingest(text, context, frame=frame)
 
-    def ingest_structured(self, items: list[dict], frame: str | None = None) -> list:
-        return self.ingestor.ingest_structured(items, frame=frame)
+    def ingest_structured(self, items: list[dict], frame: str | None = None,
+                          classify: str = "inline") -> list:
+        return self.ingestor.ingest_structured(items, frame=frame, classify=classify)
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):
         return self.resolver.resolve(entity, aspect, frame, access)

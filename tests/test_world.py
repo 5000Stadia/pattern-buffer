@@ -74,34 +74,36 @@ class TestContainmentCycleGate:
     the gate (a write-time invariant), not merely caught at read time."""
 
     def test_self_edge_rejected(self, world):
-        # The reported bug: transit prose extracted `X in X`.
-        with pytest.raises(ValueError, match="self-edge"):
-            world.ingest_structured([
-                {"entity": "place:council_tier", "attribute": "in",
-                 "value": "place:council_tier", "timeless": True},
-            ])
-        assert not [r for r in world.buffer.all_rows()
-                    if r.entity == "place:council_tier" and r.attribute == "in"]
+        # The reported bug: transit prose extracted `X in X`. INGEST-HARDENING-V1:
+        # the single edge is SKIPPED (typed receipt), not the whole chunk aborted.
+        r = world.porcelain.ingest_structured([
+            {"entity": "place:council_tier", "attribute": "in",
+             "value": "place:council_tier", "timeless": True},
+        ])
+        assert any("self-edge" in s["reason"] for s in r.skipped)
+        assert not [row for row in world.buffer.all_rows()
+                    if row.entity == "place:council_tier" and row.attribute == "in"]
 
     def test_lateral_self_loop_rejected(self, world):
         # #19: a lateral self-loop (X connects_to X) is extraction noise —
-        # no walk can use it. Rejected at the gate like the containment case.
-        with pytest.raises(ValueError, match="self-loop"):
-            world.ingest_structured([
-                {"entity": "place:wellhead", "attribute": "connects_to",
-                 "value": "place:wellhead", "timeless": True},
-            ])
-        assert not [r for r in world.buffer.all_rows()
-                    if r.attribute == "connects_to"]
+        # no walk can use it. Skipped at the gate like the containment case.
+        r = world.porcelain.ingest_structured([
+            {"entity": "place:wellhead", "attribute": "connects_to",
+             "value": "place:wellhead", "timeless": True},
+        ])
+        assert any("self-loop" in s["reason"] for s in r.skipped)
+        assert not [row for row in world.buffer.all_rows()
+                    if row.attribute == "connects_to"]
 
     def test_transitive_cycle_rejected(self, world):
         world.ingest_structured([
             {"entity": "obj:a", "attribute": "in", "value": "obj:b", "valid_from": 1.0},
         ])
-        with pytest.raises(ValueError, match="ancestor"):
-            world.ingest_structured([
-                {"entity": "obj:b", "attribute": "in", "value": "obj:a", "valid_from": 2.0},
-            ])
+        r = world.porcelain.ingest_structured([
+            {"entity": "obj:b", "attribute": "in", "value": "obj:a", "valid_from": 2.0},
+        ])
+        assert any("ancestor" in s["reason"] for s in r.skipped)
+        assert world.state("obj:b", "in", valid_as_of=3.0).winner is None  # never entered
 
     def test_plain_reparent_accepted(self, world):
         # A B C chain then A reparented under C — no cycle, must pass.
@@ -146,11 +148,11 @@ class TestContainmentCycleGate:
             {"entity": "place:b", "attribute": "in", "value": "place:a", "valid_from": 3.0},
         ])  # accepted at the gate (deferred-classify residual)
         world.classifier.classify_all()
-        # The self-edge guarantee is unaffected even when deferred:
-        with pytest.raises(ValueError, match="self-edge"):
-            world.ingest_structured([
-                {"entity": "place:b", "attribute": "in", "value": "place:b", "valid_from": 4.0},
-            ])
+        # The self-edge guarantee is unaffected even when deferred (now a skip):
+        r = world.porcelain.ingest_structured([
+            {"entity": "place:b", "attribute": "in", "value": "place:b", "valid_from": 4.0},
+        ])
+        assert any("self-edge" in s["reason"] for s in r.skipped)
         # Read-time guard stays bounded (no hang) despite the slipped cycle:
         assert isinstance(world.locate("place:a", valid_as_of=5.0), list)
 
