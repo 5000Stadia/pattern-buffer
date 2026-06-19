@@ -22,10 +22,17 @@ STATUSES = frozenset(
 # Q1): a new family edge supersedes the prior one as a single operation.
 CONTAINMENT_FAMILY = frozenset({"in", "within", "held_by", "worn_by", "carried_by"})
 
+# The compositional axis (PLACE-FEATURE-ABSTRACTION-V1): structural part-of-the-
+# whole, distinct from movable containment. A burrow is `part_of` a hillside;
+# an actor in the burrow is NOT thereby located in the hillside. Read by
+# composition()/features(), never by locate()/contents()/route().
+COMPOSITION_FAMILY = frozenset({"part_of"})
+
 # Fixed structural predicates (spec §4.3). Domain vocabulary emerges
 # freely through the canonicalization gate; these never do.
 STRUCTURAL_PREDICATES = (
-    frozenset({"kind", "connects_to", "adjacent_to", "caused_by"}) | CONTAINMENT_FAMILY
+    frozenset({"kind", "connects_to", "adjacent_to", "caused_by"})
+    | CONTAINMENT_FAMILY | COMPOSITION_FAMILY
 )
 
 # Attribute-semantics declarations are assertions about attr:<name> entities.

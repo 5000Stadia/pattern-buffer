@@ -288,6 +288,18 @@ class Porcelain:
     def contents(self, container: str, as_of: float | None = None) -> list[str]:
         return self._w.contents(container, valid_as_of=as_of)
 
+    def composition(self, entity: str, frame: str = CANON,
+                    as_of: float | None = None) -> list[str]:
+        """The `part_of` chain up — the entity's place in the structure
+        (PLACE-FEATURE-ABSTRACTION-V1). The compositional sibling of `locate`."""
+        return self._w.composition(entity, frame=frame, valid_as_of=as_of)
+
+    def features(self, place: str, frame: str = CANON,
+                 as_of: float | None = None) -> list[str]:
+        """The `part_of`-children of a place — its structural sub-features
+        (a burrow under a hillside). The compositional sibling of `contents`."""
+        return self._w.features(place, frame=frame, valid_as_of=as_of)
+
     def path(self, a: str, b: str, as_of: float | None = None) -> list[str] | None:
         # as_of routes as the graph stood at that time: a severed edge
         # (valid_to passed) drops; history is preserved (PATH-TEMPORAL-V1).

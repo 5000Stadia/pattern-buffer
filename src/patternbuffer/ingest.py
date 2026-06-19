@@ -39,6 +39,8 @@ _BUILTIN_ALIASES = {
     "holds": "held_by",
     "connected_to": "connects_to",
     "adjacent": "adjacent_to",
+    "feature_of": "part_of",      # compositional axis (PLACE-FEATURE-ABSTRACTION-V1)
+    "component_of": "part_of",
     "type": "kind",
     "is_a": "kind",
 }

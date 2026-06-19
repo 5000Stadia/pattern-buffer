@@ -136,6 +136,13 @@ class World:
     def contents(self, container: str, **kw) -> list[str]:
         return self.indexes.contents(container, **kw)
 
+    # PLACE-FEATURE-ABSTRACTION-V1 — the compositional axis (part_of).
+    def composition(self, entity: str, **kw) -> list[str]:
+        return self.indexes.composition(entity, **kw)
+
+    def features(self, place: str, **kw) -> list[str]:
+        return self.indexes.features(place, **kw)
+
     def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
 

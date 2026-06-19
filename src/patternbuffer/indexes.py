@@ -306,7 +306,15 @@ class Indexes:
         # CONSTITUTIVE outranks: structure is never superseded by recency.
         if by_class[CONSTITUTIVE]:
             rows = by_class[CONSTITUTIVE]
-            values = {repr(r.value) for r in rows}
+            # Identity-aware value identity (Cx 065): entity-valued CONSTITUTIVE
+            # rows that point to a later-MERGED whole are NOT a conflict — resolve
+            # before comparing, so a `part_of` (or place containment) edge to
+            # h1/h1_alias collapses once they are same_as. Literals compare raw.
+            def _value_key(r: Assertion):
+                if r.value_type == "entity" and isinstance(r.value, str):
+                    return ("entity", self._resolve(r.value))
+                return ("literal", repr(r.value))
+            values = {_value_key(r) for r in rows}
             earliest = min(rows, key=lambda r: r.asserted_at)
             if len(values) > 1:
                 return FoldResult(
@@ -839,6 +847,72 @@ class Indexes:
             ):
                 members.add(eid)
         return sorted(members)
+
+    # ------------------------------- PLACE-FEATURE-ABSTRACTION-V1 (composition)
+    # The compositional axis (`part_of`), mirroring locate/contents but for
+    # structural part-of-the-whole, NOT movable location. Conflict HALTS the
+    # walk — a co-existing-parent fold is never silently resolved to a winner
+    # (Cx 064 #1); the conflict surfaces through state()/truth-maintenance.
+
+    def composition(
+        self,
+        entity: str,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> list[str]:
+        """The `part_of` chain upward, nearest whole first — the entity's
+        place-in-the-structure. Mirror of `locate` over the compositional axis;
+        single-parent, cycle-guarded. A conflicted `part_of` fold stops the walk
+        (never picks among parents)."""
+        chain: list[str] = []
+        seen = {self._resolve(entity)}
+        current = self._resolve(entity)
+        while True:
+            result = self.fold_key(current, "part_of", frame, valid_as_of, asserted_as_of)
+            if (result.winner is None or result.conflicted
+                    or result.winner.value_type != "entity"):
+                return chain
+            parent = self._resolve(result.winner.value)
+            if parent in seen:
+                logger.warning("composition cycle at %s", parent)
+                return chain
+            chain.append(parent)
+            seen.add(parent)
+            current = parent
+
+    def features(
+        self,
+        place: str,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> list[str]:
+        """The `part_of`-children of `place` — its structural sub-features. A
+        child is included iff its folded, non-conflicted current `part_of`
+        winner resolves to `place` (Cx 064: not "any visible row with
+        value=place" — so valid-time/identity/retraction/conflict all align).
+        Ordered first-seen/log order, lexical tie-break."""
+        place = self._resolve(place)
+        first_seen: dict[str, int] = {}
+        for target in sorted(self._closure_of(place)):
+            for row in self._buffer.visible(
+                attribute="part_of", value=target,
+                frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+            ):
+                if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                    continue
+                eid = self._resolve(row.entity)
+                if eid not in first_seen or row.seq < first_seen[eid]:
+                    first_seen[eid] = row.seq
+        members: list[str] = []
+        for eid in first_seen:
+            result = self.fold_key(eid, "part_of", frame, valid_as_of, asserted_as_of)
+            if (result.winner is not None and not result.conflicted
+                    and result.winner.value_type == "entity"
+                    and self._resolve(result.winner.value) == place):
+                members.append(eid)
+        return sorted(members, key=lambda e: (first_seen[e], e))
 
     def aggregate(
         self,

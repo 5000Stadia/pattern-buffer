@@ -179,6 +179,15 @@ p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
 p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursive=False) -> dict
    # op in sum, count, min, max, avg; numeric rollup over contents()
 p.locate / p.contents / p.path
+p.composition(entity, frame="canon", as_of=None) -> [entity_id]
+   # PLACE-FEATURE-ABSTRACTION-V1: the `part_of` chain up (the entity's place in the
+   # structure) — compositional sibling of locate(). A separate axis from containment:
+   # a burrow part_of a hillside does NOT put an actor in the burrow "in" the hillside.
+p.features(place, frame="canon", as_of=None) -> [entity_id]
+   # the place's `part_of`-children (its structural sub-features) — sibling of contents().
+   # The sub-place is ONE entity answering both lenses (place: locate/contents/route/state;
+   # feature: these). part_of is valid-timed; both reads HALT on a conflicted parent
+   # (never silently pick) — the conflict surfaces via state(child,"part_of").
 p.route(a, b, frame="canon", as_of=None) -> {route, status, segments}
    # passability-aware routing (RFC-003). status/segment: clear|blocked|obscured
    # (removed is temporal/diagnostic, in former_passages). A blocked segment
