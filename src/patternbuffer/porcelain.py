@@ -461,6 +461,14 @@ class Porcelain:
                                  for x in e["agents"] + e["patients"]}]
         return sorted(out, key=lambda e: (e["t"] if e["t"] is not None else float("-inf")))
 
+    def who_knows(self, entity: str, attribute: str, value: Any = None,
+                  as_of: float | None = None) -> list[str]:
+        """The `knows:*` frames that KNOW `(entity, attribute)` — the computed
+        inverse of `frame_diff` (WHO-KNOWS-INVERSE-V1). A frame qualifies iff its
+        folded winner is present and (when `value` given) value-matches,
+        identity-aware. No stored `known_by`; superseded/retracted beliefs drop."""
+        return self._w.who_knows(entity, attribute, value, valid_as_of=as_of)
+
     def frame_diff(self, a: str, b: str | list[str], scope,
                    as_of: float | None = None) -> list[dict]:
         """Semantic fact diff: keys folded in `a`, absent or divergent in

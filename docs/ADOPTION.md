@@ -224,6 +224,11 @@ p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
 p.frame_diff(a, b, scope, as_of=) -> [Fact]   # b is str|list[str]; divergent values marked
+p.who_knows(entity, attribute, value=None, as_of=None) -> [frame_id]
+   # WHO-KNOWS-INVERSE-V1: the knows:* frames that KNOW a fact — the computed inverse of
+   # frame_diff (no stored known_by). A frame qualifies iff its FOLDED winner is present and
+   # (value given) value-matches, identity-aware; superseded/retracted beliefs drop. V1 is
+   # own-knows:-frame membership (the hidden-secret case); knows:O ∪ public union is V1.1.
 p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only
 ```
 

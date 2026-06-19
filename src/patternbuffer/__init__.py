@@ -143,6 +143,10 @@ class World:
     def features(self, place: str, **kw) -> list[str]:
         return self.indexes.features(place, **kw)
 
+    # WHO-KNOWS-INVERSE-V1 — the computed "who knows X" read.
+    def who_knows(self, entity: str, attribute: str, value: Any = None, **kw) -> list[str]:
+        return self.indexes.who_knows(entity, attribute, value, **kw)
+
     def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
 

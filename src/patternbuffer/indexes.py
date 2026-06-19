@@ -914,6 +914,52 @@ class Indexes:
                 members.append(eid)
         return sorted(members, key=lambda e: (first_seen[e], e))
 
+    # --------------------------------- WHO-KNOWS-INVERSE-V1 (transpose of frame_diff)
+
+    def who_knows(
+        self,
+        entity: str,
+        attribute: str,
+        value: Any = None,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> list[str]:
+        """The `knows:*` observer frames for which `(entity, attribute)` is KNOWN
+        (WHO-KNOWS-INVERSE-V1) — the inverse of `frame_diff`, computed not stored
+        (a `known_by` edge would breach the membrane). A frame knows the fact iff
+        its *folded* winner is present and, when `value` is given, value-matches
+        (identity-aware). Folded-not-raw: a superseded/retracted belief no longer
+        counts. Candidate frames are key/closure-scoped (only frames that touched
+        the key), never a full-log scan. V1 is own-`knows:`-frame membership; the
+        `knows:O ∪ public` union and set-valued membership are V1.1."""
+        entity = self._resolve(entity)
+        fa = self.fold_attribute(attribute)
+        attrs = sorted(self._semantics.containment_family()) if fa == _FAMILY_KEY else [attribute]
+        closure = sorted(self._closure_of(entity))
+        candidates: set[str] = set()
+        for row in self._buffer.visible(
+            entity_in=closure, attribute_in=attrs,
+            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+        ):
+            if row.frame.startswith("knows:"):
+                candidates.add(row.frame)
+        known: list[str] = []
+        for frame in candidates:
+            result = self.fold_key(entity, attribute, frame, valid_as_of, asserted_as_of)
+            if result.winner is None:
+                continue
+            if value is None or self._value_matches(result.winner, value):
+                known.append(frame)
+        return sorted(known)
+
+    def _value_matches(self, winner: Assertion, value: Any) -> bool:
+        """Identity-aware value match: entity values compare by resolved id,
+        literals by equality."""
+        if winner.value_type == "entity" and isinstance(winner.value, str) \
+                and isinstance(value, str):
+            return self._resolve(winner.value) == self._resolve(value)
+        return winner.value == value
+
     def aggregate(
         self,
         container: str,
