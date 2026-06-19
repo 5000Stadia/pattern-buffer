@@ -25,6 +25,15 @@ DISPOSITIONAL = "DISPOSITIONAL"
 STATE = "STATE"
 EVENT = "EVENT"
 DURABILITIES = frozenset({CONSTITUTIVE, DISPOSITIONAL, STATE, EVENT})
+# The classes the MODEL may assign (CLASSIFIER-EVENT-SAFETY-V1). EVENT is
+# excluded: it is the one verdict that ERASES a row from every fold
+# (indexes drops EVENT before folding), so a model flip STATE->EVENT is a
+# silent read-completeness failure. Occurrence-ness is structural — assigned
+# only by the deterministic guardrails (event:/caused_by/META) or host
+# declaration — never sampled per-row by the model. The model judges only the
+# standing-durability spectrum; ambiguity defaults to STATE (visible,
+# correctable), never erased.
+_STANDING_DURABILITIES = frozenset({CONSTITUTIVE, DISPOSITIONAL, STATE})
 
 # Review threshold: low-confidence CONSTITUTIVE verdicts silently corrupt
 # every future materialization (whitepaper §5.1), so they are flagged.
@@ -46,7 +55,7 @@ CREATE TABLE IF NOT EXISTS sidecar_classifier_meta (
 _MODEL_SCHEMA = {
     "type": "object",
     "properties": {
-        "durability": {"enum": sorted(DURABILITIES)},
+        "durability": {"enum": sorted(_STANDING_DURABILITIES)},
         "class_confidence": {"type": "number"},
     },
     "required": ["durability", "class_confidence"],
@@ -133,8 +142,7 @@ class Classifier:
             "DISPOSITIONAL: what it TENDS to be (habits, roles, recurring behavior). "
             "Generally true but defeasible.\n"
             "STATE: what it is RIGHT NOW (positions of movables, moods, conditions). "
-            "One event could flip it.\n"
-            "EVENT: what HAPPENED (an occurrence at a time).\n\n"
+            "One event could flip it.\n\n"
             "The mutability test resolves most ambiguity: could one event flip this "
             "without re-authoring the world? -> STATE. Asymmetric defaults: an "
             "ambiguous property is STATE; ambiguous fixture containment is "
@@ -144,7 +152,7 @@ class Classifier:
             out = self._model(prompt, _MODEL_SCHEMA)
             durability = out["durability"]
             confidence = float(out["class_confidence"])
-            if durability not in DURABILITIES:
+            if durability not in _STANDING_DURABILITIES:
                 raise ValueError(durability)
         except Exception:
             logger.exception("classifier model call failed for %s; defaulting", row.id)
@@ -243,7 +251,7 @@ class Classifier:
                         "type": "object",
                         "properties": {
                             "index": {"type": "integer"},
-                            "durability": {"enum": sorted(DURABILITIES)},
+                            "durability": {"enum": sorted(_STANDING_DURABILITIES)},
                             "class_confidence": {"type": "number"},
                         },
                         "required": ["index", "durability", "class_confidence"],
@@ -258,7 +266,7 @@ class Classifier:
             "true at every moment unless the world is re-authored.\n"
             "DISPOSITIONAL: what it TENDS to be (habits, roles); defeasible.\n"
             "STATE: what it is RIGHT NOW (positions of movables, moods); one event "
-            "could flip it.\nEVENT: what HAPPENED (an occurrence at a time).\n"
+            "could flip it.\n"
             "Mutability test: could one event flip it without re-authoring the "
             "world? -> STATE. Ambiguous property -> STATE; ambiguous fixture "
             "containment -> CONSTITUTIVE.\n\nFacts:\n" + listing
@@ -267,7 +275,9 @@ class Classifier:
         try:
             out = self._model(prompt, schema)
             for v in out["verdicts"]:
-                if v["durability"] in DURABILITIES:
+                # EVENT (or any non-standing verdict) is rejected -> the row
+                # falls to the asymmetric default below, never erased.
+                if v["durability"] in _STANDING_DURABILITIES:
                     verdicts[int(v["index"])] = (v["durability"], float(v["class_confidence"]))
         except Exception:
             logger.exception("batch classification failed; defaulting batch")
