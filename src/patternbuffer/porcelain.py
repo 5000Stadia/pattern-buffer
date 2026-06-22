@@ -146,11 +146,15 @@ class Porcelain:
     # -------------------------------------------------------------- writes
 
     def ingest(self, text: str, source: str | None = None, scene: str | None = None,
-               at: float | None = None, frame: str | None = None) -> Receipt:
+               at: float | None = None, frame: str | None = None,
+               classify: str = "inline") -> Receipt:
+        # classify (HD 079): "batch" collapses ~100 serial per-turn durability
+        # calls into one — the top live-play latency lever; "defer" skips (stage a
+        # render into a quarantine frame, classify once on promotion).
         if at is not None:
             self._w.ingestor.cursor.advance(at)
         context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
-        rows = self._w.ingest(text, context=context, frame=frame)
+        rows = self._w.ingest(text, context=context, frame=frame, classify=classify)
         if source is not None:
             fact_rows = [
                 r for r in rows
@@ -163,7 +167,7 @@ class Porcelain:
                  "status": r.status if r.status in ("stated", "observed") else "stated",
                  "timeless": True}
                 for r in fact_rows
-            ])
+            ], classify=classify)
         return self._receipt(rows)
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,

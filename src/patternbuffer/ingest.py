@@ -423,11 +423,19 @@ class Ingestor:
 
     # ---------------------------------------------------------- extracted
 
-    def ingest(self, text: str, context: str = "", frame: str | None = None) -> list[Assertion]:
+    def ingest(self, text: str, context: str = "", frame: str | None = None,
+               classify: str = "inline") -> list[Assertion]:
         """Model-backed extraction through the same gate. ``frame``
         re-targets extracted rows to a named frame (letter 028) — used for
         seeding a character's knowledge from prose; canon discipline is
-        unchanged when frame is None."""
+        unchanged when frame is None.
+
+        ``classify`` (INGEST-HARDENING-V1, extended to the text path per HD 079):
+        ``"inline"`` (default) classifies each extracted row per-row; ``"batch"``
+        defers and runs ONE batch durability call for the whole passage (the
+        per-turn live-play latency lever — collapses ~100 serial classify calls);
+        ``"defer"`` skips classification (e.g. staging a render into a quarantine
+        frame for contradiction-diff, classified later on promotion)."""
         if self._model is None:
             raise RuntimeError("no model callable injected; use ingest_structured")
         prompt = (
@@ -469,4 +477,4 @@ class Ingestor:
             f"{context}\n\nPASSAGE:\n{text}"
         )
         out = self._model(prompt, _EXTRACT_SCHEMA)
-        return self.ingest_structured(out["items"], frame=frame)
+        return self.ingest_structured(out["items"], frame=frame, classify=classify)

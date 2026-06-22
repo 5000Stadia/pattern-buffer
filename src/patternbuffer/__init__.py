@@ -198,8 +198,9 @@ class World:
 
     # Writes (each behind its role).
 
-    def ingest(self, text: str, context: str = "", frame: str | None = None) -> list:
-        return self.ingestor.ingest(text, context, frame=frame)
+    def ingest(self, text: str, context: str = "", frame: str | None = None,
+               classify: str = "inline") -> list:
+        return self.ingestor.ingest(text, context, frame=frame, classify=classify)
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
                           classify: str = "inline") -> list:

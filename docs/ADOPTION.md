@@ -166,7 +166,11 @@ supported; exact decimal/fixed-point money is deferred.
 
 ```python
 p = world.porcelain
-p.ingest(text, source=None, scene=None, at=None, frame=None) -> Receipt
+p.ingest(text, source=None, scene=None, at=None, frame=None, classify="inline"|"batch"|"defer") -> Receipt
+   # classify (HD 079): "batch" runs ONE durability call for the whole passage instead
+   # of one per extracted row — the per-turn live-play latency lever; "defer" skips
+   # classification (stage a render into a quarantine frame, classify once on promotion).
+   # Same control as ingest_structured. Default "inline" unchanged.
 p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer") -> Receipt
    # INGEST-HARDENING-V1: classify="batch" defers durability + runs ONE batch model
    # call per ingest call (the first-class form of classify_inline=False + classify_all;

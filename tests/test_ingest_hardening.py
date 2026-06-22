@@ -73,6 +73,37 @@ def test_batch_self_edge_still_skipped(world):
     assert world.state("place:loop", "in").winner is None
 
 
+# --------------------------------------- Part A on the TEXT path (HD 079)
+
+def test_text_ingest_batch_one_classify_call(tmp_path):
+    # p.ingest(text, classify="batch") => one batch durability call for the whole
+    # passage, not one per extracted row (the per-turn live-play latency lever).
+    extraction = {"items": [
+        {"entity": f"person:p{i}", "attribute": "mood", "value": "x", "valid_from": 1.0}
+        for i in range(4)
+    ]}
+    stub = StubModel(responses=[extraction], fallback=rule_classifier_fallback())
+    w = World(tmp_path / "t.world", world_id="w:t", model=stub)
+    w.porcelain.ingest("some prose", classify="batch")
+    classify_calls = [c for c in stub.calls if c[0].startswith("Classify the lifetime")]
+    assert len(classify_calls) == 1                       # one batch, not four
+    assert len([c for c in stub.calls if "Extract world-state" in c[0]]) == 1
+    for i in range(4):
+        assert w.state(f"person:p{i}", "mood").winner.value == "x"
+    w.close()
+
+
+def test_text_ingest_defer_no_classify_call(tmp_path):
+    extraction = {"items": [
+        {"entity": "person:p", "attribute": "mood", "value": "x", "valid_from": 1.0}]}
+    stub = StubModel(responses=[extraction], fallback=rule_classifier_fallback())
+    w = World(tmp_path / "d.world", world_id="w:d", model=stub)
+    w.porcelain.ingest("prose", classify="defer")
+    assert not [c for c in stub.calls if c[0].startswith("Classify the lifetime")]
+    assert w.state("person:p", "mood").winner.value == "x"   # folds (unclassified -> STATE)
+    w.close()
+
+
 # --------------------------------------------------- Part B: edge-granular skip
 
 def test_good_rows_survive_one_bad_edge(world):
