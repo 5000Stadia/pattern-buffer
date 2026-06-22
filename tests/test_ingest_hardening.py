@@ -104,6 +104,28 @@ def test_text_ingest_defer_no_classify_call(tmp_path):
     w.close()
 
 
+# --------------------------------------- lean extraction prompt (HD 082)
+
+def test_lean_extraction_trims_prompt_keeps_loadbearing(tmp_path):
+    ext = {"items": [
+        {"entity": "person:p", "attribute": "mood", "value": "x", "valid_from": 1.0}]}
+    stub = StubModel(responses=[ext, ext], fallback=rule_classifier_fallback())
+    w = World(tmp_path / "e.world", world_id="w:e", model=stub)
+    # classify="defer" so the scripted responses map 1:1 to the two extractions
+    # (no inline classify calls consuming them); the extract prompt is what we test.
+    w.porcelain.ingest("prose one", extract="full", classify="defer")
+    w.porcelain.ingest("prose two", extract="lean", classify="defer")
+    extract_prompts = [c[0] for c in stub.calls if c[0].startswith("Extract world-state")]
+    full_p, lean_p = extract_prompts[0], extract_prompts[1]
+    assert len(lean_p) < len(full_p)                      # trimmed
+    assert "DOCUMENT CLAIMS" in full_p and "DOCUMENT CLAIMS" not in lean_p  # rare rule dropped
+    # load-bearing rules survive in lean
+    for keep in ("namespaced", "connects_to", "knows:", "NEVER invent", "timeless"):
+        assert keep in lean_p
+    assert w.state("person:p", "mood").winner.value == "x"  # extraction still works
+    w.close()
+
+
 # --------------------------------------------------- Part B: edge-granular skip
 
 def test_good_rows_survive_one_bad_edge(world):

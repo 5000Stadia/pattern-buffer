@@ -147,14 +147,17 @@ class Porcelain:
 
     def ingest(self, text: str, source: str | None = None, scene: str | None = None,
                at: float | None = None, frame: str | None = None,
-               classify: str = "inline") -> Receipt:
+               classify: str = "inline", extract: str = "full") -> Receipt:
         # classify (HD 079): "batch" collapses ~100 serial per-turn durability
         # calls into one — the top live-play latency lever; "defer" skips (stage a
         # render into a quarantine frame, classify once on promotion).
+        # extract (HD 082): "lean" trims the extraction prompt to load-bearing
+        # rules (marginal input-side lever; eval-guard quality before enabling).
         if at is not None:
             self._w.ingestor.cursor.advance(at)
         context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
-        rows = self._w.ingest(text, context=context, frame=frame, classify=classify)
+        rows = self._w.ingest(text, context=context, frame=frame, classify=classify,
+                              extract=extract)
         if source is not None:
             fact_rows = [
                 r for r in rows

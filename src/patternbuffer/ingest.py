@@ -75,6 +75,70 @@ _EXTRACT_SCHEMA = {
     "required": ["items"],
 }
 
+# The extraction rules block (HD 082). `full` is the complete contract; `lean`
+# (opt-in via ingest(extract="lean")) keeps the LOAD-BEARING rules — id
+# namespacing, the `in`/`connects_to`/`kind` canonicalization, value_type, the
+# canon-vs-knows: frame discipline, aliases, timeless, never-invent — and drops
+# the rarely-needed-per-turn ones (document-claims/source_doc, the
+# overturned-belief status nuance, the habits/catchphrases enumeration) to trim
+# input tokens for the hot per-turn render extraction. NOTE: a ~30s extraction is
+# dominated by OUTPUT generation (item count), not this block — so lean is a
+# marginal input-side lever; the structural cut is extracting fewer items
+# (delta/scoped extraction). Quality must be eval-guarded before enabling.
+_EXTRACT_RULES_FULL = (
+    "Extract world-state assertions from this narrative passage.\n"
+    "Return triples (entity, attribute, value). Rules:\n"
+    "- entity ids namespaced: person:/place:/obj:/event:/doc: + snake_case.\n"
+    "- attributes: use 'in' for all containment/location; 'connects_to' for "
+    "passage; 'kind' for what a thing is; domain attributes freely otherwise.\n"
+    "- value_type 'entity' when the value is another entity id.\n"
+    "- FRAMES: facts about the world are frame 'canon' — even facts revealed "
+    "late or learned by a character mid-story; give them their TRUE historical "
+    "valid_from. Use frame 'knows:<person_id>' ONLY for the additional fact "
+    "that a character has learned something (a copy marking knowledge), never "
+    "instead of the canon row. When character A tells character B an "
+    "already-established fact, emit knows:B rows for it — no new canon rows.\n"
+    "- status: 'stated' for asserted fact, 'inferred' for a character's "
+    "deduction, 'assumed' for a working theory not yet confirmed. When the "
+    "story later overturns an earlier belief or official verdict, close it "
+    "with valid_to at the time it was overturned.\n"
+    "- DOCUMENT CLAIMS (letters, ledgers, logs): emit the claimed fact with "
+    "source_doc=<doc id>. Approximate quantities as bounds: 'over forty "
+    "thousand' -> {\"gte\": 40000}. When a later source confirms or refines "
+    "the SAME fact, use the SAME entity and attribute so the records converge.\n"
+    "- ALIASES: attach every referring expression used for an entity as "
+    "aliases (e.g. 'the clerk with the tin ear', 'the vault'). When a "
+    "previously-seen entity gains a name, keep its id and add the name; if "
+    "you minted a duplicate id for the same individual, emit same_as.\n"
+    "- SPACE: emit connects_to edges for every passage/route the text "
+    "describes (stairs, gates, corridors); never invent an edge the text "
+    "does not support — vertical proximity is not connectivity.\n"
+    "- TIME: timeless=true ONLY for identity and structure (kind, names, "
+    "fixed adjacency). Everything that happens or holds-at-a-time gets "
+    "valid_from on the provided timeline.\n"
+    "- Repeated habits, spoken catchphrases, confrontations, confessions, "
+    "and scheduled/conditional future events are assertions too (use event: "
+    "entities with caused_by where the text gives causality).\n"
+    "- NEVER invent: extract only what the text supports. Atmosphere and "
+    "sensory texture are not assertions.\n"
+)
+_EXTRACT_RULES_LEAN = (
+    "Extract world-state assertions from this narrative passage.\n"
+    "Return triples (entity, attribute, value). Rules:\n"
+    "- entity ids namespaced: person:/place:/obj:/event: + snake_case.\n"
+    "- attributes: 'in' for containment/location; 'connects_to' for passage; "
+    "'kind' for what a thing is; domain attributes otherwise.\n"
+    "- value_type 'entity' when the value is another entity id.\n"
+    "- FRAMES: world facts are frame 'canon' (give their true historical "
+    "valid_from even if revealed late); use 'knows:<person_id>' ONLY for the "
+    "extra fact that a character learned something, never instead of canon.\n"
+    "- aliases: attach referring expressions used for an entity.\n"
+    "- timeless=true ONLY for identity/structure (kind, names, fixed adjacency); "
+    "everything else gets valid_from.\n"
+    "- NEVER invent: extract only what the text supports; atmosphere is not an "
+    "assertion.\n"
+)
+
 _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
 _SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
 
@@ -424,7 +488,7 @@ class Ingestor:
     # ---------------------------------------------------------- extracted
 
     def ingest(self, text: str, context: str = "", frame: str | None = None,
-               classify: str = "inline") -> list[Assertion]:
+               classify: str = "inline", extract: str = "full") -> list[Assertion]:
         """Model-backed extraction through the same gate. ``frame``
         re-targets extracted rows to a named frame (letter 028) — used for
         seeding a character's knowledge from prose; canon discipline is
@@ -438,43 +502,7 @@ class Ingestor:
         frame for contradiction-diff, classified later on promotion)."""
         if self._model is None:
             raise RuntimeError("no model callable injected; use ingest_structured")
-        prompt = (
-            "Extract world-state assertions from this narrative passage.\n"
-            "Return triples (entity, attribute, value). Rules:\n"
-            "- entity ids namespaced: person:/place:/obj:/event:/doc: + snake_case.\n"
-            "- attributes: use 'in' for all containment/location; 'connects_to' for "
-            "passage; 'kind' for what a thing is; domain attributes freely otherwise.\n"
-            "- value_type 'entity' when the value is another entity id.\n"
-            "- FRAMES: facts about the world are frame 'canon' — even facts revealed "
-            "late or learned by a character mid-story; give them their TRUE historical "
-            "valid_from. Use frame 'knows:<person_id>' ONLY for the additional fact "
-            "that a character has learned something (a copy marking knowledge), never "
-            "instead of the canon row. When character A tells character B an "
-            "already-established fact, emit knows:B rows for it — no new canon rows.\n"
-            "- status: 'stated' for asserted fact, 'inferred' for a character's "
-            "deduction, 'assumed' for a working theory not yet confirmed. When the "
-            "story later overturns an earlier belief or official verdict, close it "
-            "with valid_to at the time it was overturned.\n"
-            "- DOCUMENT CLAIMS (letters, ledgers, logs): emit the claimed fact with "
-            "source_doc=<doc id>. Approximate quantities as bounds: 'over forty "
-            "thousand' -> {\"gte\": 40000}. When a later source confirms or refines "
-            "the SAME fact, use the SAME entity and attribute so the records converge.\n"
-            "- ALIASES: attach every referring expression used for an entity as "
-            "aliases (e.g. 'the clerk with the tin ear', 'the vault'). When a "
-            "previously-seen entity gains a name, keep its id and add the name; if "
-            "you minted a duplicate id for the same individual, emit same_as.\n"
-            "- SPACE: emit connects_to edges for every passage/route the text "
-            "describes (stairs, gates, corridors); never invent an edge the text "
-            "does not support — vertical proximity is not connectivity.\n"
-            "- TIME: timeless=true ONLY for identity and structure (kind, names, "
-            "fixed adjacency). Everything that happens or holds-at-a-time gets "
-            "valid_from on the provided timeline.\n"
-            "- Repeated habits, spoken catchphrases, confrontations, confessions, "
-            "and scheduled/conditional future events are assertions too (use event: "
-            "entities with caused_by where the text gives causality).\n"
-            "- NEVER invent: extract only what the text supports. Atmosphere and "
-            "sensory texture are not assertions.\n"
-            f"{context}\n\nPASSAGE:\n{text}"
-        )
+        rules = _EXTRACT_RULES_LEAN if extract == "lean" else _EXTRACT_RULES_FULL
+        prompt = f"{rules}{context}\n\nPASSAGE:\n{text}"
         out = self._model(prompt, _EXTRACT_SCHEMA)
         return self.ingest_structured(out["items"], frame=frame, classify=classify)
