@@ -262,6 +262,34 @@ class TestRefer:
         assert r.status == UNDERDETERMINED
         assert set(r.candidates) == {"obj:drawer", "obj:kitchen_drawer"}
 
+    def test_tier2_no_match_is_first_class(self, world):
+        # HD 081: a genuinely unresolvable reference -> tier-2 may omit entity_id.
+        # The schema must not require it (else the real provider SchemaViolations +
+        # burns a re-ask), and refer returns UNDERDETERMINED cleanly.
+        from patternbuffer.refer import _TIER2_SCHEMA
+        assert "entity_id" not in _TIER2_SCHEMA["required"]   # the fix
+        _seed_study(world)
+        world.ingest_structured([
+            {"entity": "obj:kitchen_drawer", "attribute": "kind", "value": "drawer",
+             "timeless": True},
+        ])
+        # tier-2 returns a no-match shape with entity_id OMITTED entirely
+        world._stub.enqueue({"confidence": 0.0, "signals": ["no_match"]})
+        r = world.refer("the drawer")
+        assert r.status == UNDERDETERMINED   # clean "nothing here", not an error
+
+    def test_tier2_partial_return_no_keyerror(self, world):
+        # Cx: with required relaxed, a return that HAS entity_id but omits
+        # confidence must not KeyError — it defaults sub-floor -> UNDERDETERMINED.
+        _seed_study(world)
+        world.ingest_structured([
+            {"entity": "obj:kitchen_drawer", "attribute": "kind", "value": "drawer",
+             "timeless": True},
+        ])
+        world._stub.enqueue({"entity_id": "obj:drawer"})   # no confidence key
+        r = world.refer("the drawer")
+        assert r.status == UNDERDETERMINED
+
     def test_no_llm_on_deterministic_resolution(self, world):
         _seed_study(world)
         n = len(world._stub.calls)

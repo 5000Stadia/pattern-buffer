@@ -29,7 +29,13 @@ _TIER2_SCHEMA = {
         "confidence": {"type": "number"},
         "signals": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["entity_id", "confidence", "signals"],
+    # No required fields (HD 081): "no match" is a FIRST-CLASS outcome — a
+    # genuinely unresolvable reference (off-script/willy-nilly play) lets the
+    # model omit `entity_id` entirely rather than violate a required field and
+    # burn a re-ask. The consumer is fully `.get`-defended and treats a
+    # missing/null entity_id (or sub-floor confidence) as UNDERDETERMINED
+    # ("nothing here" — the host's ask), never an error.
+    "required": [],
 }
 _TIER2_FLOOR = 0.75
 
@@ -225,7 +231,10 @@ class Refer:
             f"A reference must resolve to exactly one entity or none.\n"
             f"Reference: {description!r}\nCandidates: {list(candidates)}\n"
             "Judge by name match, recency, possession, and discourse context. "
-            "If genuinely ambiguous, return entity_id=null with low confidence."
+            "If genuinely ambiguous, return entity_id=null with low confidence. "
+            "If NO candidate matches at all (the referenced thing does not exist "
+            "in this world), return entity_id=null — a genuine no-match is a "
+            "valid, expected outcome, never an error."
         )
         try:
             out = self._model(prompt, _TIER2_SCHEMA)
@@ -239,7 +248,7 @@ class Refer:
             "signals": out.get("signals", []),
             "confidence": out.get("confidence", 0.0),
         }
-        if out.get("entity_id") in candidates and out["confidence"] >= _TIER2_FLOOR:
+        if out.get("entity_id") in candidates and out.get("confidence", 0.0) >= _TIER2_FLOOR:
             resolution = Resolution(RESOLVED, out["entity_id"], receipt=receipt)
             self._accrue_alias(description, out["entity_id"], receipt)
             return resolution
