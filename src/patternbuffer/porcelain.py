@@ -215,7 +215,11 @@ class Porcelain:
 
     def snapshot(self, scope, frame: str = CANON, as_of: float | None = None,
                  lens: str = "current_state", budget: int | None = None,
-                 since: float | None = None) -> dict:
+                 since: float | None = None, correlated: bool = False,
+                 features: bool = False) -> dict:
+        # correlated/features (AWARENESS-READS-V1.1, opt-in): fold each entity over
+        # its aka correlation union (the whole reveal scene) and/or inline each
+        # place's part_of-feature children. Default off = unchanged.
         roots = [scope] if isinstance(scope, str) else list(scope)
         known = {
             self._w.registry.resolve(r.entity)
@@ -229,7 +233,8 @@ class Porcelain:
             return {"error": "snapshot scope must be KNOWN entity ids "
                              "(use ask for references)", "bad": bad}
         m = self._w.materialize(roots, as_of=as_of, frame=frame, lens=lens,
-                                budget=budget, since=since)
+                                budget=budget, since=since,
+                                correlated=correlated, features=features)
         return {
             "world_id": self._w.world_id,
             "charter": self._w.charter(),

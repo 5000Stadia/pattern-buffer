@@ -141,11 +141,27 @@ class Projector:
         budget: int | None = None,
         asserted_as_of: int | None = None,
         since: float | None = None,
+        correlated: bool = False,
+        features: bool = False,
     ) -> Materialization:
         """`since` (letter 029): lower bound for the what_happened lens —
-        with `as_of` it gives occurred(window=[since, as_of]) matching."""
+        with `as_of` it gives occurred(window=[since, as_of]) matching.
+
+        `correlated`/`features` (AWARENESS-READS-V1.1, opt-in): fold each entity
+        over its `aka` correlation union (the scene-wide form of `state_union`),
+        and/or augment the scope with each place's `part_of`-feature children
+        (the place-with-features view). Default off = unchanged projection."""
         if lens not in LENSES:
             raise ValueError(f"unknown lens {lens!r}")
+        if correlated and lens == "establishing_set":
+            # The establishing view is the world AT CREATION — before any identity
+            # reveal — so there is nothing to correlate. The combination is
+            # incoherent; guard it rather than thread the flag through the
+            # specialized first-state path (elegance over forced orthogonality).
+            raise ValueError(
+                "correlated=True is not supported with lens='establishing_set' "
+                "(the world-at-creation view predates identity reveals)"
+            )
         if lens == "establishing_set":
             # The world at rest: the scope walk itself uses establishing
             # containment, or entities the plot moved away vanish from the
@@ -153,6 +169,16 @@ class Projector:
             entities = self._establishing_scope(scope, frame, as_of, asserted_as_of)
         else:
             entities = self._scope_entities(scope, frame, as_of, asserted_as_of)
+        if features:
+            # AWARENESS-READS-V1.1 Win 2: inline each scope place's part_of
+            # children (one level), pre-projection — a clean entity-list add
+            # (composition is a separate axis from the containment scope walk).
+            seen = set(entities)
+            for place in list(entities):
+                for child in self._indexes.features(place, frame, as_of, asserted_as_of):
+                    if child not in seen:
+                        seen.add(child)
+                        entities.append(child)
         m = Materialization(
             scope=tuple(entities), frame=frame, as_of=as_of,
             asserted_as_of=asserted_as_of, lens=lens,
@@ -160,11 +186,12 @@ class Projector:
         if lens == "what_happened":
             self._lens_events(m, entities, since)
         elif lens == "character_sheet":
-            self._lens_sheet(m, entities)
+            self._lens_sheet(m, entities, correlated=correlated)
         elif lens == "situation":
-            self._lens_situation(m, entities, budget)
+            self._lens_situation(m, entities, budget, correlated=correlated)
         else:
-            self._lens_state(m, entities, establishing=(lens == "establishing_set"))
+            self._lens_state(m, entities, establishing=(lens == "establishing_set"),
+                             correlated=correlated)
         self._fill_defaults(m)
         if lens != "situation":
             # situation budgets its live-events bucket internally and never
@@ -178,15 +205,16 @@ class Projector:
         entities: list[str],
         establishing: bool,
         served: dict[str, str] | None = None,
+        correlated: bool = False,
     ) -> None:
         """Standing truth. When `served` is supplied (situation lens), it
         collects the ids of the rows the fold actually serves now, tagged
         ``"concrete"`` (a surviving effect) or ``"open"`` (an unresolved
         winner = an open thread) — the set the live-event walk reaches back
-        from (SITUATION-LENS-V1)."""
+        from (SITUATION-LENS-V1). ``correlated`` folds over the `aka` union."""
         for entity in entities:
             folded = self._indexes.current_state(
-                entity, m.frame, m.as_of, m.asserted_as_of
+                entity, m.frame, m.as_of, m.asserted_as_of, correlated=correlated
             )
             for attr, result in sorted(folded.items()):
                 if result.quantity is not None:
@@ -258,15 +286,18 @@ class Projector:
         return min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
 
     def _lens_situation(
-        self, m: Materialization, entities: list[str], budget: int | None
+        self, m: Materialization, entities: list[str], budget: int | None,
+        correlated: bool = False,
     ) -> None:
         """Re-entry retrieval (SITUATION-LENS-V1): the standing-truth floor
         plus only the *live* events anchored to the scope; closed history is
         dropped. Liveness is derived every read from present facts — an event
         is live iff it has an open thread (a) or a still-served effect (b) —
-        and nothing is stored (the membrane, A6)."""
+        and nothing is stored (the membrane, A6). ``correlated`` is threaded so
+        the boolean stays lens-orthogonal (Cx final)."""
         served: dict[str, str] = {}
-        self._lens_state(m, entities, establishing=False, served=served)
+        self._lens_state(m, entities, establishing=False, served=served,
+                         correlated=correlated)
         floor = len(m.assertions)
         if not served:
             return
@@ -341,10 +372,13 @@ class Projector:
         events.sort(key=lambda r: (r.valid_from if r.valid_from is not None else float("-inf"), r.seq))
         m.assertions.extend(events)
 
-    def _lens_sheet(self, m: Materialization, entities: list[str]) -> None:
-        """One entity's accumulated card, frame-respecting."""
+    def _lens_sheet(self, m: Materialization, entities: list[str],
+                    correlated: bool = False) -> None:
+        """One entity's accumulated card, frame-respecting. ``correlated`` folds
+        over the `aka` union (a dual-persona sheet) — lens-orthogonal (Cx final)."""
         for entity in entities[:1]:
-            folded = self._indexes.current_state(entity, m.frame, m.as_of, m.asserted_as_of)
+            folded = self._indexes.current_state(entity, m.frame, m.as_of,
+                                                 m.asserted_as_of, correlated=correlated)
             for attr, result in sorted(folded.items()):
                 if result.winner is None:
                     continue

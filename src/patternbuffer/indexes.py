@@ -770,10 +770,25 @@ class Indexes:
         frame: str = CANON,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
+        correlated: bool = False,
     ) -> dict[str, FoldResult]:
-        """All folded keys for one entity (attribute -> result)."""
+        """All folded keys for one entity (attribute -> result).
+
+        ``correlated=True`` (AWARENESS-READS-V1.1): discover keys over the
+        entity's `aka` correlation union and fold each via `state_union` instead
+        of the bare closure — the projection-level form of `state_union`. Opt-in;
+        the META filter is preserved either way so `aka`/identity never leak."""
         entity = self._resolve(entity)
-        closure = sorted(self._closure_of(entity))
+        if correlated:
+            keyset: set[str] = set()
+            for member in self._correlation_of(
+                entity, valid_as_of=valid_as_of,
+                asserted_as_of=asserted_as_of, frame=frame,
+            ):
+                keyset |= self._closure_of(member)
+            closure = sorted(keyset)
+        else:
+            closure = sorted(self._closure_of(entity))
         attrs: set[str] = set()
         for row in self._buffer.visible(
             entity_in=closure,
@@ -787,7 +802,9 @@ class Indexes:
             attrs.add(row.attribute)
         out: dict[str, FoldResult] = {}
         for attr in attrs:
-            result = self.fold_key(entity, attr, frame, valid_as_of, asserted_as_of)
+            result = (self.state_union(entity, attr, frame, valid_as_of, asserted_as_of)
+                      if correlated
+                      else self.fold_key(entity, attr, frame, valid_as_of, asserted_as_of))
             if result.winner is not None:
                 out[self.fold_attribute(attr)] = result
         return out

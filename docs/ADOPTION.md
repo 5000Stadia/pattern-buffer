@@ -191,9 +191,14 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer") -> Rec
    # gate failures still raise).
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
-p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=) -> dict
+p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False) -> dict
    # contractually ZERO model calls and ZERO writes; id-only scopes; includes quantities
    # lens="situation": re-entry view — standing truth ∪ live threads, closed history dropped
+   # correlated=True (AWARENESS-READS-V1.1): fold each entity over its `aka` correlation
+   #   union — the whole reveal scene (masked-figure ∪ revealed identity) in one snapshot;
+   #   as-of-before a reveal returns the uncorrelated view (no leak). The scene-wide state_union.
+   # features=True: inline each scope place's `part_of`-feature children (the burrow under the
+   #   hillside) one level. Both opt-in, orthogonal to `lens`; default off = unchanged.
 p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact, quantity?}
 p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
    # op in >=, >, <=, <, ==; compares folded numeric values
