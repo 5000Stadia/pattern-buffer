@@ -222,11 +222,20 @@ class Classifier:
             return len(pending)
         return self.classify_rows(pending, batch_size)
 
-    def classify_rows(self, rows: list[Assertion], batch_size: int | None = None) -> int:
+    def classify_rows(self, rows: list[Assertion], batch_size: int | None = None,
+                      model: bool = True) -> int:
         """Classify a SPECIFIC set of rows (INGEST-HARDENING-V1): guardrails
         resolve immediately with zero model calls; model-needing rows go to one
         batch call (or `batch_size` chunks). The shared core of `classify_all`'s
-        batch path and the opt-in batched ingest. Already-classified rows skip."""
+        batch path and the opt-in batched ingest. Already-classified rows skip.
+
+        ``model=False`` (INGEST-LATENCY-V2 `classify="rules"`): the ambiguous
+        remainder gets the doctrine's primary asymmetric default STATE with NO
+        LM call — fast and deterministic. Deliberately STATE (not the
+        containment→CONSTITUTIVE except sub-rule) so a movable's containment
+        recency-supersedes; `needs_review` is never raised (STATE isn't flagged).
+        The standing-spectrum default is safe: durability is rebuildable and the
+        erasing EVENT is barred (CLASSIFIER-EVENT-SAFETY)."""
         rows = [r for r in rows if self.get(r.id) is None]
         deferred: list[Assertion] = []
         for row in rows:
@@ -242,9 +251,13 @@ class Classifier:
             else:
                 deferred.append(row)
         if deferred:
-            step = batch_size or len(deferred)
-            for start in range(0, len(deferred), step):
-                self._classify_batch(deferred[start : start + step])
+            if not model:
+                for row in deferred:
+                    self._store(Classification(row.id, STATE, 0.5, False))
+            else:
+                step = batch_size or len(deferred)
+                for start in range(0, len(deferred), step):
+                    self._classify_batch(deferred[start : start + step])
         return len(rows)
 
     def _classify_batch(self, rows: list[Assertion]) -> None:

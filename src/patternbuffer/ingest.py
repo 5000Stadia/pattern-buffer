@@ -209,6 +209,8 @@ class Ingestor:
         self._classify_collect: list[Assertion] | None = None
         self._skipped: list[SkipRecord] | None = None
         self.last_skipped: list[SkipRecord] = []
+        # INGEST-LATENCY-V2 Win 3: cursor governs valid_from for this ingest call.
+        self._cursor_authoritative: bool = False
         self._alias_map: dict[str, str] = dict(_BUILTIN_ALIASES)
         self._rebuild_alias_map()
 
@@ -273,7 +275,7 @@ class Ingestor:
 
     def ingest_structured(
         self, items: list[dict[str, Any]], frame: str | None = None,
-        classify: str = "inline",
+        classify: str = "inline", cursor_authoritative: bool = False,
     ) -> list[Assertion]:
         """The no-model gate entry: pre-extracted items, full discipline.
         Synthetic test content only — never bible-derived (spec §6).
@@ -293,28 +295,33 @@ class Ingestor:
         ``classify_all`` later over the whole build). ``batch``/``defer`` inherit
         the deferred-classification residual (the read-time ``locate()`` guard
         remains the transitive-cycle backstop, as in the harness build)."""
-        if classify not in ("inline", "batch", "defer"):
+        if classify not in ("inline", "batch", "defer", "rules"):
             raise ValueError(f"unknown classify mode {classify!r}")
         self._skipped = []
-        collect: list[Assertion] | None = [] if classify == "batch" else None
+        # "rules" collects like "batch", then applies guardrails+STATE (no LM).
+        collect: list[Assertion] | None = [] if classify in ("batch", "rules") else None
         prev_inline = self.classify_inline
-        if classify in ("batch", "defer"):
+        if classify in ("batch", "defer", "rules"):
             self.classify_inline = False
+        prev_collect = self._classify_collect   # save/restore (re-entrancy-safe)
         self._classify_collect = collect
+        prev_cursor_auth = self._cursor_authoritative
+        self._cursor_authoritative = cursor_authoritative
         try:
             appended: list[Assertion] = []
             for item in items:
                 if frame is not None and "frame" not in item:
                     item = {**item, "frame": frame}
                 appended.extend(self._ingest_item(item))
-            if classify == "batch" and collect:
-                self._classifier.classify_rows(collect)
+            if collect:
+                self._classifier.classify_rows(collect, model=(classify == "batch"))
             return appended
         finally:
             # Always reflect THIS call's skips, even if an item raised mid-batch
             # (Cx final: no stale carryover from a prior call).
             self.classify_inline = prev_inline
-            self._classify_collect = None
+            self._classify_collect = prev_collect
+            self._cursor_authoritative = prev_cursor_auth
             self.last_skipped = list(self._skipped or [])
             self._skipped = None
 
@@ -376,7 +383,17 @@ class Ingestor:
             value = self._registry.resolve(value)
         timeless = bool(item.get("timeless", False))
         valid_from = item.get("valid_from")
-        if valid_from is None and not timeless:
+        # INGEST-LATENCY-V2 Win 3: in cursor-authoritative ingest (bible
+        # source-build) the CURSOR governs the story-time axis — the per-item
+        # valid_from is overridden and DEMOTED to a `source_valid_from` meta
+        # (lossless), so a diegetic year ("612") can't invert the timeline.
+        # Computed before the edge guard (which reads valid_from). Timeless rows
+        # carry no story-time, so they are unaffected and never demote.
+        demoted_vf = None
+        if self._cursor_authoritative and not timeless:
+            demoted_vf = valid_from   # may be None (nothing to demote)
+            valid_from = self.cursor.position
+        elif valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
 
         # Authority gate FIRST (INGEST-HARDENING-V1 Cx final): an authority
@@ -429,6 +446,16 @@ class Ingestor:
         out.append(row)
         if is_manual_semantics_row:
             self._semantics.rebuild()
+        if demoted_vf is not None:
+            # The per-item story-time coordinate the cursor overrode — preserved
+            # losslessly (META_ATTRIBUTES-hidden) for host promotion to a typed
+            # content fact (year/era) if wanted (INGEST-LATENCY-V2 Win 3).
+            out.append(
+                self._buffer.append(
+                    entity=row.id, attribute="source_valid_from", value=demoted_vf,
+                    status="inferred", role=self._role,
+                )
+            )
         if receipt:
             out.append(
                 self._buffer.append(
@@ -487,22 +514,33 @@ class Ingestor:
 
     # ---------------------------------------------------------- extracted
 
-    def ingest(self, text: str, context: str = "", frame: str | None = None,
-               classify: str = "inline", extract: str = "full") -> list[Assertion]:
-        """Model-backed extraction through the same gate. ``frame``
-        re-targets extracted rows to a named frame (letter 028) — used for
-        seeding a character's knowledge from prose; canon discipline is
-        unchanged when frame is None.
-
-        ``classify`` (INGEST-HARDENING-V1, extended to the text path per HD 079):
-        ``"inline"`` (default) classifies each extracted row per-row; ``"batch"``
-        defers and runs ONE batch durability call for the whole passage (the
-        per-turn live-play latency lever — collapses ~100 serial classify calls);
-        ``"defer"`` skips classification (e.g. staging a render into a quarantine
-        frame for contradiction-diff, classified later on promotion)."""
+    def extract(self, text: str, context: str = "",
+                extract: str = "full") -> list[dict[str, Any]]:
+        """READ-ONLY extraction (INGEST-LATENCY-V2 Win 2): build the prompt, call
+        the model, return the raw extracted item dicts. NO buffer write, no
+        canonicalization/cursor/resolution (those happen in
+        `ingest_structured`/`_ingest_item`). Stateless → safe to call
+        concurrently: the host parallelizes N `extract()` calls in its own
+        runtime (with its concurrency cap) then `ingest_structured()`s the
+        results SERIALLY (the append-only writes stay serial). `extract` selects
+        the full|lean rules block."""
         if self._model is None:
             raise RuntimeError("no model callable injected; use ingest_structured")
         rules = _EXTRACT_RULES_LEAN if extract == "lean" else _EXTRACT_RULES_FULL
         prompt = f"{rules}{context}\n\nPASSAGE:\n{text}"
-        out = self._model(prompt, _EXTRACT_SCHEMA)
-        return self.ingest_structured(out["items"], frame=frame, classify=classify)
+        return self._model(prompt, _EXTRACT_SCHEMA)["items"]
+
+    def ingest(self, text: str, context: str = "", frame: str | None = None,
+               classify: str = "inline", extract: str = "full",
+               cursor_authoritative: bool = False) -> list[Assertion]:
+        """Model-backed extraction through the same gate (= `extract` then
+        `ingest_structured`, behavior-identical). ``frame`` re-targets extracted
+        rows to a named frame (letter 028). ``classify`` (HD 079): inline|batch|
+        defer|rules durability. ``extract`` (HD 082): full|lean rules.
+        ``cursor_authoritative`` (HD 084): the cursor governs valid_from (bible
+        source-ingest); see ingest_structured."""
+        items = self.extract(text, context, extract)
+        return self.ingest_structured(
+            items, frame=frame, classify=classify,
+            cursor_authoritative=cursor_authoritative,
+        )

@@ -166,11 +166,20 @@ supported; exact decimal/fixed-point money is deferred.
 
 ```python
 p = world.porcelain
-p.ingest(text, source=None, scene=None, at=None, frame=None, classify="inline"|"batch"|"defer") -> Receipt
-   # classify (HD 079): "batch" runs ONE durability call for the whole passage instead
-   # of one per extracted row — the per-turn live-play latency lever; "defer" skips
-   # classification (stage a render into a quarantine frame, classify once on promotion).
-   # Same control as ingest_structured. Default "inline" unchanged.
+p.extract(text, scene=None, extract="full"|"lean") -> [item dict]
+   # INGEST-LATENCY-V2: READ-ONLY extraction (no write). Parallelize N extract() calls
+   # in YOUR runtime (your concurrency cap), then ingest_structured() the results SERIALLY
+   # (append-only writes stay serial). The engine doesn't add concurrency (membrane).
+p.ingest(text, source=None, scene=None, at=None, frame=None,
+         classify="inline"|"batch"|"defer"|"rules", extract="full"|"lean",
+         cursor_authoritative=False) -> Receipt
+   # classify (HD 079/083): "batch" = ONE durability call/passage; "rules" = guardrails +
+   #   STATE default, ZERO LM calls (fast+deterministic, eval-guard quality); "defer" skips.
+   # extract (HD 082): "lean" trims the prompt (marginal input-side lever; eval-guard).
+   # cursor_authoritative (HD 084): the cursor governs valid_from for all rows — bible
+   #   source-ingest, so a diegetic year can't invert the story-time axis; the overridden
+   #   per-item valid_from is preserved losslessly as a `source_valid_from` meta (host
+   #   promotes to a typed year/era fact if wanted). Default off = per-item valid_from wins.
 p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer") -> Receipt
    # INGEST-HARDENING-V1: classify="batch" defers durability + runs ONE batch model
    # call per ingest call (the first-class form of classify_inline=False + classify_all;

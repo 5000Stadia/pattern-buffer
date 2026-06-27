@@ -145,19 +145,27 @@ class Porcelain:
 
     # -------------------------------------------------------------- writes
 
+    def extract(self, text: str, scene: str | None = None,
+                extract: str = "full") -> list[dict]:
+        """Read-only extraction (INGEST-LATENCY-V2): returns the raw item dicts,
+        NO write. Run these concurrently in your runtime (your cap), then
+        ingest_structured() the results serially."""
+        context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
+        return self._w.extract(text, context=context, extract=extract)
+
     def ingest(self, text: str, source: str | None = None, scene: str | None = None,
                at: float | None = None, frame: str | None = None,
-               classify: str = "inline", extract: str = "full") -> Receipt:
+               classify: str = "inline", extract: str = "full",
+               cursor_authoritative: bool = False) -> Receipt:
         # classify (HD 079): "batch" collapses ~100 serial per-turn durability
-        # calls into one — the top live-play latency lever; "defer" skips (stage a
-        # render into a quarantine frame, classify once on promotion).
-        # extract (HD 082): "lean" trims the extraction prompt to load-bearing
-        # rules (marginal input-side lever; eval-guard quality before enabling).
+        # calls into one; "rules" (HD 083) does it with zero LM calls; "defer"
+        # skips. extract (HD 082): "lean" trims the prompt. cursor_authoritative
+        # (HD 084): the cursor governs valid_from (bible source-ingest).
         if at is not None:
             self._w.ingestor.cursor.advance(at)
         context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
         rows = self._w.ingest(text, context=context, frame=frame, classify=classify,
-                              extract=extract)
+                              extract=extract, cursor_authoritative=cursor_authoritative)
         if source is not None:
             fact_rows = [
                 r for r in rows
@@ -174,8 +182,10 @@ class Porcelain:
         return self._receipt(rows)
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
-                          classify: str = "inline") -> Receipt:
-        rows = self._w.ingest_structured(items, frame=frame, classify=classify)
+                          classify: str = "inline",
+                          cursor_authoritative: bool = False) -> Receipt:
+        rows = self._w.ingest_structured(items, frame=frame, classify=classify,
+                                         cursor_authoritative=cursor_authoritative)
         receipt = self._receipt(rows)
         receipt.skipped = [
             {"entity": s.entity, "attribute": s.attribute,

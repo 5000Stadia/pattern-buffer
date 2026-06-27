@@ -199,13 +199,23 @@ class World:
     # Writes (each behind its role).
 
     def ingest(self, text: str, context: str = "", frame: str | None = None,
-               classify: str = "inline", extract: str = "full") -> list:
+               classify: str = "inline", extract: str = "full",
+               cursor_authoritative: bool = False) -> list:
         return self.ingestor.ingest(text, context, frame=frame, classify=classify,
-                                    extract=extract)
+                                    extract=extract,
+                                    cursor_authoritative=cursor_authoritative)
+
+    def extract(self, text: str, context: str = "", extract: str = "full") -> list:
+        """Read-only extraction (INGEST-LATENCY-V2): the host parallelizes these,
+        then ingest_structured()s the results serially. No write."""
+        return self.ingestor.extract(text, context, extract=extract)
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
-                          classify: str = "inline") -> list:
-        return self.ingestor.ingest_structured(items, frame=frame, classify=classify)
+                          classify: str = "inline",
+                          cursor_authoritative: bool = False) -> list:
+        return self.ingestor.ingest_structured(
+            items, frame=frame, classify=classify,
+            cursor_authoritative=cursor_authoritative)
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):
         return self.resolver.resolve(entity, aspect, frame, access)

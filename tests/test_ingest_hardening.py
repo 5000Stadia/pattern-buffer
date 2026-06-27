@@ -104,6 +104,87 @@ def test_text_ingest_defer_no_classify_call(tmp_path):
     w.close()
 
 
+# --------------------------------------- INGEST-LATENCY-V2 (HD 083/084)
+
+def test_classify_rules_zero_lm_calls(tmp_path):
+    from patternbuffer.classify import CONSTITUTIVE, STATE
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "r.world", world_id="w:r", model=stub)
+    w.porcelain.ingest_structured([
+        {"entity": "place:a", "attribute": "kind", "value": "place", "timeless": True},
+        {"entity": "obj:box", "attribute": "in", "value": "place:a",
+         "value_type": "entity", "valid_from": 1.0},          # ambiguous obj containment
+        {"entity": "obj:box", "attribute": "color", "value": "red", "valid_from": 1.0},
+    ], classify="rules")
+    assert not [c for c in stub.calls if c[0].startswith("Classify the lifetime")]  # zero LM
+    kind = next(r for r in w.buffer.all_rows() if r.attribute == "kind")
+    assert w.classifier.durability(kind.id) == CONSTITUTIVE   # guardrail
+    box_in = next(r for r in w.buffer.all_rows() if r.attribute == "in")
+    assert w.classifier.durability(box_in.id) == STATE        # ambiguous -> STATE (supersedes)
+    color = next(r for r in w.buffer.all_rows() if r.attribute == "color")
+    assert w.classifier.durability(color.id) == STATE
+    w.close()
+
+
+def test_extract_read_only_and_composes(tmp_path):
+    ext = {"items": [
+        {"entity": "person:p", "attribute": "mood", "value": "x", "valid_from": 1.0}]}
+    stub = StubModel(responses=[ext], fallback=rule_classifier_fallback())
+    w = World(tmp_path / "x.world", world_id="w:x", model=stub)
+    head = w.buffer.head()
+    items = w.extract("prose")
+    assert items == ext["items"]                              # raw items
+    assert w.buffer.head() == head                           # extract writes NOTHING
+    w.ingest_structured(items, classify="defer")             # host ingests serially
+    assert w.state("person:p", "mood").winner.value == "x"
+    w.close()
+
+
+def test_cursor_authoritative_governs_valid_from(tmp_path):
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "c.world", world_id="w:c", model=stub)
+    w.ingestor.cursor.advance(8.0)
+    w.ingest_structured([
+        {"entity": "event:opening", "attribute": "mood", "value": "tense", "valid_from": 612.0},
+        {"entity": "event:opening", "attribute": "kind", "value": "event", "timeless": True},
+    ], classify="defer", cursor_authoritative=True)
+    mood = next(r for r in w.buffer.all_rows() if r.attribute == "mood")
+    assert mood.valid_from == 8.0                            # cursor, NOT 612
+    svf = [r for r in w.buffer.all_rows() if r.attribute == "source_valid_from"]
+    assert len(svf) == 1 and svf[0].value == 612.0          # 612 preserved (not lost)
+    kind = next(r for r in w.buffer.all_rows() if r.attribute == "kind")
+    assert kind.valid_from is None                           # timeless unaffected, no demote
+    m = w.materialize(["event:opening"])
+    assert not any(r.attribute == "source_valid_from" for r in m.assertions)  # meta-hidden
+    w.close()
+
+
+def test_cursor_authoritative_monotone_across_chunks(tmp_path):
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "m.world", world_id="w:m", model=stub)
+    w.ingestor.cursor.advance(5.0)
+    w.ingest_structured([{"entity": "event:a", "attribute": "x", "value": "1",
+                          "valid_from": 612.0}], classify="defer", cursor_authoritative=True)
+    w.ingestor.cursor.advance(10.0)
+    w.ingest_structured([{"entity": "event:b", "attribute": "x", "value": "2",
+                          "valid_from": 3.0}], classify="defer", cursor_authoritative=True)
+    a = next(r for r in w.buffer.all_rows() if r.entity == "event:a" and r.attribute == "x")
+    b = next(r for r in w.buffer.all_rows() if r.entity == "event:b" and r.attribute == "x")
+    assert a.valid_from == 5.0 and b.valid_from == 10.0     # monotone by chunk order
+    w.close()
+
+
+def test_cursor_authoritative_default_off(tmp_path):
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "o.world", world_id="w:o", model=stub)
+    w.ingest_structured([{"entity": "event:a", "attribute": "x", "value": "1",
+                          "valid_from": 612.0}], classify="defer")
+    a = next(r for r in w.buffer.all_rows() if r.attribute == "x")
+    assert a.valid_from == 612.0                             # default: per-item wins
+    assert not [r for r in w.buffer.all_rows() if r.attribute == "source_valid_from"]
+    w.close()
+
+
 # --------------------------------------- lean extraction prompt (HD 082)
 
 def test_lean_extraction_trims_prompt_keeps_loadbearing(tmp_path):

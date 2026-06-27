@@ -60,6 +60,7 @@ META_ATTRIBUTES = frozenset(
         "justified_by",
         "world_defining",
         "correction_proposal",
+        "source_valid_from",  # INGEST-LATENCY-V2: demoted cursor-authoritative coord
     }
 ) | SEMANTICS_PREDICATES
 
