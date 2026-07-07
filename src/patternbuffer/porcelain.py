@@ -323,6 +323,57 @@ class Porcelain:
             frame=frame, as_of=as_of, recursive=recursive,
         ))
 
+    def entities(self, frame: str, prefix: str | None = None,
+                 as_of: float | None = None) -> list[str]:
+        """The roster read (BOUNDED-READS-V1): entity ids carried by ONE
+        frame's rows, identity-resolved, deduped, sorted. `frame` is required —
+        every read fixes perspective (a prefix-only enumeration would leak
+        cross-frame entity existence). `prefix` narrows by id namespace
+        ('place:'); `as_of` is the valid-time gate. Zero writes, no fold."""
+        if not frame:
+            # visible(frame=None) omits the frame predicate — that would be an
+            # unbounded cross-frame scan, exactly what this verb must not be.
+            raise ValueError("entities() requires a frame — every read fixes perspective")
+        out: set[str] = set()
+        for r in self._w.buffer.visible(frame=frame, valid_as_of=as_of):
+            if r.entity.startswith("a:") or r.entity.startswith(ATTR_PREFIX):
+                continue
+            eid = self._w.registry.resolve(r.entity)
+            if prefix is None or eid.startswith(prefix):
+                out.add(eid)
+        return sorted(out)
+
+    def facts(self, frame: str, entity: str | None = None,
+              attribute: str | None = None, prefix: str | None = None,
+              as_of: float | None = None, include_meta: bool = False) -> list[dict]:
+        """The frame-scan read (BOUNDED-READS-V1): the visible rows OF one
+        frame as Fact payloads — RAW log reads for audited scans (receipt
+        trails, knowledge digests, marker rows), NOT folds (folded truth is
+        `state`/`snapshot`). `frame` is required (the bound). `entity` targets
+        one id (identity-closure for world entities; exact for `a:<n>` receipt
+        chains — always served); frame/prefix-wide listings exclude meta rows
+        unless `include_meta=True`."""
+        if not frame:
+            raise ValueError("facts() requires a frame — every read fixes perspective")
+        if entity is not None and not entity.startswith("a:"):
+            clos = sorted(self._w.registry.closure(entity))
+            rows = self._w.buffer.visible(entity_in=clos, frame=frame,
+                                          attribute=attribute, valid_as_of=as_of)
+        elif entity is not None:
+            rows = self._w.buffer.visible(entity=entity, frame=frame,
+                                          attribute=attribute, valid_as_of=as_of)
+        else:
+            rows = [
+                r for r in self._w.buffer.visible(frame=frame, attribute=attribute,
+                                                  valid_as_of=as_of)
+                if include_meta or (not r.entity.startswith("a:")
+                                    and not r.entity.startswith(ATTR_PREFIX))
+            ]
+        if prefix is not None:
+            rows = [r for r in rows
+                    if self._w.registry.resolve(r.entity).startswith(prefix)]
+        return encode_out([self._fact(r).to_dict() for r in rows])
+
     def locate(self, entity: str, as_of: float | None = None) -> list[str]:
         return self._w.locate(entity, valid_as_of=as_of)
 
