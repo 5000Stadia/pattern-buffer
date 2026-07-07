@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
+from patternbuffer.codec import json_default
 from patternbuffer.model import ATTR_PREFIX, META_ATTRIBUTES, Assertion
 from patternbuffer.semantics import AttributeSemantics
 
@@ -136,7 +137,7 @@ class Classifier:
         prompt = (
             "Classify the lifetime of this fact about a world.\n"
             f"Subject: {row.entity}\nAttribute: {row.attribute}\n"
-            f"Value: {json.dumps(row.value)}\n\n"
+            f"Value: {json.dumps(row.value, default=json_default)}\n\n"
             "CONSTITUTIVE: what the thing IS (identity, structure, fixtures, era). "
             "True at every moment unless the world is re-authored.\n"
             "DISPOSITIONAL: what it TENDS to be (habits, roles, recurring behavior). "
@@ -262,7 +263,7 @@ class Classifier:
 
     def _classify_batch(self, rows: list[Assertion]) -> None:
         listing = "\n".join(
-            f"{i}. {r.entity} · {r.attribute} · {json.dumps(r.value)}"
+            f"{i}. {r.entity} · {r.attribute} · {json.dumps(r.value, default=json_default)}"
             for i, r in enumerate(rows)
         )
         schema = {

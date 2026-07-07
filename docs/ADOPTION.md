@@ -122,7 +122,25 @@ attribute with `fold_policy="accrue"` before its first data row. A `literal`
 numeric row is an absolute baseline; a `value_type="delta"` row is a signed
 increment. The fold computes `baseline + later deltas`, with the ledger
 available as `FoldResult._ledger_rows` for audit. `int` and `float` are
-supported; exact decimal/fixed-point money is deferred.
+supported for game-grade quantities.
+
+**Exact decimal (money, real ledgers).** When a quantity must fold exactly
+(`0.10 + 0.20 == 0.30`, never `0.30000000000000004`), author it as a Python
+`Decimal` (in-process) or the tag form `{"$decimal": "12.50"}` (JSON) — both
+normalize to the same stored row. Rules that follow from append-only fidelity:
+
+- **Pick one representation per attribute.** A fold mixing exact-decimal and
+  `float` **raises** (an authoring smell, surfaced not silently promoted);
+  `Decimal` + `int` folds exactly.
+- **Authored scale is preserved.** `12.50` round-trips as `12.50`; a
+  `visible(value=...)` match is scale-sensitive (`12.5` does not match `12.50`).
+- **Porcelain payloads carry the tag dict**, never a raw `Decimal` — every
+  verb's return stays plain-`json.dumps`-able. Core reads (`World.state`,
+  `materialize`) return real `Decimal` objects; if you re-serialize those
+  yourself, use `patternbuffer.codec.encode_out` (or `json_default`).
+- `avg` over decimals divides under a fixed context (prec=50, HALF_EVEN) —
+  deterministic; sums are exact. Currency codes, units, and rounding *policy*
+  are host meaning — model them as ordinary facts, not value forms.
 
 ## MUST / NEVER
 

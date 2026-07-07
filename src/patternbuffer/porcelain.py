@@ -15,8 +15,10 @@ import json
 import logging
 import re
 from dataclasses import asdict, dataclass, field
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
+from patternbuffer.codec import decode_value, encode_out
 from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
 
@@ -123,7 +125,7 @@ class Porcelain:
     def _quantity_fact(
         self,
         row,
-        quantity: int | float,
+        quantity: int | float | Decimal,
         *,
         entity: str | None = None,
         attribute: str | None = None,
@@ -141,7 +143,7 @@ class Porcelain:
 
     @staticmethod
     def _is_numeric(value: object) -> bool:
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
 
     # -------------------------------------------------------------- writes
 
@@ -189,7 +191,7 @@ class Porcelain:
         receipt = self._receipt(rows)
         receipt.skipped = [
             {"entity": s.entity, "attribute": s.attribute,
-             "value": s.value, "reason": s.reason}
+             "value": encode_out(s.value), "reason": s.reason}
             for s in self._w.ingestor.last_skipped
         ]
         return receipt
@@ -204,9 +206,9 @@ class Porcelain:
             return {"status": "unknown", "facts": [],
                     "receipt": self._receipt([]).to_dict()}
         rows = [r for r in out if r is not None]
-        return {"status": "resolved",
-                "facts": [self._fact(r).to_dict() for r in rows],
-                "receipt": self._receipt(rows).to_dict()}
+        return encode_out({"status": "resolved",
+                           "facts": [self._fact(r).to_dict() for r in rows],
+                           "receipt": self._receipt(rows).to_dict()})
 
     def retract(self, assertion_id: str, reason: str) -> Receipt:
         return self._receipt([self._w.truth.retract(assertion_id, reason)])
@@ -235,7 +237,9 @@ class Porcelain:
         m = self._w.materialize(roots, as_of=as_of, frame=frame, lens=lens,
                                 budget=budget, since=since,
                                 correlated=correlated, features=features)
-        return {
+        # encode_out at the return: the porcelain's plain-JSON contract —
+        # exact-decimal values leave as the tag dict, never a raw Decimal.
+        return encode_out({
             "world_id": self._w.world_id,
             "charter": self._w.charter(),
             "frame": m.frame, "lens": m.lens, "as_of": m.as_of,
@@ -248,7 +252,7 @@ class Porcelain:
             "conflicted": [list(c) for c in m.conflicted_keys],
             "defaults": [asdict(d) for d in m.defaults],
             "truncated": m.truncated,
-        }
+        })
 
     def state(self, entity: str, attribute: str, frame: str = CANON,
               as_of: float | None = None) -> dict:
@@ -265,7 +269,7 @@ class Porcelain:
             out["quantity"] = fold.quantity
         if fold.conflicted:
             out["conflicting"] = list(fold.conflicting)
-        return out
+        return encode_out(out)
 
     def where(self, attribute: str, op: str, value, frame: str = CANON,
               as_of: float | None = None) -> list[str]:
@@ -278,6 +282,7 @@ class Porcelain:
         }
         if op not in comparators:
             raise ValueError(f"unknown comparison operator {op!r}")
+        value = decode_value(value)   # tag-form symmetry: {"$decimal": ...} ok
         if not self._is_numeric(value):
             return []
         candidates = {
@@ -310,10 +315,10 @@ class Porcelain:
         as_of: float | None = None,
         recursive: bool = False,
     ) -> dict:
-        return self._w.aggregate(
+        return encode_out(self._w.aggregate(
             container, member_attribute, op,
             frame=frame, as_of=as_of, recursive=recursive,
-        )
+        ))
 
     def locate(self, entity: str, as_of: float | None = None) -> list[str]:
         return self._w.locate(entity, valid_as_of=as_of)
@@ -344,7 +349,7 @@ class Porcelain:
         blocked carries obstructing-fact evidence, obscured a computed
         unknown_basis. The engine derives status from portal facts under the
         host's declared traversal policy; the host supplies the words."""
-        return self._w.route(a, b, frame=frame, valid_as_of=as_of)
+        return encode_out(self._w.route(a, b, frame=frame, valid_as_of=as_of))
 
     # ----------------------------------- host reconciliation (MERGE-RECONCILE-VERB-V1)
 
@@ -413,7 +418,7 @@ class Porcelain:
             out["quantity"] = fold.quantity
         if fold.conflicted:
             out["conflicting"] = list(fold.conflicting)
-        return out
+        return encode_out(out)
 
     def correlation_conflicts(self, as_of: float | None = None,
                               frame: str = CANON) -> list[dict]:
@@ -449,7 +454,7 @@ class Porcelain:
         max_fanout: int = 64,
         budget: int | None = None,
     ) -> dict:
-        return self._w.neighborhood(
+        return encode_out(self._w.neighborhood(
             entity,
             depth=depth,
             frame=frame,
@@ -457,7 +462,7 @@ class Porcelain:
             edge_kinds=edge_kinds,
             max_fanout=max_fanout,
             budget=budget,
-        )
+        ))
 
     def events(self, kind: str | None = None,
                participants: str | list[str] | None = None,
@@ -492,7 +497,9 @@ class Porcelain:
             out = [e for e in out
                    if wanted <= {self._w.registry.resolve(x)
                                  for x in e["agents"] + e["patients"]}]
-        return sorted(out, key=lambda e: (e["t"] if e["t"] is not None else float("-inf")))
+        return encode_out(
+            sorted(out, key=lambda e: (e["t"] if e["t"] is not None else float("-inf")))
+        )
 
     def who_knows(self, entity: str, attribute: str, value: Any = None,
                   as_of: float | None = None) -> list[str]:
@@ -565,7 +572,7 @@ class Porcelain:
                     equivalent = va == vb
                 if not equivalent:
                     out.append(self._fact(row, divergent=True, b_value=vb).to_dict())
-            return out
+            return encode_out(out)
 
         b_frames = list(b)
         roots = [scope] if isinstance(scope, str) else list(scope)
@@ -592,7 +599,7 @@ class Porcelain:
                 continue
             covered = False
             held = False
-            divergent: tuple[tuple[float, int], int | float] | None = None
+            divergent: tuple[tuple[float, int], int | float | Decimal] | None = None
             for b_frame in b_frames:
                 fold_b = self._w.state(entity, attribute, frame=b_frame, valid_as_of=as_of)
                 if fold_b.quantity == quantity:
@@ -660,7 +667,7 @@ class Porcelain:
                 out.append(self._fact(row).to_dict())
             else:
                 out.append(self._fact(row, divergent=True, b_value=divergent[1]).to_dict())
-        return out
+        return encode_out(out)
 
     # ------------------------------------------------------------- ask
 
@@ -730,7 +737,7 @@ class Porcelain:
                 facts.append({"event": ev})
         answered = bool(facts)
         return Answer(
-            answered=answered, facts=facts,
+            answered=answered, facts=encode_out(facts),
             unknown_reason=None if answered else
             ("unresolved references" if asks else "no folded facts on the asked keys"),
             asks=asks,

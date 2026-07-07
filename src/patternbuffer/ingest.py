@@ -20,6 +20,7 @@ from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
+from patternbuffer.codec import decode_value
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.model import ATTR_PREFIX, CANON, SEMANTICS_PREDICATES, Assertion
 from patternbuffer.roles import WriterRole
@@ -375,7 +376,10 @@ class Ingestor:
         out: list[Assertion] = []
         attribute, receipt = self._canonicalize(item["attribute"])
         entity = self._registry.resolve(item["entity"])
-        value = item["value"]
+        # Exact-decimal symmetry: a JSON-origin host passes the tag form
+        # ({"$decimal": "12.50"}), an in-process host a real Decimal — both
+        # normalize to Decimal here (EXACT-DECIMAL-QUANTITIES-V1).
+        value = decode_value(item["value"])
         value_type = item.get("value_type") or (
             "entity" if isinstance(value, str) and ":" in value else "literal"
         )

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Callable
 
 from patternbuffer.buffer import PatternBuffer
@@ -52,7 +53,7 @@ class Materialization:
     defaults: list[DefaultFill] = field(default_factory=list)
     conflicted_keys: list[tuple[str, str]] = field(default_factory=list)
     unresolved: list[tuple[str, str]] = field(default_factory=list)  # the visible frontier
-    quantities: list[tuple[str, str, int | float]] = field(default_factory=list)
+    quantities: list[tuple[str, str, int | float | Decimal]] = field(default_factory=list)
     truncated: int = 0  # rows dropped to budget (never CONSTITUTIVE)
 
 

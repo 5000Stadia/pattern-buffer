@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
@@ -17,6 +18,13 @@ from patternbuffer.classify import (
     EVENT,
     STATE,
     Classifier,
+)
+from patternbuffer.codec import (
+    check_no_mix,
+    encode_out,
+    encode_value,
+    exact_div,
+    exact_sum,
 )
 from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, Assertion
 from patternbuffer.semantics import AttributeSemantics, CONTAINMENT, builtin_default
@@ -67,7 +75,7 @@ class FoldResult:
     corroborated_by: tuple[str, ...] = ()
     values: tuple = ()
     _value_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
-    quantity: int | float | None = None
+    quantity: int | float | Decimal | None = None
     _ledger_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
 
 
@@ -157,21 +165,31 @@ class Indexes:
     @staticmethod
     def _values_agree(old: object, new: object) -> bool:
         """Equal, or `new` refines an explicitly approximate `old`
-        ({'gte': x} / {'lte': x} / {'approx': x}) — spec §7."""
+        ({'gte': x} / {'lte': x} / {'approx': x}) — spec §7. When `new` is
+        an exact Decimal, bounds coerce via Decimal(str(...)) for the
+        comparison only — a read-time judgment, never a stored sum."""
         if old == new:
             return True
-        if isinstance(old, dict) and isinstance(new, (int, float)):
+        if isinstance(old, dict) and isinstance(new, (int, float, Decimal)):
             if "gte" in old and new >= old["gte"]:
                 return True
             if "lte" in old and new <= old["lte"]:
                 return True
-            if "approx" in old and abs(new - old["approx"]) <= 0.1 * abs(old["approx"]):
-                return True
+            if "approx" in old:
+                approx = old["approx"]
+                if isinstance(new, Decimal) and isinstance(approx, (int, float)):
+                    approx = Decimal(str(approx))
+                    return abs(new - approx) <= Decimal("0.1") * abs(approx)
+                if isinstance(new, (int, float)) and isinstance(approx, Decimal):
+                    new = Decimal(str(new))
+                    return abs(new - approx) <= Decimal("0.1") * abs(approx)
+                if abs(new - approx) <= 0.1 * abs(approx):
+                    return True
         return False
 
     @staticmethod
     def _is_numeric(value: object) -> bool:
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
+        return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
 
     def _is_event_effect(self, row: Assertion, asserted_as_of: int | None) -> bool:
         """True iff the row carries a caused_by edge to an EVENT (spec §9.1)."""
@@ -628,7 +646,7 @@ class Indexes:
             if r.value_type == "delta" and self._is_numeric(r.value)
         ]
         baseline = max(literals, key=recency) if literals else None
-        baseline_value: int | float = baseline.value if baseline is not None else 0
+        baseline_value: int | float | Decimal = baseline.value if baseline is not None else 0
         baseline_key = recency(baseline) if baseline is not None else None
         contributing = [
             r for r in deltas if baseline_key is None or recency(r) > baseline_key
@@ -636,7 +654,20 @@ class Indexes:
         contributing.sort(key=recency)
         if baseline is None and not contributing:
             return FoldResult(winner=None)
-        total = baseline_value + sum(r.value for r in contributing)
+        # Any-Decimal ledger folds exactly under MONEY_CTX; a Decimal/float
+        # mix raises with the offending rows (EXACT-DECIMAL-QUANTITIES-V1).
+        # The non-Decimal path keeps the pre-change expression VERBATIM —
+        # float addition is non-associative, so re-grouping the same values
+        # would break byte-identity for existing float worlds.
+        ledger_ids = ([baseline.id] if baseline is not None else []) + [
+            r.id for r in contributing
+        ]
+        ledger_values = [baseline_value] + [r.value for r in contributing]
+        check_no_mix(ledger_values, ids=ledger_ids)
+        if any(isinstance(v, Decimal) for v in ledger_values):
+            total = exact_sum(ledger_values, ids=ledger_ids)
+        else:
+            total = baseline_value + sum(r.value for r in contributing)
         winner = contributing[-1] if contributing else baseline
         ledger_rows = ((baseline,) if baseline is not None else ()) + tuple(contributing)
         return FoldResult(
@@ -1010,7 +1041,7 @@ class Indexes:
             return out
 
         contributing: list[str] = []
-        values: list[int | float] = []
+        values: list[int | float | Decimal] = []
         if not self._semantics.is_set_valued(member_attribute):
             for member in members():
                 folded = self.fold_key(
@@ -1026,17 +1057,24 @@ class Indexes:
                     contributing.append(member)
                     values.append(value)
 
+        # Mix validation runs on the contributing set BEFORE any op —
+        # a Decimal/float mix is the same authoring smell for min/max/count
+        # as for sum/avg (EXACT-DECIMAL-QUANTITIES-V1 §4).
+        check_no_mix(values, ids=contributing)
         count = len(values)
         if op == "count":
             value = count
         elif op == "sum":
-            value = sum(values) if values else 0
+            value = exact_sum(values, ids=contributing) if values else 0
         elif op == "min":
             value = min(values) if values else None
         elif op == "max":
             value = max(values) if values else None
         else:
-            value = (sum(values) / count) if count else None
+            value = (
+                exact_div(exact_sum(values, ids=contributing), count)
+                if count else None
+            )
         return {
             "op": op,
             "value": value,
@@ -1164,7 +1202,7 @@ class Indexes:
         out = {
             "entity": self._resolve(row.entity),
             "attribute": row.attribute,
-            "value": row.value,
+            "value": encode_out(row.value),   # recursive: nested Decimal leaves too
             "value_type": row.value_type,
             "valid": [row.valid_from, row.valid_to],
             "provenance": {
@@ -1196,7 +1234,7 @@ class Indexes:
                     {
                         "entity": self._resolve(entity),
                         "attribute": attr,
-                        "value": result.quantity,
+                        "value": encode_value(result.quantity),
                         "provenance": {
                             "status": result.winner.status,
                             "assertion_id": result.winner.id,
@@ -1479,7 +1517,7 @@ class Indexes:
                 obj = self._resolve(r.value) if isinstance(r.value, str) else r.value
                 return ("blocked", {"evidence": [{
                     "entity": self._resolve(r.entity), "attribute": r.attribute,
-                    "value": obj, "assertion_id": r.id}]})
+                    "value": encode_value(obj), "assertion_id": r.id}]})
         state_fold = self.fold_key(node, "state", frame, valid_as_of, asserted_as_of)
         w = state_fold.winner
         if w is None:
@@ -1494,7 +1532,7 @@ class Indexes:
         if w.value in blocking_states:
             return ("blocked", {"evidence": [{
                 "entity": self._resolve(node), "attribute": "state",
-                "value": w.value, "assertion_id": w.id}]})
+                "value": encode_value(w.value), "assertion_id": w.id}]})
         return ("clear", None)
 
     def route(

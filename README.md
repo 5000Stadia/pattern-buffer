@@ -14,7 +14,7 @@ One append-only log of perspective-scoped, time-indexed assertions about entitie
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
 **Status: pre-1.0; substrate validated, ingestion fidelity is the open
-front.** The engine passes its 362-test invariant suite, and the chapter test
+front.** The engine passes its 380-test invariant suite, and the chapter test
 (ingest a complete noir mystery, delete the prose, interrogate the store
 against a hand-authored answer key) has been graded across three full runs.
 The substrate's invariants held in all of them — sealed containers stayed

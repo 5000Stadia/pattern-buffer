@@ -18,6 +18,7 @@ from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, Classifier
+from patternbuffer.codec import json_default
 from patternbuffer.indexes import Indexes
 from patternbuffer.model import CANON, Assertion
 from patternbuffer.roles import WriterRole
@@ -238,5 +239,7 @@ class Resolver:
                               # constraint, and its winner is a delta row, never
                               # the value (never inherit a delta as a constraint)
                 if self._classifier.durability(row.id) in {CONSTITUTIVE, DISPOSITIONAL}:
-                    constraints.append(f"{holder} · {attr} · {json.dumps(row.value)}")
+                    constraints.append(
+                        f"{holder} · {attr} · {json.dumps(row.value, default=json_default)}"
+                    )
         return constraints

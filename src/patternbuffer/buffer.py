@@ -14,6 +14,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from patternbuffer.codec import decode_hook, json_default
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
@@ -154,7 +155,7 @@ class PatternBuffer:
                 row.entity,
                 row.attribute,
                 row.value_type,
-                json.dumps(row.value, sort_keys=True),
+                json.dumps(row.value, sort_keys=True, default=json_default),
                 row.valid_from,
                 row.valid_to,
                 row.frame,
@@ -245,7 +246,9 @@ class PatternBuffer:
             params.extend(attribute_in)
         if value is not None:
             clauses.append("a.value = ?")
-            params.append(json.dumps(value, sort_keys=True))
+            # Encoded-byte equality: a Decimal query matches its stored row at
+            # the authored scale ("12.50" != "12.5" — append-only fidelity).
+            params.append(json.dumps(value, sort_keys=True, default=json_default))
         if value_type is not None:
             clauses.append("a.value_type = ?")
             params.append(value_type)
@@ -279,7 +282,7 @@ class PatternBuffer:
                 entity=r[3],
                 attribute=r[4],
                 value_type=r[5],
-                value=json.loads(r[6]),
+                value=json.loads(r[6], object_hook=decode_hook),
                 valid_from=r[7],
                 valid_to=r[8],
                 frame=r[9],

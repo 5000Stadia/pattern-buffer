@@ -13,6 +13,7 @@ import logging
 from pathlib import Path
 
 from patternbuffer.buffer import PatternBuffer
+from patternbuffer.codec import decode_hook, json_default
 from patternbuffer.model import STATUSES, VALUE_TYPES, Assertion
 from patternbuffer.roles import _make_builder_role
 
@@ -44,7 +45,8 @@ def dump(buffer: PatternBuffer) -> str:
     lines = []
     for row in buffer.all_rows():
         lines.append(
-            json.dumps({f: getattr(row, f) for f in _FIELDS}, sort_keys=True)
+            json.dumps({f: getattr(row, f) for f in _FIELDS}, sort_keys=True,
+                       default=json_default)
         )
     return "\n".join(lines) + ("\n" if lines else "")
 
@@ -67,9 +69,14 @@ def build(jsonl: str, path: str | Path) -> PatternBuffer:
         if not line.strip():
             continue
         try:
-            raw = json.loads(line)
+            raw = json.loads(line, object_hook=decode_hook)
         except json.JSONDecodeError as exc:
             raise DumpError(f"line {n}: not valid JSON: {exc}") from exc
+        if not isinstance(raw, dict):
+            # A bare tag line ({"$decimal": ...}) decodes to a Decimal, and any
+            # other non-object line is equally not a row — abort as validation,
+            # never an AttributeError.
+            raise DumpError(f"line {n}: not an assertion row object")
         missing = set(_FIELDS) - raw.keys()
         if missing:
             raise DumpError(f"line {n}: missing fields {sorted(missing)}")
