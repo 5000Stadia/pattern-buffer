@@ -9,10 +9,12 @@
 
 One append-only log of perspective-scoped, time-indexed assertions about entities; every other structure — current state, space, knowledge, history, the rendered world — is a disposable projection over it. Fiction simulation and real-world tracking are the same machine under one policy switch.
 
+**A world-encapsulation framework, engine-independent by construction.** The substrate's only outside dependency is an injected model callable `(prompt, schema) -> json` — no host concept (players, turns, scenes, sessions) ever reaches inside it — so any engine sits on top: a game runtime, a household or job-site tracker, an agent's long-term memory. Fiction and tracking aren't two systems; they are two *instances* of one substrate, differing only in resolution policy and provenance discipline.
+
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
 **Status: pre-1.0; substrate validated, ingestion fidelity is the open
-front.** The engine passes its 96-test invariant suite, and the chapter test
+front.** The engine passes its 362-test invariant suite, and the chapter test
 (ingest a complete noir mystery, delete the prose, interrogate the store
 against a hand-authored answer key) has been graded across three full runs.
 The substrate's invariants held in all of them — sealed containers stayed
@@ -52,9 +54,9 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 3. ~~The chapter test, runs 1–3~~ + run 4 (in flight): substrate validated; registry-first ingestion (INGEST-V2) landed; pass-0 registry quality is the open score lever. Receipts: `evals/results/`.
 4. The shipped example world: `examples/anchor/` — a bible-verified noir mystery as a queryable database, with a zero-API-key scripted tour ("where was the memory core during the assembly?"). Stamps from the first verified run.
 5. The messy-dialogue micro-eval (the honest bridge from fiction ingestion to tracking-mode ingestion).
-6. The porcelain API (`ingest` / `snapshot` / `ask` — three verbs, a complete host integration), then host integration (adapter pattern — intended primary host: [Kernos](https://github.com/5000Stadia/Kernos); first *live* host: [Construct](https://github.com/5000Stadia/construct), an interactive-fiction engine playing worlds on the frozen porcelain today — `pattern` → `construct` loads it → `holonovel`).
-7. The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure).
-8. The MCP wrapper — the framework-agnostic claim proven by demonstration: the same five verbs served to non-Python hosts. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
+6. The porcelain API — the frozen host contract (`porcelain-v0.1`). Five load-bearing verbs — `ingest` (+`ingest_structured`) / `snapshot` / `ask` / `materialize` / `resolve`+`refer()` — over a fuller read-and-identity family (`state`, `where`, `aggregate`, `neighborhood`, `frame_diff`, `who_knows`, `correlate`, `route`, …). Then host integration (adapter pattern — intended primary host: [Kernos](https://github.com/5000Stadia/Kernos); first *live* host: [Construct](https://github.com/5000Stadia/construct), an interactive-fiction engine playing worlds on the frozen porcelain today — `pattern` → `construct` loads it → `holonovel`).
+7. The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure) — every item now exercised in the field by the first live host.
+8. The MCP wrapper — the framework-agnostic claim proven by demonstration: the same porcelain contract served to non-Python hosts. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
 
 ## License
 
