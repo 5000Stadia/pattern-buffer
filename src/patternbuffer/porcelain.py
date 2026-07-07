@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -97,6 +98,12 @@ class Porcelain:
 
     def __init__(self, world: "World") -> None:
         self._w = world
+        # BUILD-SESSION-V1 state. The session is a host-workflow concept and
+        # lives here (the engine's toggle/classifier don't know it exists).
+        # World.porcelain is THE handle — a second manual Porcelain(world) is
+        # unsupported (sessions would not see each other).
+        self._build_head: int | None = None
+        self._build_prev_inline: bool | None = None
 
     # ------------------------------------------------------------- helpers
 
@@ -144,6 +151,75 @@ class Porcelain:
     @staticmethod
     def _is_numeric(value: object) -> bool:
         return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
+
+    # ------------------------------------------------- BUILD-SESSION-V1
+
+    def begin_build(self, at: float | None = None) -> dict:
+        """Enter build mode: every subsequent ingest DEFERS durability
+        classification (regardless of per-call `classify=` — the session
+        wins); `seal_build` runs one pass at the end. `at` places the scene
+        cursor. Raises on double-enter (not a nesting feature)."""
+        if self._build_head is not None:
+            raise RuntimeError("a build session is already open; seal or abort it")
+        ing = self._w.ingestor
+        self._build_prev_inline = ing.classify_inline
+        ing.classify_inline = False
+        self._build_head = self._w.buffer.head()
+        if at is not None:
+            ing.cursor.advance(at)
+        return {"outcome": "build_open", "since_seq": self._build_head,
+                "cursor": ing.cursor.position}
+
+    def seal_build(self, model: bool = False, scope: str = "session") -> dict:
+        """Finalize the session: one classification pass over its rows
+        (already-classified rows — e.g. a per-call `classify="rules"` inside
+        the session — are skipped, never re-judged), restore the toggle,
+        close the session. `scope="all"` sweeps the whole log instead (the
+        classify_all-style pass, for pre-session deferred rows). `model=True`
+        sends ambiguous rows to the batch LM call; default is rules-only."""
+        if self._build_head is None:
+            raise RuntimeError("no build session open")
+        if scope not in ("session", "all"):
+            raise ValueError(f"unknown seal scope {scope!r}")
+        begin = self._build_head
+        head = self._w.buffer.head()
+        rows = self._w.buffer.all_rows()
+        if scope == "session":
+            rows = [r for r in rows if r.seq > begin]
+        classified = self._w.classifier.classify_rows(rows, model=model)
+        self._w.ingestor.classify_inline = self._build_prev_inline
+        self._build_head = None
+        self._build_prev_inline = None
+        return {"outcome": "sealed", "classified": classified,
+                "seq_range": [begin + 1, head], "scope": scope}
+
+    def abort_build(self) -> dict:
+        """Close an open session WITHOUT classifying (restore the toggle,
+        clear the state). Idempotent — `no_session` when none is open. The
+        `build()` sugar's exception path and World.close() route through
+        this: a half-built world is the host's to inspect; classifying
+        wreckage helps nobody."""
+        if self._build_head is None:
+            return {"outcome": "no_session"}
+        self._w.ingestor.classify_inline = self._build_prev_inline
+        since = self._build_head
+        self._build_head = None
+        self._build_prev_inline = None
+        return {"outcome": "aborted", "since_seq": since}
+
+    @contextmanager
+    def build(self, at: float | None = None, model: bool = False,
+              scope: str = "session"):
+        """Python sugar over begin_build/seal_build: seals on clean exit,
+        aborts (toggle restored, nothing classified) on exception."""
+        self.begin_build(at=at)
+        try:
+            yield self
+        except BaseException:
+            self.abort_build()
+            raise
+        else:
+            self.seal_build(model=model, scope=scope)
 
     # -------------------------------------------------------------- writes
 

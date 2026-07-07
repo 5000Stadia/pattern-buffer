@@ -252,6 +252,10 @@ class World:
         return out
 
     def close(self) -> None:
+        # An open build session never outlives the buffer: abort (restore the
+        # classify toggle, classify nothing) before closing (BUILD-SESSION-V1).
+        if hasattr(self, "_porcelain"):
+            self._porcelain.abort_build()
         self.buffer.close()
 
 
