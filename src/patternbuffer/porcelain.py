@@ -221,6 +221,16 @@ class Porcelain:
         else:
             self.seal_build(model=model, scope=scope)
 
+    def axis_heads(self) -> dict:
+        """The two-axis high-water mark of the log (AXIS-HEAD-V1):
+        `asserted_head` (the seq head) and `valid_head` (MAX valid_from over
+        ALL rows, all frames; None when no timed rows exist). A coordinate
+        scalar, never content — no entity/attribute/value/frame crosses. The
+        entry-epoch read: a pre-play coordinate must sit above every seeded
+        row wherever it landed (a frame-scoped max under-raises)."""
+        return {"asserted_head": self._w.buffer.head(),
+                "valid_head": self._w.buffer.max_valid_from()}
+
     # -------------------------------------------------------------- writes
 
     def extract(self, text: str, scene: str | None = None,
@@ -264,7 +274,13 @@ class Porcelain:
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
                           classify: str = "inline",
-                          cursor_authoritative: bool = False) -> Receipt:
+                          cursor_authoritative: bool = False,
+                          at: float | None = None) -> Receipt:
+        # `at` places the scene cursor before the commit (AXIS-HEAD-V1 Win 2)
+        # — the per-chunk pose for parallel-extract/serial-commit paths,
+        # mirroring ingest(at=). The porcelain owns the pose; the gate reads it.
+        if at is not None:
+            self._w.ingestor.cursor.advance(at)
         rows = self._w.ingest_structured(items, frame=frame, classify=classify,
                                          cursor_authoritative=cursor_authoritative)
         receipt = self._receipt(rows)

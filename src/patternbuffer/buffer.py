@@ -267,6 +267,13 @@ class PatternBuffer:
         params.append(aao)
         return self._select("WHERE " + " AND ".join(clauses), tuple(params))
 
+    def max_valid_from(self) -> float | None:
+        """The valid-time high-water mark over ALL rows, all frames (None when
+        no timed rows exist). Log coordinates are real after retraction —
+        monotone by construction (AXIS-HEAD-V1)."""
+        row = self._conn.execute("SELECT MAX(valid_from) FROM assertions").fetchone()
+        return row[0]
+
     def _select(self, where: str, params: tuple) -> list[Assertion]:
         cur = self._conn.execute(
             "SELECT seq, id, world_id, entity, attribute, value_type, value,"
