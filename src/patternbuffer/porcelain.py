@@ -148,17 +148,19 @@ class Porcelain:
     # -------------------------------------------------------------- writes
 
     def extract(self, text: str, scene: str | None = None,
-                extract: str = "full") -> list[dict]:
+                extract: str = "full", pov: str | None = None) -> list[dict]:
         """Read-only extraction (INGEST-LATENCY-V2): returns the raw item dicts,
         NO write. Run these concurrently in your runtime (your cap), then
-        ingest_structured() the results serially."""
+        ingest_structured() the results serially. `pov` (SHAPE-FIX-V1 4c): the
+        viewpoint entity id — deixis pronouns (I/you) bind to it instead of
+        minting phantom persons."""
         context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
-        return self._w.extract(text, context=context, extract=extract)
+        return self._w.extract(text, context=context, extract=extract, pov=pov)
 
     def ingest(self, text: str, source: str | None = None, scene: str | None = None,
                at: float | None = None, frame: str | None = None,
                classify: str = "inline", extract: str = "full",
-               cursor_authoritative: bool = False) -> Receipt:
+               cursor_authoritative: bool = False, pov: str | None = None) -> Receipt:
         # classify (HD 079): "batch" collapses ~100 serial per-turn durability
         # calls into one; "rules" (HD 083) does it with zero LM calls; "defer"
         # skips. extract (HD 082): "lean" trims the prompt. cursor_authoritative
@@ -167,7 +169,8 @@ class Porcelain:
             self._w.ingestor.cursor.advance(at)
         context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
         rows = self._w.ingest(text, context=context, frame=frame, classify=classify,
-                              extract=extract, cursor_authoritative=cursor_authoritative)
+                              extract=extract, cursor_authoritative=cursor_authoritative,
+                              pov=pov)
         if source is not None:
             fact_rows = [
                 r for r in rows
@@ -383,6 +386,35 @@ class Porcelain:
         on every future reconcile. Returns a Receipt
         (rejected | noop_already_distinct | conflict_already_merged)."""
         return self._w.registry.reject(a, b)
+
+    # -------------------------------------------- SHAPE-FIX-V1 (identity shape)
+
+    def adjudicate_deferred(self) -> dict:
+        """Merge the structurally-DECISIVE subset of open proposals — pure
+        name-fragments with no independent identity signal (anchor subsumption:
+        `tovin` ⊆ `tovin beck`), no relating edges, no kind conflict, no `aka`.
+        Returns {merged: [receipts], residue: [proposals-with-auto_decline]} —
+        the residue is yours to adjudicate with confirm/merge/reject. Opt-in;
+        `reconcile()` is unchanged. Zero model calls; idempotent."""
+        return self._w.registry.adjudicate_deferred()
+
+    def typing_conflicts(self) -> list[dict]:
+        """Read-only: same-anchor cross-kind pairs carrying the typing-slip
+        signature (an outgoing-bare spurious twin beside a structurally real
+        entity — person:harth beside place:harth). Proposals cannot surface
+        these; adjudicate each with `retype(...)` or leave it. Zero writes."""
+        return self._w.registry.typing_conflicts()
+
+    def retype(self, entity: str, to_kind: str, evidence: str,
+               absorb: str | None = None) -> dict:
+        """Typing correction, distinct from merge. absorb=None: correct one
+        mistyped entity's kind (wrong kind rows retracted, correct kind
+        appended + classified). absorb=<target>: the entity is a spurious
+        duplicate at the wrong kind — verified against the slip signature,
+        artifact edges retracted, then merged through the guarded path.
+        Never a veto bypass: a non-slip invocation returns
+        `vetoed_not_a_slip`; `distinct_from` stays absolute."""
+        return self._w.registry.retype(entity, to_kind, evidence, absorb=absorb)
 
     # ------------------------------------ AKA-CORRELATION-V1 (opt-in identity)
 

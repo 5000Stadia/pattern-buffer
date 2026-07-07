@@ -14,6 +14,7 @@ without it.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -27,6 +28,11 @@ from patternbuffer.roles import WriterRole
 from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
+
+# The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
+# A malformed id (person:/you) is SKIPPED with a typed receipt, never
+# normalized — guessing person:you would manufacture the phantom well-formed.
+_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
 
 # Built-in attribute aliases: the fold key must never fragment. Domain
 # vocabulary emerges freely; these structural repairs are fixed.
@@ -122,6 +128,10 @@ _EXTRACT_RULES_FULL = (
     "entities with caused_by where the text gives causality).\n"
     "- NEVER invent: extract only what the text supports. Atmosphere and "
     "sensory texture are not assertions.\n"
+    "- The narrative voice is not an entity: never emit person: entities for "
+    "the narrator, an unnamed speaker, or the audience. Never mint a person "
+    "from a bare pronoun; if a pronoun's referent is unknown, skip that "
+    "assertion.\n"
 )
 _EXTRACT_RULES_LEAN = (
     "Extract world-state assertions from this narrative passage.\n"
@@ -137,6 +147,10 @@ _EXTRACT_RULES_LEAN = (
     "- timeless=true ONLY for identity/structure (kind, names, fixed adjacency); "
     "everything else gets valid_from.\n"
     "- NEVER invent: extract only what the text supports; atmosphere is not an "
+    "assertion.\n"
+    "- The narrative voice is not an entity: never emit person: entities for "
+    "the narrator, an unnamed speaker, or the audience. Never mint a person "
+    "from a bare pronoun; if a pronoun's referent is unknown, skip that "
     "assertion.\n"
 )
 
@@ -375,16 +389,21 @@ class Ingestor:
     def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
         out: list[Assertion] = []
         attribute, receipt = self._canonicalize(item["attribute"])
-        entity = self._registry.resolve(item["entity"])
+        # RAW ids first (Cx final): validation must see what the author wrote,
+        # not what resolution mapped it to — resolve happens AFTER the
+        # malformed-id gate below.
+        entity = item["entity"]
         # Exact-decimal symmetry: a JSON-origin host passes the tag form
         # ({"$decimal": "12.50"}), an in-process host a real Decimal — both
         # normalize to Decimal here (EXACT-DECIMAL-QUANTITIES-V1).
         value = decode_value(item["value"])
+        # Entity inference requires the full id grammar, not a bare ":" —
+        # a prose value with a colon ("repaired: the rival arrives") is a
+        # literal, never a phantom entity reference (SHAPE-FIX-V1 4a).
         value_type = item.get("value_type") or (
-            "entity" if isinstance(value, str) and ":" in value else "literal"
+            "entity" if isinstance(value, str) and _ID_RE.fullmatch(value)
+            else "literal"
         )
-        if value_type == "entity" and isinstance(value, str):
-            value = self._registry.resolve(value)
         timeless = bool(item.get("timeless", False))
         valid_from = item.get("valid_from")
         # INGEST-LATENCY-V2 Win 3: in cursor-authoritative ingest (bible
@@ -416,6 +435,20 @@ class Ingestor:
             if self._resolver_role is None:
                 raise ValueError("no resolver authority wired for generated rows")
             write_role = self._resolver_role
+
+        # Malformed-id gate (SHAPE-FIX-V1 4a): AFTER the authority gate (an
+        # authority violation must still raise, never be swallowed by a skip —
+        # the INGEST-HARDENING ordering), BEFORE the edge guard — and on the
+        # RAW ids, before resolution touches them (Cx final).
+        if not _ID_RE.fullmatch(entity) or (
+            value_type == "entity" and isinstance(value, str)
+            and not _ID_RE.fullmatch(value)
+        ):
+            self._record_skip(entity, attribute, value, "malformed_id")
+            return out
+        entity = self._registry.resolve(entity)
+        if value_type == "entity" and isinstance(value, str):
+            value = self._registry.resolve(value)
 
         # Edge-granular structural guard (Part B): a single invalid edge
         # (containment cycle / self-edge / lateral self-loop) is SKIPPED with a
@@ -475,16 +508,22 @@ class Ingestor:
                 )
             )
         if item.get("caused_by"):
-            out.append(
-                self._buffer.append(
-                    entity=row.id, attribute="caused_by", value=str(item["caused_by"]),
-                    value_type="entity", status="inferred", role=self._role,
-                    # The effect-edge rides in its effect's frame: a non-canon
-                    # effect's cause must be reachable from a frame-scoped read
-                    # (else the situation lens false-deads it — Codex post-impl).
-                    frame=item.get("frame", CANON),
+            # Side-channel entity edge: same malformed-id gate as the main row
+            # (SHAPE-FIX-V1 4a, Cx final) — a phantom cause never enters.
+            caused_by = str(item["caused_by"])
+            if not _ID_RE.fullmatch(caused_by):
+                self._record_skip(entity, "caused_by", caused_by, "malformed_id")
+            else:
+                out.append(
+                    self._buffer.append(
+                        entity=row.id, attribute="caused_by", value=caused_by,
+                        value_type="entity", status="inferred", role=self._role,
+                        # The effect-edge rides in its effect's frame: a non-canon
+                        # effect's cause must be reachable from a frame-scoped read
+                        # (else the situation lens false-deads it — Codex post-impl).
+                        frame=item.get("frame", CANON),
+                    )
                 )
-            )
         if self._observe_mode and not timeless:
             # The A2 rider: wall-clock learned-at is a gate invariant here.
             out.append(
@@ -508,8 +547,13 @@ class Ingestor:
             # 036/019: an extractor holds single-call context — identity
             # merges are PROPOSED here, promoted where the whole world is
             # in view (promote_identity_proposals / self-check / tier-2).
-            self._registry.maybe_same_as(entity, str(item["same_as"]),
-                                         evidence="extractor late binding")
+            # Same malformed-id gate as the main row (SHAPE-FIX-V1 4a).
+            same_as = str(item["same_as"])
+            if not _ID_RE.fullmatch(same_as):
+                self._record_skip(entity, "same_as", same_as, "malformed_id")
+            else:
+                self._registry.maybe_same_as(entity, same_as,
+                                             evidence="extractor late binding")
         if self.classify_inline:
             self._classifier.classify(row)
         elif self._classify_collect is not None:
@@ -519,7 +563,7 @@ class Ingestor:
     # ---------------------------------------------------------- extracted
 
     def extract(self, text: str, context: str = "",
-                extract: str = "full") -> list[dict[str, Any]]:
+                extract: str = "full", pov: str | None = None) -> list[dict[str, Any]]:
         """READ-ONLY extraction (INGEST-LATENCY-V2 Win 2): build the prompt, call
         the model, return the raw extracted item dicts. NO buffer write, no
         canonicalization/cursor/resolution (those happen in
@@ -527,23 +571,36 @@ class Ingestor:
         concurrently: the host parallelizes N `extract()` calls in its own
         runtime (with its concurrency cap) then `ingest_structured()`s the
         results SERIALLY (the append-only writes stay serial). `extract` selects
-        the full|lean rules block."""
+        the full|lean rules block. ``pov`` (SHAPE-FIX-V1 4c): the viewpoint
+        entity id — deixis pronouns bind to it instead of minting phantoms.
+        Id-validated BEFORE prompt interpolation (never ride an unvalidated
+        string into the model)."""
         if self._model is None:
             raise RuntimeError("no model callable injected; use ingest_structured")
         rules = _EXTRACT_RULES_LEAN if extract == "lean" else _EXTRACT_RULES_FULL
+        if pov is not None:
+            if not _ID_RE.fullmatch(pov):
+                raise ValueError(f"pov {pov!r} is not a valid entity id")
+            rules += (
+                f"- First/second-person pronouns (I, you, we) referring to the "
+                f"viewpoint character are {pov} — never mint a new entity for "
+                f"them.\n"
+            )
         prompt = f"{rules}{context}\n\nPASSAGE:\n{text}"
         return self._model(prompt, _EXTRACT_SCHEMA)["items"]
 
     def ingest(self, text: str, context: str = "", frame: str | None = None,
                classify: str = "inline", extract: str = "full",
-               cursor_authoritative: bool = False) -> list[Assertion]:
+               cursor_authoritative: bool = False,
+               pov: str | None = None) -> list[Assertion]:
         """Model-backed extraction through the same gate (= `extract` then
         `ingest_structured`, behavior-identical). ``frame`` re-targets extracted
         rows to a named frame (letter 028). ``classify`` (HD 079): inline|batch|
         defer|rules durability. ``extract`` (HD 082): full|lean rules.
         ``cursor_authoritative`` (HD 084): the cursor governs valid_from (bible
-        source-ingest); see ingest_structured."""
-        items = self.extract(text, context, extract)
+        source-ingest); see ingest_structured. ``pov`` (SHAPE-FIX-V1 4c): the
+        viewpoint entity id for deixis binding."""
+        items = self.extract(text, context, extract, pov=pov)
         return self.ingest_structured(
             items, frame=frame, classify=classify,
             cursor_authoritative=cursor_authoritative,

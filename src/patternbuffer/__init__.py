@@ -83,6 +83,17 @@ class World:
             self.buffer, self.classifier, self.indexes, roles["truth_maintenance"],
             self.semantics,
         )
+        # SHAPE-FIX-V1 retype wiring: retraction authority + rules-mode
+        # durability for the corrected kind row (the set_kind_provider idiom —
+        # truth/classifier post-date the registry).
+        self.registry.set_retract_provider(self.truth.retract)
+        self.registry.set_classify_provider(
+            lambda rows: self.classifier.classify_rows(rows, model=False)
+        )
+        # Win 4 (durable-contradiction veto, HD 089): the registry reads
+        # standing folds + durability verdicts through late-bound lookups.
+        self.registry.set_fold_provider(self.indexes.fold_key)
+        self.registry.set_durability_provider(self.classifier.durability)
         self.resolver = Resolver(
             self.buffer, self.classifier, self.indexes, roles["resolver"],
             model or _no_model, policy,
@@ -200,15 +211,18 @@ class World:
 
     def ingest(self, text: str, context: str = "", frame: str | None = None,
                classify: str = "inline", extract: str = "full",
-               cursor_authoritative: bool = False) -> list:
+               cursor_authoritative: bool = False, pov: str | None = None) -> list:
         return self.ingestor.ingest(text, context, frame=frame, classify=classify,
                                     extract=extract,
-                                    cursor_authoritative=cursor_authoritative)
+                                    cursor_authoritative=cursor_authoritative,
+                                    pov=pov)
 
-    def extract(self, text: str, context: str = "", extract: str = "full") -> list:
+    def extract(self, text: str, context: str = "", extract: str = "full",
+                pov: str | None = None) -> list:
         """Read-only extraction (INGEST-LATENCY-V2): the host parallelizes these,
-        then ingest_structured()s the results serially. No write."""
-        return self.ingestor.extract(text, context, extract=extract)
+        then ingest_structured()s the results serially. No write. `pov`
+        (SHAPE-FIX-V1 4c): the viewpoint entity id for deixis binding."""
+        return self.ingestor.extract(text, context, extract=extract, pov=pov)
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
                           classify: str = "inline",

@@ -13,7 +13,14 @@ import logging
 import re
 
 from patternbuffer.buffer import PatternBuffer
-from patternbuffer.model import ATTR_PREFIX, CANON, CONTAINMENT_FAMILY, META_ATTRIBUTES
+from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    CONTAINMENT_FAMILY,
+    META_ATTRIBUTES,
+    Assertion,
+)
 from patternbuffer.roles import WriterRole
 
 # Identity edges — never a "relating edge" for the distinctness signal.
@@ -59,10 +66,37 @@ class IdentityRegistry:
         # after Indexes exists (mirrors indexes.set_closure_provider). The
         # recall gate reads kind through it; absent provider => kind unknown.
         self._kind_of = None
+        # Late-bound retract/classify providers (SHAPE-FIX-V1 `retype`): the
+        # retraction authority lives in TruthMaintenance and the durability
+        # verdict in the Classifier — both constructed after the registry, so
+        # World wires them (same idiom as set_kind_provider).
+        self._retract = None
+        self._classify_rows = None
+        # Late-bound fold + durability lookups for the durable-contradiction
+        # veto (SHAPE-FIX-V1 Win 4, HD 089: the fused-protagonist incident).
+        self._fold_of = None
+        self._durability_of = None
 
     def set_kind_provider(self, fn) -> None:
         """Install the kind-fold lookup the recall gate consults (§2)."""
         self._kind_of = fn
+
+    def set_retract_provider(self, fn) -> None:
+        """Install the retraction write (TruthMaintenance.retract) `retype` uses."""
+        self._retract = fn
+
+    def set_classify_provider(self, fn) -> None:
+        """Install the rules-mode classifier pass for rows `retype` appends."""
+        self._classify_rows = fn
+
+    def set_fold_provider(self, fn) -> None:
+        """Install the general key-fold lookup ((entity, attribute) ->
+        FoldResult) the durable-contradiction veto reads through."""
+        self._fold_of = fn
+
+    def set_durability_provider(self, fn) -> None:
+        """Install the durability lookup (assertion_id -> class)."""
+        self._durability_of = fn
 
     # --------------------------------------------------------------- write
 
@@ -137,6 +171,53 @@ class IdentityRegistry:
             e, v = row.entity, row.value
             if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
                 out.append(f"{e}·{row.attribute}·{v}")
+        return out
+
+    def durable_contradictions(self, a: str, b: str) -> list[str]:
+        """Shared attributes where BOTH sides hold present, DURABLE
+        (CONSTITUTIVE/DISPOSITIONAL), and CONTRADICTORY folded values — the
+        generalization of the kind veto to every standing fact (SHAPE-FIX-V1
+        Win 4; HD 089: a retrieval lead and a defense apprentice fused because
+        only `kind` was consulted). Two entities whose standing identities
+        contradict are probably two things: a soft distinctness signal, same
+        tier as a relating edge — auto-merge declines to a proposal; the host's
+        guarded `merge` remains available. Transient STATE differences (mood,
+        position) never trigger it. Descriptors `attr: va ≠ vb`."""
+        if self._fold_of is None or self._durability_of is None:
+            return []
+        family = self._containment_family()
+        clos_a, clos_b = self.closure(a), self.closure(b)
+
+        def authored_attrs(clos: set[str]) -> set[str]:
+            out = set()
+            for row in self._buffer.visible():
+                if row.entity not in clos:
+                    continue
+                if row.attribute in ("name", "alias", "kind") \
+                        or row.attribute in _IDENTITY_ATTRS \
+                        or row.attribute in META_ATTRIBUTES \
+                        or row.attribute in family:
+                    continue
+                out.add(row.attribute)
+            return out
+
+        def norm(winner) -> object:
+            v = winner.value
+            if winner.value_type == "entity" and isinstance(v, str):
+                return self.resolve(v)
+            return v.strip().lower() if isinstance(v, str) else v
+
+        out: list[str] = []
+        for attr in sorted(authored_attrs(clos_a) & authored_attrs(clos_b)):
+            fa, fb = self._fold_of(a, attr), self._fold_of(b, attr)
+            if fa.winner is None or fb.winner is None:
+                continue
+            if norm(fa.winner) == norm(fb.winner):
+                continue
+            durable = {CONSTITUTIVE, DISPOSITIONAL}
+            if self._durability_of(fa.winner.id) in durable \
+                    and self._durability_of(fb.winner.id) in durable:
+                out.append(f"{attr}: {fa.winner.value!r} vs {fb.winner.value!r}")
         return out
 
     def _kind_values(self, entity: str) -> set[str]:
@@ -329,6 +410,8 @@ class IdentityRegistry:
             return False
         if self.relating_edges_between(a, b):  # soft: related ⇒ probably distinct (§3a)
             return False
+        if self.durable_contradictions(a, b):  # soft: standing facts contradict (Win 4)
+            return False
         ta, tb = self.typed_name_anchors(a), self.typed_name_anchors(b)
         shared = {t for (_, t) in ta} & {t for (_, t) in tb}
         if not shared:
@@ -506,6 +589,271 @@ class IdentityRegistry:
                 break
         return self.guarded_merge(a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}")
 
+    # ------------------------------------------ SHAPE-FIX-V1 (buckets 1 + 2)
+
+    def _distinctive_anchor_tokens(self, entity: str) -> set[str]:
+        """Content tokens of the entity's name-class anchors, minus type-word
+        anchors (an anchor that IS the kind value carries no identity)."""
+        kinds = self._kind_values(entity)
+        out: set[str] = set()
+        for _attr, text in self.typed_name_anchors(entity):
+            if text in kinds:
+                continue
+            out.update(_content_tokens(text))
+        return out
+
+    def _anchor_subsumed(self, a: str, b: str) -> bool:
+        """The decisive bucket-1 shape: one side's ENTIRE distinctive
+        anchor-token set is contained in the other's — a pure fragment with no
+        independent identity signal (`tovin` ⊆ {tovin, beck}). Two sides each
+        holding distinctive non-shared tokens are two individuated things
+        sharing a token — never decisive."""
+        ta, tb = self._distinctive_anchor_tokens(a), self._distinctive_anchor_tokens(b)
+        if not ta or not tb:
+            return False
+        return ta <= tb or tb <= ta
+
+    def adjudicate_deferred(self) -> dict:
+        """Merge the structurally-DECISIVE subset of live maybe_same_as
+        proposals (SHAPE-FIX-V1 Win 1); return receipts + the residue for host
+        adjudication. Opt-in — `reconcile()` is unchanged. Decisive = no hard
+        block, zero relating edges, no `aka` correlation (non-collapsing by
+        design), kind not in conflict, and anchor subsumption. Deterministic,
+        zero model calls, idempotent."""
+        merged: list[dict] = []
+        seen: set[tuple[str, str]] = set()
+        for row in list(self._buffer.visible(attribute="maybe_same_as")):
+            if not isinstance(row.value, str):
+                continue
+            ra, rb = self.resolve(row.entity), self.resolve(row.value)
+            if ra == rb:
+                continue
+            key = tuple(sorted([ra, rb]))
+            if key in seen:
+                continue
+            seen.add(key)
+            if self.containment_block(ra, rb) or self.distinct_block(ra, rb):
+                continue
+            if self.relating_edges_between(ra, rb):
+                continue
+            if set(self.closure(rb)) & self.correlation_set(ra):
+                continue  # correlated facets are two things by design (Cx #3)
+            if self._kind_state(ra, rb) == "conflict":
+                continue
+            if self.durable_contradictions(ra, rb):
+                continue  # standing facts contradict (Win 4) — host judges
+            if not self._anchor_subsumed(ra, rb):
+                continue
+            event_id = self.merge(
+                ra, rb, evidence="adjudicate_deferred: fragment subsumption"
+            )
+            if event_id is not None:
+                merged.append(self._receipt(
+                    "merged", self.resolve(ra), merge_event_id=event_id))
+        if merged:
+            logger.info("adjudicate_deferred: %d merge(s)", len(merged))
+        return {"merged": merged, "residue": self.enumerate_proposals()}
+
+    def _containment_rows_between(self, a: str, b: str) -> list[Assertion]:
+        """The visible containment ROWS relating a's closure to b's — the
+        would-be-self-edge artifacts a Case-B retype retracts (row form of
+        `containment_block`, which serves descriptors)."""
+        family = self._containment_family()
+        clos_a, clos_b = self.closure(a), self.closure(b)
+        out = []
+        for row in self._buffer.visible():
+            if row.attribute not in family or row.value_type != "entity":
+                continue
+            if not isinstance(row.value, str):
+                continue
+            e, v = row.entity, row.value
+            if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
+                out.append(row)
+        return out
+
+    def _outgoing_domain_rows(self, entity: str) -> list[Assertion]:
+        """Domain facts authored ON the entity's closure — beyond naming, kind,
+        identity, and meta. The slip signature's bare-ness measure: incoming
+        children do NOT count (they are mis-bound rows about OTHER entities and
+        re-point correctly after the absorb)."""
+        clos = self.closure(entity)
+        out = []
+        for row in self._buffer.visible():
+            if row.entity not in clos:
+                continue
+            if row.attribute in ("name", "alias", "kind") \
+                    or row.attribute in _IDENTITY_ATTRS \
+                    or row.attribute in META_ATTRIBUTES:
+                continue
+            out.append(row)
+        return out
+
+    def _incoming_children(self, entity: str) -> list[Assertion]:
+        """Visible containment rows valued INTO the entity's closure."""
+        family = self._containment_family()
+        clos = {self.resolve(c) for c in self.closure(entity)}
+        return [
+            row for row in self._buffer.visible()
+            if row.attribute in family and row.value_type == "entity"
+            and isinstance(row.value, str) and self.resolve(row.value) in clos
+        ]
+
+    def _slip_asymmetry(self, spurious: str, target: str) -> bool:
+        """The Case-B slip signature's structural asymmetry: the spurious side
+        authored nothing of its own (outgoing-bare — where the inter-closure
+        containment ARTIFACTS don't count: `obj:street in place:street` is
+        evidence OF the slip, not independent structure); the target side is
+        real (outgoing domain facts OR incoming children). A side with any
+        non-artifact structure of its own — the locked chest — never reads as
+        spurious, so retype can't bypass the merge veto."""
+        artifact_ids = {r.id for r in self._containment_rows_between(spurious, target)}
+        own = [r for r in self._outgoing_domain_rows(spurious)
+               if r.id not in artifact_ids]
+        if own:
+            return False
+        return bool(self._outgoing_domain_rows(target)
+                    or self._incoming_children(target))
+
+    def typing_conflicts(self) -> list[dict]:
+        """Read-only surfacing of typing slips (SHAPE-FIX-V1, Cx-mandated):
+        same-anchor cross-kind pairs carrying the slip signature. Proposals
+        cannot show these — `reconcile()` never re-proposes hard-blocked pairs —
+        so without this read the slips are invisible. Zero writes, zero model
+        calls; the host adjudicates each with `retype(...)` or leaves it."""
+        text_to_reps: dict[str, set[str]] = {}
+        for row in self._buffer.visible():
+            if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
+                continue
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            text_to_reps.setdefault(
+                row.value.strip().lower(), set()).add(self.resolve(row.entity))
+        out: list[dict] = []
+        seen: set[tuple[str, str]] = set()
+        for text, reps in text_to_reps.items():
+            members = sorted(reps)
+            for i in range(len(members)):
+                for j in range(i + 1, len(members)):
+                    a, b = members[i], members[j]
+                    if self.resolve(a) == self.resolve(b):
+                        continue
+                    key = tuple(sorted([a, b]))
+                    if key in seen:
+                        continue
+                    if self._kind_state(a, b) != "conflict":
+                        continue
+                    if self._slip_asymmetry(a, b):
+                        spurious, target = a, b
+                    elif self._slip_asymmetry(b, a):
+                        spurious, target = b, a
+                    else:
+                        continue
+                    seen.add(key)
+                    artifact_ids = {
+                        r.id for r in self._containment_rows_between(spurious, target)
+                    }
+                    out.append({
+                        "spurious": spurious,
+                        "target": target,
+                        "kinds": [sorted(self._kind_values(spurious)),
+                                  sorted(self._kind_values(target))],
+                        "shared_anchor": text,
+                        # The structural evidence the signature rests on — what
+                        # makes one side spurious and the other real.
+                        "asymmetry": {
+                            "spurious_own_facts": len([
+                                r for r in self._outgoing_domain_rows(spurious)
+                                if r.id not in artifact_ids]),
+                            "target_own_facts": len(
+                                self._outgoing_domain_rows(target)),
+                            "target_children": len(
+                                self._incoming_children(target)),
+                        },
+                        "artifact_edges": self.containment_block(spurious, target),
+                    })
+        return sorted(out, key=lambda d: (d["spurious"], d["target"]))
+
+    def retype(self, entity: str, to_kind: str, evidence: str,
+               absorb: str | None = None) -> dict:
+        """Typing correction — DISTINCT from merge (SHAPE-FIX-V1 Win 2). The
+        containment veto correctly blocks merges; it must not block fixing a
+        kind slip. Append-only: wrong kind rows are RETRACTED (meta-assertions),
+        the correct kind appended and classified.
+
+        Case A (absorb=None): correct one mistyped entity's kind.
+        Case B (absorb=target): the entity is a spurious duplicate of `absorb`
+        at the wrong kind — verify the slip signature (shared anchor + kind
+        conflict + structural asymmetry), retract the slip kind row(s) and ONLY
+        the direct inter-closure containment artifacts (would-be self-edges;
+        incoming child containment is preserved untouched), then merge through
+        the guarded path. A non-slip invocation is `vetoed_not_a_slip` — retype
+        is never a veto bypass."""
+        if self._retract is None:
+            raise RuntimeError("no retraction authority wired for retype")
+        re_ = self.resolve(entity)
+        retracted: list[str] = []
+
+        def _retract_kind_rows(target_entity: str) -> None:
+            clos = self.closure(target_entity)
+            for row in self._buffer.visible(attribute="kind"):
+                if row.entity not in clos:
+                    continue
+                v = row.value
+                if isinstance(v, str) and v.strip().lower() == str(to_kind).strip().lower() \
+                        and absorb is None:
+                    continue  # already-correct row survives in Case A
+                self._retract(row.id, f"retype: {evidence}")
+                retracted.append(row.id)
+
+        if absorb is None:
+            kinds = self._kind_values(re_)
+            if kinds == {str(to_kind).strip().lower()}:
+                receipt = self._receipt("noop_already_kind", re_)
+                receipt["retracted"] = []
+                return receipt
+            _retract_kind_rows(re_)
+            row = self._buffer.append(
+                entity=re_, attribute="kind", value=to_kind,
+                status="stated", role=self._ingestor,
+            )
+            self._buffer.append(
+                entity=row.id, attribute="evidence", value=evidence,
+                status="stated", role=self._ingestor,
+            )
+            if self._classify_rows is not None:
+                self._classify_rows([row])
+            receipt = self._receipt("retyped", re_)
+            receipt["retracted"] = retracted
+            receipt["kind_assertion_id"] = row.id
+            return receipt
+
+        rt = self.resolve(absorb)
+        if re_ == rt:
+            receipt = self._receipt("noop_already_merged", re_)
+            receipt["retracted"] = []
+            return receipt
+        if self.distinct_block(re_, rt):
+            receipt = self._receipt(
+                "vetoed", re_, reason="distinct_from",
+                blocking_edges=self.distinct_block(re_, rt),
+            )
+            receipt["retracted"] = []
+            return receipt
+        shared = ({t for _, t in self.typed_name_anchors(re_)}
+                  & {t for _, t in self.typed_name_anchors(rt)})
+        if (not shared or self._kind_state(re_, rt) != "conflict"
+                or not self._slip_asymmetry(re_, rt)):
+            receipt = self._receipt("vetoed_not_a_slip", re_)
+            receipt["retracted"] = []
+            return receipt
+        _retract_kind_rows(re_)
+        for row in self._containment_rows_between(re_, rt):
+            self._retract(row.id, f"retype artifact edge: {evidence}")
+            retracted.append(row.id)
+        result = self.guarded_merge(re_, rt, evidence=f"retype absorb: {evidence}")
+        result["retracted"] = retracted
+        return result
+
     @staticmethod
     def _receipt(outcome, canonical_id, merge_event_id=None, reason=None,
                  blocking_edges=None) -> dict:
@@ -618,10 +966,13 @@ class IdentityRegistry:
         shared = {t for (_, t) in ta} & {t for (_, t) in tb}
         kind = self._kind_state(a, b)
 
+        contradictions = self.durable_contradictions(a, b)
         if containment:
             code = "containment"
         elif any(r["relation_family"] != "containment" for r in related):
             code = "relating_edge"
+        elif contradictions:
+            code = "durable_contradiction"
         elif not shared:
             code = "no_shared_anchor"
         elif kind == "conflict":
@@ -645,6 +996,7 @@ class IdentityRegistry:
             "code": code,
             "kinds": [self._kind_context(a), self._kind_context(b)],
             "related_rows": related,
+            "durable_contradictions": contradictions,
             "candidate_bindings": self._candidate_bindings(a, b),
         }
 
@@ -664,6 +1016,9 @@ class IdentityRegistry:
             attrs = sorted({r["attribute"] for r in ctx["related_rows"]
                             if r["relation_family"] != "containment"})
             return f"relating_edge: {attrs[0]}" if attrs else "relating_edge"
+        if code == "durable_contradiction":
+            cs = ctx.get("durable_contradictions") or []
+            return f"durable_contradiction: {cs[0]}" if cs else code
         return code
 
     def enumerate_proposals(self) -> list[dict]:
