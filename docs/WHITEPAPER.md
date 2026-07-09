@@ -739,6 +739,16 @@ Reads that surface *the relevant neighbourhood* of a subject, not just one key:
   perspective, the §6 absence discipline applied to enumeration). `facts()`
   serves raw visible rows for **audited scans** (receipt trails, knowledge
   digests), never folds — folded truth stays `state`/`snapshot`.
+- **`fidelity_audit(frame, as_of)`** — the ingestion self-check: derives where a
+  freshly-built log is structurally incomplete (coreference **`name_collisions`** —
+  distinct ids sharing an anchor, each pair annotated with *why* it isn't merged;
+  `unstamped_timed`; `orphan_entities`; `open_conflicts`) as a queryable checklist.
+  The unknown-as-computed-gap (A6) applied to ingestion quality: the engine
+  surfaces the gaps keyed by entity, the host joins arc/cast **severity** (host
+  meaning) and drives targeted re-extraction; the engine never repairs (membrane).
+  The headline `name_collisions` count is the fidelity metric a host drives down
+  build-over-build. Ingestion fidelity is the engine's stated open front (§19); this
+  makes it *measurable*.
 
 ### 25.5 Traversability — passable space (RFC-003)
 
@@ -824,3 +834,4 @@ exact number, the host owns what it denominates.
 | A10 | 2026-06→07 | Ingestion hardening + latency: malformed-id gate, `pov` deixis binding, edge-granular skip receipts, classify modes, cursor-authoritative ingest, the `extract()` seam (§25.6) | INGEST-HARDENING-V1, INGEST-LATENCY-V2, SHAPE-FIX-V1 |
 | A11 | 2026-07 | Exact-decimal quantities: `Decimal` + the `$decimal` tagged scalar, one value codec, fixed-context folds, raise-on-mix (§25.8; §13 numeric) | EXACT-DECIMAL-QUANTITIES-V1 |
 | A12 | 2026-07 | The frozen porcelain contract (`porcelain-v0.1`, additive-only) + the build lifecycle (`begin_build`/`seal_build`/`abort_build`, `axis_heads`) + bounded roster/scan reads (`entities`/`facts`); first host runs entirely on the porcelain (§25.1, §25.7, §25.4) | PORCELAIN-V1, BUILD-SESSION-V1, AXIS-HEAD-V1, BOUNDED-READS-V1 |
+| A13 | 2026-07 | `fidelity_audit()` — the ingestion self-check that makes the open front (§19) *measurable*: coreference `name_collisions` (the tracked metric) + `unstamped_timed`/`orphan_entities`/`open_conflicts`, derived and host-severity-joined (§25.4). Co-designed with the first host | INGESTION-FIDELITY-V1 |

@@ -19,7 +19,7 @@ from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.indexes import Indexes
 from patternbuffer.ingest import Ingestor
-from patternbuffer.model import CANON
+from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.refer import Refer, Resolution
 from patternbuffer.roles import _make_engine_roles
@@ -203,6 +203,60 @@ class World:
 
     def aggregate(self, container: str, member_attribute: str, op: str, **kw) -> dict:
         return self.indexes.aggregate(container, member_attribute, op, **kw)
+
+    def fidelity_audit(self, frame: str = CANON, as_of: float | None = None) -> dict:
+        """Structural ingestion-fidelity gaps, derived (INGESTION-FIDELITY-V1).
+        Read-only; run after a build's classification + `truth.scan()` (it never
+        classifies or scans). The engine surfaces gaps; the host joins arc/cast
+        severity and drives targeted re-extraction."""
+        from patternbuffer.classify import EVENT, STATE
+
+        collisions = self.registry.name_collisions(frame=frame, valid_as_of=as_of)
+
+        unstamped: list[dict] = []
+        entities: set[str] = set()
+        for row in self.buffer.visible(frame=frame):
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            eid = self.registry.resolve(row.entity)
+            if eid.startswith(("obj:", "person:")):
+                entities.add(eid)
+            # Meta/identity edges (same_as/distinct_from/aka/source…) are
+            # classified EVENT and carry no valid_from BY DESIGN — bookkeeping,
+            # never a spine fact; they are not an unstamped gap.
+            if row.attribute in META_ATTRIBUTES:
+                continue
+            if row.valid_from is None and self.classifier.get(row.id) is not None \
+                    and self.classifier.durability(row.id) in (STATE, EVENT):
+                unstamped.append({"entity": eid, "attribute": row.attribute,
+                                  "assertion_id": row.id})
+
+        orphans = sorted(
+            e for e in entities
+            if not self.indexes.locate(e, frame=frame, valid_as_of=as_of)
+        )
+
+        conflicts = [
+            {"entity": c.entity, "attribute": c.attribute, "frame": c.frame,
+             "kind": c.kind, "assertion_ids": list(c.assertion_ids)}
+            for c in self.truth.open_conflicts()
+        ]
+
+        live = sum(1 for g in collisions if g["live"])
+        return {
+            "frame": frame,
+            "name_collisions": collisions,
+            "unstamped_timed": unstamped,
+            "orphan_entities": orphans,
+            "open_conflicts": conflicts,
+            "summary": {
+                "name_collisions": live,          # live-fragmentation groups only
+                "name_collisions_total": len(collisions),
+                "unstamped_timed": len(unstamped),
+                "orphan_entities": len(orphans),
+                "open_conflicts": len(conflicts),
+            },
+        }
 
     def materialize(self, scope, **kw) -> Materialization:
         return self.projector.materialize(scope, **kw)

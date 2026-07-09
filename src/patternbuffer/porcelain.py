@@ -221,6 +221,18 @@ class Porcelain:
         else:
             self.seal_build(model=model, scope=scope)
 
+    def fidelity_audit(self, frame: str = CANON, as_of: float | None = None) -> dict:
+        """Structural ingestion-fidelity gaps as a queryable checklist
+        (INGESTION-FIDELITY-V1): `name_collisions` (distinct ids sharing an
+        anchor, each pair annotated with WHY it isn't merged — the coreference-
+        fragmentation metric), `unstamped_timed` (classified STATE/EVENT rows off
+        the time spine), `orphan_entities` (unanchored obj:/person:),
+        `open_conflicts`, and a `summary` with the headline live-fragmentation
+        count. Read-only; run after seal + `truth.scan()`. The host joins
+        arc/cast severity and drives targeted re-extraction of the flagged
+        spans; the engine surfaces, never repairs (membrane)."""
+        return encode_out(self._w.fidelity_audit(frame=frame, as_of=as_of))
+
     def axis_heads(self) -> dict:
         """The two-axis high-water mark of the log (AXIS-HEAD-V1):
         `asserted_head` (the seq head) and `valid_head` (MAX valid_from over

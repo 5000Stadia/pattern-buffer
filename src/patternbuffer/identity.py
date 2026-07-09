@@ -433,6 +433,65 @@ class IdentityRegistry:
                 return True
         return False
 
+    def name_collisions(self, frame: str = CANON,
+                        valid_as_of: float | None = None) -> list[dict]:
+        """Fidelity read (INGESTION-FIDELITY-V1): normalized name/alias anchors
+        carried by >1 distinct resolved entity — the coreference-fragmentation
+        metric. Grouping is frame/as-of-scoped; per-pair status is computed from
+        the identity predicates directly (never the global list-builders, which
+        pre-filter hard-blocked/distinct pairs). A group is `live` (a real
+        fragmentation the host re-extracts) iff any pair is
+        unlinked/auto_declined/typing_slip; correlated/hard-blocked-only groups
+        are reported for visibility but flagged resolved. Zero writes."""
+        text_to_reps: dict[str, set[str]] = {}
+        for row in self._buffer.visible(frame=frame, valid_as_of=valid_as_of):
+            if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
+                continue
+            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
+                continue
+            text_to_reps.setdefault(
+                row.value.strip().lower(), set()).add(self.resolve(row.entity))
+
+        out: list[dict] = []
+        for anchor in sorted(text_to_reps):
+            reps = sorted(text_to_reps[anchor])
+            if len(reps) < 2:
+                continue
+            pairs: list[dict] = []
+            live = False
+            for i in range(len(reps)):
+                for j in range(i + 1, len(reps)):
+                    a, b = reps[i], reps[j]
+                    status, reason = self._collision_status(a, b, valid_as_of, frame)
+                    entry = {"a": a, "b": b, "status": status}
+                    if reason is not None:
+                        entry["reason"] = reason
+                    pairs.append(entry)
+                    if status in ("unlinked", "auto_declined", "typing_slip"):
+                        live = True
+            out.append({"anchor": anchor, "entities": reps, "pairs": pairs,
+                        "live": live})
+        return out
+
+    def _collision_status(self, a: str, b: str, valid_as_of: float | None,
+                          frame: str) -> tuple[str, str | None]:
+        """Why a same-anchor pair isn't one entity — from the per-pair predicates
+        in `_mergeable`'s own order (INGESTION-FIDELITY-V1)."""
+        if b in self.correlation_set(a, valid_as_of=valid_as_of, frame=frame):
+            return "correlated", None                    # an aka facet — not a gap
+        if self.containment_block(a, b):
+            return "hard_blocked", "containment"
+        if self.distinct_block(a, b):
+            return "hard_blocked", "distinct_from"
+        if self._kind_state(a, b) == "conflict" and (
+                self._slip_asymmetry(a, b) or self._slip_asymmetry(b, a)):
+            return "typing_slip", None                   # host fixes with retype(absorb=)
+        if self._has_proposal(a, b):                     # a real open maybe_same_as edge
+            code = self._decline_context(a, b)["code"]
+            if code is not None:
+                return "auto_declined", code             # a logged proposal the gate declined
+        return "unlinked", None                          # no edge yet — host runs reconcile
+
     def _has_proposal(self, a: str, b: str) -> bool:
         """A visible maybe_same_as already relates a's closure to b's."""
         clos_a, clos_b = self.closure(a), self.closure(b)

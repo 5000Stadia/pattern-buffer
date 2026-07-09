@@ -311,6 +311,16 @@ p.begin_build(at=None) / p.seal_build(model=False, scope="session"|"all") / p.ab
    # restore the toggle and classify NOTHING. `with p.build(at=, model=, scope=):` is sugar
    # (seals on clean exit, aborts on exception). Retires the classify_inline / classify_all
    # / cursor.advance reach — use it for scenario/source builds.
+p.fidelity_audit(frame="canon", as_of=None) -> {name_collisions, unstamped_timed, orphan_entities, open_conflicts, summary}
+   # INGESTION-FIDELITY-V1: structural ingestion gaps as a queryable checklist, DERIVED
+   # (zero writes; run AFTER seal + truth.scan()). name_collisions = distinct ids sharing a
+   # name/alias, each pair annotated with WHY it isn't merged (correlated | hard_blocked |
+   # typing_slip | auto_declined+reason | unlinked) — the coreference-fragmentation metric;
+   # summary.name_collisions counts LIVE groups only (the tracked number to drive down).
+   # unstamped_timed = classified STATE/EVENT rows with no valid_from (off the time spine).
+   # orphan_entities = unanchored obj:/person:. open_conflicts = the truth-maintenance flags.
+   # The engine SURFACES gaps keyed by entity; the HOST joins arc/cast severity and drives
+   # targeted re-extraction of the flagged spans (membrane: engine never repairs).
 p.axis_heads() -> {asserted_head: int, valid_head: float|None}
    # AXIS-HEAD-V1: the log's two-axis high-water mark. valid_head = MAX(valid_from) over ALL
    # rows, ALL frames — the entry-epoch read (a pre-play coordinate must sit above every
