@@ -64,7 +64,11 @@ host fixes with `retype(absorb=)`) · `auto_declined` + `reason` (an open
 `maybe_same_as` relates the closures and `_decline_context(a,b)["code"]` is
 `alias_not_specific` / `kind_conflict` / `durable_contradiction` / …) · `unlinked`
 (a shared anchor, no edge, no block). Group shape:
-`{anchor, entities:[…], pairs:[{a, b, status, reason?}]}`. A group whose every pair
+`{anchor, entities:[…], kinds:[…], pairs:[{a, b, status, reason?}], live}` — where
+`kinds` is the **folded** kind per entity, index-aligned with `entities` (a host
+weights cross-kind person↔place collisions highest; the id namespace can lie, the
+fold is truth — added per HD 107), and `live` is true iff any pair is
+`unlinked`/`auto_declined`/`typing_slip`. A group whose every pair
 is `correlated`/`hard_blocked` is **reported for visibility, flagged resolved, and
 NOT counted** in the headline; a group with ≥1 `unlinked`/`auto_declined`/
 `typing_slip` pair is a **live fragmentation** the host re-extracts. (Typing slips

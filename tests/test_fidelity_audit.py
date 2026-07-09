@@ -170,14 +170,45 @@ def test_orphan_entities(world):
 
 
 def test_open_conflicts_surfaced(world):
-    # a constitutive contradiction (two kinds) raises a truth-maintenance flag
+    # a genuine constitutive contradiction (two timeless=CONSTITUTIVE kinds on one
+    # entity) raises a truth-maintenance flag that the audit must surface populated
     world.ingest_structured([
         {"entity": "obj:thing", "attribute": "kind", "value": "sword", "timeless": True},
-        {"entity": "obj:thing", "attribute": "material", "value": "steel", "valid_from": 1.0},
+        {"entity": "obj:thing", "attribute": "kind", "value": "dagger", "timeless": True},
     ])
     world.truth.scan()
     conflicts = world.porcelain.fidelity_audit()["open_conflicts"]
-    assert isinstance(conflicts, list)   # shape present; populated when scan flags one
+    hit = [c for c in conflicts if c["entity"] == "obj:thing" and c["attribute"] == "kind"]
+    assert hit and hit[0]["assertion_ids"]                # populated, not just a list
+
+
+def test_unclassified_row_not_counted(world):
+    # unstamped_timed requires an ACTUAL sidecar classification (precondition):
+    # a deferred (unclassified) row must NOT masquerade as a gap
+    world.ingest_structured([
+        {"entity": "person:d", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:d", "attribute": "mood", "value": "grim", "timeless": True},
+    ], classify="defer")
+    keys = {(u["entity"], u["attribute"])
+            for u in world.porcelain.fidelity_audit()["unstamped_timed"]}
+    assert ("person:d", "mood") not in keys               # unclassified -> not a gap
+    world.classifier.classify_all()                       # now classify it
+    keys2 = {(u["entity"], u["attribute"])
+             for u in world.porcelain.fidelity_audit()["unstamped_timed"]}
+    assert ("person:d", "mood") in keys2                  # classified STATE, no valid_from
+
+
+def test_as_of_scopes_grouping(world):
+    # a collision that only forms after a later reveal is absent from an
+    # as-of-before audit (the grouping honors valid_as_of)
+    world.ingest_structured([
+        {"entity": "person:p", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:p", "attribute": "name", "value": "wren", "timeless": True},
+        {"entity": "person:q", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:q", "attribute": "alias", "value": "wren", "valid_from": 10.0},
+    ])
+    assert _group(world.porcelain.fidelity_audit(as_of=5.0), "wren") is None
+    assert _group(world.porcelain.fidelity_audit(as_of=15.0), "wren") is not None
 
 
 # ------------------------------------------------------------ membrane
@@ -185,11 +216,15 @@ def test_open_conflicts_surfaced(world):
 def test_audit_is_read_only_and_json_safe(world):
     _named(world, "person:tovin", "person", "tovin")
     _named(world, "person:tovin_beck", "person", "tovin beck")
-    before = dump(world.buffer)
+    world.truth.scan()                                    # so open_conflicts has a sidecar
+    world.classifier.classify_all()
+    conn = world.buffer.raw_connection()
+    before, before_changes = dump(world.buffer), conn.total_changes
     a = world.porcelain.fidelity_audit()
-    after = dump(world.buffer)
-    assert before == after                                # zero writes
-    json.dumps(a)                                          # plain-JSON contract
+    after, after_changes = dump(world.buffer), conn.total_changes
+    assert before == after                                # log unchanged
+    assert after_changes == before_changes                # NO sidecar write either (Cx 501)
+    json.dumps(a)                                         # plain-JSON contract
 
 
 def test_frame_scopes_grouping(world):
