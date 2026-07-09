@@ -7,7 +7,7 @@ name = "patternbuffer"
 version = "0.0.1"
 description = "A pattern buffer that never degrades: an append-only world-state substrate; everything else is a disposable projection."
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
+license = { text = "MIT" }
 dependencies = []
 
 [project.optional-dependencies]
