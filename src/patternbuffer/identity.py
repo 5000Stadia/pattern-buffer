@@ -469,8 +469,13 @@ class IdentityRegistry:
                     pairs.append(entry)
                     if status in ("unlinked", "auto_declined", "typing_slip"):
                         live = True
-            out.append({"anchor": anchor, "entities": reps, "pairs": pairs,
-                        "live": live})
+            # Folded kind per entity (parallel to `entities`) — the host weights
+            # cross-kind collisions (person↔place) highest, and the folded kind
+            # is truth where the id namespace can lie (a mistyped id). INGESTION-
+            # FIDELITY-V1 follow-on (HD 107).
+            kinds = [self._kind_label(e) for e in reps]
+            out.append({"anchor": anchor, "entities": reps, "kinds": kinds,
+                        "pairs": pairs, "live": live})
         return out
 
     def _collision_status(self, a: str, b: str, valid_as_of: float | None,

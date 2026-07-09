@@ -313,10 +313,12 @@ p.begin_build(at=None) / p.seal_build(model=False, scope="session"|"all") / p.ab
    # / cursor.advance reach — use it for scenario/source builds.
 p.fidelity_audit(frame="canon", as_of=None) -> {name_collisions, unstamped_timed, orphan_entities, open_conflicts, summary}
    # INGESTION-FIDELITY-V1: structural ingestion gaps as a queryable checklist, DERIVED
-   # (zero writes; run AFTER seal + truth.scan()). name_collisions = distinct ids sharing a
-   # name/alias, each pair annotated with WHY it isn't merged (correlated | hard_blocked |
-   # typing_slip | auto_declined+reason | unlinked) — the coreference-fragmentation metric;
-   # summary.name_collisions counts LIVE groups only (the tracked number to drive down).
+   # (zero writes; run AFTER seal + truth.scan()). name_collisions groups = {anchor, entities,
+   # kinds (FOLDED, parallel to entities — weight cross-kind person<->place highest; the id
+   # namespace can lie), pairs:[{a,b,status,reason?}], live}. status = WHY the pair isn't
+   # merged (correlated | hard_blocked | typing_slip | auto_declined+reason | unlinked) — route
+   # repair by it: reject() genuine homonyms (harth person<->place), adjudicate_deferred/retype
+   # true same-kind splits. summary.name_collisions counts LIVE groups only (the tracked number).
    # unstamped_timed = classified STATE/EVENT rows with no valid_from (off the time spine).
    # orphan_entities = unanchored obj:/person:. open_conflicts = the truth-maintenance flags.
    # The engine SURFACES gaps keyed by entity; the HOST joins arc/cast severity and drives

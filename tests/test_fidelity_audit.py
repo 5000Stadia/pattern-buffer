@@ -83,6 +83,12 @@ def test_collision_statuses(world):
     s, _ = _status(_group(a, "figure"), "person:ilsa", "person:masked")
     assert s == "correlated"
 
+    # folded kinds per group (HD 107) — parallel to `entities`; a cross-kind
+    # (person↔place) collision is detectable from the kind pair, not the namespace
+    crown = _group(a, "crown")
+    kinds = dict(zip(crown["entities"], crown["kinds"]))
+    assert kinds["obj:crown_relic"] == "relic" and kinds["place:crown_hall"] == "place"
+
 
 def test_typing_slip_status(world):
     # person:harth (bare) shadows place:harth (has a villager) -> slip
