@@ -267,6 +267,8 @@ Identity across non-adjacent references is the hardest problem in the system and
 - **Late binding.** "A man entered" in chapter 1 merges with the named character of chapter 3 by appending identity assertions, leaving every chapter-1 row intact and now reachable through the merged identity.
 - **Splits and underdetermined anchors** *(added in design sessions)*: the dual of merging. A coarsely-anchored entity ("the drawer," anchored only to the home) is **a spatial thunk** — not wrong, *underdetermined*, recorded at exactly the precision the language transmitted. When the world later grows finer entities (desk drawer, kitchen drawer), the coarse entity becomes a candidate-set holder (`MAYBE_SAME_AS` both) and collapses the way thunks always collapse — on forcing, exactly once: the player retrieves the pipe from the desk drawer, the identity event commits `drawer_1 SAME_AS desk_drawer`, and the kitchen drawer provably never held it. Until forced, the honest answer is available and natural: "your pipe's in a drawer at home — you never said which room." The system refuses to claim precision the language never transmitted.
 
+The registry's shipped surface has grown well past this founding sketch — a third **non-collapsing** identity relation (`aka` correlation, for reveals and dual personas), an explicit **anti-merge** primitive (`distinct_from`), a host-invoked reconciliation/adjudication/**retype** family, and a **durable-contradiction veto** that keeps two entities with contradictory standing facts from auto-merging. The full catalogue is §25.2.
+
 ---
 
 ## 12. The operation algebra and the role authority matrix
@@ -323,6 +325,7 @@ materialize(scope, as_of, frame, lens, budget) → materialization
 - `current_state` — adds STATE folded to `as_of`.
 - `what_happened` — the EVENT chain in scope, time-ordered, with causality; the backstory digest.
 - `character_sheet` — one entity's accumulated card, frame-respecting.
+- `situation` — standing truth folded to `as_of` **∪** the live EVENT activity since a `since` cursor: the re-entry lens for "what's true here now, and what just happened" in one read (SITUATION-LENS-V1; catalogued in §25).
 
 **Algorithm:** select in-scope, in-frame assertions valid at `as_of` per lens → fold STATE by supersession per (entity, attribute, frame) key — *per frame; a belief fold never overwrites canon* → walk the containment tree for the spatial spine, ordered by depth and salience → fill gaps from kind-defaults, every fill marked `default` → resolve forced thunks via the resolver (which feeds new assertions back through classification — the system is closed under its own operations) → shape to budget.
 
@@ -330,8 +333,10 @@ materialize(scope, as_of, frame, lens, budget) → materialization
 fold ignores durability and computes a derived total from the latest numeric
 `literal` baseline plus later signed `delta` rows. The total is served as a
 quantity, not as a stored assertion; the append-only ledger remains the audit
-trail. Integers and floats are supported in v1; exact decimal arithmetic is a
-future extension.
+trail. Integers and floats serve game-grade quantities; **exact-decimal
+arithmetic (money, real ledgers) is shipped** — an opt-in `Decimal` value that
+folds without float drift, carried through every JSON boundary as a tagged
+scalar (EXACT-DECIMAL-QUANTITIES-V1, catalogued in §25).
 
 **The budget invariant:** the CONSTITUTIVE spine is budget-exempt. Compress DISPOSITIONAL color, summarize peripheral STATE, digest EVENT chains — never compact identity and structure. (Anchored summarization with the anchor formally bound to the constitutive layer.)
 
@@ -592,4 +597,230 @@ The working vocabulary is maintained in [`LEXICON.md`](LEXICON.md) — two layer
 
 The instructor rulings of dev_inbox letter 002 (containment-family fold key, self-contained frames with optional inclusion edges, establishing-set qualification, mandatory STATE/EVENT `valid_time` stamping, file+`world_id` double partitioning, canonicalization receipts-in-log/map-in-sidecar) carry spike authority and are encoded in `specs/SPIKE-V1.md`; A1/A2 are the two that amend this document's text.
 
+Amendments **A7–A12** — the post-spike subsystems (the read layer, the full identity model, spatial composition and traversability, ingestion hardening, exact decimals, the frozen porcelain and build lifecycle) — are logged in **§25.9**, alongside the catalogue of the shipped surface they document.
+
 **Lineage:** this white paper integrates (a) the framework-agnostic Assertion-World Model design document (June 2026), which itself superseded an earlier host-shaped design frame by re-deriving the system with no concessions and cataloging the diff as §18; and (b) the subsequent design sessions that produced P8, `refer()` and the three-tier cascade, constraint inversion, the scene cursor and lidar disciplines, splits/underdetermined anchors, thunks-move-without-resolving, document trust chains, cross-source conflict handling, the write-path taxonomy, mode-scoped decay, dramatic irony as a computable delta, the worlds/binding model, the naming decisions, and the lexicon.
+
+---
+
+## 25. The shipped surface (implementation currency)
+
+Sections 1–24 are the founding design and remain canonical; every principle,
+primitive, and invariant above is load-bearing in the running engine. This
+section catalogues the subsystems **built past the spike** — the work that
+carried the engine from the chapter-test spike to a first host running entirely
+on its public contract. Nothing here contradicts §1–§24; each item is a
+consequence of a founding principle, named so the design reference is complete.
+Each subsystem has a spec under `specs/` and tests asserting its invariants; the
+integrator's how-to is [`ADOPTION.md`](ADOPTION.md).
+
+Milestone (2026-07): the first live host, **Construct** (an interactive-fiction
+engine), runs with **zero** engine-internal reaches — entirely on the porcelain
+(§25.1). The framework-agnostic claim of §17 is demonstrated, not asserted.
+
+### 25.1 The porcelain — the frozen host contract
+
+The operation algebra (§12) is the engine's internal surface; the **porcelain**
+(`porcelain-v0.1`, tagged and **frozen**) is the typed, JSON-serializable verb
+set a host actually integrates against. Freeze semantics are **additive-only**:
+parameters gain defaults and verbs are added; nothing is renamed, removed, or
+re-typed — so a host built against the tag never breaks. Everything a host needs
+is here; a host that reaches below it (into `buffer`/`ingestor`/`classifier`) is
+a signal a legitimate need isn't yet expressible on the surface, and the fix is
+to add the verb (that is how §25.4–§25.7 came to exist). The verb families:
+
+- **Write:** `ingest` / `ingest_structured` / `extract` (the read-only
+  extraction seam) / `resolve` / `retract`.
+- **Standing reads:** `snapshot` (scope × frame × lens × as_of × budget),
+  `state`, `state_union`, `where`, `aggregate`, `confidence`.
+- **Spatial reads:** `locate`, `contents`, `composition`, `features`, `path`,
+  `route`, `neighborhood`, `salience`.
+- **Knowledge/diff reads:** `frame_diff`, `who_knows`, `events`.
+- **Identity:** `reconcile`, `proposals`, `confirm`, `merge`, `reject`,
+  `correlate`, `correlations`, `correlation_conflicts`, `adjudicate_deferred`,
+  `typing_conflicts`, `retype`.
+- **Roster/scan reads:** `entities`, `facts`.
+- **Build lifecycle:** `begin_build` / `seal_build` / `abort_build` (+ the
+  `build()` context manager), `axis_heads`.
+- **Reference:** `ask` (natural-language question → grounded facts), `refer`.
+
+Every read that can carry a value is **plain-JSON-safe** at the boundary
+(exact-decimals leave as tagged scalars, never raw `Decimal`); the core returns
+native Python objects, the porcelain encodes.
+
+### 25.2 The full identity model
+
+§11's registry shipped as four relations plus a host adjudication surface. The
+relations, by collapsing behaviour:
+
+- **`same_as`** — collapses two ids to one closure (the merge of §11). A logged,
+  reversible event.
+- **`maybe_same_as`** — the represented-ambiguity proposal; carries its
+  evidence; survives until adjudicated.
+- **`distinct_from`** — the explicit **anti-merge** primitive: a sticky "these
+  are definitively two things" that every future reconcile honours (keeps two
+  same-named Clays apart). A **hard veto** on merge.
+- **`aka` (correlation)** — a **non-collapsing** third relation: two ids are
+  *facets of one identity* (the masked figure **is** Ilsa; a dual persona; an
+  amalgamation) without merging their rows. As-of-scoped, so a reveal at t=10
+  does not leak backward before it. `state_union`/`snapshot(correlated=True)`
+  fold an entity over its correlation set for the whole reveal scene in one read.
+
+The **host reconciliation surface** (all guarded; the hard vetoes —
+containment, `distinct_from` — are absolute):
+
+- **`reconcile()`** — the global finalize pass: merges confident cross-chunk
+  coreferents by shared anchor through the auto-gate; the rest become adjudicable
+  proposals.
+- **`adjudicate_deferred()`** — merges only the structurally-**decisive** open
+  proposals (anchor **subsumption**: a pure fragment whose entire distinctive
+  anchor set is contained in the other's — `tovin` ⊆ `tovin beck`), returning
+  receipts + the residue for host judgment. The semantic trap (two individuated
+  things sharing a token) stays a proposal by construction.
+- **`retype(entity, to_kind, evidence, absorb=)`** — a typing correction
+  **distinct from merge**: the containment veto correctly blocks *merges* but
+  must not block fixing a kind slip (a relic mis-typed `person:`; a
+  `person:harth` shadowing the real `place:harth`). Append-only: wrong `kind`
+  rows are retracted, the correct one appended and classified; in the absorb
+  case only the inter-closure *artifact* edges are retracted (real child
+  containment is preserved), then a guarded merge. A non-slip invocation is
+  refused (`vetoed_not_a_slip`) — retype is never a veto bypass.
+- **`typing_conflicts()`** — read-only surfacing of the slip candidates
+  (`reconcile` never re-proposes hard-blocked pairs, so without this they are
+  invisible).
+- **The durable-contradiction veto** — the kind-check generalized to *every
+  standing fact*: two entities whose shared, present, **durable**
+  (CONSTITUTIVE/DISPOSITIONAL) attributes hold contradictory values are probably
+  two things; auto-merge soft-declines to a proposal (a retrieval lead and a
+  defense apprentice do not fuse just because they share a first name). A
+  live-play defect made this concrete.
+
+`proposals()` returns each open proposal with a structured `auto_decline`
+context (the precise gate-failure code + evidence), so a host can adjudicate
+with meaning it has and the engine doesn't.
+
+### 25.3 Spatial composition — the `part_of` axis
+
+§4 gives the containment tree (where a movable *is*) and the lateral graph (what
+connects). Composition adds a third structural axis: **`part_of`** — a feature is
+*structurally part of* a place without being *located in* it the way a movable
+is (the burrow under the hillside, the alcove of a hall). `features(place)`
+reads the `part_of`-children; `composition(entity)` reads the chain up;
+`snapshot(features=True)` inlines a place with its sub-features in one read.
+Identity-resolved and conflict-halting (a two-parent feature is excluded), one
+level deep — the general recursive framework is deliberately deferred until a
+third shape proves it needed.
+
+### 25.4 The retrieval and awareness read layer
+
+Reads that surface *the relevant neighbourhood* of a subject, not just one key:
+
+- **`neighborhood(entity, depth, edge_kinds, budget)`** — the salience-ranked
+  local subgraph across containment, lateral, and relation edges: the "what's
+  around this and what matters" read for host briefings.
+- **`salience(entity)`** — the projection-time ranking of §13, exposed as a read
+  (recency + reinforcement + reference frequency + delta-from-baseline;
+  computed, cached in the sidecar, never authoritative — P1 preserved).
+- **`aggregate(container, attribute, op)`** — bounded `sum`/`count`/`min`/`max`/
+  `avg` over a container's members' folded values (recursive optional).
+- **`confidence(entity, attribute, frame)`** — derived trust over a functional
+  key (provenance rank + recency + corroboration), computable over a **list** of
+  frames (an observer's effective knowledge = `knows:O` ∪ `public`).
+- **`who_knows(entity, attribute, value?)`** — the frame-transpose of
+  `frame_diff`: which `knows:*` frames hold a given fact. Private knowers are
+  enumerated; a *public* fact is not (public ⇒ host-assumed universal — a host
+  heuristic the engine deliberately does not enumerate).
+- **`state_union` / `snapshot(correlated=, features=)`** — the correlation- and
+  composition-aware projections of §25.2/§25.3, opt-in, default-off (existing
+  reads byte-unchanged).
+- **`entities(frame, prefix=, as_of=)` and `facts(frame, …)`** — the bounded
+  roster and frame-scan reads. **Frame is required** on both (a prefix-only
+  enumeration would leak cross-frame entity existence — every read fixes
+  perspective, the §6 absence discipline applied to enumeration). `facts()`
+  serves raw visible rows for **audited scans** (receipt trails, knowledge
+  digests), never folds — folded truth stays `state`/`snapshot`.
+
+### 25.5 Traversability — passable space (RFC-003)
+
+§4's lateral graph answers "is there a way"; **`route(a, b, frame, as_of)`**
+answers "is the way *passable*." Each portal segment (a door, gate, hatch) is
+classified `clear` / `blocked` / `obscured` under a host-declared, kind-scoped
+**traversal policy** (a shut *door* blocks; a shut *cabinet* does not) — the
+engine reads the declaration as data (the RFC-001 pattern), never host
+vocabulary. A blocked way is *derived world-detail on the portal* (its state and
+obstruction relations), inspectable and sticky, **never a stored edge label**;
+`blocked` carries the obstructing evidence, `obscured` a computed
+`unknown_basis` (the §A6 unknown doctrine, never a fake row). `path()` stays
+purely structural and is now **as-of-aware** (a severed edge drops at the time it
+was severed; history preserved).
+
+### 25.6 Ingestion hardening and latency
+
+The gate (§10) gained the disciplines that lived testing demanded:
+
+- **Malformed-id gate** — an id that violates the grammar (`person:/you`, a
+  stray-slash phantom minted from narration) is **skipped with a typed receipt**,
+  never normalized (guessing `person:you` would manufacture the phantom
+  well-formed). Runs *after* the authority gate, so an authority violation still
+  raises — a skip never swallows it.
+- **`pov=` deixis binding** — the viewpoint entity id (validated before it ever
+  reaches the prompt); first/second-person pronouns bind to it instead of minting
+  a phantom person. Plus an extractor rule suppressing narrative-voice entities
+  (the narrator is not a person). This kills the `person:you` class at the source.
+- **Edge-granular skip receipts** — a single invalid edge (containment cycle,
+  self-edge, lateral self-loop) is dropped with a typed `SkipRecord` while the
+  rest of the chunk ingests; the host audits exactly what fell (no silent cap).
+- **Classify modes** — `ingest(classify="inline"|"batch"|"defer"|"rules")`:
+  per-row (default), one batched model call, none (host sweeps later), or
+  guardrails-only zero-LM. The build-time latency lever.
+- **Cursor-authoritative ingest** — for bible/source builds the scene cursor
+  governs the story-time axis; a per-item `valid_from` is demoted to a lossless
+  `source_valid_from` meta so a diegetic year can't invert the timeline.
+- **`extract()`** — the read-only extraction seam: a host parallelizes N
+  `extract()` calls in its own runtime, then `ingest_structured()`s the results
+  serially (writes stay serial, append-only intact).
+
+### 25.7 The build lifecycle
+
+Two porcelain reads name what a source build needs from the engine's shape:
+
+- **Build sessions** — `begin_build(at=)` / `seal_build(model=, scope=)` /
+  `abort_build()` (+ the `build()` context manager): enter defer-classification
+  mode, ingest a whole world, then run one classification pass at the seal
+  (`scope="session"` for the session's rows, `"all"` for a whole-log sweep). An
+  exception or `World.close()` aborts cleanly (a half-built world is the host's to
+  inspect; classifying wreckage helps nobody). The session is a host-workflow
+  concept and lives on the porcelain; the engine's classifier and toggle stay
+  ignorant of it.
+- **`axis_heads()`** — the log's two-axis high-water mark: `asserted_head` (the
+  seq head) and `valid_head` (`MAX(valid_from)` over **all** rows, all frames —
+  the entry-epoch read: a pre-play coordinate must sit above every seeded row
+  wherever it landed). A coordinate scalar, never content — no
+  entity/attribute/value/frame crosses.
+
+### 25.8 Exact-decimal quantities
+
+The §13 accrue fold serves fiction quantities as `int`/`float`. For **money and
+any exact ledger**, float accrual is silently lossy (`0.1 + 0.2 ≠ 0.3`,
+compounding across a delta chain). An exact quantity is a Python **`Decimal`** in
+memory and a reserved **tagged scalar** `{"$decimal": "12.50"}` on every JSON
+boundary (storage, dump, host payloads); a single value **codec** owns the
+tagging so authored scale is preserved (`12.50` stays `12.50`) and no float ever
+touches the number. Fold arithmetic runs under a fixed decimal context, so builds
+stay byte-deterministic (P7). Mixing exact-decimal with float in one fold
+**raises** (an authoring smell surfaced, never silently promoted); `Decimal` +
+`int` is exact. Opt-in per value: fiction floats stay floats, and a world that
+never authors a decimal is byte-identical to before. Currency codes, units, and
+rounding *policy* remain host meaning (ordinary facts) — the engine stores an
+exact number, the host owns what it denominates.
+
+### 25.9 Amendment log (continued)
+
+| # | Date | Amendment | Origin |
+|---|---|---|---|
+| A7 | 2026-06→07 | The retrieval/awareness read layer: `neighborhood`, `salience` read, `aggregate`, multi-frame `confidence`, `who_knows`, the `situation` lens, `state_union`, `snapshot(correlated=/features=)` (§25.4; §13 lens list) | WORLD-RETRIEVAL-V1/V2, SITUATION-LENS-V1, CONFIDENCE-V1/MULTIFRAME, WHO-KNOWS-INVERSE-V1, AWARENESS-READS-V1.1 |
+| A8 | 2026-06→07 | The full identity model: `aka` correlation (non-collapsing), `distinct_from` (anti-merge), the reconcile/`adjudicate_deferred`/`retype`/`typing_conflicts` surface, the durable-contradiction veto (§25.2; §11) | AKA-CORRELATION-V1, MERGE-RECONCILE-VERB-V1/V2, IDENTITY-RECALL-V1, TRIAGE-CONTEXT-V1, SHAPE-FIX-V1 |
+| A9 | 2026-06→07 | Spatial composition (`part_of`/`features`/`composition`, §25.3) and traversability (`route`/portal/policy, as-of `path`, §25.5) | PLACE-FEATURE-ABSTRACTION-V1, RFC-003, PATH-TEMPORAL-V1 |
+| A10 | 2026-06→07 | Ingestion hardening + latency: malformed-id gate, `pov` deixis binding, edge-granular skip receipts, classify modes, cursor-authoritative ingest, the `extract()` seam (§25.6) | INGEST-HARDENING-V1, INGEST-LATENCY-V2, SHAPE-FIX-V1 |
+| A11 | 2026-07 | Exact-decimal quantities: `Decimal` + the `$decimal` tagged scalar, one value codec, fixed-context folds, raise-on-mix (§25.8; §13 numeric) | EXACT-DECIMAL-QUANTITIES-V1 |
+| A12 | 2026-07 | The frozen porcelain contract (`porcelain-v0.1`, additive-only) + the build lifecycle (`begin_build`/`seal_build`/`abort_build`, `axis_heads`) + bounded roster/scan reads (`entities`/`facts`); first host runs entirely on the porcelain (§25.1, §25.7, §25.4) | PORCELAIN-V1, BUILD-SESSION-V1, AXIS-HEAD-V1, BOUNDED-READS-V1 |

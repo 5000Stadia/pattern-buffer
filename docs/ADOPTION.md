@@ -184,13 +184,15 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
 
 ```python
 p = world.porcelain
-p.extract(text, scene=None, extract="full"|"lean") -> [item dict]
+p.extract(text, scene=None, extract="full"|"lean", pov=None) -> [item dict]
    # INGEST-LATENCY-V2: READ-ONLY extraction (no write). Parallelize N extract() calls
    # in YOUR runtime (your concurrency cap), then ingest_structured() the results SERIALLY
    # (append-only writes stay serial). The engine doesn't add concurrency (membrane).
+   # pov (SHAPE-FIX-V1): the viewpoint entity id — first/second-person pronouns (I/you)
+   #   bind to it instead of minting a phantom person:you. Id-validated before the prompt.
 p.ingest(text, source=None, scene=None, at=None, frame=None,
          classify="inline"|"batch"|"defer"|"rules", extract="full"|"lean",
-         cursor_authoritative=False) -> Receipt
+         cursor_authoritative=False, pov=None) -> Receipt
    # classify (HD 079/083): "batch" = ONE durability call/passage; "rules" = guardrails +
    #   STATE default, ZERO LM calls (fast+deterministic, eval-guard quality); "defer" skips.
    # extract (HD 082): "lean" trims the prompt (marginal input-side lever; eval-guard).
@@ -198,15 +200,20 @@ p.ingest(text, source=None, scene=None, at=None, frame=None,
    #   source-ingest, so a diegetic year can't invert the story-time axis; the overridden
    #   per-item valid_from is preserved losslessly as a `source_valid_from` meta (host
    #   promotes to a typed year/era fact if wanted). Default off = per-item valid_from wins.
-p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer") -> Receipt
+p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules",
+                    cursor_authoritative=False, at=None) -> Receipt
    # INGEST-HARDENING-V1: classify="batch" defers durability + runs ONE batch model
    # call per ingest call (the first-class form of classify_inline=False + classify_all;
    # ~65% build-time cut on generate-path builds) — use it for bulk/scenario ingest.
-   # "inline" (default) = per-row; "defer" = no classify (host runs classify_all later).
-   # The Receipt's `skipped: [{entity, attribute, value, reason}]` lists edges dropped
-   # at the gate (containment cycle / self-edge / lateral self-loop) — edge-granular:
-   # one bad edge is skipped, the rest of the chunk still ingests (no silent cap; other
-   # gate failures still raise).
+   # "inline" (default) = per-row; "defer" = no classify (host runs classify_all later);
+   # "rules" = guardrails+STATE, zero LM.
+   # at (AXIS-HEAD-V1): places the scene cursor before the commit — the per-chunk pose for
+   #   parallel-extract/serial-commit paths (mirrors ingest(at=)).
+   # The Receipt's `skipped: [{entity, attribute, value, reason}]` lists rows dropped at
+   # the gate — edge-granular (containment cycle / self-edge / lateral self-loop) AND
+   # `malformed_id` (SHAPE-FIX-V1: a stray-slash phantom id like person:/you, rejected not
+   # normalized; runs AFTER the authority gate so a violation still raises). One bad row is
+   # skipped, the rest of the chunk still ingests (no silent cap; other gate failures raise).
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False) -> dict
@@ -264,6 +271,50 @@ p.state_union(entity, attribute, frame="canon", as_of=None) -> {status, fact, qu
 p.correlation_conflicts(as_of=None, frame="canon") -> [{a, b, aka_edge, distinct_edges}]
    # raw aka authored over a distinct_from (a contradiction) surfaced for adjudication;
    # the guarded correlate() prevents it at the source.
+p.reconcile() -> {merges, proposals}                      # global finalize; host-invoked
+p.proposals() -> [{a, b, evidence, auto_decline_reason, auto_decline}]
+   # open maybe_same_as with a structured auto_decline (gate-failure code + evidence);
+   # code "durable_contradiction" names contradictory standing facts (SHAPE-FIX-V1 Win 4)
+p.confirm(a, b) / p.merge(a, b, evidence) / p.reject(a, b) -> Receipt
+   # confirm = promote a proposal; merge = assert (guarded, hard vetoes absolute);
+   # reject = distinct_from (sticky anti-merge)
+p.adjudicate_deferred() -> {merged: [Receipt], residue: [proposal]}
+   # SHAPE-FIX-V1: merge only the structurally-DECISIVE open proposals (anchor subsumption:
+   # a pure fragment whose whole distinctive anchor set ⊆ the other's — tovin ⊆ tovin beck).
+   # Blocked: relating edges, aka correlation, kind conflict, durable contradiction. The
+   # semantic trap (two individuated things sharing a token) stays residue. reconcile()
+   # unchanged; zero model calls; idempotent.
+p.typing_conflicts() -> [{spurious, target, kinds, shared_anchor, asymmetry, artifact_edges}]
+   # SHAPE-FIX-V1: read-only surfacing of typing slips (same-anchor cross-kind pairs with the
+   # slip signature: an outgoing-bare spurious twin beside a structurally real entity —
+   # person:harth beside place:harth). Proposals can't show these; adjudicate with retype().
+p.retype(entity, to_kind, evidence, absorb=None) -> Receipt
+   # SHAPE-FIX-V1: typing correction, DISTINCT from merge (the containment veto blocks a
+   # merge, never a kind fix). absorb=None: correct one mistyped entity's kind (wrong kind
+   # rows retracted, correct kind appended + classified). absorb=<target>: absorb a spurious
+   # duplicate — slip signature verified, ONLY inter-closure artifact edges retracted (child
+   # containment preserved), then guarded merge. Non-slip => vetoed_not_a_slip; distinct_from
+   # absolute. Outcomes: retyped | merged | vetoed_not_a_slip | vetoed | noop_*.
+p.entities(frame, prefix=None, as_of=None) -> [entity_id]
+   # BOUNDED-READS-V1: the roster read — entity ids carried by ONE frame's rows, resolved +
+   # sorted. frame REQUIRED (a prefix-only enumeration leaks cross-frame existence; every
+   # read fixes perspective). Your place roster is entities("canon", prefix="place:").
+p.facts(frame, entity=None, attribute=None, prefix=None, as_of=None, include_meta=False) -> [Fact]
+   # BOUNDED-READS-V1: the frame-scan — ONE frame's visible rows as Fact dicts (provenance
+   # included). RAW log reads for AUDITED scans (receipt trails, knowledge digests, marker
+   # rows), NOT folds (folded truth = state/snapshot). frame REQUIRED. An exact a:<n>
+   # receipt-chain target is always served; wide scans exclude a:*/attr:* unless include_meta.
+p.begin_build(at=None) / p.seal_build(model=False, scope="session"|"all") / p.abort_build() -> dict
+   # BUILD-SESSION-V1: a build session defers durability classification for everything
+   # ingested inside it (the session wins over per-call classify=), then seal runs ONE pass
+   # (scope="all" sweeps the whole log for pre-session deferred rows). abort/World.close()
+   # restore the toggle and classify NOTHING. `with p.build(at=, model=, scope=):` is sugar
+   # (seals on clean exit, aborts on exception). Retires the classify_inline / classify_all
+   # / cursor.advance reach — use it for scenario/source builds.
+p.axis_heads() -> {asserted_head: int, valid_head: float|None}
+   # AXIS-HEAD-V1: the log's two-axis high-water mark. valid_head = MAX(valid_from) over ALL
+   # rows, ALL frames — the entry-epoch read (a pre-play coordinate must sit above every
+   # seeded row wherever it landed). A coordinate scalar, never content.
 p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
