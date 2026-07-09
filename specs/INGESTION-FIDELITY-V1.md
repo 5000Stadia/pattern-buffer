@@ -3,7 +3,9 @@
 **Status:** SHIPPED — Cx spec review to GREEN (3 passes: grounding, per-pair
 predicate derivation, decline-context access) → implemented → Cx code review GREEN
 (2 fixes: meta-attribute exclusion in `unstamped_timed`, `auto_declined` gated on a
-real proposal). 428 green. Co-designed with Construct (letters 099/100). Collaboration with Construct
+real proposal) → independent on-channel Cx re-review GREEN (codex-inbox 501/503;
+notes addressed in `e850841`). 430 green. Co-designed with Construct (letters
+099/100). Collaboration with Construct
 converged (PB→Construct letter 099 at `/home/k/Newproject/dev_inbox/`; HD's reply
 `dev_inbox/100-from-hd-ingestion-fidelity-corpus-and-baseline.md`). Scope is now
 crisp and **single-verb**: a deterministic, membrane-clean
