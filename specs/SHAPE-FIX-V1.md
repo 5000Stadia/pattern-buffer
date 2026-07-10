@@ -106,10 +106,18 @@ must not block a *typing correction*. Two cases, one verb:
   pattern). **Validated against the id grammar BEFORE prompt interpolation** (Cx:
   never interpolate an unvalidated string into the extractor prompt — a malformed
   `pov` raises `ValueError`, it does not ride into the model). When set, the prompt
-  instructs: *"first/second-person pronouns (I, you, we) referring to the viewpoint
-  character are `<pov>` — never mint a new entity for them."* When unset:
+  enumerates the **full scoped deictic family** (amended per HD 126 / Cx 570 — the
+  original `(I, you, we)` shorthand let "my hand" bind sideways to the nearest NPC,
+  fabricating canon): *singular first-person (`I, me, my, mine, myself`) and
+  addressed second-person (`you, your, yours`) refer exclusively to `<pov>` — never
+  mint for them, and a singular possessee ("my hand", "your coat") is NEVER
+  attributed to any other present character; plural (`we, us, our, ours`) INCLUDES
+  `<pov>` without proving exclusive ownership — never guess the other members,
+  never rebind the plural wholesale to a nearby character.* When unset:
   *"never mint a person from a bare pronoun; if the referent is unknown, skip that
-  assertion."* Porcelain threads `pov=` through.
+  assertion."* Porcelain threads `pov=` through. The contract test pins the
+  instruction LINE itself (word-bounded, rules-section-only — a whole-prompt
+  substring search false-passes on look-alike words).
 
 ## Win 4 — the durable-contradiction veto (HD 089: the fused-protagonist incident)
 Live failure: reconcile fused `person:pavel_orra` (role: retrieval lead) into

@@ -597,9 +597,18 @@ class Ingestor:
             if not _ID_RE.fullmatch(pov):
                 raise ValueError(f"pov {pov!r} is not a valid entity id")
             rules += (
-                f"- First/second-person pronouns (I, you, we) referring to the "
-                f"viewpoint character are {pov} — never mint a new entity for "
-                f"them.\n"
+                # The FULL deictic family incl. possessives (HD 126: "my hand"
+                # once bound sideways to the nearest NPC — fabricated canon).
+                # Scoped per Cx 570: singular deixis is exclusively the POV;
+                # plural deixis INCLUDES the POV without proving exclusive
+                # ownership or licensing guessed members.
+                f"- Viewpoint deixis: I, me, my, mine, myself — and you, your, "
+                f"yours when the narration addresses the viewpoint character — "
+                f"refer to {pov}; never mint a new entity for them, and a "
+                f"singular possessee (my hand, your coat) is NEVER attributed "
+                f"to any other present character. Plural we, us, our, ours "
+                f"INCLUDE {pov}: never guess the other members and never "
+                f"rebind the plural wholesale to a nearby character.\n"
             )
         prompt = f"{rules}{context}\n\nPASSAGE:\n{text}"
         # RAW output, verbatim (INGEST-LATENCY-V2; Cx 545): extract() returns the

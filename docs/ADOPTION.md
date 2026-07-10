@@ -188,7 +188,7 @@ p.extract(text, scene=None, extract="full"|"lean", pov=None) -> [item dict]
    # INGEST-LATENCY-V2: READ-ONLY extraction (no write). Parallelize N extract() calls
    # in YOUR runtime (your concurrency cap), then ingest_structured() the results SERIALLY
    # (append-only writes stay serial). The engine doesn't add concurrency (membrane).
-   # pov (SHAPE-FIX-V1): the viewpoint entity id — first/second-person pronouns (I/you)
+   # pov (SHAPE-FIX-V1): the viewpoint entity id — the full scoped deictic family (singular I/me/my/mine/myself + addressed you/your/yours exclusively; plural we/us/our/ours inclusively — a singular possessee never attributes sideways)
    #   bind to it instead of minting a phantom person:you. Id-validated before the prompt.
 p.ingest(text, source=None, scene=None, at=None, frame=None,
          classify="inline"|"batch"|"defer"|"rules", extract="full"|"lean",

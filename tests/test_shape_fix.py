@@ -364,8 +364,26 @@ def test_pov_threads_into_prompt(world, tmp_path):
 
     w = World(tmp_path / "pov.world", world_id="w:pov", model=spy)
     try:
-        w.porcelain.extract("I look around.", pov="person:hero")
+        w.porcelain.extract("I run my hand along the counter.", pov="person:hero")
         assert "person:hero" in seen["prompt"]
-        assert "viewpoint character" in seen["prompt"]
+        # HD 126 / Cx 570: pin the deictic INSTRUCTION LINE itself (word-bounded,
+        # rules section only — an unbounded whole-prompt substring search passes
+        # even when forms are deleted, because the base rules and the passage
+        # fixture contain look-alike words).
+        import re
+        rules_section = seen["prompt"].split("\n\nPASSAGE:\n")[0]
+        line = next(l for l in rules_section.splitlines()
+                    if l.startswith("- Viewpoint deixis:"))
+        for form in ("I", "me", "my", "mine", "myself", "we", "us", "our",
+                     "ours", "you", "your", "yours"):
+            assert re.search(rf"\b{form}\b", line), f"deictic form {form!r} missing"
+        # the complete no-sideways clause, on that same line
+        assert ("singular possessee (my hand, your coat) is NEVER attributed "
+                "to any other present character") in line
+        # the plural scoping (Cx 570 #1): includes the POV, never exclusive
+        # ownership, never guessed members, never wholesale rebinding
+        assert "INCLUDE person:hero" in line
+        assert "never guess the other members" in line
+        assert "never rebind the plural wholesale" in line
     finally:
         w.close()
