@@ -11,3 +11,5 @@ __pycache__/
 # the dump is the diffable receipt.
 evals/results/**/*.world
 evals/results/**/staging/
+dist/
+build/

@@ -340,5 +340,24 @@ p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade;
 ```
 
 Every write returns a per-assertion Receipt; every fact carries
-`{status, source_chain, assertion_id}` provenance. MCP wrapper and the
-`arch` CLI follow as mechanical mirrors.
+`{status, source_chain, assertion_id}` provenance.
+
+## THE MCP SERVER (non-Python hosts)
+
+`pip install patternbuffer[mcp]` →
+`patternbuffer-mcp --world w.world --world-id w:id` (env:
+`PATTERNBUFFER_WORLD`, `PATTERNBUFFER_WORLD_ID`) serves ONE world over stdio
+(the 1:1 invariant; multi-world = multiple servers). The 37 deterministic
+porcelain verbs are MCP tools; results arrive as
+`structuredContent = {"result": <the porcelain return>}` (Receipts as dicts;
+exact-decimals as `{"$decimal": …}` tags) with the same object serialized in
+the text block.
+
+MCP-specific narrowings (the genuinely model-free subset — the server's World
+has no model callable): `ingest_structured.classify` accepts `"rules"|"defer"`
+only (default `"rules"`); `seal_build` takes no `model` argument (always
+rules-only). Model-backed verbs (`extract`/`ingest`-prose/`ask`/`resolve`) are
+V1.1 via MCP sampling. Trust boundary: a connected MCP client is a **fully
+trusted world principal** — it can name any frame; tool annotations are hints,
+never authorization. Put untrusted consumers (players, NPCs) behind YOUR
+host-mediated surface; frame entitlement is a host concern.

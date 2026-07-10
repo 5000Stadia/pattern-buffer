@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "patternbuffer"
-version = "0.0.1"
+version = "0.1.0"
 description = "A pattern buffer that never degrades: an append-only world-state substrate; everything else is a disposable projection."
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -12,6 +12,10 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+mcp = ["mcp>=1.28,<2"]
+
+[project.scripts]
+patternbuffer-mcp = "patternbuffer.mcp:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

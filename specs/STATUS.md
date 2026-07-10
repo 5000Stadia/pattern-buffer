@@ -36,6 +36,7 @@ _Last reconciled: 2026-07-09._
 | BUILD-SESSION-V1 | `begin_build`/`seal_build`/`abort_build` + the `build()` sugar |
 | AXIS-HEAD-V1 | `axis_heads()` (two-axis high-water mark) + `ingest_structured(at=)` |
 | INGESTION-FIDELITY-V1 | `fidelity_audit()` — the structural-gap read (coreference metric + gaps) |
+| MCP-WRAPPER-V1 | The porcelain over MCP: 37 deterministic tools, `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs — decisions in effect
 | RFC | State |
@@ -53,4 +54,8 @@ _Last reconciled: 2026-07-09._
 ## Open — drafted, not yet implemented
 | Spec | State |
 |---|---|
-| MCP-WRAPPER-V1 | **DRAFT** — the porcelain over MCP (engine-independence proof, non-Python). Awaiting greenlight → Cx review → implement. |
+| *(none)* | — |
+
+*(MCP-WRAPPER-V1 moved to Shipped: spec GREEN via inbox-Cx 529 after a BLOCKED
+round; implemented as `patternbuffer.mcp` + the `[mcp]` extra + the
+`patternbuffer-mcp` entry point.)*
