@@ -209,6 +209,16 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    # "rules" = guardrails+STATE, zero LM.
    # at (AXIS-HEAD-V1): places the scene cursor before the commit — the per-chunk pose for
    #   parallel-extract/serial-commit paths (mirrors ingest(at=)).
+   # frame= is a DEFAULT for unframed items, NOT an override (letter 028) — per-item frame
+   #   keys WIN, which mixed batches require (a telling scene's knows:B rows must survive).
+   #   NOTE: extract() returns RAW model output, and extracted items MAY carry their own
+   #   frame (the schema declares it optional; live providers commonly stamp canon
+   #   explicitly) — never ASSUME extraction output is unframed. To quarantine/
+   #   stage a batch wholesale, apply YOUR policy to a COPY first (strip or reject item
+   #   frames — retaining knows:* bypasses your quarantine; stripping erases knowledge
+   #   semantics; which is right is your world-policy call, not the engine's or the
+   #   model's). When frame= is given and items keep a different own frame, the Receipt
+   #   carries a warning (never silent — HD 121).
    # The Receipt's `skipped: [{entity, attribute, value, reason}]` lists rows dropped at
    # the gate — edge-granular (containment cycle / self-edge / lateral self-loop) AND
    # `malformed_id` (SHAPE-FIX-V1: a stray-slash phantom id like person:/you, rejected not

@@ -293,9 +293,21 @@ class Porcelain:
         # mirroring ingest(at=). The porcelain owns the pose; the gate reads it.
         if at is not None:
             self._w.ingestor.cursor.advance(at)
+        # frame= is a DEFAULT for unframed items (letter 028) — per-item frames
+        # win, which mixed batches (knows:B rows beside canon) require. Make the
+        # non-obvious case LOUD, never silent (HD 121: a staging frame silently
+        # lost to item-level stamps bypassed a quarantine gate for weeks).
+        kept_own = (sum(1 for i in items
+                        if isinstance(i, dict) and i.get("frame") not in (None, frame))
+                    if frame is not None else 0)
         rows = self._w.ingest_structured(items, frame=frame, classify=classify,
                                          cursor_authoritative=cursor_authoritative)
         receipt = self._receipt(rows)
+        if kept_own:
+            receipt.warnings.append(
+                f"frame={frame!r} filled only unframed items; {kept_own} item(s) "
+                "kept their own frame key (frame= is a default, not an override "
+                "— strip item frames to re-target wholesale)")
         receipt.skipped = [
             {"entity": s.entity, "attribute": s.attribute,
              "value": encode_out(s.value), "reason": s.reason}

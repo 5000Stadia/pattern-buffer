@@ -590,6 +590,12 @@ class Ingestor:
                 f"them.\n"
             )
         prompt = f"{rules}{context}\n\nPASSAGE:\n{text}"
+        # RAW output, verbatim (INGEST-LATENCY-V2; Cx 545): extract() returns the
+        # model's item dicts untouched — including an explicit frame="canon"
+        # stamp. Canon-vs-absent is equivalent at the INGEST GATE only; a raw
+        # consumer auditing/persisting extraction output must see what the model
+        # said. Re-targeting a batch (staging/quarantine) is host policy over a
+        # COPY — see ADOPTION's strip idiom and the Receipt warning.
         return self._model(prompt, _EXTRACT_SCHEMA)["items"]
 
     def ingest(self, text: str, context: str = "", frame: str | None = None,
@@ -597,8 +603,9 @@ class Ingestor:
                cursor_authoritative: bool = False,
                pov: str | None = None) -> list[Assertion]:
         """Model-backed extraction through the same gate (= `extract` then
-        `ingest_structured`, behavior-identical). ``frame`` re-targets extracted
-        rows to a named frame (letter 028). ``classify`` (HD 079): inline|batch|
+        `ingest_structured`, behavior-identical). ``frame`` is the DEFAULT frame for
+        extracted rows that carry none (letter 028) — extracted items stamping their
+        own frame (incl. an explicit canon) keep it; see ingest_structured. ``classify`` (HD 079): inline|batch|
         defer|rules durability. ``extract`` (HD 082): full|lean rules.
         ``cursor_authoritative`` (HD 084): the cursor governs valid_from (bible
         source-ingest); see ingest_structured. ``pov`` (SHAPE-FIX-V1 4c): the
