@@ -121,9 +121,16 @@ _EXTRACT_RULES_FULL = (
     "- SPACE: emit connects_to edges for every passage/route the text "
     "describes (stairs, gates, corridors); never invent an edge the text "
     "does not support — vertical proximity is not connectivity.\n"
-    "- TIME: timeless=true ONLY for identity and structure (kind, names, "
-    "fixed adjacency). Everything that happens or holds-at-a-time gets "
-    "valid_from on the provided timeline.\n"
+    "- TIME: timeless=true ONLY for what holds across the world's whole "
+    "history: identity/structure (kind, names, fixed adjacency) and facts of "
+    "origin (kinship of origin, innate traits presented as what the person "
+    "has always been). Everything acquired or mutable gets valid_from — a "
+    "dated onset when the text gives one ('became a soldier at the war'); "
+    "otherwise the earliest supported point (the entity's introduction or "
+    "the scene cursor). Time-relative quantities (age) are current state at "
+    "the cursor, never timeless. Standing-but-acquired properties "
+    "(occupation, scars, learned skills) are NOT timeless — stamp them at "
+    "their earliest supported time.\n"
     "- Repeated habits, spoken catchphrases, confrontations, confessions, "
     "and scheduled/conditional future events are assertions too (use event: "
     "entities with caused_by where the text gives causality).\n"
@@ -148,8 +155,14 @@ _EXTRACT_RULES_LEAN = (
     "- ALWAYS extract location changes: X moves/leaves/arrives => a new 'in' "
     "row for X. Presence and departure are core state, never atmosphere "
     "(a departure that goes unrecorded makes presence lie).\n"
-    "- timeless=true ONLY for identity/structure (kind, names, fixed adjacency); "
-    "everything else gets valid_from.\n"
+    "- timeless=true ONLY for what holds across the world's whole history: "
+    "identity/structure (kind, names, fixed adjacency) and facts of origin "
+    "(kinship of origin, innate traits). Everything acquired or mutable gets "
+    "valid_from — the dated onset if given, else the earliest supported "
+    "point (the entity's introduction or the scene cursor). Time-relative "
+    "quantities (age) are current state at the cursor, never timeless; "
+    "standing-but-acquired properties (occupation, scars, learned skills) "
+    "are NOT timeless — stamp them at their earliest supported time.\n"
     "- NEVER invent: extract only what the text supports; atmosphere is not an "
     "assertion.\n"
     "- The narrative voice is not an entity: never emit person: entities for "
@@ -450,6 +463,7 @@ class Ingestor:
         ):
             self._record_skip(entity, attribute, value, "malformed_id")
             return out
+        raw_entity, raw_value = entity, value
         entity = self._registry.resolve(entity)
         if value_type == "entity" and isinstance(value, str):
             value = self._registry.resolve(value)
@@ -474,6 +488,16 @@ class Ingestor:
             item.get("frame", CANON), None if timeless else valid_from,
         )
         if skip is not None:
+            # INGESTION-FIDELITY-V2 §D: two raw ids that resolve to one
+            # identity head post-`same_as` are a MERGE footprint, not an
+            # authored self-edge — the distinct reason (raw ids retained)
+            # makes the diagnosis actionable. Containment-only per the
+            # GREEN'd spec; a merged lateral loop keeps its original
+            # reason. Gate behavior is identical: the row never enters.
+            if (entity == value and raw_entity != raw_value
+                    and self._semantics.is_containment(attribute)):
+                skip = (f"merged_self_edge: {raw_entity!r} and {raw_value!r} "
+                        f"resolve to the same entity {entity!r} — {skip}")
             self._record_skip(entity, attribute, value, skip)
             return out  # nothing appended
 

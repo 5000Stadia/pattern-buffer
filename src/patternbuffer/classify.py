@@ -145,7 +145,12 @@ class Classifier:
             "STATE: what it is RIGHT NOW (positions of movables, moods, conditions). "
             "One event could flip it.\n\n"
             "The mutability test resolves most ambiguity: could one event flip this "
-            "without re-authoring the world? -> STATE. Asymmetric defaults: an "
+            "without re-authoring the world? -> STATE. When the text presents a "
+            "property as an enduring baseline of the person — a physical trait, a "
+            "capability, a continuing role — prefer CONSTITUTIVE (what they are) or "
+            "DISPOSITIONAL (how they tend) over STATE; a temporary ability or "
+            "condition, or a time-relative quantity (age), remains STATE. "
+            "Asymmetric defaults: an "
             "ambiguous property is STATE; ambiguous fixture containment is "
             "CONSTITUTIVE."
         )

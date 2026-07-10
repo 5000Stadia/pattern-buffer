@@ -43,10 +43,25 @@ do. The load-bearing instructions, in order of damage when absent:
    knowledge transfer, causality) and say "every one the text describes."
    With the equally explicit negative: never an edge the text doesn't
    support — proximity is not connectivity.
-5. **Scope `timeless` to a whitelist.** *(Run-1 failure, minor.)* "timeless
-   = permanent facts" produced timeless STATE rows (a dead man's status, a
-   meter's location). Whitelist instead: identity and structure only (kind,
-   names, fixed adjacency); everything that holds-at-a-time gets stamped.
+5. **Scope `timeless` to a whitelist.** *(Run-1 failure, minor; widened by
+   INGESTION-FIDELITY-V2.)* "timeless = permanent facts" produced timeless
+   STATE rows (a dead man's status, a meter's location). Whitelist instead:
+   what holds across the world's **whole history** — identity/structure
+   (kind, names, fixed adjacency) and facts of origin (kinship of origin,
+   innate traits). Everything acquired or mutable gets `valid_from`: the
+   dated onset if the text gives one, else the **earliest supported point**
+   (the entity's introduction / the scene cursor). Time-relative quantities
+   (age) are cursor-stamped state, never timeless; standing-but-acquired
+   properties (occupation, scars, learned skills) are stamped at their
+   earliest supported time — their *durability* is the classifier's to
+   judge (standing class ≠ timeless valid time; the two are orthogonal).
+   **Kinship-of-origin recipe:** declare your canonical child→parent
+   vocabulary structural at construction —
+   `attribute_default=lambda a: {"structural": True} if a in ("father",
+   "mother") else None` — and those rows classify CONSTITUTIVE
+   deterministically (no model call). The inverse `father_of`/`mother_of`
+   (subject IS father of value) is a separate attribute you declare only if
+   you accept that form; it is never a canonicalization of `father`.
 6. **The never-invent floor and the texture negative hold well.** *(Run-1
    success.)* "Extract only what the text supports; atmosphere is not an
    assertion" produced zero phantom contents in two sealed containers and

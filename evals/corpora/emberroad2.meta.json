@@ -1,0 +1,40 @@
+{
+  "title": "The Ember That Burned Cold",
+  "protagonist": "person:brother_caldus",
+  "theme": "True inheritance is not the crown you can claim, but the burden you choose to carry and lay down for the living.",
+  "stance": "fiction",
+  "mode": "pure",
+  "style": "Grim northern medieval folk-fantasy in a mountain borderland: spare, ash-cold, road-worn prose with monkish dread, hearthside superstition, iron-and-snow imagery, and the solemn cadence of an old tale being whispered beside dying embers.",
+  "scenario_mode": "win_loss",
+  "arc_scope": [
+    "person:brother_caldus",
+    "person:caldus",
+    "person:lysa"
+  ],
+  "main_arc": "arc:main",
+  "arc_ids": [
+    "arc:main"
+  ],
+  "entry_epoch": 1001000.0,
+  "seeded_frames": [
+    "person:brother_caldus",
+    "person:caldus",
+    "person:elian",
+    "person:horned_figure",
+    "person:lysa"
+  ],
+  "endless": false,
+  "opening_as_of": 1001000.0,
+  "next_source_as_of": 2000000.0,
+  "source_step": 1000000.0,
+  "goal_statement": "See your story through to its end.",
+  "intro": "In the northern border mountains, where snow closes the passes and old saints are carved into roadside stones, you are the one left carrying a crown no living head should wear. A dying monk of Saint Orven\u2019s Step has put the east road before you, and every hearth, shrine, and black pine hollow remembers that some inheritances bite deeper than iron. What waits in these heights is not only a claim of blood, but the weight of what you choose to bear for the living, and what you must one day lay down.",
+  "genre": "gothic fantasy pilgrimage",
+  "premise": "After Saint Orven\u2019s Step has been reduced to \u201cwhat remains of it,\u201d Brother Caldus, a monk marked by a wooden sun-disc, charges a traveler to carry a crown east by the old pilgrim path. The path is an inherited religious duty: it gives people guides, rules, and sacred signs, but it also forbids anyone from wearing the crown and turns inheritance into a burden that must be carried for the living.",
+  "game_type": [
+    "political_intrigue",
+    "social_drama_relationship_web"
+  ],
+  "death_policy": "mortal",
+  "death_policy_reason": "a gothic fantasy pilgrimage with political intrigue still centers a dangerous quest rather than a death-shielded social genre"
+}

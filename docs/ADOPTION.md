@@ -339,6 +339,14 @@ p.fidelity_audit(frame="canon", as_of=None) -> {name_collisions, unstamped_timed
    # repair by it: reject() genuine homonyms (harth person<->place), adjudicate_deferred/retype
    # true same-kind splits. summary.name_collisions counts LIVE groups only (the tracked number).
    # unstamped_timed = classified STATE/EVENT rows with no valid_from (off the time spine).
+   # Rows the sidecar judges CONSTITUTIVE/DISPOSITIONAL sit OUTSIDE this STATE/EVENT-only
+   # bin; their valid-time correctness is a separate extraction contract (acquired standing
+   # facts — occupation, scars, learned skills — still carry valid_from at the earliest
+   # supported point; durability never licenses backward-forever projection).
+   # Kinship-of-origin recipe (INGESTION-FIDELITY-V2): declare child->parent vocabulary
+   # structural (attribute_default returning {"structural": True} for "father"/"mother")
+   # -> deterministic CONSTITUTIVE, no model call; father_of (inverse) is a separate
+   # opt-in attribute, never a canonicalization of father.
    # orphan_entities = unanchored obj:/person:. open_conflicts = the truth-maintenance flags.
    # The engine SURFACES gaps keyed by entity; the HOST joins arc/cast severity and drives
    # targeted re-extraction of the flagged spans (membrane: engine never repairs).

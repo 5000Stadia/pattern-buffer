@@ -13,3 +13,4 @@ evals/results/**/*.world
 evals/results/**/staging/
 dist/
 build/
+evals/corpora/*.world*
