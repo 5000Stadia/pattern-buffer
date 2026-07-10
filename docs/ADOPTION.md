@@ -354,7 +354,7 @@ Every write returns a per-assertion Receipt; every fact carries
 
 ## THE MCP SERVER (non-Python hosts)
 
-`pip install patternbuffer[mcp]` →
+`pip install pbuffer[mcp]` →
 `patternbuffer-mcp --world w.world --world-id w:id` (env:
 `PATTERNBUFFER_WORLD`, `PATTERNBUFFER_WORLD_ID`) serves ONE world over stdio
 (the 1:1 invariant; multi-world = multiple servers). The 37 deterministic

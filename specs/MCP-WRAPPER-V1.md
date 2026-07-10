@@ -100,7 +100,7 @@ schemas declared to match the envelope.
   (whitepaper §17.2). The README section for the server carries this paragraph.
 
 ## Shape (unchanged from r1 where not amended above)
-- Optional module `patternbuffer.mcp`, installed via `patternbuffer[mcp]` (SDK
+- Optional module `patternbuffer.mcp`, installed via `pbuffer[mcp]` (SDK
   dependency lives in the extra; lazy import; **the dependency-free core never
   imports it** — audited by a fresh-subprocess test: base install imports
   `patternbuffer` with no `mcp` requirement).
@@ -115,7 +115,7 @@ schemas declared to match the envelope.
   change; no reflective tool surface.
 
 ## Release
-Ships as `patternbuffer 0.1.0` to PyPI with the `[mcp]` extra (founder-approved
+Ships as `pbuffer 0.1.0` to PyPI with the `[mcp]` extra (founder-approved
 bundling; license reconciled to MIT). The `[mcp]` wheel exposes the server entry
 point (`patternbuffer-mcp`).
 

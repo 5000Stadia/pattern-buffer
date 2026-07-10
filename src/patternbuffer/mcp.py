@@ -8,7 +8,7 @@ reflection, no model callable (the server's World has none, and the exposed
 parameter domains are the genuinely model-free subset).
 
 The engine core never imports this module; the `mcp` SDK is imported lazily and
-ships in the `patternbuffer[mcp]` extra. Trust boundary: a connected client is a
+ships in the `pbuffer[mcp]` extra (distribution name; import stays patternbuffer). Trust boundary: a connected client is a
 FULLY TRUSTED world principal (it can name any frame; annotations are hints,
 never authorization) — untrusted consumers go through a host-mediated surface.
 """
@@ -281,7 +281,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from mcp.server.stdio import stdio_server
     except ImportError:
-        parser.error("the MCP SDK is not installed — pip install 'patternbuffer[mcp]'")
+        parser.error("the MCP SDK is not installed — pip install 'pbuffer[mcp]'")
 
     world = World(args.world, world_id=args.world_id)   # no model callable
     server = build_server(world)

@@ -14,7 +14,7 @@ One append-only log of perspective-scoped, time-indexed assertions about entitie
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
 **Status: pre-1.0; substrate validated, ingestion fidelity is the open
-front.** The engine passes its 419-test invariant suite, and the chapter test
+front.** The engine passes its 450-test invariant suite, and the chapter test
 (ingest a complete noir mystery, delete the prose, interrogate the store
 against a hand-authored answer key) has been graded across three full runs.
 The substrate's invariants held in all of them — sealed containers stayed
@@ -29,8 +29,17 @@ single commit) replaced serial prompt-iterated extraction after measurement
 showed prose contracts fragment differently every round; identity and key
 fragmentation died as failure classes, and pass-0 registry quality is where
 the remaining extraction failures concentrate. Run 4, with its checkable
-predictions, is in flight. Not yet installable from PyPI; the shipped example
-world with a zero-API-key query tour lands once a verified run stamps it.
+predictions, is in flight.
+
+## Install
+
+```bash
+pip install pbuffer          # the engine (zero dependencies) — import patternbuffer
+pip install pbuffer[mcp]     # + the MCP server: patternbuffer-mcp --world w.world --world-id w:id
+```
+
+*(The PyPI distribution is `pbuffer` — the exact name `patternbuffer` was taken
+by an unrelated project; the import is `patternbuffer` throughout.)*
 
 ## What this is
 
@@ -56,7 +65,7 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 5. ~~The messy-dialogue micro-eval (the honest bridge from fiction ingestion to tracking-mode ingestion).~~ Done — **10/10** on the reality-divergence battery (`evals/results/2026-06-12-micro-v1-final/`); tracking-mode ingestion validated against sloppy conversational fragments.
 6. ~~The porcelain API + host integration.~~ Done — and proven in the strongest form. The frozen contract (`porcelain-v0.1`, additive-only): five load-bearing verbs — `ingest` (+`ingest_structured`) / `snapshot` / `ask` / `materialize` / `resolve`+`refer()` — over a fuller read-and-identity family (`state`, `where`, `aggregate`, `neighborhood`, `frame_diff`, `who_knows`, `correlate`, `route`, `entities`, `facts`, build sessions, `axis_heads`, …). The first *live* host, [Construct](https://github.com/5000Stadia/construct) (an interactive-fiction engine — `pattern` → `construct` loads it → `holonovel`), runs **entirely on this contract**: zero engine-internal reaches, its 800+-test suite green on the pure public surface. The engine-independent claim, demonstrated rather than asserted. (Intended primary host: [Kernos](https://github.com/5000Stadia/Kernos), adapter pattern.)
 7. ~~The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure).~~ Met in the field — every item is exercised in [Construct](https://github.com/5000Stadia/construct)'s live suite (the first host runs entirely on the frozen porcelain). These are host-layer criteria, proven by the adopter, not a further engine deliverable.
-8. ~~The MCP wrapper~~ — built: `pip install patternbuffer[mcp]` → `patternbuffer-mcp --world w.world --world-id w:id` serves the frozen porcelain's **37 deterministic verbs** over stdio to any MCP client — read, query, and *build* a world with zero Python (the genuinely model-free subset; model-backed verbs are V1.1 via sampling). One server ↔ one world; a connected client is a fully **trusted world principal** — frame entitlement for untrusted consumers stays host-mediated. The framework-agnostic claim, proven by demonstration. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
+8. ~~The MCP wrapper~~ — built: `pip install pbuffer[mcp]` → `patternbuffer-mcp --world w.world --world-id w:id` serves the frozen porcelain's **37 deterministic verbs** over stdio to any MCP client — read, query, and *build* a world with zero Python (the genuinely model-free subset; model-backed verbs are V1.1 via sampling). One server ↔ one world; a connected client is a fully **trusted world principal** — frame entitlement for untrusted consumers stays host-mediated. The framework-agnostic claim, proven by demonstration. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
 
 ## License
 
