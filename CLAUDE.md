@@ -10,6 +10,13 @@ A world-state substrate: one append-only log of perspective-scoped, time-indexed
 2. **Read `docs/LEXICON.md`.** One name per concept, used identically in code, docs, and tests. A term not in the lexicon is added there before it is used twice. Exported names must pass the double-read test.
 3. `docs/reference/assertion-world-model-original.md` is the preserved founding document — lineage, not the working reference.
 
+## Cross-agent communication (AgentPost — the sole actionable channel)
+
+- **AgentPost is primary** for all inter-agent traffic: specs, reviews, questions, replies. This agent's identity is `pb` (`agentpost identify --cwd "$PWD"`). Claim inbound with `agentpost next pb` (atomic single-claim — never act from a raw read of `unread/`); send with `agentpost message` / `question` / `reply`; `--notify idle` routinely, `immediate` only for blockers.
+- **Never create new actionable `dev_inbox/` letters, and never mirror one task across channels.** `dev_inbox/` (and `/home/k/codex-inbox`) are read-only historical/recovery material; after a *proven* AgentPost notification failure they may carry only a control pointer to the existing Message-ID — never the actionable content.
+- Historical references to old numbered letters (e.g. "Cx 604") remain valid citations; do not rewrite them.
+- If `agentpost armed pb` reports catch-up-only, the native plugin monitor arms at the next session reload; do not build ad hoc polling as a substitute for presence.
+
 ## Hard constraints (the survival checklist)
 
 Whitepaper §18.1 is non-negotiable. The load-bearing ones for implementation:
