@@ -76,6 +76,10 @@ class World:
         )
         self.indexes.set_closure_provider(self.registry.closure)
         self.indexes.set_correlation_provider(self.registry.correlation_set)
+        # TRACKING-MODE-V1: tracking-vs-non-tracking selects on policy ONLY
+        # (never stance — the no-bias invariant); deny is a resolution policy,
+        # not an epistemic mode, so it takes the non-tracking branch.
+        self.indexes.set_time_physics(policy == OBSERVE_OR_UNKNOWN, clock)
         self.registry.set_kind_provider(lambda e: self.indexes.fold_key(e, "kind"))
         self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
         self.indexes.set_salience_provider(self.salience_index.salience)
@@ -192,10 +196,14 @@ class World:
         frame: str | list[str] = CANON,
         as_of: float | None = None,
         asserted_as_of: int | None = None,
+        now: float | None = None,
     ) -> dict:
+        # `now` is WALL time (TRACKING-MODE-V1): the staleness reference in
+        # tracking worlds, defaulting to the injected clock; unused in fiction.
+        # Never a second meaning for as_of (which stays valid time).
         return self.indexes.confidence(
             entity, attribute, frame=frame, as_of=as_of,
-            asserted_as_of=asserted_as_of,
+            asserted_as_of=asserted_as_of, now=now,
         )
 
     def neighborhood(self, entity: str, **kw) -> dict:

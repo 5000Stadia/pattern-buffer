@@ -14,6 +14,7 @@ without it.
 from __future__ import annotations
 
 import logging
+import math
 import re
 import time
 from dataclasses import dataclass
@@ -452,6 +453,17 @@ class Ingestor:
         entity = self._registry.resolve(entity)
         if value_type == "entity" and isinstance(value, str):
             value = self._registry.resolve(value)
+
+        # Decay-policy declarations must be valid physics (TRACKING-MODE-V1
+        # §B3): a malformed half-life is skip-receipted at the gate, never
+        # silently active (DecayPolicy would ignore it — but a silent ignore
+        # reads as "declared" to the author; the receipt says it fell).
+        if attribute == "decay_halflife_seconds" and not (
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value) and value > 0
+        ):
+            self._record_skip(entity, attribute, value, "invalid_decay_halflife")
+            return out
 
         # Edge-granular structural guard (Part B): a single invalid edge
         # (containment cycle / self-edge / lateral self-loop) is SKIPPED with a

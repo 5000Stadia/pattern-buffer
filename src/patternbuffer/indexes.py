@@ -26,6 +26,7 @@ from patternbuffer.codec import (
     exact_div,
     exact_sum,
 )
+from patternbuffer.decay import DecayPolicy
 from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, Assertion
 from patternbuffer.semantics import AttributeSemantics, CONTAINMENT, builtin_default
 
@@ -108,6 +109,19 @@ class Indexes:
             lambda eid, valid_as_of=None, asserted_as_of=None, frame=CANON: {eid}
         )
         self._salience = lambda eid, frame=CANON, as_of=None: 0.0
+        # TRACKING-MODE-V1: time physics. `_tracking` selects on
+        # policy == "observe_or_unknown" ONLY (never stance — the no-bias
+        # invariant); `_clock` is the World's injected wall clock; `_decay`
+        # reads declared half-lives fresh at each read (rebuildable).
+        self._tracking = False
+        self._clock: Callable[[], float] = lambda: 0.0
+        self._decay = DecayPolicy(buffer, self._semantics)
+
+    def set_time_physics(self, tracking: bool, clock: Callable[[], float]) -> None:
+        """World wiring (TRACKING-MODE-V1): tracking = the operational selector
+        (`policy == "observe_or_unknown"`); clock = the injected wall clock."""
+        self._tracking = tracking
+        self._clock = clock
 
     def set_identity_resolver(self, fn: Callable[[str], str]) -> None:
         self._resolve = fn
@@ -207,7 +221,94 @@ class Indexes:
             "last_observed_at": None,
             "corroboration": 0,
             "conflicted": False,
+            # TRACKING-MODE-V1: one payload shape everywhere — the three
+            # additive fields are present (null) on empty/set-valued/accrue.
+            "recency": None,
+            "recency_status": None,
+            "last_confirmed_at_wallclock": None,
         }
+
+    def _time_trust(
+        self,
+        winner: Assertion,
+        entity: str,
+        attribute: str,
+        frames: list[str],
+        as_of: float | None,
+        asserted_as_of: int | None,
+        now: float | None,
+    ) -> tuple[float | None, str, float | None]:
+        """(recency, recency_status, last_confirmed_at_wallclock) —
+        TRACKING-MODE-V1's frozen branches.
+
+        Non-tracking (invent_under_canon / deny): ("permanent", 1.0, None) —
+        the page is true; story-time recency is salience's business (liveness),
+        never trust's. Tracking: recency = 2**(−age/half_life) with
+        age = max(0, now − stamp); "unconfigured"/"unconfirmed" return
+        recency=None (excluded + renormalized upstream — fail-closed: neither
+        fake permanence nor fake staleness)."""
+        if not self._tracking:
+            return 1.0, "permanent", None
+        # The finite-clock contract (Cx 604 #1), validated FIRST — before any
+        # branch can short-circuit: wall time must be a finite real number. A
+        # NaN stamp would make max(0, now−NaN) select 0.0 — a broken clock
+        # fabricating PERFECT freshness. A non-finite explicit/injected `now`
+        # fails loudly on every tracking read; non-finite STORED stamps never
+        # qualify as confirmations (enforced in _confirmation_stamp).
+        ref_now = float(now) if now is not None else float(self._clock())
+        if not math.isfinite(ref_now):
+            raise ValueError(
+                f"wall-clock 'now' must be finite, got {ref_now!r} "
+                "(a broken clock must fail, not fabricate freshness)")
+        half_life = self._decay.resolve(winner.attribute)
+        if half_life is None:
+            return None, "unconfigured", None
+        stamp = self._confirmation_stamp(
+            winner, entity, attribute, frames, as_of, asserted_as_of
+        )
+        if stamp is None:
+            return None, "unconfirmed", None
+        age = max(0.0, ref_now - float(stamp))
+        return 2.0 ** (-(age / float(half_life))), "configured", float(stamp)
+
+    def _confirmation_stamp(
+        self,
+        winner: Assertion,
+        entity: str,
+        attribute: str,
+        frames: list[str],
+        as_of: float | None,
+        asserted_as_of: int | None,
+    ) -> float | None:
+        """The latest visible A1 wall stamp among rows that CONFIRM the served
+        value: `stated`/`observed` provenance only, strict value-equivalence to
+        the winner, frame- and asserted_as_of-respecting (TRACKING-MODE-V1 §B4).
+        An assumed/inferred/conflicting/different-value row never refreshes it.
+        Fail-closed: a tracking row missing its mandatory stamp contributes no
+        confirmation."""
+        best: float | None = None
+        for f in frames:
+            for row in self._visible_key_rows(
+                entity, attribute, frame=f,
+                valid_as_of=as_of, asserted_as_of=asserted_as_of,
+            ):
+                if row.status not in ("stated", "observed"):
+                    continue
+                if not self._confidence_values_equivalent(row, winner):
+                    continue
+                for meta in self._buffer.visible(
+                    entity=row.id, attribute="learned_at_wallclock",
+                    asserted_as_of=asserted_as_of,
+                ):
+                    v = meta.value
+                    # FINITE only (Cx 604 #1): a NaN/inf stamp must fall to
+                    # the honest `unconfirmed` branch, never qualify as a
+                    # confirmation (fail-closed).
+                    if (isinstance(v, (int, float)) and not isinstance(v, bool)
+                            and math.isfinite(v)):
+                        if best is None or float(v) > best:
+                            best = float(v)
+        return best
 
     def _confidence_values_equivalent(self, left: Assertion, right: Assertion) -> bool:
         # Corroboration is "same value" (post-impl review): STRICT equivalence,
@@ -387,6 +488,7 @@ class Indexes:
         frame: str | list[str] = CANON,
         as_of: float | None = None,
         asserted_as_of: int | None = None,
+        now: float | None = None,
     ) -> dict:
         """Derived trust score for one functional folded key.
 
@@ -406,7 +508,7 @@ class Indexes:
         """
         if not isinstance(frame, str):
             return self._confidence_multiframe(
-                entity, attribute, list(frame), as_of, asserted_as_of
+                entity, attribute, list(frame), as_of, asserted_as_of, now
             )
         entity = self._resolve(entity)
         if self._semantics.is_set_valued(attribute) or self._semantics.is_accrue(attribute):
@@ -431,22 +533,13 @@ class Indexes:
             # stated fact (post-impl review).
             provenance = min(provenance, max(0.0, min(1.0, winner.confidence)))
 
-        if winner.valid_from is None:
-            recency = 1.0
-        else:
-            ref = as_of
-            if ref is None:
-                closure_rows = self._buffer.visible(
-                    entity_in=sorted(self._closure_of(entity)),
-                    frame=frame,
-                    asserted_as_of=asserted_as_of,
-                )
-                ref = max(
-                    (row.valid_from for row in closure_rows if row.valid_from is not None),
-                    default=winner.valid_from,
-                )
-            age = max(0.0, float(ref) - float(winner.valid_from))
-            recency = 1.0 / (1.0 + age / params["recency_scale"])
+        # TRACKING-MODE-V1: the recency component. Non-tracking = permanent
+        # (the fiction anti-decay amendment — story-time decay removed from
+        # trust; liveness is salience's axis). Tracking = wall-clock age under
+        # the declared DecayPolicy, with the fail-closed null branches.
+        recency, recency_status, confirmed_at = self._time_trust(
+            winner, entity, attribute, [frame], as_of, asserted_as_of, now
+        )
 
         source_classes = {self._source_class(winner, asserted_as_of)}
         for assertion_id in fold.corroborated_by:
@@ -469,11 +562,20 @@ class Indexes:
         )
 
         weights = params["weights"]
-        score = (
-            weights["provenance"] * provenance
-            + weights["recency"] * recency
-            + weights["corroboration"] * corroboration_score
-        )
+        if recency is None:
+            # unconfigured/unconfirmed: the recency term is EXCLUDED and its
+            # weight renormalized over the remaining components (fail-closed).
+            denom = weights["provenance"] + weights["corroboration"]
+            score = (
+                weights["provenance"] * provenance
+                + weights["corroboration"] * corroboration_score
+            ) / denom
+        else:
+            score = (
+                weights["provenance"] * provenance
+                + weights["recency"] * recency
+                + weights["corroboration"] * corroboration_score
+            )
         if fold.conflicted:
             score *= 0.5
         score = min(1.0, max(0.0, score))
@@ -483,6 +585,9 @@ class Indexes:
             "last_observed_at": winner.valid_from,
             "corroboration": corroboration,
             "conflicted": fold.conflicted,
+            "recency": recency,
+            "recency_status": recency_status,
+            "last_confirmed_at_wallclock": confirmed_at,
         }
 
     def _confidence_multiframe(
@@ -492,6 +597,7 @@ class Indexes:
         frames: list[str],
         as_of: float | None,
         asserted_as_of: int | None,
+        now: float | None = None,
     ) -> dict:
         """Confidence over the read-union of `frames` (CONFIDENCE-MULTIFRAME-V1).
 
@@ -514,7 +620,8 @@ class Indexes:
         if len(ordered) == 1:
             # Reduction: a single distinct frame is byte-identical to the str
             # path (and inherits its full V1 corroboration recovery).
-            return self.confidence(entity, attribute, ordered[0], as_of, asserted_as_of)
+            return self.confidence(entity, attribute, ordered[0], as_of,
+                                   asserted_as_of, now)
 
         entity = self._resolve(entity)
         if self._semantics.is_set_valued(attribute) or self._semantics.is_accrue(attribute):
@@ -555,23 +662,12 @@ class Indexes:
         if winner.confidence is not None:
             provenance = min(provenance, max(0.0, min(1.0, winner.confidence)))
 
-        if winner.valid_from is None:
-            recency = 1.0
-        else:
-            ref = as_of
-            if ref is None:
-                closure = sorted(self._closure_of(entity))
-                refs = [
-                    row.valid_from
-                    for f in ordered
-                    for row in self._buffer.visible(
-                        entity_in=closure, frame=f, asserted_as_of=asserted_as_of
-                    )
-                    if row.valid_from is not None
-                ]
-                ref = max(refs) if refs else winner.valid_from
-            age = max(0.0, float(ref) - float(winner.valid_from))
-            recency = 1.0 / (1.0 + age / params["recency_scale"])
+        # TRACKING-MODE-V1: same frozen branches as the single-frame path —
+        # one payload shape, the stamp taken per the EFFECTIVE winner over the
+        # frame union.
+        recency, recency_status, confirmed_at = self._time_trust(
+            winner, entity, attribute, ordered, as_of, asserted_as_of, now
+        )
 
         # Corroboration: distinct source classes attesting the EFFECTIVE served
         # value (Codex post-impl finding 2). Counting sources that back a
@@ -611,11 +707,18 @@ class Indexes:
         )
 
         weights = params["weights"]
-        score = (
-            weights["provenance"] * provenance
-            + weights["recency"] * recency
-            + weights["corroboration"] * corroboration_score
-        )
+        if recency is None:
+            denom = weights["provenance"] + weights["corroboration"]
+            score = (
+                weights["provenance"] * provenance
+                + weights["corroboration"] * corroboration_score
+            ) / denom
+        else:
+            score = (
+                weights["provenance"] * provenance
+                + weights["recency"] * recency
+                + weights["corroboration"] * corroboration_score
+            )
         if conflicted:
             score *= 0.5
         score = min(1.0, max(0.0, score))
@@ -625,6 +728,9 @@ class Indexes:
             "last_observed_at": winner.valid_from,
             "corroboration": corroboration,
             "conflicted": conflicted,
+            "recency": recency,
+            "recency_status": recency_status,
+            "last_confirmed_at_wallclock": confirmed_at,
         }
 
     def _fold_accrue(self, rows: list[Assertion]) -> FoldResult:

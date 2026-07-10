@@ -24,6 +24,11 @@ def _null_confidence():
         "last_observed_at": None,
         "corroboration": 0,
         "conflicted": False,
+        # TRACKING-MODE-V1: one payload shape everywhere — the additive
+        # fields are present (null) on empty/set-valued/accrue results.
+        "recency": None,
+        "recency_status": None,
+        "last_confirmed_at_wallclock": None,
     }
 
 
@@ -46,18 +51,28 @@ def test_stated_recent_multi_source_corroborated_scores_high(world):
     assert out["score"] > 0.85
 
 
-def test_assumed_old_single_source_scores_low(world):
+def test_assumed_old_single_source_scores_below_stated(world):
+    # TRACKING-MODE-V1 amendment (founder ruling): fiction recency is
+    # PERMANENT — story-time age no longer erodes trust (the page is true).
+    # An `assumed` fact still scores strictly below a `stated` equivalent via
+    # PROVENANCE; age contributes nothing in either direction.
     world.ingest_structured([
         {"entity": "obj:relic", "attribute": "condition", "value": "dusty",
          "valid_from": 1.0, "status": "assumed"},
+        {"entity": "obj:altar", "attribute": "condition", "value": "dusty",
+         "valid_from": 1.0},                        # stated, same age
     ])
 
-    out = world.confidence("obj:relic", "condition", as_of=101.0)
+    old_read = world.confidence("obj:relic", "condition", as_of=101.0)
+    fresh_read = world.confidence("obj:relic", "condition", as_of=1.0)
+    stated = world.confidence("obj:altar", "condition", as_of=101.0)
 
-    assert out["status"] == "assumed"
-    assert out["last_observed_at"] == 1.0
-    assert out["corroboration"] == 0
-    assert out["score"] < 0.25
+    assert old_read["status"] == "assumed"
+    assert old_read["last_observed_at"] == 1.0
+    assert old_read["corroboration"] == 0
+    assert old_read["recency"] == 1.0 and old_read["recency_status"] == "permanent"
+    assert old_read["score"] == fresh_read["score"]     # age changes nothing
+    assert old_read["score"] < stated["score"]          # provenance still ranks
 
 
 def test_conflicted_key_is_flagged_and_score_is_halved(world):

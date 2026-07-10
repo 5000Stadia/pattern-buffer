@@ -259,10 +259,19 @@ p.route(a, b, frame="canon", as_of=None) -> {route, status, segments}
    # DERIVED, never stored. A portal kind gates passage only under a host-declared
    # `traversal:<kind>` policy (blocks_when_state / blocks_when_relation), scoped
    # to the kind; no policy => clear (no engine guess). The host supplies the words.
-p.confidence(entity, attribute, frame=, as_of=) -> {score, status, last_observed_at, corroboration, conflicted}
+p.confidence(entity, attribute, frame=, as_of=, now=) -> {score, status, last_observed_at,
+                       corroboration, conflicted, recency, recency_status, last_confirmed_at_wallclock}
    # derived trust over a functional key; never stored; functional-only (set/accrue -> score None)
    # frame is str | list[str]: a list = trust over the read-union (knows:O ∪ public);
    # cross-frame agreement raises corroboration, disagreement is conflict (score halved)
+   # TRACKING-MODE-V1: recency is MODE-SCOPED. Fiction/deny -> recency 1.0,
+   #   recency_status="permanent" (the page is true; story-time age never erodes trust).
+   #   observe_or_unknown -> recency = 2**(-max(0, now - last_confirmed_at_wallclock)/half_life)
+   #   under your declared DecayPolicy rows (attr:<key> . decay_halflife_seconds . n;
+   #   exact-key > attr:in family > attr:__world__ default); now= is WALL time (defaults to
+   #   the injected clock; as_of stays valid-time - never overloaded). Fail-closed:
+   #   "unconfigured"/"unconfirmed" -> recency null, excluded + renormalized (never faked).
+   #   Render "last confirmed <t> - N days unconfirmed" by joining state() + this payload.
 p.correlate(a, b, evidence, at=None) -> Receipt
    # AKA-CORRELATION-V1: link two entities as facets of one identity (non-collapsing
    # `aka`) WITHOUT merging — reveals, dual personas, amalgamation. `at` = the reveal's

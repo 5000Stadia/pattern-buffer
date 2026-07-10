@@ -1,6 +1,8 @@
 # CONFIDENCE-MULTIFRAME-V1 — confidence over an observer's effective knowledge
 
-**Status:** DRAFT → seeking Codex GREEN before implementation.
+> **AMENDED by TRACKING-MODE-V1 (2026-07, founder ruling):** the recency component no longer decays with story time. In non-tracking worlds (`invent_under_canon`, `deny`) recency is PERMANENT (1.0 — the page is true; story-time liveness is salience's axis, not trust's). In `observe_or_unknown` worlds recency = `2**(−max(0, now − last_confirmed_at_wallclock)/half_life)` under the declared `DecayPolicy`, with fail-closed `unconfigured`/`unconfirmed` null branches (recency excluded + weights renormalized). The payload gains `recency`, `recency_status`, `last_confirmed_at_wallclock` on every result. Example (tracking, configured): `{score: 0.62, status: "observed", last_observed_at: 400.0, corroboration: 0, conflicted: false, recency: 0.5, recency_status: "configured", last_confirmed_at_wallclock: 5000.0}`. Example (fiction): `{…, recency: 1.0, recency_status: "permanent", last_confirmed_at_wallclock: null}`.
+
+**Status:** SHIPPED (Codex GREEN'd and implemented; amended by TRACKING-MODE-V1 — see banner).
 **Kind:** passive, additive read extension. Touches `confidence()` only; no
 fold-path, schema, or write-path change. Computed at read, nothing stored
 (the membrane — whitepaper A6).
@@ -54,10 +56,14 @@ Reuses `fold_key` per frame; unions only at the scoring layer. No new fold.
    rule — NOT approximate-bounds agreement). As in V1, conflict halves the score.
 4. **Provenance & recency.** Computed from the **effective winner**, identical
    to V1: provenance from `CONFIDENCE_PARAMS["provenance"]` floored by the
-   winner's source-confidence clamped to `[0,1]`; recency `1/(1+age/scale)` where
-   `age = ref - winner.valid_from`. When `as_of` is None, `ref` is the max
-   `valid_from` over the closure rows visible in **any** listed frame (the union
-   analogue of V1's single-frame closure reference).
+   winner's source-confidence clamped to `[0,1]`; **(amended by
+   TRACKING-MODE-V1)** recency is mode-scoped — permanent `1.0` in
+   non-tracking worlds; in tracking worlds, wall-clock decay from the
+   effective winner's confirmation stamp, where the stamp search runs over the
+   **frame union** (the latest visible finite A1 stamp among
+   `stated`/`observed` rows strictly value-equivalent to the effective winner,
+   in any listed frame, `asserted_as_of`-respecting). The retired story-time
+   formula `1/(1+age/scale)` over `ref − winner.valid_from` is lineage only.
 5. **Corroboration.** Distinct `_source_class` values minus 1, counting only
    sources that attest the **effective served value** — never sources backing a
    *different* per-frame value (those are conflict, not corroboration; counting
@@ -72,14 +78,18 @@ Reuses `fold_key` per frame; unions only at the scoring layer. No new fold.
    and cross-frame agreement raises trust as intended. (Source rows carry a
    single `frame` column, so the union is a clean set with no physical
    double-count.)
-6. **Return** the same dict shape as V1:
-   `{score, status, last_observed_at, corroboration, conflicted}` where `status`
-   is the effective winner's status and `last_observed_at` its `valid_from`.
+6. **Return** the same dict shape as V1 **(amended: plus the three additive
+   TRACKING-MODE-V1 fields)**:
+   `{score, status, last_observed_at, corroboration, conflicted, recency,
+   recency_status, last_confirmed_at_wallclock}` where `status` is the
+   effective winner's status and `last_observed_at` its `valid_from`.
 
 ## Porcelain
 
-`p.confidence(entity, attribute, frame=..., as_of=...)` — `frame` accepts
-`str | list[str]`, pass-through. Return shape unchanged.
+`p.confidence(entity, attribute, frame=..., as_of=..., now=...)` — `frame`
+accepts `str | list[str]`, pass-through; `now` **(amended)** is the optional
+wall-clock reference for tracking worlds (never a valid-time as-of). Return
+shape carries the three additive TRACKING-MODE-V1 fields.
 
 ## Non-goals / invariants
 
@@ -98,8 +108,11 @@ Reuses `fold_key` per frame; unions only at the scoring layer. No new fold.
    single frame alone.
 3. Cross-frame conflict: `knows:o` says X, `public` says Y (non-equivalent) →
    `conflicted: True`, score halved.
-4. Union recency: a fresh `public` observation lifts recency for an observer
-   whose private fact is stale.
+4. Union confirmation **(amended from the retired story-time "union
+   recency")**: in a tracking world, an eligible same-value `public`
+   confirming row refreshes the effective winner's wall-clock recency over the
+   frame union; in non-tracking worlds the scores are equal and recency is
+   permanent.
 5. Absence: key absent in all listed frames → `_empty_confidence()`.
 6. Membrane: the call writes nothing (assertion count unchanged across the call).
 7. Set/accrue under a frame list → `score: None`.

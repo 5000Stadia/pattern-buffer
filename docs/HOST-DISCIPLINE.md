@@ -194,9 +194,13 @@ is irreducible provenance, legitimately the row's `confidence` field.)
   *assumption*.
 - **Trust / staleness → `confidence`, computed, never stored.** `confidence(e,
   attr)` returns a derived trust score (provenance × recency × corroboration)
-  plus `last_observed_at`; compute *staleness* as `your_clock − last_observed_at`
-  host-side. A three-campaign-years-stale fact has low confidence and **full
-  validity** — never delete it, never store a decaying `confidence` row (the
+  plus `last_observed_at` (valid-time) and — in tracking worlds —
+  `last_confirmed_at_wallclock` + a mode-scoped `recency` (TRACKING-MODE-V1:
+  wall-clock decay under your declared per-attribute half-lives; permanent in
+  fiction — the page is true). Render staleness from the wallclock field. A
+  three-campaign-years-stale fact keeps **full validity** and — in fiction —
+  undiminished confidence; only wall-clock unconfirmed age (tracking worlds)
+  decays trust. Never delete it, never store a decaying `confidence` row (the
   membrane).
 
 ## Feeding mechanics (summary; depth in INGESTION-PLAYBOOK.md)

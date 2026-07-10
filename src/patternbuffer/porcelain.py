@@ -638,10 +638,15 @@ class Porcelain:
         attribute: str,
         frame: str | list[str] = CANON,
         as_of: float | None = None,
+        now: float | None = None,
     ) -> dict:
         # frame may be a list: trust over an observer's effective knowledge
         # (knows:O ∪ public), mirroring multi-frame frame_diff.
-        return self._w.confidence(entity, attribute, frame=frame, as_of=as_of)
+        # now (TRACKING-MODE-V1): the WALL-time staleness reference in tracking
+        # worlds (defaults to the injected clock; unused in fiction). The
+        # payload carries recency/recency_status/last_confirmed_at_wallclock.
+        return self._w.confidence(entity, attribute, frame=frame, as_of=as_of,
+                                  now=now)
 
     def neighborhood(
         self,

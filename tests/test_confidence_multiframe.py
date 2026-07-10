@@ -109,11 +109,18 @@ def test_union_recency_uses_the_freshest_observation(world):
     # effective winner is the freshest observation across frames
     assert union["last_observed_at"] == 50.0
     assert stale["last_observed_at"] == 1.0
-    assert union["score"] > stale["score"]        # recency lifts the union
+    # TRACKING-MODE-V1 amendment: fiction recency is PERMANENT (the page is
+    # true) — story-time age no longer changes trust, so both reads carry the
+    # constant component; the freshest observation still selects the winner.
+    assert union["recency"] == stale["recency"] == 1.0
+    assert union["recency_status"] == stale["recency_status"] == "permanent"
+    assert union["score"] == stale["score"]
 
 
 _EMPTY = {"score": None, "status": None, "last_observed_at": None,
-          "corroboration": 0, "conflicted": False}
+          "corroboration": 0, "conflicted": False,
+          "recency": None, "recency_status": None,
+          "last_confirmed_at_wallclock": None}
 
 
 def test_absent_in_all_frames_is_empty(world):
