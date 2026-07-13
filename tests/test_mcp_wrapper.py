@@ -274,6 +274,7 @@ def test_wire_shapes_deep_equal_direct_calls(tmp_path):
 # ------------------------------------------------------------- lifecycle
 
 def test_startup_mismatched_world_id_fails_loudly(tmp_path):
+    pytest.importorskip("mcp")  # without the SDK, main() exits at the extra guard
     from patternbuffer.buffer import WorldMismatch
     from patternbuffer.mcp import main
     p = tmp_path / "owned.world"
