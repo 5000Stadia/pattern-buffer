@@ -1,6 +1,13 @@
 """Codex-auth HTTP shim: (prompt, schema) -> json over the ChatGPT
 consumer backend (letter 020, Path A).
 
+PERSONAL / EXPERIMENTAL EVAL TOOLING — not part of the installed
+package. This shim drives the developer's own authenticated ChatGPT
+Codex login (~/.codex/auth.json) against a consumer backend; anyone
+running it does so under their own account and the provider's terms
+of service. For a supported model callable, inject your own
+`(prompt, schema) -> json` (see model_shim.py / docs/ADOPTION.md).
+
 Pattern copied from the Kernos reference implementation
 (kernos/providers/codex_provider.py) — copied, never imported: the
 engine-neutrality rule is about coupling, not prior art. Every body

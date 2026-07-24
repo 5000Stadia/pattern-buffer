@@ -14,7 +14,7 @@ One append-only log of perspective-scoped, time-indexed assertions about entitie
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
 **Status: pre-1.0; substrate validated in BOTH modes, the ingestion-fidelity
-front closed by a measured contract.** The engine passes its 482-test
+front closed by a measured contract.** The engine passes its 480+-test
 invariant suite, and the chapter test
 (ingest a complete noir mystery, delete the prose, interrogate the store
 against a hand-authored answer key) has been graded across three full runs.
@@ -45,6 +45,23 @@ pip install pbuffer[mcp]     # + the MCP server: patternbuffer-mcp --world w.wor
 *(The PyPI distribution is `pbuffer` — the exact name `patternbuffer` was taken
 by an unrelated project; the import is `patternbuffer` throughout.)*
 
+## Try it
+
+The shipped example world — a complete noir mystery ingested into the
+substrate, prose deleted — answers structured questions deterministically.
+No model, no API key, milliseconds:
+
+```bash
+git clone https://github.com/5000Stadia/pattern-buffer && cd pattern-buffer
+python examples/anchor/build_anchor.py   # rebuild anchor.world from the committed dump
+python examples/anchor/tour.py           # the scripted interrogation tour
+```
+
+The tour walks the two-clock question (where was the memory core *as of*
+each chapter), knowledge frames (what one character can see), sealed
+containers, and the 8 open truth-maintenance conflict flags the world
+ships with visibly.
+
 ## What this is
 
 A storage and retrieval substrate that lets a language model maintain a complete, queryable, durable model of a world — places, objects, people, relationships, histories, and unknowns — such that any state question is answered by a deterministic query, never by re-reading prose; the world accretes and is re-enterable; and the same engine serves authored fiction (a holodeck, a campaign, a mystery) and real-world tracking (a household, a job site, a vehicle), differing only in resolution policy and provenance discipline.
@@ -59,6 +76,17 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 - **[docs/HOST-DISCIPLINE.md](docs/HOST-DISCIPLINE.md)** — the adopter's discipline brief: the seven categories every fact must be classified along to ingest with fidelity, and the structural retrieval strategies (the four correlation axes + the correlation sweep) to surface every relevant, related detail for any subject.
 - **[docs/INGESTION-PLAYBOOK.md](docs/INGESTION-PLAYBOOK.md)** — evidence-based rules for deserializing narrative into a world: the extractor contract, feeding mechanics, what the gate guards, and measured ingestion baselines.
 - **[docs/reference/assertion-world-model-original.md](docs/reference/assertion-world-model-original.md)** — the framework-agnostic design document this project was founded on, preserved verbatim for lineage.
+
+*A note on provenance citations.* Specs and the whitepaper's decision record
+cite the project's internal review trail: "the founder" is the project owner,
+who arbitrates design crossroads; "letter NNN" / "dev_inbox" / "Cx NNN" refer
+to an archived numbered correspondence with an independent review agent
+(Codex); "AgentPost" is the local message channel that replaced it; "pbr",
+"c", and "K"/"Kernos CC" are the dedicated reviewer, the first live host
+(Construct), and the intended primary host's maintainer respectively. These
+citations are preserved verbatim as review provenance — the artifacts are
+private, but every design decision they gate is restated in the whitepaper
+and specs themselves.
 
 ## The road
 
