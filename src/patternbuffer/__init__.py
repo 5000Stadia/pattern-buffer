@@ -31,12 +31,12 @@ from patternbuffer.thunks import (
     POLICIES,
     Resolver,
 )
-from patternbuffer.tmaint import TruthMaintenance
+from patternbuffer.tmaint import AtomicAbort, TruthMaintenance
 
 __version__ = "0.0.1"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
-__all__ = ["World", "Materialization", "Resolution", "__version__"]
+__all__ = ["World", "Materialization", "Resolution", "AtomicAbort", "__version__"]
 
 
 class World:
@@ -161,6 +161,71 @@ class World:
     # WHO-KNOWS-INVERSE-V1 — the computed "who knows X" read.
     def who_knows(self, entity: str, attribute: str, value: Any = None, **kw) -> list[str]:
         return self.indexes.who_knows(entity, attribute, value, **kw)
+
+    # MOVED-EVENT-V1 § E2 — "in transit" is temporal world-state, not host
+    # judgment, so it is one engine-derived read (a sibling of locate()/events()).
+    # Writes nothing durable; adds no mutation verb; changes neither the fold nor
+    # locate(). Identical signature on World and the porcelain.
+    _MOVE_PAYLOAD = ("kind", "agent", "origin", "destination", "manner")
+
+    def in_transit(self, agent: str | None = None, as_of: float | None = None,
+                   frame: str = CANON) -> list[dict]:
+        # Event payload rows regardless of valid-time (openness is decided here,
+        # not by visibility): omit valid_as_of so no valid-time bound is applied;
+        # asserted/retraction filtering still holds.
+        rows = self.buffer.visible(frame=frame, entity_prefix="event:")
+        by_event: dict[str, list] = {}
+        for r in rows:
+            by_event.setdefault(self.registry.resolve(r.entity), []).append(r)
+        wanted = self.registry.resolve(agent) if agent is not None else None
+        out: list[dict] = []
+        for eid, ev_rows in by_event.items():
+            kind = next((r for r in ev_rows
+                         if r.attribute == "kind" and r.value == "moved"), None)
+            if kind is None:
+                continue
+            payload = [r for r in ev_rows if r.attribute in self._MOVE_PAYLOAD]
+            valid_from = kind.valid_from
+            valid_to = kind.valid_to
+            # openness (§ E2). as_of=None: open iff valid_to is None. Numeric t:
+            # valid_from <= t AND (valid_to is None OR t < valid_to). A zero-
+            # duration (complete) or closed event is never in transit.
+            if as_of is None:
+                if valid_to is not None:
+                    continue
+            else:
+                vf = valid_from if valid_from is not None else float("-inf")
+                if not (vf <= as_of and (valid_to is None or as_of < valid_to)):
+                    continue
+            agent_val = next((r.value for r in ev_rows if r.attribute == "agent"), None)
+            if wanted is not None and (agent_val is None
+                                       or self.registry.resolve(agent_val) != wanted):
+                continue
+            origin = next((r.value for r in ev_rows if r.attribute == "origin"), None)
+            dest = next((r.value for r in ev_rows if r.attribute == "destination"), None)
+            manner = next((r.value for r in ev_rows if r.attribute == "manner"), None)
+            # event-start anchor = (valid_from, min asserted_at over PAYLOAD rows
+            # only) — attr:* meta-rows are already excluded (entity != event:*).
+            anchor = (valid_from if valid_from is not None else float("-inf"),
+                      min(r.asserted_at for r in payload))
+            # containment comparison (pbr's tuple rule). Exclude (arrived) only
+            # when a containment winner exists whose (valid_from, asserted_at) is
+            # AT OR AFTER the anchor; a head predating the anchor = last-known.
+            last_known = None
+            if agent_val is not None:
+                winner = self.state(self.registry.resolve(agent_val), "in",
+                                    frame=frame, valid_as_of=as_of).winner
+                if winner is not None:
+                    w_anchor = (winner.valid_from if winner.valid_from is not None
+                                else float("-inf"), winner.asserted_at)
+                    if w_anchor >= anchor:
+                        continue  # arrived / relocated — not in transit
+                    last_known = (self.registry.resolve(winner.value)
+                                  if winner.value_type == "entity" else winner.value)
+            out.append({"agent": agent_val, "origin": origin,
+                        "destination": dest, "manner": manner,
+                        "last_known_containment": last_known})
+        return sorted(out, key=lambda d: (str(d["agent"]), str(d["destination"])))
 
     def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
@@ -288,9 +353,23 @@ class World:
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
                           classify: str = "inline",
-                          cursor_authoritative: bool = False) -> list:
+                          cursor_authoritative: bool = False,
+                          extracted: bool = False, atomic: bool = False) -> list:
+        # `extracted` (MOVED-EVENT-V1 §B.3): prose-authored mode — the engine
+        # authors movement timestamps (the moved-event coordinate pass). Default
+        # False keeps structured callers byte-identical; World.ingest sets it.
+        # `atomic` (ATOMIC-ACTIVATION-V1 §A): all-or-none visibility, default off.
         return self.ingestor.ingest_structured(
             items, frame=frame, classify=classify,
+            cursor_authoritative=cursor_authoritative, extracted=extracted,
+            atomic=atomic)
+
+    def commit_set(self, ops: list[dict], *, classify: str = "rules",
+                   frame: str = CANON, cursor_authoritative: bool = False) -> list:
+        # The typed activation door (ATOMIC-ACTIVATION-V1 §C): ordered
+        # assert/retract ops applied as one all-or-none unit of work.
+        return self.ingestor.commit_set(
+            ops, self.truth, classify=classify, frame=frame,
             cursor_authoritative=cursor_authoritative)
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):

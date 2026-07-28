@@ -374,7 +374,7 @@ Every write returns a per-assertion Receipt; every fact carries
 `pip install pbuffer[mcp]` →
 `patternbuffer-mcp --world w.world --world-id w:id` (env:
 `PATTERNBUFFER_WORLD`, `PATTERNBUFFER_WORLD_ID`) serves ONE world over stdio
-(the 1:1 invariant; multi-world = multiple servers). The 37 deterministic
+(the 1:1 invariant; multi-world = multiple servers). The 39 deterministic
 porcelain verbs are MCP tools; results arrive as
 `structuredContent = {"result": <the porcelain return>}` (Receipts as dicts;
 exact-decimals as `{"$decimal": …}` tags) with the same object serialized in
@@ -388,3 +388,48 @@ V1.1 via MCP sampling. Trust boundary: a connected MCP client is a **fully
 trusted world principal** — it can name any frame; tool annotations are hints,
 never authorization. Put untrusted consumers (players, NPCs) behind YOUR
 host-mediated surface; frame entitlement is a host concern.
+
+## ATOMIC ACTIVATION SETS (`commit_set` / `atomic=True`)
+
+When a change spans several rows and a *prefix* would be incoherent — an
+ancestry insertion (retract the old parent edge, then append the interposed
+one), an arc adoption (retract the manifest's old main, append the new) — commit
+it **all-or-none**:
+
+- **`commit_set(ops)`** — the general door. `ops` is an ordered list of
+  `{"op":"assert","item":{…}}` and `{"op":"retract","assertion_id","reason"}`.
+  Applied as ONE unit of work: one commit on success, one rollback on any fault.
+- **`ingest_structured(items, atomic=True)`** — the assert-only sugar.
+- **Model-free only:** pass `classify="rules"` or `"defer"` (an omitted/`inline`/
+  `batch` classify under `atomic=True` raises — those call the model inside the
+  open transaction). `commit_set` defaults to `"rules"`.
+- **Ordered, never re-sorted:** ops apply in author order; each sees the staged
+  prefix for cycle/ancestry/recency checks. A `retract` may target only an
+  assertion committed **before the call** — not one an earlier op in the same set
+  minted (its `a:<seq>` id is not addressable). Recency is world-time
+  progression: give the superseding row a later `valid_from` (equal-time,
+  different-value is a flagged simultaneous contradiction, not an update).
+- **Failure — `AtomicAbort{cause, skipped, error}`** (`from patternbuffer import
+  AtomicAbort`), raised only after rollback is confirmed, nothing visible:
+  `cause="gate_skip"` (a malformed-id/cycle/self-edge that would receipt-and-
+  continue on the non-atomic path — `skipped` names the edges, `error=None`);
+  `cause="exception"` (authority/semantics/unknown-retract-target — `error=
+  {type,message}`, `skipped=[]`). Over MCP the abort is `isError:true` with
+  `structuredContent={cause,skipped,error}`.
+- **Non-idempotent:** a death/response-loss AFTER commit leaves a complete
+  durable set; a blind re-run DUPLICATES. On an ambiguous outcome, probe a
+  postcondition (is the new main loadable? does the head carry the set?) before
+  retrying — atomicity is not exactly-once.
+
+## MOVEMENT EVENTS (`kind=moved` / `in_transit()`)
+
+A movement is a reified `kind=moved` event with `agent`/`origin`/`destination`/
+`manner` rows (a novel endpoint is a `literal` string — never invented into an
+entity). In prose ingestion the **engine** authors the timestamps: a `complete`
+move is a zero-duration `[t,t)` event and the arrival becomes a **standing**
+containment (`locate()` flips at `t`); an open move has no arrival and
+`in_transit(agent, as_of)` reports it with the last-known containment. `events()`
+additively carries `origin`/`destination`/`manner`/`valid_to`/`origin_bound`/
+`destination_bound` for every event. The host doorway is preserved: a moved event
+never synthesizes a containment row — an `in` row exists only if extraction
+authored it in the same batch.

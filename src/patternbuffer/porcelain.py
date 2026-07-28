@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any
 from patternbuffer.codec import decode_value, encode_out
 from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
+from patternbuffer.tmaint import AtomicAbort
 
 if TYPE_CHECKING:  # pragma: no cover
     from patternbuffer import World
@@ -287,10 +288,19 @@ class Porcelain:
     def ingest_structured(self, items: list[dict], frame: str | None = None,
                           classify: str = "inline",
                           cursor_authoritative: bool = False,
-                          at: float | None = None) -> Receipt:
+                          at: float | None = None,
+                          extracted: bool = False,
+                          atomic: bool = False) -> Receipt:
+        # `extracted` (MOVED-EVENT-V1 §B.3): prose-authored mode. The engine runs
+        # the moved-event coordinate pass, authoring movement timestamps from the
+        # scene cursor. Default False leaves structured callers byte-identical.
+        # `atomic` (ATOMIC-ACTIVATION-V1 §A): all-or-none visibility, default off.
         # `at` places the scene cursor before the commit (AXIS-HEAD-V1 Win 2)
         # — the per-chunk pose for parallel-extract/serial-commit paths,
         # mirroring ingest(at=). The porcelain owns the pose; the gate reads it.
+        # ATOMIC §B4 pin (a): snapshot the prior cursor BEFORE applying `at=`, so
+        # an aborted atomic call restores the genuinely pre-call pose.
+        prior_cursor = self._w.ingestor.cursor.position
         if at is not None:
             self._w.ingestor.cursor.advance(at)
         # frame= is a DEFAULT for unframed items (letter 028) — per-item frames
@@ -300,8 +310,14 @@ class Porcelain:
         kept_own = (sum(1 for i in items
                         if isinstance(i, dict) and i.get("frame") not in (None, frame))
                     if frame is not None else 0)
-        rows = self._w.ingest_structured(items, frame=frame, classify=classify,
-                                         cursor_authoritative=cursor_authoritative)
+        try:
+            rows = self._w.ingest_structured(
+                items, frame=frame, classify=classify,
+                cursor_authoritative=cursor_authoritative, extracted=extracted,
+                atomic=atomic)
+        except AtomicAbort:
+            self._w.ingestor.cursor.position = prior_cursor  # §B4 pin (a)
+            raise
         receipt = self._receipt(rows)
         if kept_own:
             receipt.warnings.append(
@@ -331,6 +347,26 @@ class Porcelain:
 
     def retract(self, assertion_id: str, reason: str) -> Receipt:
         return self._receipt([self._w.truth.retract(assertion_id, reason)])
+
+    def commit_set(self, ops: list[dict], *, classify: str = "rules",
+                   frame: str = CANON,
+                   cursor_authoritative: bool = False) -> Receipt:
+        """The typed activation door (ATOMIC-ACTIVATION-V1 §C): an ordered list
+        of ``{op:"assert", item}`` / ``{op:"retract", assertion_id, reason}`` ops
+        applied as ONE all-or-none unit of work. On any gate skip / raised
+        condition the whole set rolls back and ``AtomicAbort`` (cause
+        ``gate_skip``/``exception``) is raised — nothing becomes visible. Success
+        returns the ordinary ``Receipt`` (non-idempotent; retry via a
+        postcondition probe, §B5)."""
+        rows = self._w.commit_set(ops, classify=classify, frame=frame,
+                                  cursor_authoritative=cursor_authoritative)
+        receipt = self._receipt(rows)
+        receipt.skipped = [
+            {"entity": s.entity, "attribute": s.attribute,
+             "value": encode_out(s.value), "reason": s.reason}
+            for s in self._w.ingestor.last_skipped
+        ]
+        return receipt
 
     # --------------------------------------------------- reads (LLM-free)
 
@@ -679,9 +715,18 @@ class Porcelain:
                                 lens="what_happened", since=since, as_of=until)
         by_event: dict[str, dict] = {}
         for r in m.assertions:
+            # § E1: every event dict — moved or not — ALWAYS carries the six
+            # additive keys, so the payload byte-shape is a contract, never
+            # "omitted-or-null". All prior keys/defaults are untouched.
             ev = by_event.setdefault(r.entity, {"id": r.entity, "kind": None,
                                                 "agents": [], "patients": [],
-                                                "t": r.valid_from, "caused_by": []})
+                                                "t": r.valid_from, "caused_by": [],
+                                                "origin": None, "destination": None,
+                                                "manner": None, "valid_to": None,
+                                                "origin_bound": None,
+                                                "destination_bound": None})
+            # stored r.attribute is already the canonical fold key (canonicalized
+            # at the ingest gate), so compare it directly as the prior keys do.
             if r.attribute == "kind":
                 ev["kind"] = r.value
             elif r.attribute == "agent":
@@ -690,8 +735,22 @@ class Porcelain:
                 ev["patients"].append(r.value)
             elif r.attribute == "caused_by":
                 ev["caused_by"].append(r.value)
+            elif r.attribute == "origin":
+                ev["origin"] = r.value
+                # discriminator is the STORED value_type, not grammar (§ E1/F4.1)
+                ev["origin_bound"] = r.value_type == "entity"
+            elif r.attribute == "destination":
+                ev["destination"] = r.value
+                ev["destination_bound"] = r.value_type == "entity"
+            elif r.attribute == "manner":
+                ev["manner"] = r.value
             if r.valid_from is not None:
                 ev["t"] = r.valid_from
+            # closing coordinate: movement payload rows share one valid_to;
+            # None = open event (zero-duration completes carry valid_from==valid_to)
+            if r.attribute in ("kind", "agent", "origin", "destination", "manner") \
+                    and r.valid_to is not None:
+                ev["valid_to"] = r.valid_to
         out = list(by_event.values())
         if kind is not None:
             out = [e for e in out if e["kind"] == kind]
@@ -704,6 +763,15 @@ class Porcelain:
         return encode_out(
             sorted(out, key=lambda e: (e["t"] if e["t"] is not None else float("-inf")))
         )
+
+    def in_transit(self, agent: str | None = None, as_of: float | None = None,
+                   frame: str = CANON) -> list[dict]:
+        """Open moved events whose agent has not yet arrived (MOVED-EVENT-V1 § E2).
+        Each result is `{agent, origin, destination, manner,
+        last_known_containment}`; `last_known_containment` is the resolved
+        containment value (place id) or `None`. Identical signature to
+        `World.in_transit`; the porcelain result is `encode_out`-encoded."""
+        return encode_out(self._w.in_transit(agent=agent, as_of=as_of, frame=frame))
 
     def who_knows(self, entity: str, attribute: str, value: Any = None,
                   as_of: float | None = None) -> list[str]:

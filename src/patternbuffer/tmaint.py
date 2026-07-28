@@ -33,6 +33,30 @@ CREATE TABLE IF NOT EXISTS sidecar_conflicts (
 """
 
 
+class AtomicAbort(Exception):
+    """Raised by an aborted `atomic=True` ingest / `commit_set` (ATOMIC-
+    ACTIVATION-V1 §B6). Emitted ONLY after rollback is confirmed — the set is
+    fully rolled back, nothing visible. Public import: `patternbuffer.AtomicAbort`.
+
+    Fields (types frozen):
+    - `cause`: `"gate_skip"` (a receipt-and-continue skip — malformed id / cycle /
+      self-edge — aborted the set) or `"exception"` (a condition that RAISES on
+      the non-atomic path — authority, semantics, unknown retract target, or an
+      unexpected error).
+    - `skipped`: the skip-receipt records `{entity, attribute, value, reason}`
+      (the non-atomic path's shape); `[]` when `cause="exception"`.
+    - `error`: `None` when `cause="gate_skip"`; `{type, message}` otherwise.
+    """
+
+    def __init__(self, cause: str, skipped: list, error: dict | None) -> None:
+        self.cause = cause
+        self.skipped = skipped
+        self.error = error
+        super().__init__(
+            f"atomic set aborted (cause={cause!r}, "
+            f"skipped={len(skipped)}, error={error})")
+
+
 @dataclass(frozen=True, slots=True)
 class Conflict:
     entity: str
@@ -111,8 +135,23 @@ class TruthMaintenance:
 
     def retract(self, target: Assertion | str, reason: str) -> Assertion:
         """Append a retraction meta-assertion. The target survives in the
-        log; folds exclude it from the retraction's asserted_at onward."""
+        log; folds exclude it from the retraction's asserted_at onward.
+
+        Target validation (ATOMIC-ACTIVATION-V1 §C1/F5): the target must exist
+        in the **pre-call committed log** — raise otherwise (no orphan `retracts`
+        row). Under an open unit, a target minted by an earlier op in the same
+        set (its `a:<seq>` id is not public vocabulary, §B3) is NOT eligible:
+        its seq lies above the unit's pre-call head. Standalone (no unit) this is
+        just "the target exists in the current log."""
         target_id = target if isinstance(target, str) else target.id
+        row = self._buffer.get(target_id)
+        precall_head = self._buffer.unit_precall_head
+        eligible = row is not None and (precall_head is None
+                                        or row.seq <= precall_head)
+        if not eligible:
+            raise ValueError(
+                f"retract target {target_id!r} is not a committed assertion "
+                "(a staged, in-set-minted id is not an eligible target)")
         return self._buffer.append(
             entity=target_id,
             attribute="retracts",

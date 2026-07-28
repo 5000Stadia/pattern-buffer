@@ -69,6 +69,196 @@ class WorldMismatch(ValueError):
     """A buffer was opened or written with the wrong world_id (1:1 invariant)."""
 
 
+class PoisonedConnection(RuntimeError):
+    """Raised by every later operation after a rollback-unconfirmable abort
+    poisons the connection (ATOMIC-ACTIVATION-V1 §B1) — uncertain transaction
+    state can never be finalized; only a fresh reopen recovers."""
+
+
+# The DML/read opcode classes Pattern Buffer legitimately borrows; everything
+# else (SAVEPOINT, ATTACH/DETACH, mutating PRAGMA, VACUUM, DDL) is denied by
+# default for borrowed execution, and SQLITE_TRANSACTION is provenance-gated.
+_ALLOWED_ACTIONS = frozenset({
+    sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_INSERT,
+    sqlite3.SQLITE_UPDATE, sqlite3.SQLITE_DELETE, sqlite3.SQLITE_FUNCTION,
+})
+
+
+def _guarded_getattribute(allowed: frozenset):
+    """Build a ``__getattribute__`` that enforces a REAL read allowlist: only the
+    named public members and Python's own dunders resolve; every other attribute
+    read — private slot, name-mangled spelling, arbitrary sqlite surface — raises
+    AttributeError. Name mangling is renaming, not access control (pbr r2 A1); a
+    borrowed holder must not reach the native handle by any attribute spelling."""
+    def __getattribute__(self, name: str) -> Any:
+        if name in allowed or (name.startswith("__") and name.endswith("__")):
+            return object.__getattribute__(self, name)
+        raise AttributeError(name)
+    return __getattribute__
+
+
+def _slot(obj: Any, name: str) -> Any:
+    """Read a private slot past the allowlisting ``__getattribute__`` — internal
+    use only (a module function, so it is not an attribute of the borrowed
+    object; a borrowed holder cannot invoke it as ``proxy.<anything>``)."""
+    return object.__getattribute__(obj, name)
+
+
+_CURSOR_ALLOWED = frozenset({
+    "execute", "executemany", "fetchone", "fetchall", "fetchmany",
+    "connection", "lastrowid", "rowcount", "description",
+})
+
+
+class _CursorProxy:
+    """A cursor whose ``.connection`` is the facade and whose execute/executemany
+    return the proxy — never the native cursor (ATOMIC-ACTIVATION-V1 §B1).
+    Attribute reads are allowlisted (`__getattribute__`), so the native cursor
+    (`_cursor`, any mangled spelling) is unreachable; internals are reached only
+    through ``object.__getattribute__``. Iteration stays on the proxy
+    (``__iter__`` returns self, ``__next__`` delegates), so no chain —
+    ``facade.execute(...).connection``, ``iter(...).connection`` — recovers raw."""
+
+    __slots__ = ("_cursor", "_facade")
+
+    __getattribute__ = _guarded_getattribute(_CURSOR_ALLOWED)
+
+    def __init__(self, cursor: sqlite3.Cursor, facade: "_ConnectionFacade") -> None:
+        object.__setattr__(self, "_cursor", cursor)
+        object.__setattr__(self, "_facade", facade)
+
+    def execute(self, *a: Any, **k: Any) -> "_CursorProxy":
+        _slot(self, "_cursor").execute(*a, **k)
+        return self
+
+    def executemany(self, *a: Any, **k: Any) -> "_CursorProxy":
+        _slot(self, "_cursor").executemany(*a, **k)
+        return self
+
+    def fetchone(self) -> Any:
+        return _slot(self, "_cursor").fetchone()
+
+    def fetchall(self) -> list:
+        return _slot(self, "_cursor").fetchall()
+
+    def fetchmany(self, size: int | None = None) -> list:
+        cur = _slot(self, "_cursor")
+        return cur.fetchmany(size) if size is not None else cur.fetchmany()
+
+    def __iter__(self) -> "_CursorProxy":
+        return self                       # NOT iter(native) — that leaks .connection
+
+    def __next__(self) -> Any:
+        return _slot(self, "_cursor").__next__()
+
+    @property
+    def connection(self) -> "_ConnectionFacade":
+        return _slot(self, "_facade")
+
+    @property
+    def lastrowid(self) -> int | None:
+        return _slot(self, "_cursor").lastrowid
+
+    @property
+    def rowcount(self) -> int:
+        return _slot(self, "_cursor").rowcount
+
+    @property
+    def description(self) -> Any:
+        return _slot(self, "_cursor").description
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise AttributeError(f"cannot set {name!r} on the cursor proxy")
+
+
+_FACADE_ALLOWED = frozenset({
+    "execute", "executemany", "cursor", "executescript", "commit", "rollback",
+    "total_changes", "in_transaction", "close",
+})
+
+
+class _ConnectionFacade:
+    """A deny-by-default capability over the buffer's sole SQLite connection
+    (ATOMIC-ACTIVATION-V1 §B1). Sidecars hold THIS, never the raw handle:
+
+    - attribute reads are allowlisted (`__getattribute__`): only the public
+      methods/read-properties below resolve; the buffer ref (`_buffer`) and every
+      raw-returning path are unreachable by ANY spelling — mangled or not — so a
+      borrowed holder cannot recover the native connection and disable the
+      authorizer (pbr r2 A1). Internals use ``object.__getattribute__``;
+    - ``commit()``/``rollback()`` route through the buffer's unit-of-work — gated
+      to the single terminal commit while a unit is open;
+    - every cursor-producing call returns a ``_CursorProxy`` whose ``.connection``
+      is the facade;
+    - ``executescript``/DDL is rejected while a unit is open (it implicitly
+      commits before running);
+    - transaction-control SQL through ``execute`` is caught below the text by the
+      unit authorizer the buffer installs on the raw connection.
+    """
+
+    __slots__ = ("_buffer",)
+
+    __getattribute__ = _guarded_getattribute(_FACADE_ALLOWED)
+
+    def __init__(self, buffer: "PatternBuffer") -> None:
+        object.__setattr__(self, "_buffer", buffer)
+
+    def execute(self, *a: Any, **k: Any) -> _CursorProxy:
+        return _CursorProxy(_slot(self, "_buffer")._live_conn().execute(*a, **k), self)
+
+    def executemany(self, *a: Any, **k: Any) -> _CursorProxy:
+        return _CursorProxy(
+            _slot(self, "_buffer")._live_conn().executemany(*a, **k), self)
+
+    def cursor(self) -> _CursorProxy:
+        return _CursorProxy(_slot(self, "_buffer")._live_conn().cursor(), self)
+
+    def executescript(self, script: str) -> _CursorProxy:
+        buf = _slot(self, "_buffer")
+        if buf._unit_open:
+            raise RuntimeError(
+                "executescript/DDL is forbidden while an atomic unit is open "
+                "(it implicitly commits before running)")
+        return _CursorProxy(buf._live_conn().executescript(script), self)
+
+    def commit(self) -> None:
+        _slot(self, "_buffer")._gated_commit()
+
+    def rollback(self) -> None:
+        _slot(self, "_buffer")._gated_rollback()
+
+    @property
+    def total_changes(self) -> int:
+        return _slot(self, "_buffer")._live_conn().total_changes
+
+    @property
+    def in_transaction(self) -> bool:
+        return _slot(self, "_buffer")._live_conn().in_transaction
+
+    def __enter__(self) -> "_ConnectionFacade":
+        return self                       # never the raw connection (§B1)
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
+        # A4: outside a unit, mirror sqlite context semantics — commit on clean
+        # exit, rollback on exception. Both route through the gated owner path, so
+        # INSIDE an open unit they are inert (the terminal commit still governs).
+        if exc_type is None:
+            _slot(self, "_buffer")._gated_commit()
+        else:
+            _slot(self, "_buffer")._gated_rollback()
+        return False
+
+    def close(self) -> None:
+        # owner-only: the facade never closes the shared connection (the buffer
+        # owns its lifecycle) — a borrowed close() is always rejected.
+        raise RuntimeError("close() is owner-only on the connection facade")
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name in ("autocommit", "isolation_level"):
+            raise RuntimeError(f"{name} is owner-only on the connection facade")
+        raise AttributeError(f"cannot set {name!r} on the connection facade")
+
+
 class PatternBuffer:
     """The append-only store. Holds exactly one world's log, forever."""
 
@@ -89,6 +279,15 @@ class PatternBuffer:
             )
         self.world_id = world_id
         self.rows_read = 0  # deserialization counter (read-path scaling guard, 037)
+        # Unit-of-work (ATOMIC-ACTIVATION-V1 §B1): the buffer owns the sole
+        # connection and hands every holder a capability facade, never the raw
+        # handle. While a unit is open, all commits defer to one terminal commit.
+        self._facade = _ConnectionFacade(self)
+        self._unit_open = False
+        self._owner_phase = "none"       # {none, begin, commit, rollback}
+        self._poisoned = False
+        self._unit_committed = False     # last unit reached a terminal COMMIT
+        self._unit_precall_head: int | None = None
 
     def _meta(self, key: str) -> str | None:
         row = self._conn.execute(
@@ -164,7 +363,7 @@ class PatternBuffer:
                 row.asserted_at,
             ),
         )
-        self._conn.commit()
+        self._commit_or_defer()
         logger.debug("append %s: (%s · %s)", row.id, row.entity, row.attribute)
 
     def _validate_attr_semantics_insert(self, row: Assertion) -> None:
@@ -304,9 +503,132 @@ class PatternBuffer:
 
     # ------------------------------------------------------------- plumbing
 
-    def raw_connection(self) -> sqlite3.Connection:
-        """For tests asserting the triggers; never used by engine code."""
-        return self._conn
+    def raw_connection(self) -> "_ConnectionFacade":
+        """The capability facade over the sole connection (ATOMIC-ACTIVATION-V1
+        §B1) — the ONLY boundary any holder receives; the raw handle never
+        escapes, so nothing can cache it and bypass the unit-of-work."""
+        return self._facade
 
     def close(self) -> None:
         self._conn.close()
+
+    # ------------------------------------------------- unit-of-work (§B1)
+
+    def _live_conn(self) -> sqlite3.Connection:
+        if self._poisoned:
+            raise PoisonedConnection(
+                "connection poisoned after an unconfirmable rollback")
+        return self._conn
+
+    def _commit_or_defer(self) -> None:
+        """The buffer's own per-row commit — deferred while a unit is open."""
+        if self._unit_open:
+            return
+        self._conn.commit()
+
+    def _gated_commit(self) -> None:
+        """A borrowed ``facade.commit()`` — a no-op during a unit (deferred to
+        the single terminal commit), a real commit outside one."""
+        if self._unit_open:
+            return
+        self._live_conn().commit()
+
+    def _gated_rollback(self) -> None:
+        if self._unit_open:
+            return                        # borrowed rollback is inert mid-unit
+        self._live_conn().rollback()
+
+    def _unit_authorizer(self, action: int, arg1: Any, arg2: Any,
+                         dbname: Any, source: Any) -> int:
+        """Compile-time capability check for borrowed execution during a unit.
+        Transaction control is provenance-gated by ``_owner_phase``; the DML/read
+        classes are allowed; everything else is denied by default."""
+        if action == sqlite3.SQLITE_TRANSACTION:
+            want = {"begin": "BEGIN", "commit": "COMMIT",
+                    "rollback": "ROLLBACK"}.get(self._owner_phase)
+            return (sqlite3.SQLITE_OK
+                    if want is not None and arg1 == want else sqlite3.SQLITE_DENY)
+        if action in _ALLOWED_ACTIONS:
+            return sqlite3.SQLITE_OK
+        return sqlite3.SQLITE_DENY
+
+    def _run_phase(self, phase: str, sql: str) -> None:
+        """Issue one owner transaction statement with the phase set to exactly
+        it, resetting to ``none`` in a try/finally so a raised commit/rollback
+        can never leave the capability authorizing (§B1.b)."""
+        self._owner_phase = phase
+        try:
+            self._conn.execute(sql)
+        finally:
+            self._owner_phase = "none"
+
+    def _poison(self) -> None:
+        self._poisoned = True
+        for op in (lambda: self._conn.set_authorizer(None), self._conn.close):
+            try:
+                op()
+            except Exception:
+                pass
+
+    @property
+    def poisoned(self) -> bool:
+        return self._poisoned
+
+    @property
+    def unit_committed(self) -> bool:
+        """Whether the LAST ``atomic_unit`` reached a confirmed terminal COMMIT.
+        A fault after this point is the ambiguous post-commit outcome (§B6/F7):
+        the set is durable — the raw error propagates, never wrapped as
+        ``AtomicAbort``, and in-memory views are NOT restored."""
+        return self._unit_committed
+
+    @property
+    def unit_precall_head(self) -> int | None:
+        """The committed head at unit entry — retract target eligibility uses
+        it to exclude staged (in-set-minted) ids (§C1); ``None`` outside a unit."""
+        return self._unit_precall_head
+
+    def atomic_unit(self, body: "Any") -> Any:
+        """Run ``body()`` inside ONE transaction (ATOMIC-ACTIVATION-V1 §B1):
+        a single commit on success, a single rollback on any exception, and the
+        authorizer installed/restored in an OUTER try/finally on every exit so
+        later non-atomic work is unaffected. A rollback-unconfirmable failure
+        **poisons** the connection and propagates the raw error unwrapped (§B6).
+        Once COMMIT succeeds, any later fault is the ambiguous post-commit outcome
+        (raw, never ``AtomicAbort``). Nested entry is rejected."""
+        if self._unit_open:
+            raise RuntimeError("nested atomic unit entry is rejected")
+        self._live_conn()
+        prior_authorizer = None    # sqlite3 exposes no getter; known None here
+        self._unit_committed = False
+        began = False
+        restore = True
+        try:
+            # A3: EVERY stateful install is inside the guard — a setup fault
+            # (head(), set_authorizer) still runs the finally cleanup, so
+            # `_unit_open`/authorizer never linger to break the next INSERT.
+            self._conn.set_authorizer(self._unit_authorizer)
+            self._unit_open = True
+            self._unit_precall_head = self.head()
+            self._run_phase("begin", "BEGIN")
+            began = True
+            result = body()
+            self._run_phase("commit", "COMMIT")
+            self._unit_committed = True     # A2: terminal success is recorded
+            return result
+        except BaseException:
+            # A2: never roll back a committed set — once COMMIT lands, a later
+            # fault is post-commit-ambiguous and propagates raw.
+            if began and not self._unit_committed:
+                try:
+                    self._run_phase("rollback", "ROLLBACK")
+                except BaseException:
+                    self._poison()          # unconfirmable → fail closed (§B6)
+                    restore = False
+                    raise
+            raise
+        finally:
+            self._unit_open = False
+            self._unit_precall_head = None
+            if restore and not self._poisoned:
+                self._conn.set_authorizer(prior_authorizer)

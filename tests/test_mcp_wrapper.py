@@ -1,6 +1,6 @@
 """MCP-WRAPPER-V1: the porcelain over MCP — registry, dispatch, wire, membrane.
 
-The wrapper is a pure adapter over the frozen porcelain: an explicit 37-tool
+The wrapper is a pure adapter over the frozen porcelain: an explicit 39-tool
 registry (never reflective), the genuinely model-free parameter subset (spy-
 proven), one mechanical wire envelope, the exact annotations table, and the
 core/extra import membrane. The stdio smoke test runs against the real SDK.
@@ -65,9 +65,9 @@ def _seed(world):
 
 # ------------------------------------------------------------- registry
 
-def test_registry_is_exactly_the_declared_37():
+def test_registry_is_exactly_the_declared_39():
     reg = build_registry()
-    assert len(reg) == 37 and set(reg) == set(V1_TOOLS)
+    assert len(reg) == 39 and set(reg) == set(V1_TOOLS)
     assert "state_union" in reg                       # the Cx-caught omission
     for absent in ("extract", "ingest", "ask", "resolve"):   # V1.1, not V1
         assert absent not in reg
@@ -169,6 +169,7 @@ def test_every_v1_tool_makes_zero_model_calls(spy_world, tmp_path):
                        "scope": "place:room"},
         "who_knows": {"entity": "obj:coin", "attribute": "in"},
         "events": {},
+        "in_transit": {},
         "entities": {"frame": "canon"},
         "facts": {"frame": "canon"},
         "fidelity_audit": {},
@@ -180,6 +181,9 @@ def test_every_v1_tool_makes_zero_model_calls(spy_world, tmp_path):
         "ingest_structured": {"items": [
             {"entity": "obj:coin", "attribute": "state", "value": "dusty",
              "valid_from": 2.0}]},
+        "commit_set": {"ops": [
+            {"op": "assert", "item": {"entity": "obj:coin", "attribute": "state",
+                                      "value": "clean", "valid_from": 3.0}}]},
         "retract": {"assertion_id": "a:1", "reason": "test"},
         "reconcile": {},
         "adjudicate_deferred": {},
@@ -382,7 +386,7 @@ async def test_stdio_initialize_list_call_shutdown(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            assert len(tools.tools) == 37
+            assert len(tools.tools) == 39
             by_name = {t.name: t for t in tools.tools}
             assert by_name["snapshot"].annotations.readOnlyHint is True
             assert by_name["retract"].annotations.destructiveHint is True

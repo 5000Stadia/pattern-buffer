@@ -26,13 +26,13 @@ import types as _pytypes
 import typing
 from typing import Any
 
-from patternbuffer import World
+from patternbuffer import AtomicAbort, World
 from patternbuffer.codec import encode_out
 
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------- the registry
-# Explicit and exhaustive (Cx 521 #2): the 37 deterministic tools. A porcelain
+# Explicit and exhaustive (Cx 521 #2): the 39 deterministic tools. A porcelain
 # addition CANNOT appear here by reflection — it must be classified V1/V1.1 and
 # added deliberately (the registry-completeness test enforces this).
 
@@ -40,12 +40,13 @@ V1_READS = (
     "snapshot", "state", "state_union", "where", "aggregate", "confidence",
     "locate", "contents", "composition", "features", "path", "route",
     "neighborhood", "salience", "frame_diff", "who_knows", "events",
+    "in_transit",                                        # MOVED-EVENT-V1 § E3
     "entities", "facts", "fidelity_audit", "axis_heads", "proposals",
     "correlations", "correlation_conflicts", "typing_conflicts",
 )
 V1_MUTATIONS = (
-    "ingest_structured", "retract", "reconcile", "adjudicate_deferred",
-    "confirm", "merge", "reject", "correlate", "retype",
+    "ingest_structured", "commit_set", "retract", "reconcile",
+    "adjudicate_deferred", "confirm", "merge", "reject", "correlate", "retype",
     "begin_build", "seal_build", "abort_build",
 )
 V1_TOOLS = V1_READS + V1_MUTATIONS
@@ -56,7 +57,7 @@ V1_TOOLS = V1_READS + V1_MUTATIONS
 # supersedes the effective view. The complement of this set within mutations —
 # including begin_build/abort_build — is explicitly destructiveHint=False.
 DESTRUCTIVE = frozenset({
-    "retract", "merge", "confirm", "retype", "adjudicate_deferred",
+    "retract", "commit_set", "merge", "confirm", "retype", "adjudicate_deferred",
     "reconcile", "seal_build",
 })
 # Retry-safe mutations only (reads are all idempotent).
@@ -82,6 +83,25 @@ SCHEMA_OVERRIDES: dict[tuple[str, str], dict] = {
     ("ingest_structured", "classify"): {"type": "string",
                                         "enum": ["rules", "defer"],
                                         "default": "rules"},
+    # ATOMIC-ACTIVATION-V1 §D: commit_set is model-free too, and its ops carry a
+    # DISCRIMINATED shape so a generic list[dict] never reaches the gate unshaped.
+    ("commit_set", "classify"): {"type": "string",
+                                 "enum": ["rules", "defer"],
+                                 "default": "rules"},
+    ("commit_set", "ops"): {
+        "type": "array",
+        "items": {"oneOf": [
+            {"type": "object",
+             "properties": {"op": {"const": "assert"}, "item": {"type": "object"}},
+             "required": ["op", "item"], "additionalProperties": False},
+            {"type": "object",
+             "properties": {"op": {"const": "retract"},
+                            "assertion_id": {"type": "string"},
+                            "reason": {"type": "string"}},
+             "required": ["op", "assertion_id", "reason"],
+             "additionalProperties": False},
+        ]},
+    },
 }
 # Parameters omitted from the tool surface entirely (the server always uses
 # the safe value): seal_build(model=) would reach the batch model path.
@@ -205,11 +225,11 @@ def dispatch(world: World, name: str, arguments: dict[str, Any],
     unknown = set(args) - allowed
     if unknown:
         raise ValueError(f"{name}: unknown argument(s) {sorted(unknown)}")
-    if name == "ingest_structured":
+    if name in ("ingest_structured", "commit_set"):
         classify = args.setdefault("classify", "rules")
         if classify not in ("rules", "defer"):
             raise ValueError(
-                "ingest_structured over MCP accepts classify='rules'|'defer' "
+                f"{name} over MCP accepts classify='rules'|'defer' "
                 "only — 'inline'/'batch' reach the model path, which this "
                 "no-model server does not carry (MCP-WRAPPER-V1)")
     if name == "seal_build":
@@ -252,11 +272,25 @@ def build_server(world: World):
         ]
 
     @server.call_tool()   # SDK validates input, wraps dict as structuredContent
-    async def _call_tool(name: str, arguments: dict) -> dict:
-        # Returning the envelope dict: the SDK places it in structuredContent
-        # AND serializes the same object into one TextContent block — the
-        # spec's wire convention, natively.
-        return dispatch(world, name, arguments, lock=lock)
+    async def _call_tool(name: str, arguments: dict):
+        # Success: return the envelope dict — the SDK places it in
+        # structuredContent AND serializes it into one TextContent block.
+        # AtomicAbort (ATOMIC-ACTIVATION-V1 §D): return a pinned error result —
+        # the machine-readable structuredContent {cause, skipped, error} is the
+        # contract; the text content is a non-parsed human summary.
+        try:
+            return dispatch(world, name, arguments, lock=lock)
+        except AtomicAbort as abort:
+            payload = {"cause": abort.cause, "skipped": abort.skipped,
+                       "error": abort.error}
+            return types.CallToolResult(
+                isError=True,
+                structuredContent=payload,
+                content=[types.TextContent(
+                    type="text",
+                    text=f"atomic set aborted (cause={abort.cause}); "
+                         f"{len(abort.skipped)} skip(s); nothing committed")],
+            )
 
     return server
 

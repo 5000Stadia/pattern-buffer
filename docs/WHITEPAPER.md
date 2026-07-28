@@ -629,13 +629,16 @@ is here; a host that reaches below it (into `buffer`/`ingestor`/`classifier`) is
 a signal a legitimate need isn't yet expressible on the surface, and the fix is
 to add the verb (that is how §25.4–§25.7 came to exist). The verb families:
 
-- **Write:** `ingest` / `ingest_structured` / `extract` (the read-only
+- **Write:** `ingest` / `ingest_structured` (`atomic=` for all-or-none) /
+  `commit_set` (the typed activation door) / `extract` (the read-only
   extraction seam) / `resolve` / `retract`.
 - **Standing reads:** `snapshot` (scope × frame × lens × as_of × budget),
   `state`, `state_union`, `where`, `aggregate`, `confidence`.
 - **Spatial reads:** `locate`, `contents`, `composition`, `features`, `path`,
-  `route`, `neighborhood`, `salience`.
-- **Knowledge/diff reads:** `frame_diff`, `who_knows`, `events`.
+  `route`, `neighborhood`, `salience`, `in_transit`.
+- **Knowledge/diff reads:** `frame_diff`, `who_knows`, `events` (the payload
+  additively carries the six movement keys — `origin`/`destination`/`manner`/
+  `valid_to`/`origin_bound`/`destination_bound`, MOVED-EVENT-V1).
 - **Identity:** `reconcile`, `proposals`, `confirm`, `merge`, `reject`,
   `correlate`, `correlations`, `correlation_conflicts`, `adjudicate_deferred`,
   `typing_conflicts`, `retype`.
@@ -837,3 +840,6 @@ exact number, the host owns what it denominates.
 | A13 | 2026-07 | `fidelity_audit()` — the ingestion self-check that makes the open front (§19) *measurable*: coreference `name_collisions` (the tracked metric) + `unstamped_timed`/`orphan_entities`/`open_conflicts`, derived and host-severity-joined (§25.4). Co-designed with the first host | INGESTION-FIDELITY-V1 |
 | A15 | 2026-07 | Tracking mode validated (the second mode's chapter test): the three-axis time contract (`valid_from` / `asserted_at` / `learned_at_wallclock`), `DecayPolicy` (declared per-attribute half-lives; world physics as rebuildable data), `confidence(now=)` with the frozen `recency`/`recency_status`/`last_confirmed_at_wallclock` payload, the **fiction anti-decay amendment** (founder: the page is true — story-time never erodes trust; §13/§15 amended), and the **no-bias invariant** (founder: `stance` is a pure identifier; the engine never judges what can exist in either stance — the aliens test). Battery 14/14 (`evals/the_grey_house/`) | TRACKING-MODE-V1 |
 | A14 | 2026-07 | The MCP wrapper (§17.2's reserved "later optional wrapper", built): `pbuffer[mcp]` serves the frozen porcelain's 37 deterministic verbs over stdio — the genuinely model-free subset (classify narrowed to `rules`/`defer`; no `seal_build(model)`), explicit registry (never reflective), `{"result": …}` wire envelope, exact ToolAnnotations, one server ↔ one world. A connected client is a fully **trusted world principal**; entitlement stays host-mediated. The engine-independence claim now demonstrated beyond Python | MCP-WRAPPER-V1 |
+| A17 | 2026-07 | All-or-none activation: `ingest_structured(atomic=True)` + the typed `commit_set(ops)` door (assert/retract), the buffer's unit-of-work behind a deny-by-default capability facade + provenance-gated SQLite authorizer (the single terminal commit; fail-closed poison on unconfirmable rollback), the `AtomicAbort{cause,skipped,error}` contract, shared-path retract target validation, model-free-classify boundary. Registered as the MCP wrapper's 39th verb (pinned error envelope). Storage-level atomicity — no staged frames, no visibility indirection | ATOMIC-ACTIVATION-V1 |
+| A16 | 2026-07 | Movement as a reified event: a `kind=moved` event with `agent`/`origin`/`destination`/`manner` (event-scoped keys, never global aliases), a `literal` **never-invent** novel endpoint, the engine-authored coordinate pass for prose mode (`ingest_structured(extracted=True)` — zero-duration `[t,t)` payload + a **standing** arrival `in`, so `locate()` flips at `t`), the two general interval gate invariants, `in_transit()` (the derived open-move read), and the additive six-key `events()` payload. Registered as the MCP wrapper's 38th verb. Host doorway (`in`-from-batch only) preserved — the event is evidence, never a bypass | MOVED-EVENT-V1 |
+| A16 | 2026-07 | The standing-property contract: **timeless = true across the world's whole history** (facts of origin only; acquired standing facts stamp at their earliest supported time; age is never timeless — §5's durability and §3's valid time kept orthogonal), the classifier's enduring-baseline preference, kinship-of-origin as one host `attribute_default` declaration (no engine kinship vocabulary), the `merged_self_edge` receipt reason; background-homonym coreference **parked forever with cause** (its reopening tripwire lives host-side — see ROADMAP-deferred's no-park-without-a-tripwire doctrine). Plus the full scoped deictic family in the `pov` instruction (§25.6 extension) | INGESTION-FIDELITY-V2, SHAPE-FIX-V1 4c |

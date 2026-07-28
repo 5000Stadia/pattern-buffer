@@ -121,6 +121,27 @@ design pipelines to lean on them rather than over-tuning the contract:
     (`assumed`) cannot hold incumbency over a later observation. Found BY
     run 1, fixed in the engine, not the prompt. *(Engine fix.)*
 
+### C.1 Activation sets (all-or-none multi-row changes)
+
+When a change is a *set* whose prefix would be incoherent — an ancestry
+insertion, an arc adoption — commit it atomically instead of row-by-row:
+
+- Use **`commit_set(ops)`** (ordered `assert`/`retract`) or
+  **`ingest_structured(items, atomic=True)`** (assert-only). Classify must be
+  **model-free** (`rules`/`defer`) — the model can't run inside the open
+  transaction.
+- **Scaffold-first ordering** still helps but is not gate-enforced: author each
+  op so its cycle/ancestry/recency checks see the staged prefix. A `retract`
+  targets only a **committed** id (never one the same set just minted). Give a
+  superseding row a **later `valid_from`** — equal-time/different-value is a
+  flagged contradiction, not an update.
+- **On abort nothing is visible** and `AtomicAbort{cause, skipped, error}` carries
+  the receipts (technical failure stays out of canon — receipts ride the
+  exception, never rows). `gate_skip` = a malformed-id/cycle/self-edge; `exception`
+  = authority/semantics/unknown-retract-target.
+- **Non-idempotent:** after an ambiguous outcome, probe a postcondition before
+  retrying — a blind re-run of an already-committed set duplicates it.
+
 ## D. Grading discipline (for anyone building an eval like ours)
 
 17. **The grader must find the extractor's entities, not dictate them.**

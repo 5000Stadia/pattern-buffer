@@ -50,11 +50,20 @@ class SalienceIndex:
         self._buffer = buffer
         self._classifier = classifier
         self._indexes = indexes
+        self._schema_ready = False
         self._ensure_schema()
 
-    def _ensure_schema(self) -> None:
+    def _ensure_schema(self, force: bool = False) -> None:
+        # ATOMIC-ACTIVATION-V1 §B1: create-once. Reads must be DDL-free (a
+        # `salience()` read during an open atomic unit would otherwise hit the
+        # facade's open-unit `executescript` rejection). `rebuild()` forces the
+        # recreate (the recovery path drops the table) — permitted outside a unit,
+        # rejected during one by the facade.
+        if self._schema_ready and not force:
+            return
         self._buffer.raw_connection().executescript(_SCHEMA)
         self._buffer.raw_connection().commit()
+        self._schema_ready = True
 
     @staticmethod
     def _as_of_key(as_of: float | None) -> str:
@@ -62,7 +71,7 @@ class SalienceIndex:
 
     def rebuild(self) -> None:
         """Drop cached scores; they will be recomputed on demand."""
-        self._ensure_schema()
+        self._ensure_schema(force=True)   # recovery may have dropped the table
         self._buffer.raw_connection().execute("DELETE FROM sidecar_salience")
         self._buffer.raw_connection().commit()
 

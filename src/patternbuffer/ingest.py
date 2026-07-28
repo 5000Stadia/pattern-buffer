@@ -22,13 +22,25 @@ from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
-from patternbuffer.codec import decode_value
+from patternbuffer.codec import decode_value, encode_out
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.model import ATTR_PREFIX, CANON, SEMANTICS_PREDICATES, Assertion
 from patternbuffer.roles import WriterRole
 from patternbuffer.semantics import AttributeSemantics
+from patternbuffer.tmaint import AtomicAbort
 
 logger = logging.getLogger(__name__)
+
+
+class _GateSkip(Exception):
+    """Internal signal (ATOMIC-ACTIVATION-V1 §B2): a receipt-and-continue skip
+    occurred inside an atomic set — carries the skip records so the envelope can
+    raise ``AtomicAbort(cause="gate_skip")`` after rollback. Never escapes the
+    ingestor."""
+
+    def __init__(self, skipped: list) -> None:
+        self.skipped = skipped
+        super().__init__(f"{len(skipped)} gate skip(s) aborted the atomic set")
 
 # The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
 # A malformed id (person:/you) is SKIPPED with a typed receipt, never
@@ -69,6 +81,14 @@ _EXTRACT_SCHEMA = {
                     "status": {"enum": ["stated", "observed", "inferred", "assumed"]},
                     "timeless": {"type": "boolean"},
                     "valid_from": {"type": ["number", "null"]},
+                    # MOVED-EVENT-V1 §B.1: valid_to is consumed at the gate but
+                    # was undeclared (permissive tolerance is not a contract).
+                    "valid_to": {"type": ["number", "null"]},
+                    # MOVED-EVENT-V1 §B.1/§A: the movement completion marker is
+                    # a first-class item field on the kind=moved item only —
+                    # boolean-only (a null marker fails the group closed, §B.4),
+                    # never a durable `complete` attribute row.
+                    "complete": {"type": "boolean"},
                     "confidence": {"type": ["number", "null"]},
                     "source_doc": {"type": ["string", "null"]},
                     "caused_by": {"type": ["string", "null"]},
@@ -100,6 +120,28 @@ _EXTRACT_RULES_FULL = (
     "- attributes: use 'in' for all containment/location; 'connects_to' for "
     "passage; 'kind' for what a thing is; domain attributes freely otherwise.\n"
     "- value_type 'entity' when the value is another entity id.\n"
+    "- MOVEMENT: when the text narrates a person actually leaving or arriving "
+    "at a place (goes out, slips away, comes in, arrives, departs, walks/rides/"
+    "drives from A to B), ALSO emit an event with a FRESH UNIQUE id of the form "
+    "'event:<short-occurrence-slug>' — a new id for every distinct movement, "
+    "never reused — with these attributes, all sharing the one id: kind=moved; "
+    "agent=<person id>; origin=<place> and/or destination=<place> exactly as the "
+    "text gives them (a bound place is its entity id; a named-but-unregistered "
+    "place is that name as a plain string with value_type=literal; an unnamed "
+    "end is simply absent); manner=<the verb's own mode: walk/run/crawl/ride/"
+    "drive/fly/swim> when the verb says it. Use exactly the keys agent, origin, "
+    "destination, manner — not actor, from, to, source, target, mode. Do NOT "
+    "emit valid_from or valid_to for a movement — the engine stamps the "
+    "timeline; a number invented from prose ('that evening') is forbidden. "
+    "Instead put a single boolean field 'complete' on the kind=moved item: "
+    "complete=true when the SAME passage narrates the finished arrival, "
+    "complete=false when only the departure is narrated. A bound destination "
+    "whose arrival is narrated (complete=true) also gets its ordinary 'in' row "
+    "(no timestamp on it either). Only actual displacement by a person is "
+    "movement: intent or facing ('turned toward the door', 'keeps to the "
+    "threshold'), preparation ('takes up the pails'), moving atmosphere (air, "
+    "rain, light), and repositioning within the same place are NOT moved "
+    "events.\n"
     "- FRAMES: facts about the world are frame 'canon' — even facts revealed "
     "late or learned by a character mid-story; give them their TRUE historical "
     "valid_from. Use frame 'knows:<person_id>' ONLY for the additional fact "
@@ -155,6 +197,20 @@ _EXTRACT_RULES_LEAN = (
     "- ALWAYS extract location changes: X moves/leaves/arrives => a new 'in' "
     "row for X. Presence and departure are core state, never atmosphere "
     "(a departure that goes unrecorded makes presence lie).\n"
+    "- MOVEMENT: when a person actually leaves or arrives at a place, ALSO emit "
+    "an event with a FRESH UNIQUE id 'event:<slug>' (new per movement, never "
+    "reused) sharing one id: kind=moved; agent=<person id>; origin=<place> "
+    "and/or destination=<place> as the text gives them (bound place = its id; "
+    "named-but-unregistered = the name as value_type=literal; unnamed end = "
+    "absent); manner=<walk/run/crawl/ride/drive/fly/swim> when the verb says it. "
+    "Use exactly agent, origin, destination, manner — not actor/from/to/source/"
+    "target/mode. Do NOT emit valid_from or valid_to for a movement; instead put "
+    "one boolean 'complete' on the kind=moved item (true when the same passage "
+    "narrates the finished arrival, false when only departure). A bound "
+    "destination with complete=true also gets its ordinary 'in' row (no "
+    "timestamp). Only real person displacement is movement: intent/facing, "
+    "preparation, moving atmosphere (air/rain/light), and same-place "
+    "repositioning are NOT moved events.\n"
     "- timeless=true ONLY for what holds across the world's whole history: "
     "identity/structure (kind, names, fixed adjacency) and facts of origin "
     "(kinship of origin, innate traits). Everything acquired or mutable gets "
@@ -303,11 +359,132 @@ class Ingestor:
         self._semantics.rebuild()
         return out
 
+    # ------------------------------------------ moved-event coordinate pass
+
+    def _apply_moved_coordinate_pass(
+        self, items: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """MOVED-EVENT-V1 §B.3-B.5: engine-authored movement timestamps
+        (extracted mode). For each `kind=moved` event: validate its single
+        boolean `complete` marker (fail closed on missing / non-boolean /
+        duplicated / misplaced — drop the whole moved group AND its matched
+        arrival `in`, one `moved_marker_invalid` receipt); strip any
+        model-supplied `valid_from`/`valid_to`; stamp from the scene cursor. The
+        event PAYLOAD rows (kind/agent/origin/destination/manner) get
+        `valid_from`=cursor and `valid_to`=cursor when complete (the
+        zero-duration event); the matched arrival `in` gets `valid_from`=cursor
+        with `valid_to` ABSENT (the standing destination — never `[t,t)`, else
+        `locate()` could never flip to it). An `attribute="complete"` row is
+        stray and never durable."""
+        cursor = self.cursor.position
+
+        def ev_id(it: dict[str, Any]) -> str | None:
+            e = it.get("entity")
+            return e if isinstance(e, str) and e.startswith("event:") else None
+
+        def cattr(it: dict[str, Any]) -> str:
+            raw = it.get("attribute")
+            return self._canonicalize(raw)[0] if isinstance(raw, str) else ""
+
+        moved_ids = {
+            ev_id(it) for it in items
+            if ev_id(it) and cattr(it) == "kind" and it.get("value") == "moved"
+        }
+        if not moved_ids:
+            return items
+
+        payload: dict[str, list[int]] = {eid: [] for eid in moved_ids}
+        kind_idx: dict[str, int] = {}
+        markers: dict[str, list[Any]] = {eid: [] for eid in moved_ids}
+        agent: dict[str, Any] = {}
+        dest: dict[str, Any] = {}
+        dest_is_entity: dict[str, bool] = {}
+        frame_of: dict[str, str] = {eid: CANON for eid in moved_ids}
+        drop: set[int] = set()
+
+        for idx, it in enumerate(items):
+            eid = ev_id(it)
+            if eid not in payload:
+                continue
+            attr = cattr(it)
+            if attr == "complete":
+                drop.add(idx)          # stray row — never the marker, never durable
+                continue
+            payload[eid].append(idx)
+            if "complete" in it:
+                markers[eid].append(it["complete"])
+            if attr == "kind" and it.get("value") == "moved":
+                kind_idx[eid] = idx
+                frame_of[eid] = it.get("frame") or CANON
+            elif attr == "agent":
+                agent[eid] = it.get("value")
+            elif attr == "destination":
+                dest[eid] = it.get("value")
+                vt = it.get("value_type") or (
+                    "entity" if isinstance(it.get("value"), str)
+                    and _ID_RE.fullmatch(str(it.get("value"))) else "literal")
+                dest_is_entity[eid] = vt == "entity"
+
+        for eid in moved_ids:
+            ki = kind_idx.get(eid)
+            marker_ok = (
+                len(markers[eid]) == 1
+                and isinstance(markers[eid][0], bool)
+                and ki is not None
+                and "complete" in items[ki]
+            )
+            # EVERY exact arrival match is a candidate (M1): a duplicate arrival
+            # row must not survive with model-authored coordinates. Match rule:
+            # entity==agent ∧ canonical attr=="in" ∧ value==destination ∧ frame.
+            arrival_idxs: list[int] = []
+            if agent.get(eid) is not None and dest.get(eid) is not None \
+                    and dest_is_entity.get(eid):
+                for idx, it in enumerate(items):
+                    if (it.get("entity") == agent[eid] and cattr(it) == "in"
+                            and it.get("value") == dest[eid]
+                            and (it.get("frame") or CANON) == frame_of[eid]):
+                        arrival_idxs.append(idx)
+            if not marker_ok:
+                for idx in payload[eid]:
+                    drop.add(idx)
+                for idx in arrival_idxs:          # drop ALL matches, not just one
+                    drop.add(idx)
+                self._record_skip(eid, "kind", "moved", "moved_marker_invalid")
+                continue
+            complete = markers[eid][0]
+            # An OPEN move (complete=false) has NO arrival `in` (§B.3): an exact
+            # arrival-shaped row is contradictory — drop+receipt every candidate
+            # so the untrusted prose path can neither flip locate() nor retain an
+            # invented coordinate (M2).
+            if not complete and arrival_idxs:
+                for idx in arrival_idxs:
+                    drop.add(idx)
+                self._record_skip(eid, "arrival", dest[eid], "moved_open_with_arrival")
+            for idx in payload[eid]:
+                it = dict(items[idx])
+                it.pop("complete", None)
+                it.pop("timeless", None)
+                it["valid_from"] = cursor
+                it["valid_to"] = cursor if complete else None
+                items[idx] = it
+            if complete:
+                for idx in arrival_idxs:          # stamp ALL exact matches (M1)
+                    it = dict(items[idx])
+                    it.pop("timeless", None)
+                    it["valid_from"] = cursor
+                    it["valid_to"] = None
+                    items[idx] = it
+
+        if not drop:
+            return items
+        return [it for idx, it in enumerate(items) if idx not in drop]
+
     # -------------------------------------------------------- structured
 
     def ingest_structured(
         self, items: list[dict[str, Any]], frame: str | None = None,
         classify: str = "inline", cursor_authoritative: bool = False,
+        extracted: bool = False, atomic: bool = False,
     ) -> list[Assertion]:
         """The no-model gate entry: pre-extracted items, full discipline.
         Synthetic test content only — never bible-derived (spec §6).
@@ -326,9 +503,31 @@ class Ingestor:
         cut). ``"defer"`` skips classification entirely (the host runs
         ``classify_all`` later over the whole build). ``batch``/``defer`` inherit
         the deferred-classification residual (the read-time ``locate()`` guard
-        remains the transitive-cycle backstop, as in the harness build)."""
+        remains the transitive-cycle backstop, as in the harness build).
+
+        ``atomic`` (ATOMIC-ACTIVATION-V1 §A): default ``False`` — existing per-row
+        visibility byte-identical. Under ``atomic=True`` the whole set is one unit
+        of work (all-or-none); classification must be model-free
+        (``classify ∈ {rules, defer}``, else ``ValueError`` before any write), and
+        any gate skip aborts the set with ``AtomicAbort`` (§B6)."""
         if classify not in ("inline", "batch", "defer", "rules"):
             raise ValueError(f"unknown classify mode {classify!r}")
+        if atomic:
+            if classify not in ("rules", "defer"):
+                raise ValueError(
+                    "atomic=True requires model-free classify ∈ {rules, defer} "
+                    "— 'inline'/'batch' call the model inside the open "
+                    "transaction (ATOMIC-ACTIVATION-V1 §A)")
+            return self._run_atomic(lambda: self._skip_aborting(
+                lambda: self._ingest_body(items, frame, classify,
+                                          cursor_authoritative, extracted)))
+        return self._ingest_body(items, frame, classify, cursor_authoritative,
+                                 extracted)
+
+    def _ingest_body(
+        self, items: list[dict[str, Any]], frame: str | None,
+        classify: str, cursor_authoritative: bool, extracted: bool,
+    ) -> list[Assertion]:
         self._skipped = []
         # "rules" collects like "batch", then applies guardrails+STATE (no LM).
         collect: list[Assertion] | None = [] if classify in ("batch", "rules") else None
@@ -340,6 +539,14 @@ class Ingestor:
         prev_cursor_auth = self._cursor_authoritative
         self._cursor_authoritative = cursor_authoritative
         try:
+            # MOVED-EVENT-V1 §B.3: in extracted (prose) mode the ENGINE authors
+            # movement timestamps — the model is untrusted for timing. The
+            # coordinate pass strips model coordinates from moved-event rows and
+            # their matched arrival `in`, stamps from the scene cursor, and
+            # fails a malformed marker group closed. Structured callers
+            # (extracted=False) keep their own numeric coordinates untouched.
+            if extracted:
+                items = self._apply_moved_coordinate_pass(items)
             appended: list[Assertion] = []
             for item in items:
                 if frame is not None and "frame" not in item:
@@ -351,6 +558,132 @@ class Ingestor:
         finally:
             # Always reflect THIS call's skips, even if an item raised mid-batch
             # (Cx final: no stale carryover from a prior call).
+            self.classify_inline = prev_inline
+            self._classify_collect = prev_collect
+            self._cursor_authoritative = prev_cursor_auth
+            self.last_skipped = list(self._skipped or [])
+            self._skipped = None
+
+    # ------------------------------------------------- atomic (§B / §C)
+
+    def _skip_aborting(self, body):
+        """Run an ingest/op body, then raise ``_GateSkip`` if it receipted any
+        skip — so a receipt-and-continue skip aborts the whole atomic set (§B2).
+        The skips are captured before the body's finally nulls ``_skipped``."""
+        appended = body()
+        if self.last_skipped:
+            raise _GateSkip(list(self.last_skipped))
+        return appended
+
+    def _run_atomic(self, body):
+        """Shared atomic envelope: snapshot in-memory views, run ``body`` in the
+        buffer's unit-of-work, translate faults to ``AtomicAbort`` (§B4/§B6). A
+        rollback-unconfirmable failure poisons the connection and propagates the
+        raw error unwrapped — never wrapped as ``AtomicAbort`` (§B6)."""
+        snap = self._snapshot_views()
+        try:
+            return self._buffer.atomic_unit(body)
+        except _GateSkip as sig:
+            self._restore_views(snap)
+            # §B6: skipped is the non-atomic path's record shape, JSON-ready
+            # (encoded value), so it rides the exception AND the MCP wire cleanly.
+            raise AtomicAbort("gate_skip", [
+                {"entity": s.entity, "attribute": s.attribute,
+                 "value": encode_out(s.value), "reason": s.reason}
+                for s in sig.skipped], None)
+        except AtomicAbort:
+            raise
+        except BaseException as exc:
+            # A2/§B6: a fault after a confirmed COMMIT (post-commit-ambiguous) or
+            # an unconfirmable rollback (poisoned) is the RAW error — never
+            # wrapped as AtomicAbort, and in-memory views are NOT restored (the
+            # set is durable / its state is unknown).
+            if self._buffer.poisoned or self._buffer.unit_committed:
+                raise
+            self._restore_views(snap)
+            raise AtomicAbort(
+                "exception", [],
+                {"type": type(exc).__name__, "message": str(exc)}) from exc
+
+    def _snapshot_views(self) -> dict[str, Any]:
+        """In-memory mutable views SQLite rollback does NOT restore (§B4)."""
+        return {
+            "alias_map": dict(self._alias_map),
+            "default_checked": set(self._attribute_default_checked),
+            "classify_inline": self.classify_inline,
+            "last_skipped": list(self.last_skipped),
+        }
+
+    def _restore_views(self, snap: dict[str, Any]) -> None:
+        self._alias_map = snap["alias_map"]
+        self._attribute_default_checked = snap["default_checked"]
+        self.classify_inline = snap["classify_inline"]
+        # this abort's skips ride out on AtomicAbort; the object's last_skipped
+        # is restored to its prior value — the two never alias (§B4).
+        self.last_skipped = snap["last_skipped"]
+        # the semantics declaration view self-heals from the rolled-back log on
+        # next access; force the refresh so a staged attr:* declaration is gone.
+        self._semantics._rebuilt_at = -1
+
+    def commit_set(
+        self, ops: list[dict[str, Any]], truth, *, classify: str = "rules",
+        frame: str = CANON, cursor_authoritative: bool = False,
+    ) -> list[Assertion]:
+        """The typed activation door (ATOMIC-ACTIVATION-V1 §C): an ordered list
+        of ``{op:"assert", item}`` / ``{op:"retract", assertion_id, reason}`` ops
+        applied as ONE unit of work. Each op dispatches through its EXISTING path
+        (gate discipline / the truth-maintenance verb) — the unit-of-work changes
+        only WHEN durability happens. Model-free classify only."""
+        if classify not in ("rules", "defer"):
+            raise ValueError(
+                "commit_set requires model-free classify ∈ {rules, defer}")
+        self._validate_ops(ops)
+        return self._run_atomic(lambda: self._skip_aborting(
+            lambda: self._apply_ops(ops, truth, frame, classify,
+                                    cursor_authoritative)))
+
+    @staticmethod
+    def _validate_ops(ops: list[dict[str, Any]]) -> None:
+        if not isinstance(ops, list):
+            raise ValueError("commit_set ops must be a list")
+        for op in ops:
+            if not isinstance(op, dict) or op.get("op") not in ("assert", "retract"):
+                raise ValueError(
+                    f"commit_set op must be {{op: assert|retract, …}}, got {op!r}")
+            if op["op"] == "assert":
+                if not isinstance(op.get("item"), dict):
+                    raise ValueError("an 'assert' op requires an 'item' dict")
+            else:
+                if not isinstance(op.get("assertion_id"), str) or "reason" not in op:
+                    raise ValueError(
+                        "a 'retract' op requires 'assertion_id' and 'reason'")
+
+    def _apply_ops(self, ops, truth, frame, classify, cursor_authoritative):
+        """The commit_set op loop — the assert path mirrors ``_ingest_body``'s
+        gate + classify collection; retract dispatches to the shared truth verb
+        (authority held internally, never laundered from the op, §C1)."""
+        self._skipped = []
+        collect: list[Assertion] | None = [] if classify in ("batch", "rules") else None
+        prev_inline = self.classify_inline
+        self.classify_inline = False
+        prev_collect = self._classify_collect
+        self._classify_collect = collect
+        prev_cursor_auth = self._cursor_authoritative
+        self._cursor_authoritative = cursor_authoritative
+        try:
+            appended: list[Assertion] = []
+            for op in ops:
+                if op["op"] == "assert":
+                    item = op["item"]
+                    if frame is not None and "frame" not in item:
+                        item = {**item, "frame": frame}
+                    appended.extend(self._ingest_item(item))
+                else:
+                    appended.append(truth.retract(op["assertion_id"], op["reason"]))
+            if collect:
+                self._classifier.classify_rows(collect, model=(classify == "batch"))
+            return appended
+        finally:
             self.classify_inline = prev_inline
             self._classify_collect = prev_collect
             self._cursor_authoritative = prev_cursor_auth
@@ -478,6 +811,20 @@ class Ingestor:
         ):
             self._record_skip(entity, attribute, value, "invalid_decay_halflife")
             return out
+
+        # MOVED-EVENT-V1 §B.2: two general interval invariants the log lacked
+        # (buffer accepted both shapes). A closing coordinate requires a numeric
+        # opening one, and cannot precede it. Skip-receipted, never silently
+        # stored; under atomic=True this skip aborts the whole set.
+        eff_valid_from = None if timeless else valid_from
+        row_valid_to = item.get("valid_to")
+        if row_valid_to is not None:
+            if eff_valid_from is None:
+                self._record_skip(entity, attribute, value, "valid_to_without_valid_from")
+                return out
+            if row_valid_to < eff_valid_from:
+                self._record_skip(entity, attribute, value, "valid_to_before_valid_from")
+                return out
 
         # Edge-granular structural guard (Part B): a single invalid edge
         # (containment cycle / self-edge / lateral self-loop) is SKIPPED with a
@@ -656,7 +1003,11 @@ class Ingestor:
         source-ingest); see ingest_structured. ``pov`` (SHAPE-FIX-V1 4c): the
         viewpoint entity id for deixis binding."""
         items = self.extract(text, context, extract, pov=pov)
+        # MOVED-EVENT-V1 §B.3: the model path is prose-authored — the engine
+        # authors movement timestamps, never the model. A host replicating this
+        # path via extract()->ingest_structured() must likewise pass
+        # extracted=True (ADOPTION/HOST-DISCIPLINE).
         return self.ingest_structured(
             items, frame=frame, classify=classify,
-            cursor_authoritative=cursor_authoritative,
+            cursor_authoritative=cursor_authoritative, extracted=True,
         )

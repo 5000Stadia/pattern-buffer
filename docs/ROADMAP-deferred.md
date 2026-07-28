@@ -18,6 +18,14 @@ proactively when **all three** hold; otherwise it waits — and the file records
    guess we'd be stuck with (pre-v1 the freeze is soft, but a wrong *shape* is
    still churn).
 
+**No park without a tripwire** (joint doctrine with the first host, 2026-07-12).
+Every held/parked entry below names its **tripwire** — the observable signal
+that would reopen it, and who would witness it. A park whose trigger nobody
+could witness is unfalsifiable; where that is genuinely the case, the record
+says **never**, honestly. (Origin: the background-homonym park's trigger was
+unobservable until the first host shipped a co-presence tripwire — README
+item 10.)
+
 Pre-v1, the surface is malleable; this file is revised as worlds reveal needs.
 
 ---
@@ -45,7 +53,7 @@ Pre-v1, the surface is malleable; this file is revised as worlds reveal needs.
 ## Strong follow-on (passes; its own spec next)
 | Item | Characteristic | Shape | Why not bundled |
 |---|---|---|---|
-| **confidence / freshness read** (C) | belief that ages; "is this still current?" (reality / V2) | a *derived read under the membrane* — confidence = temporal salience (recency × corroboration × provenance), freshness = `now − t`; Kernos-shaped | read-layer, host-computable today; no overlap → a clean follow-on, not bundled with V2 |
+| **confidence / freshness read** (C) | belief that ages; "is this still current?" (reality / V2) | a *derived read under the membrane* — confidence = temporal salience (recency × corroboration × provenance), freshness = `now − t`; Kernos-shaped | **since SHIPPED** — CONFIDENCE-V1 (+ the wall-clock recency axis under TRACKING-MODE-V1); row retained for lineage |
 
 ## Deferred — passive vs invasive, and the axis each fails
 
@@ -64,17 +72,26 @@ urgency, no loss in waiting.
 discussion, never auto-built.
 
 ### Held — invasive (surface for discussion, never auto-build)
-| Item | Imprint | Why invasive | Fails on |
-|---|---|---|---|
-| **Nested belief** (frames-about-frames) | **heavy — a new dimension** | expands the frame model + threads belief-depth into reads, used or not | overlap + shape + bulk — *the "multidimensional knowledge tracker" risk* |
-| **General query** (`where x.foo and y.bar>3`) | medium-heavy — a query engine | overlap/"which read?" exists on sight | overlap + shape + P7. Trigger: a forbidden host full-log scan |
+| Item | Imprint | Why invasive | Fails on | Tripwire |
+|---|---|---|---|---|
+| **Nested belief** (frames-about-frames) | **heavy — a new dimension** | expands the frame model + threads belief-depth into reads, used or not | overlap + shape + bulk — *the "multidimensional knowledge tracker" risk* | a host question of belief-depth ≥ 2 that flat `knows:` frames + read-union cannot express — arrives here as a consult; watched by the asking host + pb |
+| **General query** (`where x.foo and y.bar>3`) | medium-heavy — a query engine | overlap/"which read?" exists on sight | overlap + shape + P7 | a host read satisfiable only by a full-log scan (a reach below the porcelain) — surfaces in the host's own review gate, lands here as a porcelain-gap report; watched by the host reviewer + pb |
 
 *(Native exact-decimal, formerly held here as invasive, was **built** 2026-07 at founder direction — see Shipped. The concern it named — "every value path must handle it, used or not" — was answered by making it opt-in and codec-centralized: float worlds never enter the Decimal path and are byte-identical.)*
 
 ### Pending founder read
-| Item | Imprint | Note |
+| Item | Imprint | Note | Tripwire |
+|---|---|---|---|
+| **Salience tuning (config)** | light — defaulted weights, passive | weakly-likely at best; ship the config object now or stay tossed until a host misranks. Learned/adaptive version is invasive (held above). | a host misranks in lived play (the wrong entity surfaces first in a briefing/lens read) — watched by the first host in play, reported here as measured examples |
+
+### Parked — awaiting a forcing case (tripwires named)
+| Item | Park | Tripwire |
 |---|---|---|
-| **Salience tuning (config)** | light — defaulted weights, passive | weakly-likely at best; ship the config object now or stay tossed until a host misranks. Learned/adaptive version is invasive (held above). |
+| **Looping / non-monotonic time** | host illusion via as-of; the engine clock stays monotonic (awareness cycle, 2026-06) | a world whose loop the as-of illusion cannot express — arrives as a host consult with the failing scene; ruled here |
+| **Time-derived rate quantities** | read-side derivation suffices (awareness cycle) | a rate a host cannot derive from stored quantities at read — arrives as a consult with the measured read; watched by the host |
+| **General structure-polymorphism framework** | only the two concrete invariant reads are built (correlation-union, place/feature); the framework waits | a THIRD concrete shape forcing the same invariant-read pattern — visible as the third such spec request on this desk |
+| **Cross-passage arrival closure** | MOVED-EVENT-V1 non-goal: a departure and an arrival narrated passages apart stay two records, joined at read | a measured case where the open interval misleads a lens or host — watched by the first host's probe/play logs, returns as measured rows |
+| **Background-homonym coreference** | parked forever with cause (README item 10) | the first host's co-presence tripwire (`trace.present_homonyms`, host commit 991feee) — a fire returns here as measured rows; watched by the host |
 
 ### Tossed — passive but not contextually likely (decided against, not parked)
 - **accrue min/max/avg folds** — a delta-ledger rarely wants min/max/avg; thin reflexive need.
