@@ -162,18 +162,43 @@ class Indexes:
         metas = self._buffer.visible(
             entity=row.id, attribute="source", asserted_as_of=asserted_as_of
         )
+        # SOURCE-IDENTITY-V1: a source class is a SOURCE, not a category. The
+        # class carries the document's identity exactly as it carries the
+        # speaker's — "a speaker is a document that talks" cuts both ways, and
+        # only the talking one had kept its name. Collapsing every `doc:` to a
+        # bare "document" made two distinct documents one supersession class,
+        # so a cross-document disagreement silently last-write-wins instead of
+        # raising §7.2's flag (the whitepaper's own supply-house example), and
+        # N independently agreeing documents scored zero corroboration.
+        #
+        # Collected over the WHOLE meta set, never first-match: a row carrying
+        # several sources must classify the same way regardless of the order
+        # `visible()` returns them. `doc:` outranks `person:` because §7.1's
+        # chain is two-hop — the document is the outer evidentiary artifact and
+        # a person named beside it is the attributed voice within it.
+        docs: list[str] = []
+        speakers: list[str] = []
         for m in metas:
-            if isinstance(m.value, str) and m.value.startswith("doc:"):
-                return "document"
-            if isinstance(m.value, str) and m.value.startswith("person:"):
-                # Speaker-source class (027 Decision 2): a speaker is a
-                # document that talks — same speaker supersedes self,
-                # speakers disagreeing cross-source flag + ask (§7.2).
-                return f"speaker:{m.value}"
+            if not isinstance(m.value, str):
+                continue
+            if m.value.startswith("doc:"):
+                docs.append(m.value)
+            elif m.value.startswith("person:"):
+                speakers.append(m.value)
+        if docs:
+            return f"document:{min(docs)}"
+        if speakers:
+            # Speaker-source class (027 Decision 2): a speaker is a
+            # document that talks — same speaker supersedes self,
+            # speakers disagreeing cross-source flag + ask (§7.2).
+            return f"speaker:{min(speakers)}"
         # stated and observed without a document chain are ONE supersession
         # class: both are rank-3 authoritative, and ordinary narrative
         # movement must supersede across them (run-4 finding: the §7.1
         # boundary is document-vs-direct, not stated-vs-observed).
+        # NOTE: this pooling is the undeclared-origin case — deliberately
+        # unchanged here and recorded as a founder crossroads in
+        # SOURCE-IDENTITY-V1 §6, not an oversight.
         return "direct"
 
     @staticmethod

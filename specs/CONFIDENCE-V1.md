@@ -2,7 +2,7 @@
 
 > **AMENDED by TRACKING-MODE-V1 (2026-07, founder ruling):** the recency component no longer decays with story time. In non-tracking worlds (`invent_under_canon`, `deny`) recency is PERMANENT (1.0 — the page is true; story-time liveness is salience's axis, not trust's). In `observe_or_unknown` worlds recency = `2**(−max(0, now − last_confirmed_at_wallclock)/half_life)` under the declared `DecayPolicy`, with fail-closed `unconfigured`/`unconfirmed` null branches (recency excluded + weights renormalized). The payload gains `recency`, `recency_status`, `last_confirmed_at_wallclock` on every result. Example (tracking, configured): `{score: 0.62, status: "observed", last_observed_at: 400.0, corroboration: 0, conflicted: false, recency: 0.5, recency_status: "configured", last_confirmed_at_wallclock: 5000.0}`. Example (fiction): `{…, recency: 1.0, recency_status: "permanent", last_confirmed_at_wallclock: null}`.
 
-**Status:** SHIPPED (Codex r1 GREEN; corroboration pinned as de-duplicated distinct source classes; amended by TRACKING-MODE-V1 — see banner). The deliberated "strong follow-on" (RFC-002
+**Status:** SHIPPED (Codex r1 GREEN; corroboration pinned as de-duplicated distinct source classes; amended by TRACKING-MODE-V1 — see banner; **corroboration prose corrected by SOURCE-IDENTITY-V1**, which also made a document's source class carry its identity, so distinct documents corroborate and disagree cross-source as speakers always did — §2's count is unchanged in *rule*, but its inputs stop collapsing). The deliberated "strong follow-on" (RFC-002
 §4.2; ROADMAP-deferred C). A real-world tracker's beliefs **age** — "how sure
 should I be of this *now*, given how it was observed, how recently, and whether
 anything corroborates it?" Kernos's framing: **confidence = temporal salience**
@@ -63,13 +63,26 @@ result shape — including empty/set-valued/accrue — carries them.)
     the score, and the remaining weights renormalize
     (`(w_p·p + w_c·c)/(w_p + w_c)`). Non-finite stored stamps never qualify;
     a non-finite explicit or injected `now` raises.
-  - **corroboration** — a **de-duplicated** count of *independent agreeing
-    source classes* (Codex r1): take the union of the winner's source class +
-    `FoldResult.corroborated_by` rows' source classes + any same-value visible
-    rows' source classes, as a **set of distinct `_source_class` values**, so a
-    row counted via `corroborated_by` is never recounted in the same-value scan.
-    `n = len(that set) - 1` (agreeing sources *beyond* the winner's own);
-    log-scaled (`log1p(n)/log1p(CORROB_SCALE)`).
+  - **corroboration** — a **de-duplicated** count of distinct agreeing
+    **source identities** (Codex r1; *identities* corrected from *independent
+    classes* by SOURCE-IDENTITY-V1 — see the honesty note below): take the
+    union of the winner's source class + `FoldResult.corroborated_by` rows'
+    source classes + any same-value visible rows' source classes, as a **set of
+    distinct `_source_class` values**, so a row counted via `corroborated_by` is
+    never recounted in the same-value scan. `n = len(that set) - 1` (agreeing
+    sources *beyond* the winner's own); log-scaled
+    (`log1p(n)/log1p(CORROB_SCALE)`).
+    - **Honesty note (SOURCE-IDENTITY-V1 §5).** This counts distinct source
+      *identities*, which is **not** proof of independent origin, and the
+      original wording ("independent") promised more than the definition
+      delivered. Two limits are real and deliberate: the engine holds **no
+      attribution graph**, so it cannot see that two differently-identified
+      sources descend from one upstream reading; and **undeclared-origin rows
+      pool into `direct`**, so N agreeing rows carrying no `source` meta score
+      `0` (SOURCE-IDENTITY-V1 §6 — an open founder crossroads, since pooling
+      undercounts while per-row origin would overcount in echo-dense domains).
+      Read the number as *"how many distinctly-attributed sources agree"*,
+      never as *"how independent is this"*.
 - **`last_observed_at`** = the winner's `valid_from` — a valid-time
   coordinate, kept for provenance. **(Amended)** Trust-staleness is NOT
   computed from it: staleness is wall-clock — render it from
