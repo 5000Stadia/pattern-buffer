@@ -33,7 +33,12 @@ from patternbuffer.thunks import (
 )
 from patternbuffer.tmaint import AtomicAbort, TruthMaintenance
 
-__version__ = "0.0.1"
+# Kept in lockstep with pyproject's `version` by
+# tests/test_version.py::test_version_matches_pyproject — the literal drifted
+# to 0.0.1 through the 0.1/0.2 releases, so a host pinning capability
+# detection to `__version__` read a version three releases stale. The test is
+# the guard; pyproject remains the single source of truth.
+__version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
 __all__ = ["World", "Materialization", "Resolution", "AtomicAbort", "__version__"]
