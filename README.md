@@ -14,7 +14,7 @@ One append-only log of perspective-scoped, time-indexed assertions about entitie
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
 **Status: pre-1.0; substrate validated in BOTH modes, the ingestion-fidelity
-front closed by a measured contract.** The engine passes its 482-test
+front closed by a measured contract.** The engine passes its 536-test
 invariant suite, and the chapter test
 (ingest a complete noir mystery, delete the prose, interrogate the store
 against a hand-authored answer key) has been graded across three full runs.
@@ -45,6 +45,23 @@ pip install pbuffer[mcp]     # + the MCP server: patternbuffer-mcp --world w.wor
 *(The PyPI distribution is `pbuffer` — the exact name `patternbuffer` was taken
 by an unrelated project; the import is `patternbuffer` throughout.)*
 
+## Try it
+
+The shipped example world — a complete noir mystery ingested into the
+substrate, prose deleted — answers structured questions deterministically.
+No model, no API key, milliseconds:
+
+```bash
+git clone https://github.com/5000Stadia/pattern-buffer && cd pattern-buffer
+python examples/anchor/build_anchor.py   # rebuild anchor.world from the committed dump
+python examples/anchor/tour.py           # the scripted interrogation tour
+```
+
+The tour walks the two-clock question (where was the memory core *as of*
+each chapter), knowledge frames (what one character can see), sealed
+containers, and the 8 open truth-maintenance conflict flags the world
+ships with visibly.
+
 ## What this is
 
 A storage and retrieval substrate that lets a language model maintain a complete, queryable, durable model of a world — places, objects, people, relationships, histories, and unknowns — such that any state question is answered by a deterministic query, never by re-reading prose; the world accretes and is re-enterable; and the same engine serves authored fiction (a holodeck, a campaign, a mystery) and real-world tracking (a household, a job site, a vehicle), differing only in resolution policy and provenance discipline.
@@ -60,6 +77,17 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 - **[docs/INGESTION-PLAYBOOK.md](docs/INGESTION-PLAYBOOK.md)** — evidence-based rules for deserializing narrative into a world: the extractor contract, feeding mechanics, what the gate guards, and measured ingestion baselines.
 - **[docs/reference/assertion-world-model-original.md](docs/reference/assertion-world-model-original.md)** — the framework-agnostic design document this project was founded on, preserved verbatim for lineage.
 
+*A note on provenance citations.* Specs and the whitepaper's decision record
+cite the project's internal review trail: "the founder" is the project owner,
+who arbitrates design crossroads; "letter NNN" / "dev_inbox" / "Cx NNN" refer
+to an archived numbered correspondence with an independent review agent
+(Codex); "AgentPost" is the local message channel that replaced it; "pbr",
+"c", and "K"/"Kernos CC" are the dedicated reviewer, the first live host
+(Construct), and the intended primary host's maintainer respectively. These
+citations are preserved verbatim as review provenance — the artifacts are
+private, but every design decision they gate is restated in the whitepaper
+and specs themselves.
+
 ## The road
 
 1. ~~Recover and commit the *Last Honest Meter* eval seed (the chapter test's ground truth).~~ Done — v1-final, `evals/last_honest_meter/`.
@@ -69,9 +97,9 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 5. ~~The messy-dialogue micro-eval (the honest bridge from fiction ingestion to tracking-mode ingestion).~~ Done — **10/10** on the reality-divergence battery (`evals/results/2026-06-12-micro-v1-final/`); tracking-mode ingestion validated against sloppy conversational fragments.
 6. ~~The porcelain API + host integration.~~ Done — and proven in the strongest form. The frozen contract (`porcelain-v0.1`, additive-only): five load-bearing verbs — `ingest` (+`ingest_structured`) / `snapshot` / `ask` / `materialize` / `resolve`+`refer()` — over a fuller read-and-identity family (`state`, `where`, `aggregate`, `neighborhood`, `frame_diff`, `who_knows`, `correlate`, `route`, `entities`, `facts`, build sessions, `axis_heads`, …). The first *live* host, [Construct](https://github.com/5000Stadia/construct) (an interactive-fiction engine — `pattern` → `construct` loads it → `holonovel`), runs **entirely on this contract**: zero engine-internal reaches, its 800+-test suite green on the pure public surface. The engine-independent claim, demonstrated rather than asserted. (Intended primary host: [Kernos](https://github.com/5000Stadia/Kernos), adapter pattern.)
 7. ~~The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure).~~ Met in the field — every item is exercised in [Construct](https://github.com/5000Stadia/construct)'s live suite (the first host runs entirely on the frozen porcelain). These are host-layer criteria, proven by the adopter, not a further engine deliverable.
-8. ~~The MCP wrapper~~ — built: `pip install pbuffer[mcp]` → `patternbuffer-mcp --world w.world --world-id w:id` serves the frozen porcelain's **37 deterministic verbs** over stdio to any MCP client — read, query, and *build* a world with zero Python (the genuinely model-free subset; model-backed verbs are V1.1 via sampling). One server ↔ one world; a connected client is a fully **trusted world principal** — frame entitlement for untrusted consumers stays host-mediated. The framework-agnostic claim, proven by demonstration. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
+8. ~~The MCP wrapper~~ — built: `pip install pbuffer[mcp]` → `patternbuffer-mcp --world w.world --world-id w:id` serves the frozen porcelain's **39 deterministic verbs** over stdio to any MCP client — read, query, and *build* a world with zero Python (the genuinely model-free subset; model-backed verbs are V1.1 via sampling). One server ↔ one world; a connected client is a fully **trusted world principal** — frame entitlement for untrusted consumers stays host-mediated. The framework-agnostic claim, proven by demonstration. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
 9. ~~Tracking mode: the second-mode thesis, proven~~ (TRACKING-MODE-V1). Trust and story time are now formally separate axes. In **fiction**, confidence recency is *permanent* — the page is true, and story-time liveness belongs to salience, not trust. In **tracking** worlds (`observe_or_unknown`), trust decays with **unconfirmed wall time** under declared per-attribute half-lives (`DecayPolicy` — data, not config: `attr:in · decay_halflife_seconds · 2 days`), fail-closed (`unconfigured`/`unconfirmed` exclude recency and renormalize, never fake a score) with a finite-clock contract (a broken clock can never manufacture freshness). `confidence()` carries `recency`, `recency_status`, `last_confirmed_at_wallclock` on every result — "last confirmed June 19, 22 days unconfirmed" is one join. The mode selector is the *policy*, never a stance judgment: the engine applies **no plausibility bias** to observer reports in either mode. Receipts: `evals/the_grey_house/` (the replayable tracking eval), 14/14 scorecard.
-10. ~~The ingestion-fidelity contract, evidence-gated end to end~~ (INGESTION-FIDELITY-V1 → V2). V1 shipped `fidelity_audit()` — the structural gap read (coreference collision groups, unstamped timed facts, orphans, open conflicts) the host joins for severity. The first live host's full rebuild then delivered the measured signals: the coreference seal took live collisions 8→4 with zero severe, and the audit residue decomposed into exactly one real defect class — standing personal properties (`build`, `occupation`, kinship, `can_*`) authored as timed state. V2 shipped that contract narrowly: timeless means *true across the world's whole history* (facts of origin only — everything acquired gets its earliest supported time; age is never timeless), the classifier prefers standing classes for enduring-baseline traits, kinship-of-origin is one host declaration (`attribute_default`), and merge-induced self-edges receipt distinctly (`merged_self_edge`). The remaining candidate (background-homonym coreference) was **parked forever with cause** — every residual group unvouched, none load-bearing, replay-proved harmless. Machinery without a measured victim doesn't ship.
+10. ~~The ingestion-fidelity contract, evidence-gated end to end~~ (INGESTION-FIDELITY-V1 → V2). V1 shipped `fidelity_audit()` — the structural gap read (coreference collision groups, unstamped timed facts, orphans, open conflicts) the host joins for severity. The first live host's full rebuild then delivered the measured signals: the coreference seal took live collisions 8→4 with zero severe, and the audit residue decomposed into exactly one real defect class — standing personal properties (`build`, `occupation`, kinship, `can_*`) authored as timed state. V2 shipped that contract narrowly: timeless means *true across the world's whole history* (facts of origin only — everything acquired gets its earliest supported time; age is never timeless), the classifier prefers standing classes for enduring-baseline traits, kinship-of-origin is one host declaration (`attribute_default`), and merge-induced self-edges receipt distinctly (`merged_self_edge`). The remaining candidate (background-homonym coreference) was **parked forever with cause** — every residual group unvouched, none load-bearing, replay-proved harmless. Machinery without a measured victim doesn't ship (the first live host now carries a co-presence tripwire — telemetry-only — that would surface such a victim; a fire returns here as measured rows).
 
 ## License
 

@@ -2,7 +2,7 @@
 
 **Status:** synthesis of the PB↔Kernos exchange (letters PB-015 / K-033),
 2026-06-12. Ownership per K's convergence flag: **HD's design docs
-(ARC-LAYER.md, SESSION-ZERO.md in /home/k/Newproject) are the canonical
+(ARC-LAYER.md, SESSION-ZERO.md in the Construct host repo) are the canonical
 experience-layer design**; this outline is the three-way map — what
 exists, what's adopted, what's net-new, and what the engine still owes.
 

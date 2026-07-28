@@ -6,7 +6,7 @@ predicate derivation, decline-context access) → implemented → Cx code review
 real proposal) → independent on-channel Cx re-review GREEN (codex-inbox 501/503;
 notes addressed in `e850841`). 430 green. Co-designed with Construct (letters
 099/100). Collaboration with Construct
-converged (PB→Construct letter 099 at `/home/k/Newproject/dev_inbox/`; HD's reply
+converged (PB→Construct letter 099 in the Construct host repo's inbox; HD's reply
 `dev_inbox/100-from-hd-ingestion-fidelity-corpus-and-baseline.md`). Scope is now
 crisp and **single-verb**: a deterministic, membrane-clean
 `fidelity_audit()` read that surfaces where a freshly-built log is structurally
