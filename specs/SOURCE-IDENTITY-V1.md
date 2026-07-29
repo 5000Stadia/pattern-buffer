@@ -1,6 +1,14 @@
-# SOURCE-IDENTITY-V1 — a source class is a source, not a category — r2
+# SOURCE-IDENTITY-V1 — a source class is a source, not a category — r2.1
 
-**Status:** r2 DRAFT → pbr (re-review after r1.1 RED). r1.1 landed on `main` as
+**Status:** r2.1 — **code GREEN** (pbr `<1766884f…>` at `236cc3c`); r2's sole
+spec blocker was a stale §2.1 paragraph still prescribing the rejected
+lexicographic tiebreak, contradicting §2.2(b), the implementation and the
+rewritten oracles. r2.1 is that amendment only — **no code change**. pbr's
+rulings: identity-closure canonicalization GREEN, the composite class ACCEPTED
+(explicitly "keep it; do not switch to gate rejection"), conflict-parties-vs-
+served-value GREEN, and `corroborated_by` to be left exactly as r2 has it.
+
+Earlier lineage: r2 DRAFT → pbr (re-review after r1.1 RED). r1.1 landed on `main` as
 `328ec7e` under founder direction ahead of any pbr verdict; pbr then returned
 **RED on both spec (`<8b7ef3c6…>`) and code (`<c4111100…>`)** with three contract
 gaps, all of which **pb reproduced against shipped code before repairing**. The
@@ -81,7 +89,8 @@ if isinstance(m.value, str) and m.value.startswith("doc:"):
     return f"document:{m.value}"
 ```
 
-That is the whole semantic change. It restores the symmetry the function's own
+That is the primary semantic change; §2.2 adds the three r2 repairs on top,
+of which (b) supersedes r1.1's multi-source tiebreak. It restores the symmetry the function's own
 comment asserts, and both faces close together because both read the same class.
 
 ### 2.1 Secondary: multi-source rows are order-dependent (pinned, not left)
@@ -97,16 +106,22 @@ two-hop (*the story observed the letter; the letter claims the facts*); the
 document is the outer, more specific evidentiary artifact, and a person named
 alongside it is the attributed voice *within* that artifact.
 
-**The same determinism applies to both kinds** (r1.1 correction — r1 pinned it
-for documents only, which would have left the identical nondeterminism live on
-multi-*speaker* rows while fixing it for documents; an inconsistency pbr would
-rightly have flagged). Where several sources of the winning kind sit on one row,
-take the lexicographically least, and receipt nothing — a multi-source single
-row is a writer choice, not an engine fault.
+**The same rule applies to both kinds.** Where several sources of the winning
+kind sit on one row, the class is the **canonical composite of all of them** —
+see §2.2(b) for the rule and its rationale — and nothing is receipted; a
+multi-source single row is a writer choice, not an engine fault.
+
+> **r2 correction.** r1/r1.1 pinned this as *"take the lexicographically
+> least"*. That was rejected: selecting one attester by label spelling made
+> evidentiary identity depend on sort order, and pbr reproduced identical
+> provenance topology producing opposite outcomes under renaming. §2.2(b) is
+> the normative rule; this paragraph previously contradicted it, which was the
+> sole spec blocker on r2's code-GREEN. The r1.1 note — that whatever rule
+> applies must apply to **both** kinds, not documents only — survives intact
+> and is now satisfied by the composite.
 
 This changes classification only for rows carrying more than one source, which
-no shipped test exercises. It is called out separately so pbr can rule on it
-independently of §2's main change.
+no shipped test exercised before r1.1.
 
 ## 2.2 r2 repairs — pbr's three RED findings
 
@@ -158,7 +173,20 @@ Two pins on the repair:
   while the reverse does not. The recomputation asks a symmetric question and
   must test both directions, or an approximate row the served value satisfies is
   reported as a conflicting party.
-- **`corroborated_by` keeps its existing meaning exactly** — the challengers that
+- **`corroborated_by` keeps its existing meaning exactly — pbr ruled this
+  settled (`<1766884f…>`), and for a stronger reason than the one that stayed
+  my hand.** I reverted the change because it broke a shipped test and was an
+  unasked widening. pbr's ruling is that the test encodes a deliberate
+  contract: CONFIDENCE-V1 defines corroboration as **strict same-value**
+  evidence, and `test_confidence.py::test_corroboration_is_strict_not_approximate`
+  pins that a `{gte}` bound must NOT corroborate a precise value. So the
+  resulting `corroboration: 0` on a two-row refinement pair is **intended, not
+  an undercount**, and recomputing against the served value would have silently
+  violated that contract rather than merely changed a tuple. The self-reference
+  (winner listed among its own corroborators) is acknowledged as awkward
+  *representation*; if it is ever cleaned up, the direction is to decouple
+  refinement/convergence lineage from strict-value confidence — never to
+  redefine this tuple in place. Original wording follows: — the challengers that
   agreed as the fold advanced, pinned by
   `test_fold.py::TestCrossSource::test_agreeing_value_corroborates`. An earlier
   draft of this repair recomputed corroboration against the final serving value
