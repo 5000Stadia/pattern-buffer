@@ -6,7 +6,7 @@ the authoritative current state.** A spec marked *Shipped* has its feature live 
 `src/patternbuffer/` with tests; browse the spec for the design and the whitepaper
 §25 for the consolidated architecture.
 
-_Last reconciled: 2026-07-09._
+_Last reconciled: 2026-07-29._
 
 ## Shipped — feature live in the engine
 | Spec | What it shipped |
@@ -36,7 +36,18 @@ _Last reconciled: 2026-07-09._
 | BUILD-SESSION-V1 | `begin_build`/`seal_build`/`abort_build` + the `build()` sugar |
 | AXIS-HEAD-V1 | `axis_heads()` (two-axis high-water mark) + `ingest_structured(at=)` |
 | INGESTION-FIDELITY-V1 | `fidelity_audit()` — the structural-gap read (coreference metric + gaps) |
-| MCP-WRAPPER-V1 | The porcelain over MCP: 37 deterministic tools, `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
+| MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
+
+## Landed — live in the engine, **pbr code verdict outstanding**
+These three shipped on `main` under founder direction ahead of a code review, and
+are **reviewable, not settled**. Spec revisions are pbr-GREEN; what is outstanding
+is implementation fidelity. A RED verdict means amend or revert on `main`.
+
+| Spec | What it landed | Review state |
+|---|---|---|
+| MOVED-EVENT-V1 (r6) | Movement as a reified `kind=moved` event (`agent`/`origin`/`destination`/`manner`), `literal` never-invent endpoints, the prose-mode coordinate pass, `in_transit()`, the additive six-key `events()` payload. MCP verb 38 | spec GREEN `<2e17ff6f…>`; code review resubmitted `<9c26ad0a…>` |
+| ATOMIC-ACTIVATION-V1 (r11) | All-or-none activation: `commit_set(ops)` + `ingest_structured(atomic=True)` over a unit-of-work behind a deny-by-default capability facade + provenance-gated SQLite authorizer; `AtomicAbort{cause,skipped,error}`. MCP verb 39. **Consumed live by Construct** | spec GREEN `<48a4cd92…>`; code review resubmitted `<9c26ad0a…>` |
+| SOURCE-IDENTITY-V1 (r2) | A source class carries its source's *identity*, so distinct documents corroborate when agreeing and raise §7.2 cross-source flags when disagreeing instead of silently last-write-wins. Ids canonicalize through the identity closure; the class is a composite, never a spelling-selected member; conflict parties are computed against the served value | r1.1 RED (`<8b7ef3c6…>` spec, `<c4111100…>` code) → r2 sent `<0a4795a8…>` |
 
 ## Ratified RFCs — decisions in effect
 | RFC | State |
@@ -55,6 +66,13 @@ _Last reconciled: 2026-07-09._
 | Spec | State |
 |---|---|
 | *(none)* | — |
+
+## Open design questions — no spec, awaiting a founder disposition
+| Question | Where it came from |
+|---|---|
+| **Undeclared-origin pooling** (SOURCE-IDENTITY-V1 §6) | Rows with no declared `source` all pool into one `direct` class, so N independent observations agreeing score `corroboration 0`. Pooling undercounts; per-row origin would *overcount* wherever echoes are undeclared. Construct confirms no host leans on corroboration scoring yet, so it can be decided on merit |
+| **`corroborated_by` may list the winner as its own corroborator** | Surfaced during SOURCE-IDENTITY r2 and deliberately left out of scope; `confidence()` unions the winner's class with `corroborated_by`'s, so a two-row refinement pair may undercount. Handed to pbr as a separate question |
+| **pbeo take-back: take 3 / adapt 3 / add 1** | A closed external programme's findings — coreference-by-declaration as *prevention*, decline-decays-like-a-claim, `explicitly_declined_by_source`, retraction-vs-supersession, premise decay, attestation value-scoping. Not adopted; Construct has logged the host-shaped ones against its own roadmap |
 
 *(MCP-WRAPPER-V1 moved to Shipped: spec GREEN via inbox-Cx 529 after a BLOCKED
 round; implemented as `patternbuffer.mcp` + the `[mcp]` extra + the
