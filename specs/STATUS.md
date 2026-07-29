@@ -63,8 +63,21 @@ _Last reconciled: 2026-07-29 (all three of that day's tracks pbr-GREEN on spec a
 | Question | Where it came from |
 |---|---|
 | **Undeclared-origin pooling** (SOURCE-IDENTITY-V1 §6) | Rows with no declared `source` all pool into one `direct` class, so N independent observations agreeing score `corroboration 0`. Pooling undercounts; per-row origin would *overcount* wherever echoes are undeclared. Construct confirms no host leans on corroboration scoring yet, so it can be decided on merit |
-| **`corroborated_by` may list the winner as its own corroborator** | Surfaced during SOURCE-IDENTITY r2 and deliberately left out of scope; `confidence()` unions the winner's class with `corroborated_by`'s, so a two-row refinement pair may undercount. Handed to pbr as a separate question |
 | **pbeo take-back: take 3 / adapt 3 / add 1** | A closed external programme's findings — coreference-by-declaration as *prevention*, decline-decays-like-a-claim, `explicitly_declined_by_source`, retraction-vs-supersession, premise decay, attestation value-scoping. Not adopted; Construct has logged the host-shaped ones against its own roadmap |
+
+**Settled since, not open** — recorded so neither is reopened from this index:
+
+- **`corroborated_by` listing the winner as its own corroborator** (pbr `<1766884f…>`): leave as
+  is. The resulting `corroboration: 0` on a two-row refinement pair is **intended, not an
+  undercount** — CONFIDENCE-V1 defines corroboration as *strict same-value* evidence, pinned by
+  `test_confidence.py::test_corroboration_is_strict_not_approximate`. The self-reference is
+  acknowledged as awkward representation only; if ever cleaned up, decouple refinement lineage
+  from strict-value confidence rather than redefining the tuple in place.
+- **Empty retract `reason`** (pbr `<ba11caff…>`): `str` including `""` is contract-valid. The
+  shared `TruthMaintenance.retract` path accepts it and the MCP schema has no `minLength`, so
+  tightening only `commit_set` would break shared-path fidelity. If revisited, it goes as one
+  spec across standalone retract, `commit_set` and MCP together, with an explicit whitespace
+  ruling.
 
 *(MCP-WRAPPER-V1 moved to Shipped: spec GREEN via inbox-Cx 529 after a BLOCKED
 round; implemented as `patternbuffer.mcp` + the `[mcp]` extra + the
