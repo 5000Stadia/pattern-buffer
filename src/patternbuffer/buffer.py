@@ -104,10 +104,25 @@ def _slot(obj: Any, name: str) -> Any:
     return object.__getattribute__(obj, name)
 
 
+def _live_cursor(proxy: Any) -> Any:
+    """Re-check the owning buffer, then return the native cursor — for module
+    code only.
+
+    This is a module function for the same reason ``_slot`` is: it must not be
+    an attribute of the borrowed proxy. An earlier revision made it a method
+    and allowlisted it, which handed callers
+    ``facade.execute(...)._live().connection`` — the exact raw connection, and
+    therefore ``set_authorizer(None)`` and unmediated transaction control. The
+    poison check has to be reachable from every proxy operation and reachable
+    from nowhere else.
+    """
+    _slot(_slot(proxy, "_facade"), "_buffer")._live_conn()
+    return _slot(proxy, "_cursor")
+
+
 _CURSOR_ALLOWED = frozenset({
     "execute", "executemany", "fetchone", "fetchall", "fetchmany",
     "connection", "lastrowid", "rowcount", "description",
-    "_live",   # the per-operation poison re-check (§B6)
 })
 
 
@@ -128,45 +143,29 @@ class _CursorProxy:
         object.__setattr__(self, "_cursor", cursor)
         object.__setattr__(self, "_facade", facade)
 
-    def _live(self) -> sqlite3.Cursor:
-        """Re-check the owning buffer on EVERY operation, then hand back the
-        native cursor.
-
-        A cursor obtained before an abort used to keep working afterwards: it
-        delegated straight to its native cursor, so poisoning the buffer never
-        reached it. That made the §B6 fail-closed guarantee conditional on the
-        physical `close()` succeeding — and when both ROLLBACK and `close()`
-        raise while the underlying connection stays live, an uncertain
-        transaction remained readable and finalizable through a cached handle.
-        Poison is a software gate, so it has to be consulted per operation
-        rather than trusted to a one-shot teardown.
-        """
-        _slot(_slot(self, "_facade"), "_buffer")._live_conn()
-        return _slot(self, "_cursor")
-
     def execute(self, *a: Any, **k: Any) -> "_CursorProxy":
-        self._live().execute(*a, **k)
+        _live_cursor(self).execute(*a, **k)
         return self
 
     def executemany(self, *a: Any, **k: Any) -> "_CursorProxy":
-        self._live().executemany(*a, **k)
+        _live_cursor(self).executemany(*a, **k)
         return self
 
     def fetchone(self) -> Any:
-        return self._live().fetchone()
+        return _live_cursor(self).fetchone()
 
     def fetchall(self) -> list:
-        return self._live().fetchall()
+        return _live_cursor(self).fetchall()
 
     def fetchmany(self, size: int | None = None) -> list:
-        cur = self._live()
+        cur = _live_cursor(self)
         return cur.fetchmany(size) if size is not None else cur.fetchmany()
 
     def __iter__(self) -> "_CursorProxy":
         return self                       # NOT iter(native) — that leaks .connection
 
     def __next__(self) -> Any:
-        return self._live().__next__()
+        return _live_cursor(self).__next__()
 
     @property
     def connection(self) -> "_ConnectionFacade":
@@ -174,15 +173,15 @@ class _CursorProxy:
 
     @property
     def lastrowid(self) -> int | None:
-        return self._live().lastrowid
+        return _live_cursor(self).lastrowid
 
     @property
     def rowcount(self) -> int:
-        return _slot(self, "_cursor").rowcount
+        return _live_cursor(self).rowcount
 
     @property
     def description(self) -> Any:
-        return _slot(self, "_cursor").description
+        return _live_cursor(self).description
 
     def __setattr__(self, name: str, value: Any) -> None:
         raise AttributeError(f"cannot set {name!r} on the cursor proxy")

@@ -682,7 +682,10 @@ def test_oracle14_a1_full_escape_exploit_fails(world):
                      "_ConnectionFacade__b"):
         _assert_raises_attr(facade, spelling)
     for spelling in ("_cursor", "_facade", "_native",
-                     "_CursorProxy__cursor", "_CursorProxy__facade"):
+                     "_CursorProxy__cursor", "_CursorProxy__facade",
+                     # the poison re-check: allowlisting it as a METHOD handed
+                     # callers `proxy._live().connection` = the raw connection
+                     "_live", "_live_cursor", "_CursorProxy__live"):
         _assert_raises_attr(proxy, spelling)
     # iter(proxy).connection is the FACADE, never the native cursor's connection
     assert iter(facade.execute("SELECT 1")).connection is facade
@@ -969,6 +972,34 @@ class TestPoisonIsASoftwareGate:
         buf, _ = self._poisoned_buffer(tmp_path)
         with pytest.raises(PoisonedConnection):
             buf.raw_connection().execute("SELECT 1")
+
+    def test_cached_rowcount_and_description_are_gated(self, tmp_path):
+        """Every native-cursor state read is poison-checked, not just
+        `lastrowid` — `rowcount`/`description` used to stay readable."""
+        buf, cached = self._poisoned_buffer(tmp_path)
+        with pytest.raises(PoisonedConnection):
+            cached.rowcount
+        with pytest.raises(PoisonedConnection):
+            cached.description
+
+    def test_poison_recheck_helper_is_not_borrowable(self, tmp_path):
+        """The per-operation poison re-check must not itself be an escape.
+
+        Making it an allowlisted METHOD handed callers
+        `facade.execute(...)._live().connection` — the raw connection, and so
+        `set_authorizer(None)` and unmediated transaction control. It is a
+        module function now, reachable from module code and nowhere else.
+        """
+        from patternbuffer.buffer import PatternBuffer
+
+        buf = PatternBuffer(tmp_path / "escape.world", world_id="w:escape")
+        cur = buf.raw_connection().execute("SELECT 1")
+        with pytest.raises(AttributeError):
+            cur._live
+        for spelling in ("_live", "_live_cursor", "_cursor", "_facade"):
+            with pytest.raises(AttributeError):
+                getattr(cur, spelling)
+        buf.close()
 
 
 class TestCommitSetOpSchemaIsExact:
