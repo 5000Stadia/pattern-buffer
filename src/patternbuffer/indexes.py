@@ -176,22 +176,39 @@ class Indexes:
         # `visible()` returns them. `doc:` outranks `person:` because §7.1's
         # chain is two-hop — the document is the outer evidentiary artifact and
         # a person named beside it is the attributed voice within it.
-        docs: list[str] = []
-        speakers: list[str] = []
+        #
+        # r2 (pbr): two further pins, both load-bearing.
+        #
+        # 1. IDs are canonicalized through the identity closure. Raw source
+        #    strings are not source *identities*: write `doc:manual` and
+        #    `doc:manual_alias`, merge them afterwards, and un-canonicalized
+        #    classes stay distinct — one logical document then self-corroborates
+        #    (corroboration=1 for a single source) and can false-flag on
+        #    disagreement. Current-head closure, consistent with the engine's
+        #    known historical-identity limitation.
+        # 2. The class is the COMPOSITE of every source of the winning kind,
+        #    not one selected member. Selecting `min()` made evidentiary
+        #    identity depend on label spelling: two rows sharing one common
+        #    document silently superseded when that shared id sorted first and
+        #    conflicted when it sorted last — identical provenance topology,
+        #    opposite outcome, decided alphabetically. A set of attesters is
+        #    its own identity; sorting only canonicalizes the rendering.
+        docs: set[str] = set()
+        speakers: set[str] = set()
         for m in metas:
             if not isinstance(m.value, str):
                 continue
             if m.value.startswith("doc:"):
-                docs.append(m.value)
+                docs.add(self._resolve(m.value))
             elif m.value.startswith("person:"):
-                speakers.append(m.value)
+                speakers.add(self._resolve(m.value))
         if docs:
-            return f"document:{min(docs)}"
+            return "document:" + "|".join(sorted(docs))
         if speakers:
             # Speaker-source class (027 Decision 2): a speaker is a
             # document that talks — same speaker supersedes self,
             # speakers disagreeing cross-source flag + ask (§7.2).
-            return f"speaker:{min(speakers)}"
+            return "speaker:" + "|".join(sorted(speakers))
         # stated and observed without a document chain are ONE supersession
         # class: both are rank-3 authoritative, and ordinary narrative
         # movement must supersede across them (run-4 finding: the §7.1
@@ -910,18 +927,44 @@ class Indexes:
         incumbent, rest = ordered[0], ordered[1:]
         serving = incumbent
         corroborations: list[str] = []
-        conflicts: list[str] = []
         for challenger in rest:
             if self._values_agree(serving.value, challenger.value):
                 corroborations.append(challenger.id)
                 serving = challenger  # the refinement is the more precise value
-            else:
-                conflicts.append(challenger.id)
-        if conflicts:
+        # SOURCE-IDENTITY-V1 r2 (pbr): the parties are recomputed against the
+        # FINAL serving value, never anchored to the incumbent. `serving`
+        # advances on refinement, so an incumbent that agreed with everything
+        # could still be reported as a conflicting party while the rows that
+        # actually disagree went unnamed: with a={gte:10}, b=12, c=13 the fold
+        # served b and reported conflicting={a,c} — a pair that AGREES — while
+        # the real incompatibility was b↔c. TruthMaintenance.scan() persisted
+        # the same wrong pair, so the durable cross_source sidecar (and any
+        # host ask built on it) named the wrong evidence. Document splitting
+        # makes this ordinary three-document shape newly reachable.
+        # Compatibility is SYMMETRIC, unlike `_values_agree(old, new)`, which
+        # asks the directional question "does `new` refine `old`?" — so
+        # `_values_agree({gte:10}, 12)` holds while `_values_agree(12, {gte:10})`
+        # does not. Asking it one way round here would report an approximate
+        # row that the served exact value satisfies as a conflicting party.
+        def compatible(a: object, b: object) -> bool:
+            return self._values_agree(a, b) or self._values_agree(b, a)
+
+        # `corroborated_by` keeps its existing meaning EXACTLY — the challengers
+        # that agreed as the fold advanced (test_fold.py::TestCrossSource::
+        # test_agreeing_value_corroborates pins it). pbr's finding was about
+        # `conflicting` naming the wrong parties; widening it to redefine
+        # corroboration too would be an unasked contract change, so only the
+        # conflict parties are recomputed here.
+        disagreeing = [
+            w.id for w in ordered
+            if w.id != serving.id and not compatible(serving.value, w.value)
+        ]
+        if disagreeing:
             return FoldResult(
-                winner=serving if not corroborations else serving,
+                winner=serving,
                 conflicted=True,
-                conflicting=tuple([incumbent.id, *conflicts]),
+                # The serving row is itself a party to the disagreement.
+                conflicting=tuple([serving.id, *disagreeing]),
                 corroborated_by=tuple(corroborations),
             )
         return FoldResult(winner=serving, corroborated_by=tuple(corroborations))

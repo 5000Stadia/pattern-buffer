@@ -1,13 +1,12 @@
-# SOURCE-IDENTITY-V1 — a source class is a source, not a category — r1.1
+# SOURCE-IDENTITY-V1 — a source class is a source, not a category — r2
 
-**Status:** r1.1 DRAFT → pbr (spec review). r1.1 is a self-correction made
-before any pbr verdict: §2.1 pinned multi-source determinism for documents only,
-which would have left the identical nondeterminism live on multi-speaker rows.
-The rule now covers both kinds (§2.1, oracle 12a). No other change from r1. Repairs a whitepaper-invariant
-violation in shipped code. **Whitepaper wins** (CLAUDE.md): §7.2 requires
-cross-source disagreement to flag; shipped code silently last-write-wins across
-distinct documents. Read-layer only; no log change, no migration, no stored
-value, no payload shape change.
+**Status:** r2 DRAFT → pbr (re-review after r1.1 RED). r1.1 landed on `main` as
+`328ec7e` under founder direction ahead of any pbr verdict; pbr then returned
+**RED on both spec (`<8b7ef3c6…>`) and code (`<c4111100…>`)** with three contract
+gaps, all of which **pb reproduced against shipped code before repairing**. The
+primary `document:<identity>` direction, the CONFIDENCE prose repair, `doc:`-over-
+`person:` precedence, §6 scoping, and the flag→tmaint-sidecar→host-ask boundary
+were all confirmed sound and are unchanged. r2 repairs only the three gaps (§2.2).
 
 Originating evidence: `pbeo`'s TAKE-BACK (`<23084b48…>`, 2026-07-28) flagged the
 corroboration face of this defect. pb probing found the root cause and a second,
@@ -108,6 +107,66 @@ row is a writer choice, not an engine fault.
 This changes classification only for rows carrying more than one source, which
 no shipped test exercises. It is called out separately so pbr can rule on it
 independently of §2's main change.
+
+## 2.2 r2 repairs — pbr's three RED findings
+
+All three were reproduced on shipped code first, then fixed.
+
+### (a) Source IDs are canonicalized through the identity closure
+
+Raw source strings are not source *identities*. Write `doc:manual` and
+`doc:manual_alias`, merge them afterwards, and un-canonicalized classes stay
+distinct — **one logical document then self-corroborates.** Measured on r1.1:
+corroboration stayed `1` across the merge; it must fall to `0`.
+
+Collected `doc:`/`person:` ids now pass through `self._resolve` (current-head
+closure, consistent with the engine's known historical-identity limitation).
+**This gap was introduced by r1.1** — before it, every document collapsed to one
+class, so aliases were handled correctly by accident. Oracle 14.
+
+### (b) The class is a canonical COMPOSITE, never one member selected by spelling
+
+r1.1's `min()` was deterministic but not semantic. pbr reproduced, and pb
+confirmed, that identical two-row provenance topology flipped outcome purely on
+renaming the shared source:
+
+| shared source sorts | r1.1 result |
+|---|---|
+| lexically least | `conflicted=False`, served `'new'` |
+| lexically greatest | `conflicted=True`, served `'old'` |
+
+**Spelling decided which value was served.** A set of attesters is its own
+identity, so the class is now every source of the winning kind, canonically
+rendered: `document:` + `"|".join(sorted(ids))`. Sorting canonicalizes the
+*rendering* only; it never selects an attester. A single-source row is
+unchanged (`document:doc:x`, `speaker:person:x`). Oracle 15.
+
+### (c) Conflict parties are recomputed against the final serving value
+
+`serving` advances on refinement, but `conflicting` was anchored permanently to
+`incumbent` (`indexes.py`). With `a={gte:10}`, `b=12`, `c=13` the fold served `b`
+and reported `conflicting={a,c}` — **a pair that agrees** — while the real
+incompatibility was `b↔c`. `TruthMaintenance.scan()` persisted the same wrong
+pair, so the durable `cross_source` sidecar named the wrong evidence. This bug
+**pre-dates this spec**; document-splitting makes the three-document shape newly
+reachable, which is why it lands here. Oracle 16.
+
+Two pins on the repair:
+
+- **Compatibility is symmetric.** `_values_agree(old, new)` asks the directional
+  question "does `new` refine `old`?", so `_values_agree({gte:10}, 12)` holds
+  while the reverse does not. The recomputation asks a symmetric question and
+  must test both directions, or an approximate row the served value satisfies is
+  reported as a conflicting party.
+- **`corroborated_by` keeps its existing meaning exactly** — the challengers that
+  agreed as the fold advanced, pinned by
+  `test_fold.py::TestCrossSource::test_agreeing_value_corroborates`. An earlier
+  draft of this repair recomputed corroboration against the final serving value
+  too; that broke the shipped test and is an unasked contract change, so it was
+  reverted. **Flagged for pbr rather than taken:** the old semantics can list the
+  winner as its own corroborator, and `confidence()` unions the winner's class
+  with `corroborated_by`'s classes — so a two-row refinement pair may undercount.
+  That is a separate question, not folded in here.
 
 ## 3. What does NOT change
 
