@@ -646,17 +646,37 @@ class Ingestor:
     def _validate_ops(ops: list[dict[str, Any]]) -> None:
         if not isinstance(ops, list):
             raise ValueError("commit_set ops must be a list")
+        # §C1's vocabulary is EXACT, and the Python door enforces it rather
+        # than trusting the MCP schema to be the only gate. It previously
+        # checked the discriminant and a few required fields, so an assert op
+        # could smuggle outer `role`/`status` keys (authority laundering is
+        # precisely what §C1 forbids) and a retract could carry a non-string
+        # `reason`, which was then stored as the retraction value. The
+        # published MCP schema already excluded both (`additionalProperties:
+        # false`, `reason: string`); Python was simply laxer than the contract
+        # it advertised. This narrows Python to the contract — it never widens
+        # it, so no valid call changes.
+        allowed = {"assert": {"op", "item"}, "retract": {"op", "assertion_id", "reason"}}
         for op in ops:
             if not isinstance(op, dict) or op.get("op") not in ("assert", "retract"):
                 raise ValueError(
                     f"commit_set op must be {{op: assert|retract, …}}, got {op!r}")
+            extra = set(op) - allowed[op["op"]]
+            if extra:
+                raise ValueError(
+                    f"a '{op['op']}' op accepts exactly {sorted(allowed[op['op']])}; "
+                    f"unexpected {sorted(extra)} (authority and provenance are "
+                    "held internally, never taken from the op)")
             if op["op"] == "assert":
                 if not isinstance(op.get("item"), dict):
                     raise ValueError("an 'assert' op requires an 'item' dict")
             else:
-                if not isinstance(op.get("assertion_id"), str) or "reason" not in op:
+                if not isinstance(op.get("assertion_id"), str):
+                    raise ValueError("a 'retract' op requires 'assertion_id'")
+                if not isinstance(op.get("reason"), str):
                     raise ValueError(
-                        "a 'retract' op requires 'assertion_id' and 'reason'")
+                        "a 'retract' op requires 'reason' to be a string, got "
+                        f"{type(op.get('reason')).__name__}")
 
     def _apply_ops(self, ops, truth, frame, classify, cursor_authoritative):
         """The commit_set op loop — the assert path mirrors ``_ingest_body``'s

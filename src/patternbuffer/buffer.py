@@ -107,6 +107,7 @@ def _slot(obj: Any, name: str) -> Any:
 _CURSOR_ALLOWED = frozenset({
     "execute", "executemany", "fetchone", "fetchall", "fetchmany",
     "connection", "lastrowid", "rowcount", "description",
+    "_live",   # the per-operation poison re-check (§B6)
 })
 
 
@@ -127,29 +128,45 @@ class _CursorProxy:
         object.__setattr__(self, "_cursor", cursor)
         object.__setattr__(self, "_facade", facade)
 
+    def _live(self) -> sqlite3.Cursor:
+        """Re-check the owning buffer on EVERY operation, then hand back the
+        native cursor.
+
+        A cursor obtained before an abort used to keep working afterwards: it
+        delegated straight to its native cursor, so poisoning the buffer never
+        reached it. That made the §B6 fail-closed guarantee conditional on the
+        physical `close()` succeeding — and when both ROLLBACK and `close()`
+        raise while the underlying connection stays live, an uncertain
+        transaction remained readable and finalizable through a cached handle.
+        Poison is a software gate, so it has to be consulted per operation
+        rather than trusted to a one-shot teardown.
+        """
+        _slot(_slot(self, "_facade"), "_buffer")._live_conn()
+        return _slot(self, "_cursor")
+
     def execute(self, *a: Any, **k: Any) -> "_CursorProxy":
-        _slot(self, "_cursor").execute(*a, **k)
+        self._live().execute(*a, **k)
         return self
 
     def executemany(self, *a: Any, **k: Any) -> "_CursorProxy":
-        _slot(self, "_cursor").executemany(*a, **k)
+        self._live().executemany(*a, **k)
         return self
 
     def fetchone(self) -> Any:
-        return _slot(self, "_cursor").fetchone()
+        return self._live().fetchone()
 
     def fetchall(self) -> list:
-        return _slot(self, "_cursor").fetchall()
+        return self._live().fetchall()
 
     def fetchmany(self, size: int | None = None) -> list:
-        cur = _slot(self, "_cursor")
+        cur = self._live()
         return cur.fetchmany(size) if size is not None else cur.fetchmany()
 
     def __iter__(self) -> "_CursorProxy":
         return self                       # NOT iter(native) — that leaks .connection
 
     def __next__(self) -> Any:
-        return _slot(self, "_cursor").__next__()
+        return self._live().__next__()
 
     @property
     def connection(self) -> "_ConnectionFacade":
@@ -157,7 +174,7 @@ class _CursorProxy:
 
     @property
     def lastrowid(self) -> int | None:
-        return _slot(self, "_cursor").lastrowid
+        return self._live().lastrowid
 
     @property
     def rowcount(self) -> int:
@@ -264,14 +281,18 @@ class PatternBuffer:
 
     def __init__(self, path: str | Path, world_id: str) -> None:
         self.path = Path(path)
+        # The poison gate is armed BEFORE the connection exists: `_live_conn()`
+        # is now the single database entry point (§B6 fail-closed), and it is
+        # consulted by `_meta()` during construction itself.
+        self._poisoned = False
         self._conn = sqlite3.connect(self.path)
         self._conn.executescript(_SCHEMA)
         existing = self._meta("world_id")
         if existing is None:
-            self._conn.execute(
+            self._live_conn().execute(
                 "INSERT INTO world_meta (key, value) VALUES ('world_id', ?)", (world_id,)
             )
-            self._conn.commit()
+            self._live_conn().commit()
         elif existing != world_id:
             self._conn.close()
             raise WorldMismatch(
@@ -285,12 +306,11 @@ class PatternBuffer:
         self._facade = _ConnectionFacade(self)
         self._unit_open = False
         self._owner_phase = "none"       # {none, begin, commit, rollback}
-        self._poisoned = False
         self._unit_committed = False     # last unit reached a terminal COMMIT
         self._unit_precall_head: int | None = None
 
     def _meta(self, key: str) -> str | None:
-        row = self._conn.execute(
+        row = self._live_conn().execute(
             "SELECT value FROM world_meta WHERE key = ?", (key,)
         ).fetchone()
         return row[0] if row else None
@@ -343,7 +363,7 @@ class PatternBuffer:
                 f"buffer of world {self.world_id!r}"
             )
         self._validate_attr_semantics_insert(row)
-        self._conn.execute(
+        self._live_conn().execute(
             "INSERT INTO assertions (seq, id, world_id, entity, attribute, value_type,"
             " value, valid_from, valid_to, frame, status, confidence, asserted_at)"
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -375,7 +395,7 @@ class PatternBuffer:
             raise ValueError(
                 f"cannot declare semantics for inviolable core attribute {target!r}"
             )
-        prior = self._conn.execute(
+        prior = self._live_conn().execute(
             "SELECT id FROM assertions"
             " WHERE attribute = ? AND entity NOT LIKE ? AND entity NOT LIKE ?"
             " ORDER BY seq LIMIT 1",
@@ -391,7 +411,8 @@ class PatternBuffer:
 
     def head(self) -> int:
         """The current log head (last seq; 0 for an empty log)."""
-        row = self._conn.execute("SELECT COALESCE(MAX(seq), 0) FROM assertions").fetchone()
+        row = self._live_conn().execute(
+            "SELECT COALESCE(MAX(seq), 0) FROM assertions").fetchone()
         return int(row[0])
 
     def get(self, assertion_id: str) -> Assertion | None:
@@ -470,11 +491,12 @@ class PatternBuffer:
         """The valid-time high-water mark over ALL rows, all frames (None when
         no timed rows exist). Log coordinates are real after retraction —
         monotone by construction (AXIS-HEAD-V1)."""
-        row = self._conn.execute("SELECT MAX(valid_from) FROM assertions").fetchone()
+        row = self._live_conn().execute(
+            "SELECT MAX(valid_from) FROM assertions").fetchone()
         return row[0]
 
     def _select(self, where: str, params: tuple) -> list[Assertion]:
-        cur = self._conn.execute(
+        cur = self._live_conn().execute(
             "SELECT seq, id, world_id, entity, attribute, value_type, value,"
             " valid_from, valid_to, frame, status, confidence, asserted_at"
             f" FROM assertions a {where} ORDER BY seq",
@@ -524,7 +546,7 @@ class PatternBuffer:
         """The buffer's own per-row commit — deferred while a unit is open."""
         if self._unit_open:
             return
-        self._conn.commit()
+        self._live_conn().commit()
 
     def _gated_commit(self) -> None:
         """A borrowed ``facade.commit()`` — a no-op during a unit (deferred to
@@ -558,7 +580,7 @@ class PatternBuffer:
         can never leave the capability authorizing (§B1.b)."""
         self._owner_phase = phase
         try:
-            self._conn.execute(sql)
+            self._live_conn().execute(sql)
         finally:
             self._owner_phase = "none"
 

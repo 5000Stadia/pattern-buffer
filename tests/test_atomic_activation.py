@@ -905,3 +905,111 @@ async def test_oracle13_mcp_wire_atomic_abort_envelope(tmp_path):
 @pytest.fixture
 def anyio_backend():
     return "asyncio"
+
+
+# ============================================================ pbr code review
+# ATOMIC-ACTIVATION-V1 code verdict <8f99e09b…> — F1 (HIGH), F2 (MEDIUM).
+
+class TestPoisonIsASoftwareGate:
+    """F1 — §B6's fail-closed guarantee must not depend on the physical
+    `close()` succeeding.
+
+    pbr's reproduction: wrap the connection so BOTH `ROLLBACK` and `close()`
+    raise while the underlying SQLite connection stays live. The buffer
+    poisoned, but `head()` and a cursor cached before the abort both still
+    worked — an uncertain transaction remained observable and finalizable.
+    """
+
+    def _poisoned_buffer(self, tmp_path):
+        """A buffer whose rollback AND close both fail, leaving SQLite live."""
+        from patternbuffer.buffer import PatternBuffer
+
+        buf = PatternBuffer(tmp_path / "poison.world", world_id="w:poison")
+        cached = buf.raw_connection().execute("SELECT 1")   # cached BEFORE abort
+
+        real = buf._conn
+
+        class Hostile:
+            """Live connection; ROLLBACK and close() raise."""
+            def __getattr__(self, name):
+                return getattr(real, name)
+
+            def execute(self, sql, *a, **k):
+                if sql.strip().upper().startswith("ROLLBACK"):
+                    raise sqlite3.OperationalError("rollback failed")
+                return real.execute(sql, *a, **k)
+
+            def close(self):
+                raise sqlite3.OperationalError("close failed")
+
+        buf._conn = Hostile()
+
+        def body():
+            raise RuntimeError("force abort")
+
+        try:
+            buf.atomic_unit(body)          # takes a callable, not a CM
+        except Exception:
+            pass
+        return buf, cached
+
+    def test_poison_blocks_buffer_read_paths(self, tmp_path):
+        buf, _ = self._poisoned_buffer(tmp_path)
+        assert buf.poisoned is True
+        with pytest.raises(PoisonedConnection):
+            buf.head()
+
+    def test_poison_blocks_a_cursor_cached_before_the_abort(self, tmp_path):
+        """The decisive one — a handle obtained before the abort must die too."""
+        buf, cached = self._poisoned_buffer(tmp_path)
+        with pytest.raises(PoisonedConnection):
+            cached.execute("SELECT COUNT(*) FROM assertions")
+
+    def test_poison_blocks_newly_obtained_paths(self, tmp_path):
+        buf, _ = self._poisoned_buffer(tmp_path)
+        with pytest.raises(PoisonedConnection):
+            buf.raw_connection().execute("SELECT 1")
+
+
+class TestCommitSetOpSchemaIsExact:
+    """F2 — the Python door enforces §C1's exact vocabulary, matching the
+    published MCP schema instead of being laxer than it."""
+
+    def test_assert_op_rejects_outer_role_key(self, world):
+        """Authority is held internally and never taken from the op."""
+        with pytest.raises(ValueError, match="accepts exactly"):
+            world.commit_set([{
+                "op": "assert", "role": "truth",
+                "item": {"entity": "o:1", "attribute": "k", "value": "v",
+                         "valid_from": 1.0},
+            }])
+
+    def test_assert_op_rejects_outer_status_key(self, world):
+        with pytest.raises(ValueError, match="accepts exactly"):
+            world.commit_set([{
+                "op": "assert", "status": "observed",
+                "item": {"entity": "o:1", "attribute": "k", "value": "v",
+                         "valid_from": 1.0},
+            }])
+
+    def test_retract_reason_must_be_a_string(self, world):
+        rows = world.ingest_structured([
+            {"entity": "o:1", "attribute": "k", "value": "v", "valid_from": 1.0},
+        ])
+        rid = [r.id for r in rows if getattr(r, "attribute", None) == "k"][0]
+        with pytest.raises(ValueError, match="reason.*string"):
+            world.commit_set([
+                {"op": "retract", "assertion_id": rid, "reason": {"why": "bad"}},
+            ])
+
+    def test_valid_ops_are_unaffected(self, world):
+        """The narrowing must never reject a contract-valid call."""
+        rows = world.commit_set([
+            {"op": "assert", "item": {"entity": "o:1", "attribute": "k",
+                                      "value": "v", "valid_from": 1.0}},
+        ])
+        assert rows
+        rid = [r.id for r in rows if getattr(r, "attribute", None) == "k"][0]
+        world.commit_set([
+            {"op": "retract", "assertion_id": rid, "reason": "superseded"},
+        ])
