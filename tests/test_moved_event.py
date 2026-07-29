@@ -587,3 +587,90 @@ def test_oracle12_location_clause_still_fires_non_moved(world):
          "valid_from": 3.0},
     ])
     assert w.locate("person:mara", valid_as_of=3.0) == ["place:garden"]
+
+
+# ============================================================ pbr code review
+# MOVED-EVENT-V1 code verdict <922ea048…> — F1 (HIGH), F2 (MEDIUM).
+
+def _moved_batch(event_frame, arrival_frame):
+    """A moved group + its co-emitted arrival, with hostile model coordinates
+    on the arrival. `None` frame = unframed (the call default fills it)."""
+    ev, arr = {}, {}
+    if event_frame is not None:
+        ev["frame"] = event_frame
+    if arrival_frame is not None:
+        arr["frame"] = arrival_frame
+    return [
+        {"entity": "event:m1", "attribute": "kind", "value": "moved",
+         "complete": True, **ev},
+        {"entity": "event:m1", "attribute": "agent", "value": "person:edda", **ev},
+        {"entity": "event:m1", "attribute": "destination", "value": "place:yard", **ev},
+        # the arrival, carrying invented coordinates that MUST be stripped
+        {"entity": "person:edda", "attribute": "in", "value": "place:yard",
+         "valid_from": 999.0, "valid_to": 1234.0, **arr},
+    ]
+
+
+class TestEffectiveFrameAntiInvention:
+    """F1 — the coordinate pass ran BEFORE `frame=` was filled into unframed
+    items, so it compared a pre-default frame against a post-default one. An
+    explicitly-framed event and its unframed arrival (which the call default
+    puts in the SAME frame) looked like different frames, the arrival went
+    unmatched, and the model's invented coordinates reached the log."""
+
+    def test_explicit_event_defaulted_arrival(self, world):
+        world.ingestor.cursor.advance(5.0)
+        world.ingest_structured(
+            _moved_batch(event_frame="knows:b", arrival_frame=None),
+            frame="knows:b", extracted=True,
+        )
+        fold = world.state("person:edda", "in", frame="knows:b")
+        assert fold.winner.valid_from == 5.0, "cursor must replace invented 999"
+        assert fold.winner.valid_to is None, "arrival is STANDING, not [t,t)"
+
+    def test_defaulted_event_explicit_arrival(self, world):
+        world.ingestor.cursor.advance(5.0)
+        world.ingest_structured(
+            _moved_batch(event_frame=None, arrival_frame="knows:b"),
+            frame="knows:b", extracted=True,
+        )
+        fold = world.state("person:edda", "in", frame="knows:b")
+        assert fold.winner.valid_from == 5.0
+        assert fold.winner.valid_to is None
+
+    def test_both_defaulted_still_matches(self, world):
+        world.ingestor.cursor.advance(5.0)
+        world.ingest_structured(
+            _moved_batch(event_frame=None, arrival_frame=None),
+            frame="knows:b", extracted=True,
+        )
+        fold = world.state("person:edda", "in", frame="knows:b")
+        assert fold.winner.valid_from == 5.0
+        assert fold.winner.valid_to is None
+
+
+class TestStrayCompleteRowIsASkip:
+    """F2 — a stray `attribute="complete"` row was added to `drop` with no
+    receipt, so `last_skipped` was empty on the ordinary path and, under
+    extracted+atomic+rules, `_skip_aborting` saw no skip and the set committed
+    instead of aborting."""
+
+    def _batch_with_stray_complete(self):
+        return _moved_batch(None, None) + [
+            {"entity": "event:m1", "attribute": "complete", "value": True},
+        ]
+
+    def test_emits_a_typed_skip_receipt(self, world):
+        world.ingestor.cursor.advance(5.0)
+        world.ingest_structured(self._batch_with_stray_complete(), extracted=True)
+        assert any(s.reason == "moved_complete_attribute_not_durable"
+                   for s in world.ingestor.last_skipped)
+
+    def test_aborts_the_atomic_set(self, world):
+        from patternbuffer import AtomicAbort
+        with pytest.raises(AtomicAbort) as ei:
+            world.ingestor.cursor.advance(5.0)
+            world.ingest_structured(self._batch_with_stray_complete(),
+                                    extracted=True, atomic=True, classify="rules")
+        assert ei.value.cause == "gate_skip"
+        assert world.state("person:edda", "in").winner is None, "nothing visible"

@@ -362,7 +362,7 @@ class Ingestor:
     # ------------------------------------------ moved-event coordinate pass
 
     def _apply_moved_coordinate_pass(
-        self, items: list[dict[str, Any]]
+        self, items: list[dict[str, Any]], call_frame: str | None = None
     ) -> list[dict[str, Any]]:
         """MOVED-EVENT-V1 §B.3-B.5: engine-authored movement timestamps
         (extracted mode). For each `kind=moved` event: validate its single
@@ -386,6 +386,20 @@ class Ingestor:
             raw = it.get("attribute")
             return self._canonicalize(raw)[0] if isinstance(raw, str) else ""
 
+        def eff_frame(it: dict[str, Any]) -> str:
+            """The frame this row will actually land in.
+
+            The pass runs BEFORE `_ingest_body` fills `frame=` into unframed
+            items, so reading `it["frame"]` raw compares a pre-default value
+            against a post-default one. An event explicitly stamped
+            `knows:b` and its unframed arrival — which the call default puts
+            in `knows:b` too — looked like different frames, the arrival went
+            unmatched, and the model's invented coordinates survived into the
+            log instead of being replaced by the cursor. Explicit item frame
+            wins, else the call-level default, else canon.
+            """
+            return it.get("frame") or call_frame or CANON
+
         moved_ids = {
             ev_id(it) for it in items
             if ev_id(it) and cattr(it) == "kind" and it.get("value") == "moved"
@@ -408,6 +422,14 @@ class Ingestor:
                 continue
             attr = cattr(it)
             if attr == "complete":
+                # A skip RECEIPT, not a silent drop (§B.4 calls it a malformed
+                # movement row that is skipped). Silently dropping it meant
+                # `last_skipped` carried no receipt on the ordinary path, and —
+                # worse — under extracted+atomic+rules `_skip_aborting` saw no
+                # skip at all, so a malformed gate row failed to abort the set
+                # the atomic contract promises is all-or-none.
+                self._record_skip(it.get("entity"), "complete", it.get("value"),
+                                  "moved_complete_attribute_not_durable")
                 drop.add(idx)          # stray row — never the marker, never durable
                 continue
             payload[eid].append(idx)
@@ -415,7 +437,7 @@ class Ingestor:
                 markers[eid].append(it["complete"])
             if attr == "kind" and it.get("value") == "moved":
                 kind_idx[eid] = idx
-                frame_of[eid] = it.get("frame") or CANON
+                frame_of[eid] = eff_frame(it)
             elif attr == "agent":
                 agent[eid] = it.get("value")
             elif attr == "destination":
@@ -442,7 +464,7 @@ class Ingestor:
                 for idx, it in enumerate(items):
                     if (it.get("entity") == agent[eid] and cattr(it) == "in"
                             and it.get("value") == dest[eid]
-                            and (it.get("frame") or CANON) == frame_of[eid]):
+                            and eff_frame(it) == frame_of[eid]):
                         arrival_idxs.append(idx)
             if not marker_ok:
                 for idx in payload[eid]:
@@ -546,7 +568,7 @@ class Ingestor:
             # fails a malformed marker group closed. Structured callers
             # (extracted=False) keep their own numeric coordinates untouched.
             if extracted:
-                items = self._apply_moved_coordinate_pass(items)
+                items = self._apply_moved_coordinate_pass(items, frame)
             appended: list[Assertion] = []
             for item in items:
                 if frame is not None and "frame" not in item:
