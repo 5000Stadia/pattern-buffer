@@ -6,7 +6,7 @@ the authoritative current state.** A spec marked *Shipped* has its feature live 
 `src/patternbuffer/` with tests; browse the spec for the design and the whitepaper
 §25 for the consolidated architecture.
 
-_Last reconciled: 2026-07-29._
+_Last reconciled: 2026-07-29 (all three of that day's tracks pbr-GREEN on spec and code)._
 
 ## Shipped — feature live in the engine
 | Spec | What it shipped |
@@ -36,18 +36,10 @@ _Last reconciled: 2026-07-29._
 | BUILD-SESSION-V1 | `begin_build`/`seal_build`/`abort_build` + the `build()` sugar |
 | AXIS-HEAD-V1 | `axis_heads()` (two-axis high-water mark) + `ingest_structured(at=)` |
 | INGESTION-FIDELITY-V1 | `fidelity_audit()` — the structural-gap read (coreference metric + gaps) |
+| MOVED-EVENT-V1 | Movement as a reified `kind=moved` event (`agent`/`origin`/`destination`/`manner`), `literal` never-invent endpoints, the prose-mode coordinate pass, `in_transit()`, the additive six-key `events()` payload. MCP verb 38 |
+| ATOMIC-ACTIVATION-V1 | All-or-none activation: `commit_set(ops)` + `ingest_structured(atomic=True)` over a unit-of-work behind a deny-by-default capability facade and a provenance-gated SQLite authorizer; `AtomicAbort{cause,skipped,error}`; fail-closed poison as an independent software gate. MCP verb 39 |
+| SOURCE-IDENTITY-V1 | A source class carries its source's *identity* — distinct documents corroborate when agreeing and raise §7.2 cross-source flags when disagreeing instead of silently last-write-wins. Ids canonicalize through the identity closure; the class is a canonical composite, never a spelling-selected member; conflict parties are computed against the served value |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
-
-## Landed — live in the engine, **pbr code verdict outstanding**
-These three shipped on `main` under founder direction ahead of a code review, and
-are **reviewable, not settled**. Spec revisions are pbr-GREEN; what is outstanding
-is implementation fidelity. A RED verdict means amend or revert on `main`.
-
-| Spec | What it landed | Review state |
-|---|---|---|
-| MOVED-EVENT-V1 (r6) | Movement as a reified `kind=moved` event (`agent`/`origin`/`destination`/`manner`), `literal` never-invent endpoints, the prose-mode coordinate pass, `in_transit()`, the additive six-key `events()` payload. MCP verb 38 | spec GREEN `<2e17ff6f…>`; code review resubmitted `<9c26ad0a…>` |
-| ATOMIC-ACTIVATION-V1 (r11) | All-or-none activation: `commit_set(ops)` + `ingest_structured(atomic=True)` over a unit-of-work behind a deny-by-default capability facade + provenance-gated SQLite authorizer; `AtomicAbort{cause,skipped,error}`. MCP verb 39. **Consumed live by Construct** | spec GREEN `<48a4cd92…>`; code review resubmitted `<9c26ad0a…>` |
-| SOURCE-IDENTITY-V1 (r2) | A source class carries its source's *identity*, so distinct documents corroborate when agreeing and raise §7.2 cross-source flags when disagreeing instead of silently last-write-wins. Ids canonicalize through the identity closure; the class is a composite, never a spelling-selected member; conflict parties are computed against the served value | r1.1 RED (`<8b7ef3c6…>` spec, `<c4111100…>` code) → r2 sent `<0a4795a8…>` |
 
 ## Ratified RFCs — decisions in effect
 | RFC | State |
