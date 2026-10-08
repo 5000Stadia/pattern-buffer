@@ -61,7 +61,6 @@ _BUILTIN_ALIASES = {
     "located_in": "in",
     "location": "in",
     "contained_in": "in",
-    "within": "in",
     "wearing": "worn_by",  # direction repaired by the extractor contract
     "holds": "held_by",
     "connected_to": "connects_to",

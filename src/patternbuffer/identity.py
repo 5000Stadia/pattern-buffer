@@ -344,18 +344,6 @@ class IdentityRegistry:
                 out.add(row.entity)
         return out
 
-    def name_anchors(self, entity: str) -> set[str]:
-        """NAME-class anchors only (names + aliases, lowercased) — the
-        high-weight identity signal. Role/title tokens deliberately
-        excluded (036: a shared title register must never carry a merge)."""
-        closure = self.closure(entity)
-        out: set[str] = set()
-        for row in self._buffer.visible():
-            if row.entity in closure and row.attribute in ("name", "alias") \
-                    and isinstance(row.value, str):
-                out.add(row.value.strip().lower())
-        return out
-
     def typed_name_anchors(self, entity: str) -> set[tuple[str, str]]:
         """NAME-class anchors as ``(attribute, normalized_text)`` (IDENTITY-
         RECALL-V1 §3): like name_anchors but keeps the name-vs-alias kind so

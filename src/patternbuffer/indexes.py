@@ -28,7 +28,7 @@ from patternbuffer.codec import (
 )
 from patternbuffer.decay import DecayPolicy
 from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, Assertion
-from patternbuffer.semantics import AttributeSemantics, CONTAINMENT, builtin_default
+from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +56,6 @@ CONFIDENCE_PARAMS = {
 }
 
 
-def fold_attribute(attribute: str) -> str:
-    """Built-in fold-key compatibility helper.
-
-    World-bound reads use Indexes.fold_attribute(), which includes declared
-    semantics. This free function remains for callers that only need the
-    built-in defaults.
-    """
-    return _FAMILY_KEY if builtin_default(attribute).relation_family == CONTAINMENT else attribute
-
-
 @dataclass(frozen=True, slots=True)
 class FoldResult:
     """What the fold serves for one key."""
@@ -78,11 +68,6 @@ class FoldResult:
     _value_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
     quantity: int | float | Decimal | None = None
     _ledger_rows: tuple[Assertion, ...] = field(default=(), repr=False, compare=False)
-
-
-@dataclass
-class _KeyRows:
-    rows: list[Assertion] = field(default_factory=list)
 
 
 class Indexes:
