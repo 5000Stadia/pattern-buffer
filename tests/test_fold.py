@@ -661,3 +661,63 @@ class TestNumericQuantities:
             } == {"master meter", "the master meter"}
         finally:
             w.close()
+
+
+# ------------------------------------------------------- FOLD-CORRECTNESS-V1
+# One set of fold rules across classes, ties and time. Each test is one of
+# the spec's oracles; "today" in a comment names the pre-fix wrong answer.
+
+
+def _fc_world(tmp_path, name="fc"):
+    from patternbuffer import World
+
+    return World(
+        tmp_path / f"{name}.world",
+        world_id=f"w:{name}",
+        model=StubModel(fallback=rule_classifier_fallback()),
+    )
+
+
+class TestOneRecencyKey:
+    """§1: valid time 0.0 is a time, not "no time" (the cursor starts there)."""
+
+    @pytest.mark.parametrize("now_first", [True, False])
+    def test_zero_outranks_a_negative_flashback(self, tmp_path, now_first):
+        w = _fc_world(tmp_path)
+        try:
+            now = {"entity": "person:p", "attribute": "in", "value": "room:now",
+                   "valid_from": 0.0}
+            back = {"entity": "person:p", "attribute": "in", "value": "room:flashback",
+                    "valid_from": -10.0}
+            w.ingest_structured([now, back] if now_first else [back, now])
+            fold = w.state("person:p", "in")
+            # today: room:flashback (0.0 read as -inf, so -10 was "later")
+            assert fold.winner.value == "room:now" and not fold.conflicted
+            assert w.locate("person:p") == ["room:now"]
+        finally:
+            w.close()
+
+    def test_zero_is_a_time_for_establishing_set_and_its_scope_walk(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "room:now", "attribute": "kind", "value": "room",
+                 "timeless": True},
+                {"entity": "room:flashback", "attribute": "kind", "value": "room",
+                 "timeless": True},
+                {"entity": "person:p", "attribute": "in", "value": "room:now",
+                 "valid_from": 0.0},
+                {"entity": "person:p", "attribute": "in", "value": "room:flashback",
+                 "valid_from": -10.0},
+            ])
+            # The world at rest is the FIRST state in valid time: -10 precedes
+            # 0.0. Today both the establishing state and the establishing
+            # containment walk read 0.0 as -inf and picked room:now.
+            m = w.materialize("room:flashback", lens="establishing_set")
+            assert "person:p" in m.scope
+            assert [r.value for r in m.assertions
+                    if r.entity == "person:p" and r.attribute == "in"] == ["room:flashback"]
+            later = w.materialize("room:now", lens="establishing_set")
+            assert "person:p" not in later.scope
+        finally:
+            w.close()

@@ -118,7 +118,8 @@ class Projector:
                 )
             ]
             if qualifying:
-                first = min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+                # FOLD-CORRECTNESS-V1 §1: the fold's own recency key (0.0 is a time).
+                first = min(qualifying, key=self._indexes._recency_key)
                 parent[entity] = self._indexes.resolve_entity(first.value)
         out, ordering = set(roots), list(roots)
         changed = True
@@ -283,7 +284,7 @@ class Projector:
                 qualifying.append(r)
         if not qualifying:
             return None
-        return min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+        return min(qualifying, key=self._indexes._recency_key)  # FOLD-CORRECTNESS-V1 §1
 
     def _lens_situation(
         self, m: Materialization, entities: list[str], budget: int | None,

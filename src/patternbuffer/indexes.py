@@ -204,6 +204,18 @@ class Indexes:
         return "direct"
 
     @staticmethod
+    def _recency_key(row: Assertion) -> tuple[float, int]:
+        """The one recency order every fold and pick uses (FOLD-CORRECTNESS-V1
+        §1): valid time, then log order; a timeless row sorts before every
+        timed one. `0.0` IS a time — the scene cursor starts there — so the
+        old `valid_from or -inf` spelling read the commonest stamp as "no
+        time" and let a flashback at −10 outrank the present."""
+        return (
+            row.valid_from if row.valid_from is not None else float("-inf"),
+            row.asserted_at,
+        )
+
+    @staticmethod
     def _values_agree(old: object, new: object) -> bool:
         """Equal, or `new` refines an explicitly approximate `old`
         ({'gte': x} / {'lte': x} / {'approx': x}) — spec §7. When `new` is
@@ -490,8 +502,7 @@ class Indexes:
 
         if by_class[DISPOSITIONAL]:
             rows = by_class[DISPOSITIONAL]
-            winner = max(rows, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
-            return FoldResult(winner=winner)
+            return FoldResult(winner=max(rows, key=self._recency_key))
         return FoldResult(winner=None)
 
     def state_union(
@@ -677,11 +688,7 @@ class Indexes:
         if not folds:
             return self._empty_confidence()
 
-        def recency_key(fold: FoldResult) -> tuple[float, int]:
-            w = fold.winner
-            return (w.valid_from if w.valid_from is not None else float("-inf"), w.asserted_at)
-
-        winner = max(folds, key=lambda ff: recency_key(ff[1]))[1].winner
+        winner = max(folds, key=lambda ff: self._recency_key(ff[1].winner))[1].winner
 
         # Conflict: any per-frame conflict, or two frames' winners disagree
         # (strict, entity-resolved — the effective belief is contested).
@@ -777,12 +784,7 @@ class Indexes:
         """Accrue quantities: latest absolute numeric baseline plus later
         signed numeric deltas. The ledger is provenance-only; the derived
         quantity is surfaced separately from stored facts."""
-        def recency(row: Assertion) -> tuple[float, int]:
-            return (
-                row.valid_from if row.valid_from is not None else float("-inf"),
-                row.asserted_at,
-            )
-
+        recency = self._recency_key
         literals = [
             r for r in rows
             if r.value_type == "literal" and self._is_numeric(r.value)
@@ -829,8 +831,7 @@ class Indexes:
         member's own (entity, attribute, value-identity) key. The served
         winner remains the most-recent current member for compatibility.
         """
-        def recency(row: Assertion) -> tuple[float, int]:
-            return (row.valid_from if row.valid_from is not None else float("-inf"), row.asserted_at)
+        recency = self._recency_key
 
         def value_identity(row: Assertion) -> tuple[str, object]:
             if row.value_type == "entity" and isinstance(row.value, str):
@@ -880,7 +881,7 @@ class Indexes:
             by_source.setdefault(self._source_class(r, asserted_as_of), []).append(r)
         winners: dict[str, Assertion] = {}
         for sc, rs in by_source.items():
-            top = max(rs, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+            top = max(rs, key=self._recency_key)
             # Supersession requires world-time progression: rows tied at the
             # winner's valid_from with a DIFFERENT value are a simultaneous
             # contradiction, not an update — flag, serve earliest-asserted
