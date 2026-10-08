@@ -149,3 +149,69 @@ class TestTwoTimeAxes:
     def test_timeless_rows_always_valid(self, buf, roles):
         buf.append(entity="e:room", attribute="kind", value="room", status="stated", role=roles["ingestor"])
         assert len(buf.visible(entity="e:room", valid_as_of=0.0)) == 1
+
+
+class TestDerivedHead:
+    """The head is tracked in memory and `log_version` moves with every change
+    to this connection's view — derived from the buffer's own appends and
+    rollbacks, never stored."""
+
+    def test_append_after_read_is_seen(self, buf, roles):
+        ing = roles["ingestor"]
+        _place_pipe(buf, ing)
+        assert buf.head() == 1
+        assert [r.value for r in buf.visible(entity="obj:pipe")] == ["obj:drawer"]
+        version = buf.log_version
+        buf.append(entity="obj:pipe", attribute="in", value="place:vault",
+                   value_type="entity", valid_from=2.0, status="stated", role=ing)
+        assert buf.head() == 2
+        assert buf.log_version != version
+        assert [r.value for r in buf.visible(entity="obj:pipe")] == ["obj:drawer", "place:vault"]
+
+    def test_rollback_restores_head_and_survives_a_reappend_to_the_same_head(self, buf, roles):
+        ing = roles["ingestor"]
+        _place_pipe(buf, ing)
+        inside = {}
+
+        def body():
+            buf.append(entity="e:x", attribute="note", value="staged", status="stated", role=ing)
+            buf.append(entity="e:y", attribute="note", value="staged", status="stated", role=ing)
+            inside["head"] = buf.head()
+            inside["rows"] = [r.value for r in buf.visible(entity="e:x")]
+            raise RuntimeError("abort the unit")
+
+        version = buf.log_version
+        with pytest.raises(RuntimeError):
+            buf.atomic_unit(body)
+        assert inside == {"head": 3, "rows": ["staged"]}
+        assert buf.head() == 1
+        assert buf.visible(entity="e:x") == []
+        assert buf.log_version != version
+        # Re-appending returns the head to its in-unit value: reads serve the
+        # new rows, never the rolled-back ones.
+        buf.append(entity="e:x", attribute="note", value="real", status="stated", role=ing)
+        buf.append(entity="e:z", attribute="note", value="other", status="stated", role=ing)
+        assert buf.head() == 3
+        assert [r.value for r in buf.visible(entity="e:x")] == ["real"]
+        assert buf.visible(entity="e:y") == []
+
+    def test_a_reopen_reads_the_head_from_the_file(self, tmp_path, roles):
+        path = tmp_path / "reopen.world"
+        first = PatternBuffer(path, world_id="w:test")
+        _place_pipe(first, roles["ingestor"])
+        first.close()
+        second = PatternBuffer(path, world_id="w:test")
+        try:
+            assert second.head() == 1
+            assert second.append(entity="e:x", attribute="note", value=1, status="stated",
+                                 role=roles["ingestor"]).id == "a:2"
+        finally:
+            second.close()
+
+    def test_a_closed_buffer_still_refuses_reads(self, tmp_path, roles):
+        b = PatternBuffer(tmp_path / "closed.world", world_id="w:test")
+        _place_pipe(b, roles["ingestor"])
+        assert b.head() == 1                  # tracked in memory from here on
+        b.close()
+        with pytest.raises(sqlite3.ProgrammingError):
+            b.head()

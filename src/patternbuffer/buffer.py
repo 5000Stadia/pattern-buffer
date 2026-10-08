@@ -4,6 +4,14 @@ One SQLite file per world, and ``world_id`` stamped on every row as a
 cross-wiring guard (the 1:1 invariant, spec §3.1/§4). Append-only is
 enforced twice: the Python surface exposes no update/delete, and SQL
 triggers raise on UPDATE/DELETE as belt-and-braces against future code.
+
+The buffer is its file's only writer (one writer per world — ATOMIC-
+ACTIVATION-V1 non-goals; the buffer owns the sole connection). So the log
+head is tracked in memory, and ``log_version`` tells the derived in-memory
+caches (identity closure, durability, attribute semantics) when this
+connection's view of the file may have changed. A second connection
+appending to the same file is outside that model: this buffer would not see
+its rows until reopened.
 """
 
 from __future__ import annotations
@@ -293,6 +301,11 @@ class PatternBuffer:
         # is now the single database entry point (§B6 fail-closed), and it is
         # consulted by `_meta()` during construction itself.
         self._poisoned = False
+        # The log head as this connection sees it (None = unknown, re-read on
+        # demand), and the counter derived caches key on. Both are derived and
+        # disposable: a reopen starts from None/0.
+        self._head: int | None = None
+        self._log_version = 0
         self._conn = sqlite3.connect(self.path)
         self._conn.executescript(_SCHEMA)
         existing = self._meta("world_id")
@@ -391,6 +404,11 @@ class PatternBuffer:
                 row.asserted_at,
             ),
         )
+        # The row is visible on this connection from here on, committed or
+        # not (a deferred unit commit, or a failed commit left pending).
+        if self._head is not None and row.seq > self._head:
+            self._head = row.seq
+        self._log_version += 1
         self._commit_or_defer()
         logger.debug("append %s: (%s · %s)", row.id, row.entity, row.attribute)
 
@@ -418,10 +436,31 @@ class PatternBuffer:
     # ----------------------------------------------------------------- read
 
     def head(self) -> int:
-        """The current log head (last seq; 0 for an empty log)."""
-        row = self._live_conn().execute(
-            "SELECT COALESCE(MAX(seq), 0) FROM assertions").fetchone()
-        return int(row[0])
+        """The current log head (last seq; 0 for an empty log).
+
+        Read from SQLite once, then tracked: ``_insert`` advances it and a
+        rollback, close or poison forgets it (single writer — module doc)."""
+        conn = self._live_conn()          # a poisoned buffer still refuses
+        if self._head is None:
+            row = conn.execute("SELECT COALESCE(MAX(seq), 0) FROM assertions").fetchone()
+            self._head = int(row[0])
+        return self._head
+
+    @property
+    def log_version(self) -> int:
+        """A counter that moves on every append, and whenever pending writes
+        may have been discarded or the connection became unusable (rollback,
+        close, poison). Derived in-memory caches rebuild when it differs from
+        the value they were built at. Never stored; meaningful only within
+        this instance."""
+        return self._log_version
+
+    def _forget_view(self) -> None:
+        """Rows (or sidecar writes) may have vanished or become unreadable:
+        re-read the head on demand and move ``log_version`` so every derived
+        cache re-derives (or raises, on a closed/poisoned connection)."""
+        self._head = None
+        self._log_version += 1
 
     def get(self, assertion_id: str) -> Assertion | None:
         rows = self._select("WHERE id = ?", (assertion_id,))
@@ -542,6 +581,7 @@ class PatternBuffer:
         return self._facade
 
     def close(self) -> None:
+        self._forget_view()               # later reads hit the closed handle, as before
         self._conn.close()
 
     # ------------------------------------------------- unit-of-work (§B1)
@@ -568,7 +608,10 @@ class PatternBuffer:
     def _gated_rollback(self) -> None:
         if self._unit_open:
             return                        # borrowed rollback is inert mid-unit
-        self._live_conn().rollback()
+        try:
+            self._live_conn().rollback()
+        finally:
+            self._forget_view()
 
     def _unit_authorizer(self, action: int, arg1: Any, arg2: Any,
                          dbname: Any, source: Any) -> int:
@@ -596,6 +639,7 @@ class PatternBuffer:
 
     def _poison(self) -> None:
         self._poisoned = True
+        self._forget_view()
         for op in (lambda: self._conn.set_authorizer(None), self._conn.close):
             try:
                 op()
@@ -658,6 +702,10 @@ class PatternBuffer:
                     self._poison()          # unconfirmable → fail closed (§B6)
                     restore = False
                     raise
+                finally:
+                    # the unit's rows and sidecar writes are gone: the head
+                    # returns to its pre-unit value and every cache re-derives
+                    self._forget_view()
             raise
         finally:
             self._unit_open = False
