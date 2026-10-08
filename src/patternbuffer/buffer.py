@@ -134,8 +134,9 @@ class _CursorProxy:
     """A cursor whose ``.connection`` is the facade and whose execute/executemany
     return the proxy — never the native cursor (ATOMIC-ACTIVATION-V1 §B1).
     Attribute reads are allowlisted (`__getattribute__`), so the native cursor
-    (`_cursor`, any mangled spelling) is unreachable; internals are reached only
-    through ``object.__getattribute__``. Iteration stays on the proxy
+    (`_cursor`, any mangled spelling) is unreachable by ordinary access (a
+    misuse guard, not a security boundary); internals are reached only through
+    ``object.__getattribute__``. Iteration stays on the proxy
     (``__iter__`` returns self, ``__next__`` delegates), so no chain —
     ``facade.execute(...).connection``, ``iter(...).connection`` — recovers raw."""
 
@@ -203,9 +204,13 @@ class _ConnectionFacade:
 
     - attribute reads are allowlisted (`__getattribute__`): only the public
       methods/read-properties below resolve; the buffer ref (`_buffer`) and every
-      raw-returning path are unreachable by ANY spelling — mangled or not — so a
-      borrowed holder cannot recover the native connection and disable the
-      authorizer (pbr r2 A1). Internals use ``object.__getattribute__``;
+      raw-returning path are unreachable by ordinary or mangled spellings, so a
+      borrowed holder cannot recover the native connection by accident (pbr r2
+      A1). This guards against misuse, not a hostile holder: Python offers no
+      true capability boundary (``object.__getattribute__`` reaches internals,
+      and sidecars hold the buffer itself). The enforcement that holds is the
+      SQLite authorizer installed for an atomic unit, which refuses any
+      non-terminal commit whatever handle issues it;
     - ``commit()``/``rollback()`` route through the buffer's unit-of-work — gated
       to the single terminal commit while a unit is open;
     - every cursor-producing call returns a ``_CursorProxy`` whose ``.connection``

@@ -1,11 +1,12 @@
 # ADOPTION.md — integrating pattern-buffer
 
 **Audience:** agents (and humans) wiring this library into a host.
-**Status: pre-1.0.** Signatures below are the current plumbing surface and
-are exact as of this commit. The porcelain layer (letter-008 direction:
-`ingest` / `snapshot` / `ask` as the complete host integration, all I/O
-JSON-serializable) is the post-chapter-test polish target and is marked
-PLANNED where it appears.
+**Status: pre-1.0.** Hosts integrate against the **porcelain**
+(`world.porcelain`): the frozen, additive-only contract `porcelain-v0.1`, all
+I/O JSON-serializable (whitepaper §25.1; also served over MCP). The plumbing
+surface further down is the layer below it, kept as reference — a host that
+reaches into it is signalling a missing porcelain verb (report it; don't build
+on the reach).
 
 ## The contract in one paragraph
 
@@ -43,7 +44,7 @@ from your side the engine is indistinguishable from sqlite3.
    disclosure machinery acts as one consumer policy over frames; frames remain
    the storage mechanism.
 
-## Current surface (exact, pre-porcelain)
+## The plumbing below the porcelain (reference)
 
 ```python
 World(path, world_id, model=None, policy="invent_under_canon", clock=time.time)
@@ -144,9 +145,25 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
 
 ## MUST / NEVER
 
-- **MUST** route every write through the gate (`ingest` / `ingest_structured`
-  / `resolve` / `truth.retract`). There is no other write path; do not look
-  for one.
+- **MUST** route every write through the gate — on the porcelain, `ingest` /
+  `ingest_structured` / `commit_set` / `resolve` / `retract`. There is no other
+  write path; do not look for one.
+- **MUST** use ids in the gate's grammar — `^[a-z][a-z0-9_]*:[a-z0-9_:]+$`:
+  lowercase, digits, `_` and `:` only (`thing:press_N1`, `person:jean-luc` and
+  `doc:letter.1` are all malformed). A malformed id is **skipped with a typed
+  `malformed_id` receipt, never raised and never normalized** (normalizing would
+  be an identity guess). **MUST** check `Receipt.skipped` after every write.
+- **MUST** name knowledge frames by the full entity id: `knows:person:daniel`,
+  never `knows:daniel`. Nothing validates the suffix today, so a short form
+  silently becomes a different frame.
+- **MUST**, after reopening a world, place the scene cursor before the first
+  untimed write (`at=`, e.g. from `axis_heads()["valid_head"]`): the cursor
+  starts at 0.0 on every open, so an untimed row otherwise lands at t=0 and
+  loses to every later-stamped row on its key.
+- **NEVER** (until the gate fix lands) send the inverse predicates `holds` or
+  `wearing` — the built-in aliases rename them to `held_by` / `worn_by`
+  **without swapping subject and object**, so `person:ralph holds thing:key`
+  puts Ralph inside the key. Write `thing:key held_by person:ralph`.
 - **NEVER** let your renderer/narrator append. The component that speaks must
   not decide what is true. Resolution-as-a-tool is fine — the tool's
   implementation is the resolver, which holds the append authority.
@@ -201,7 +218,12 @@ p.ingest(text, source=None, scene=None, at=None, frame=None,
    #   per-item valid_from is preserved losslessly as a `source_valid_from` meta (host
    #   promotes to a typed year/era fact if wanted). Default off = per-item valid_from wins.
 p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules",
-                    cursor_authoritative=False, at=None) -> Receipt
+                    cursor_authoritative=False, at=None, extracted=False,
+                    atomic=False) -> Receipt
+   # The extract() -> ingest_structured() recipe MUST pass extracted=True (MOVED-EVENT-V1
+   #   §B.3): prose-mode items get engine-authored movement timestamps; without it,
+   #   model-written times survive. atomic=True (ATOMIC-ACTIVATION-V1): all-or-none —
+   #   any gate skip aborts the whole call with AtomicAbort (see below).
    # INGEST-HARDENING-V1: classify="batch" defers durability + runs ONE batch model
    # call per ingest call (the first-class form of classify_inline=False + classify_all;
    # ~65% build-time cut on generate-path builds) — use it for bulk/scenario ingest.
@@ -221,8 +243,10 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    #   carries a warning (never silent — HD 121).
    # The Receipt's `skipped: [{entity, attribute, value, reason}]` lists rows dropped at
    # the gate — edge-granular (containment cycle / self-edge / lateral self-loop) AND
-   # `malformed_id` (SHAPE-FIX-V1: a stray-slash phantom id like person:/you, rejected not
-   # normalized; runs AFTER the authority gate so a violation still raises). One bad row is
+   # `malformed_id` (SHAPE-FIX-V1: any id outside the grammar — person:/you, thing:press_N1,
+   # person:jean-luc — rejected not normalized; runs AFTER the authority gate so a
+   # violation still raises). NOTE: p.ingest() (the prose path) does not yet copy its
+   # skips into its Receipt — audit finding, fix pending; ingest_structured does. One bad row is
    # skipped, the rest of the chunk still ingests (no silent cap; other gate failures raise).
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
@@ -294,7 +318,8 @@ p.reconcile() -> {merges, proposals}                      # global finalize; hos
 p.proposals() -> [{a, b, evidence, auto_decline_reason, auto_decline}]
    # open maybe_same_as with a structured auto_decline (gate-failure code + evidence);
    # code "durable_contradiction" names contradictory standing facts (SHAPE-FIX-V1 Win 4)
-p.confirm(a, b) / p.merge(a, b, evidence) / p.reject(a, b) -> Receipt
+p.confirm(a, b) / p.merge(a, b, evidence) / p.reject(a, b)
+   -> {outcome, canonical_id, merge_event_id, reason, blocking_edges}   # an identity receipt
    # confirm = promote a proposal; merge = assert (guarded, hard vetoes absolute);
    # reject = distinct_from (sticky anti-merge)
 p.adjudicate_deferred() -> {merged: [Receipt], residue: [proposal]}
@@ -332,7 +357,10 @@ p.begin_build(at=None) / p.seal_build(model=False, scope="session"|"all") / p.ab
    # / cursor.advance reach — use it for scenario/source builds.
 p.fidelity_audit(frame="canon", as_of=None) -> {name_collisions, unstamped_timed, orphan_entities, open_conflicts, summary}
    # INGESTION-FIDELITY-V1: structural ingestion gaps as a queryable checklist, DERIVED
-   # (zero writes; run AFTER seal + truth.scan()). name_collisions groups = {anchor, entities,
+   # (zero writes; run AFTER seal). CAUTION (audit 2026-10, fix pending): open_conflicts
+   # is read from a stored table that only world.truth.scan() refreshes — below the
+   # porcelain, unreachable over MCP — and it is not yet frame-scoped. Until the fix,
+   # treat open_conflicts as advisory; state() reports a conflicted key reliably. name_collisions groups = {anchor, entities,
    # kinds (FOLDED, parallel to entities — weight cross-kind person<->place highest; the id
    # namespace can lie), pairs:[{a,b,status,reason?}], live}. status = WHY the pair isn't
    # merged (correlated | hard_blocked | typing_slip | auto_declined+reason | unlinked) — route
@@ -363,6 +391,13 @@ p.who_knows(entity, attribute, value=None, as_of=None) -> [frame_id]
    # frame_diff (no stored known_by). A frame qualifies iff its FOLDED winner is present and
    # (value given) value-matches, identity-aware; superseded/retracted beliefs drop. V1 is
    # own-knows:-frame membership (the hidden-secret case); knows:O ∪ public union is V1.1.
+   # CAUTION (audit 2026-10, fix pending): V1 matches only the frame's single folded
+   # winner. On a set-valued attribute (alias, name, connects_to, any declared set) a
+   # member other than the winner reads as NOT known; on an accrue attribute it matches
+   # the last delta row, not the total. Use frame_diff for membership until then.
+   # A frame's whole knowledge as folded truth: snapshot(entities(F, as_of=h), frame=F,
+   # as_of=h). (snapshot(person, frame=F) covers that ONE entity and its contents, not
+   # what the person knows about others; facts(F) is raw rows, superseded ones included.)
 p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only
 ```
 
