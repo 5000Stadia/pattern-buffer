@@ -380,3 +380,33 @@ class TestSalience:
         out = world.porcelain.neighborhood("person:marn")
         assert isinstance(world.porcelain.salience("person:marn"), float)
         json.dumps(out)
+
+
+class TestPrivateFamilyKey:
+    """FOLD-CORRECTNESS-V1 §7: `__containment__` is an internal fold key; at
+    the read boundary the containment family is named `in`."""
+
+    def test_current_state_names_the_family_in(self, world):
+        _seed_neighborhood(world)
+        marn = world.indexes.current_state("person:marn")
+        lantern = world.indexes.current_state("obj:lantern")
+        # today: both were keyed by the private sentinel
+        assert "__containment__" not in marn and "__containment__" not in lantern
+        assert marn["in"].winner.value == "place:study"
+        assert lantern["in"].winner.attribute == "held_by"   # one key, whole family
+
+    def test_snapshot_conflicted_names_the_family_in(self, world):
+        world.ingest_structured([
+            {"entity": "obj:coin", "attribute": "in", "value": "obj:purse",
+             "valid_from": 1.0},
+            {"entity": "obj:coin", "attribute": "held_by", "value": "person:ann",
+             "valid_from": 1.0},
+        ])
+        # today: [["obj:coin", "__containment__"]]
+        assert world.porcelain.snapshot("obj:coin")["conflicted"] == [["obj:coin", "in"]]
+
+    def test_relations_neighborhood_excludes_the_containment_family(self, world):
+        _seed_neighborhood(world)
+        out = world.neighborhood("person:marn", edge_kinds=["relations"])
+        # today: place:study, marn's containment parent, came back as a relation
+        assert set(_neighbor_ids(out)) == {"person:ilsa"}

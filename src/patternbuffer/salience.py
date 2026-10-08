@@ -159,7 +159,12 @@ class SalienceIndex:
             by_fold_attr.setdefault(self._indexes.fold_attribute(row.attribute), []).append(row)
         if not by_fold_attr:
             return 0.0
-        current = self._indexes.current_state(entity, frame, as_of)
+        # current_state names the containment family `in` (FOLD-CORRECTNESS-V1
+        # §7); re-key it by fold key to match the grouping above.
+        current = {
+            self._indexes.fold_attribute(attr): result
+            for attr, result in self._indexes.current_state(entity, frame, as_of).items()
+        }
 
         def recency_key(row: Assertion) -> tuple[float, int]:
             return (

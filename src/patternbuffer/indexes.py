@@ -33,6 +33,7 @@ from patternbuffer.semantics import AttributeSemantics
 logger = logging.getLogger(__name__)
 
 _FAMILY_KEY = "__containment__"
+_FAMILY_NAME = "in"  # the family's only name outside the engine (FOLD-CORRECTNESS-V1 §7)
 _NEIGHBORHOOD_EDGES = frozenset({"containment", "lateral", "relations", "events"})
 _NEIGHBORHOOD_DEPTH_CAP = 3
 # Evidence rank (the assumption quarantine, generalized): provisional classes
@@ -1024,7 +1025,8 @@ class Indexes:
         asserted_as_of: int | None = None,
         correlated: bool = False,
     ) -> dict[str, FoldResult]:
-        """All folded keys for one entity (attribute -> result).
+        """All folded keys for one entity (attribute -> result). The
+        containment family is ONE key, named `in` (FOLD-CORRECTNESS-V1 §7).
 
         ``correlated=True`` (AWARENESS-READS-V1.1): discover keys over the
         entity's `aka` correlation union and fold each via `state_union` instead
@@ -1058,7 +1060,11 @@ class Indexes:
                       if correlated
                       else self.fold_key(entity, attr, frame, valid_as_of, asserted_as_of))
             if result.winner is not None:
-                out[self.fold_attribute(attr)] = result
+                # FOLD-CORRECTNESS-V1 §7: `__containment__` is an internal fold
+                # key; at the read boundary the family is named `in` (its
+                # public subject, as decay's `attr:in` already reads it).
+                fa = self.fold_attribute(attr)
+                out[_FAMILY_NAME if fa == _FAMILY_KEY else fa] = result
         return out
 
     # ---------------------------------------------------------------- walks
@@ -1482,6 +1488,9 @@ class Indexes:
         for attr, result in self.current_state(
             entity, frame, valid_as_of, asserted_as_of
         ).items():
+            # The family's key is `in` (FOLD-CORRECTNESS-V1 §7), so it is caught
+            # here; the old `__containment__` key slipped past this skip and
+            # served the containment parent as a "relations" neighbor.
             if attr in skip:
                 continue
             for row in result._value_rows or (

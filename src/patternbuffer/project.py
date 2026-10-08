@@ -271,7 +271,9 @@ class Projector:
             )
             if not r.entity.startswith("a:")
             and not r.entity.startswith(ATTR_PREFIX)
-            and self._indexes.fold_attribute(r.attribute) == attr  # already fold-keyed
+            # `attr` is a current_state key: the family arrives named `in`
+            # (FOLD-CORRECTNESS-V1 §7), so compare fold keys on both sides.
+            and self._indexes.fold_attribute(r.attribute) == self._indexes.fold_attribute(attr)
             and r.value_type != "unresolved"
             and self._classifier.durability(r.id) == STATE
         ]
