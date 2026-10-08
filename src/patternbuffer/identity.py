@@ -2,9 +2,11 @@
 SAME_AS / MAYBE_SAME_AS, merges as logged events.
 
 The registry is derived: edges are ordinary assertions; the closure is
-computed (union-find over visible same_as edges). A merge appends — late
-binding leaves every earlier row intact and reachable through the merged
-identity. A bad merge is repaired forward by retracting the edge.
+computed (the connected component over visible same_as edges — at head, one
+component map per log version, rebuilt when the log moves and never stored).
+A merge appends — late binding leaves every earlier row intact and reachable
+through the merged identity. A bad merge is repaired forward by retracting
+the edge.
 """
 
 from __future__ import annotations
@@ -76,6 +78,14 @@ class IdentityRegistry:
         # veto (SHAPE-FIX-V1 Win 4, HD 089: the fused-protagonist incident).
         self._fold_of = None
         self._durability_of = None
+        # The head-time identity view, derived per buffer log version: every
+        # same_as endpoint -> its whole component, each multi-member
+        # component's elected representative, and the first-seen seqs that
+        # election reads (scanned on first demand only). See _components().
+        self._view_version = -1
+        self._component_of: dict[str, frozenset[str]] = {}
+        self._representative: dict[frozenset[str], str] = {}
+        self._first_seen: dict[str, int] | None = None
 
     def set_kind_provider(self, fn) -> None:
         """Install the kind-fold lookup the recall gate consults (§2)."""
@@ -302,28 +312,73 @@ class IdentityRegistry:
     def resolve(self, entity: str, asserted_as_of: int | None = None) -> str:
         """Canonical representative: the first-seen member of the entity's
         same_as closure (stable across instances — first-seen is log order)."""
-        closure = self.closure(entity, asserted_as_of)
-        if len(closure) == 1:
+        if not self._at_head(asserted_as_of):
+            closure = self.closure(entity, asserted_as_of)
+            if len(closure) == 1:
+                return entity
+            return self._elect(closure, self._first_seen_scan(closure, asserted_as_of))
+        members = self._components().get(entity)
+        if members is None or len(members) == 1:
             return entity
-        first_seen: dict[str, int] = {}
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
-            if row.entity in closure and row.entity not in first_seen:
-                first_seen[row.entity] = row.seq
-            if (
-                row.value_type == "entity"
-                and isinstance(row.value, str)
-                and row.value in closure
-                and row.value not in first_seen
-            ):
-                first_seen[row.value] = row.seq
-        return min(closure, key=lambda e: (first_seen.get(e, 1 << 62), e))
+        rep = self._representative.get(members)
+        if rep is None:
+            if self._first_seen is None:
+                merged = set()
+                for component in self._component_of.values():
+                    if len(component) > 1:
+                        merged |= component
+                self._first_seen = self._first_seen_scan(merged, None)
+            rep = self._representative[members] = self._elect(members, self._first_seen)
+        return rep
 
     def closure(self, entity: str, asserted_as_of: int | None = None) -> set[str]:
+        if self._at_head(asserted_as_of):
+            members = self._components().get(entity)
+            return set(members) if members is not None else {entity}
+        return self._walk(self._same_as_edges(asserted_as_of), entity)
+
+    # ------------------------------------------- the derived head-time view
+
+    def _at_head(self, asserted_as_of: int | None) -> bool:
+        """Whether an asserted-axis bound selects exactly the head view: none,
+        or one at/after the head (no row is asserted after the head). Only a
+        bound strictly in the past reads the log afresh."""
+        return asserted_as_of is None or (
+            isinstance(asserted_as_of, (int, float))
+            and asserted_as_of >= self._buffer.head()
+        )
+
+    def _components(self) -> dict[str, frozenset[str]]:
+        """Every same_as endpoint visible at head -> its whole closure, rebuilt
+        only when the buffer's log version moves (an append, a rollback). An id
+        absent from the map is its own singleton closure."""
+        version = self._buffer.log_version
+        if self._view_version != version:
+            edges = self._same_as_edges(None)
+            component_of: dict[str, frozenset[str]] = {}
+            for start in edges:
+                if start not in component_of:
+                    members = frozenset(self._walk(edges, start))
+                    for member in members:
+                        component_of[member] = members
+            self._component_of = component_of
+            self._representative = {}
+            self._first_seen = None
+            self._view_version = version
+        return self._component_of
+
+    def _same_as_edges(self, asserted_as_of: int | None) -> dict[str, set[str]]:
+        """Visible same_as rows as an undirected adjacency map."""
         edges: dict[str, set[str]] = {}
         for row in self._buffer.visible(attribute="same_as", asserted_as_of=asserted_as_of):
             if row.value_type == "entity":
                 edges.setdefault(row.entity, set()).add(row.value)
                 edges.setdefault(row.value, set()).add(row.entity)
+        return edges
+
+    @staticmethod
+    def _walk(edges: dict[str, set[str]], entity: str) -> set[str]:
+        """The connected component of `entity` in `edges` (itself if absent)."""
         out = {entity}
         frontier = [entity]
         while frontier:
@@ -332,6 +387,27 @@ class IdentityRegistry:
                     out.add(nxt)
                     frontier.append(nxt)
         return out
+
+    def _first_seen_scan(self, members, asserted_as_of: int | None) -> dict[str, int]:
+        """The seq at which each of `members` first appears in a visible row,
+        as subject or as an entity value — the log order election reads."""
+        first_seen: dict[str, int] = {}
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+            if row.entity in members and row.entity not in first_seen:
+                first_seen[row.entity] = row.seq
+            if (
+                row.value_type == "entity"
+                and isinstance(row.value, str)
+                and row.value in members
+                and row.value not in first_seen
+            ):
+                first_seen[row.value] = row.seq
+        return first_seen
+
+    @staticmethod
+    def _elect(closure, first_seen: dict[str, int]) -> str:
+        """The first-seen member of a closure (lexical tie-break)."""
+        return min(closure, key=lambda e: (first_seen.get(e, 1 << 62), e))
 
     def candidates(self, entity: str) -> set[str]:
         """Open maybe_same_as edges touching this entity's closure."""

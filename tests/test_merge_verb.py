@@ -183,6 +183,54 @@ def test_enumerate_skips_a_proposal_that_since_merged(world):
                    for p in world.porcelain.proposals())
 
 
+def test_reads_follow_a_merge_and_its_retraction(world):
+    # The head-time identity view is derived per log version: a read before
+    # the merge, the merge, and the retraction of its edge each re-derive it,
+    # and as-of reads below the head still see the log as it stood.
+    world.ingest_structured([
+        {"entity": "obj:a", "attribute": "kind", "value": "lamp", "timeless": True},
+        {"entity": "obj:b", "attribute": "kind", "value": "lamp", "timeless": True},
+        {"entity": "obj:b", "attribute": "color", "value": "red", "valid_from": 1.0},
+    ])
+    assert _R(world, "obj:b") == "obj:b"
+    assert world.registry.closure("obj:a") == {"obj:a"}
+    assert world.state("obj:a", "color").winner is None
+    before_merge = world.buffer.head()
+
+    world.porcelain.merge("obj:a", "obj:b", evidence="same lamp")
+    assert _R(world, "obj:b") == "obj:a"
+    assert world.registry.closure("obj:b") == {"obj:a", "obj:b"}
+    assert world.state("obj:a", "color").winner.value == "red"
+    mutated = world.registry.closure("obj:a")
+    mutated.add("obj:stray")                      # a caller's copy, never the view
+    assert world.registry.closure("obj:a") == {"obj:a", "obj:b"}
+    merged_head = world.buffer.head()
+
+    edge = world.buffer.visible(attribute="same_as")[0]
+    world.porcelain.retract(edge.id, "two lamps after all")
+    assert _R(world, "obj:b") == "obj:b"
+    assert world.registry.closure("obj:a") == {"obj:a"}
+    assert world.state("obj:a", "color").winner is None
+    assert world.registry.resolve("obj:b", asserted_as_of=before_merge) == "obj:b"
+    assert world.registry.resolve("obj:b", asserted_as_of=merged_head) == "obj:a"
+    assert world.registry.closure("obj:a", asserted_as_of=merged_head) == {"obj:a", "obj:b"}
+
+
+def test_a_merge_written_by_another_registry_is_seen(world):
+    from patternbuffer.identity import IdentityRegistry
+    from patternbuffer.roles import _make_engine_roles
+
+    world.ingest_structured([
+        {"entity": "obj:a", "attribute": "kind", "value": "thing", "timeless": True},
+        {"entity": "obj:b", "attribute": "kind", "value": "thing", "timeless": True},
+    ])
+    assert _R(world, "obj:b") == "obj:b"
+    other = IdentityRegistry(world.buffer, _make_engine_roles()["ingestor"], world.semantics)
+    other.merge("obj:a", "obj:b", evidence="a second registry on the same buffer")
+    assert _R(world, "obj:b") == "obj:a"
+    assert world.registry.closure("obj:a") == {"obj:a", "obj:b"}
+
+
 def test_receipts_and_proposals_are_json(world):
     _seed_red(world)
     world.registry.maybe_same_as("person:p1", "person:p2", evidence="seed")
