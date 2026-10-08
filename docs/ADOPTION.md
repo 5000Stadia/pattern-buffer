@@ -169,6 +169,11 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   implementation is the resolver, which holds the append authority.
 - **NEVER** map a host scope to more than one world, or split one world
   across buffers (the 1:1 invariant). Bind scopes; don't partition.
+- **NEVER** write a world file through one `World` while another `World` — in
+  another process, or a second handle in this one — holds the same file open.
+  Each `World` is its file's only writer: it tracks the log head and its
+  derived read caches in memory and does not see another connection's appends
+  until it is reopened. One live `World` per file; route readers through it.
 - **MUST** preserve frame absence: serve consumers only frames they are
   entitled to; out-of-frame content is absent from the payload already — do
   not re-add it from caches.
