@@ -277,7 +277,12 @@ class Projector:
         ]
         qualifying = []
         for r in rows:
-            pinned = bool(self._buffer.visible(entity=r.id, attribute="world_defining"))
+            # FOLD-CORRECTNESS-V1 §5: the pin is read as-of too — a pin
+            # appended after H must not reach back into a read as of H.
+            pinned = bool(self._buffer.visible(
+                entity=r.id, attribute="world_defining",
+                asserted_as_of=m.asserted_as_of,
+            ))
             if pinned:
                 return r
             if not self._indexes._is_event_effect(r, m.asserted_as_of):

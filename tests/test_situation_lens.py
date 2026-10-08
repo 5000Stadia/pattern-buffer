@@ -206,3 +206,33 @@ class TestFrameScoping:
         # and it is absent from canon, where the effect was never asserted
         canon = world.materialize("place:trail", lens="situation")
         assert "event:sighting" not in _event_ids(canon)
+
+
+class TestAsOfReadsStayAsOf:
+    """FOLD-CORRECTNESS-V1 §5: the establishing lens reads `world_defining`
+    pins as-of, like every other row it serves."""
+
+    def test_pin_appended_after_h_leaves_the_as_of_h_view_unchanged(self, world):
+        def establishing(**kw):
+            m = world.materialize("obj:gate", lens="establishing_set", **kw)
+            return {(a.attribute, a.value) for a in m.assertions}
+
+        rows = world.ingest_structured([
+            {"entity": "obj:gate", "attribute": "kind", "value": "gate", "timeless": True},
+            {"entity": "obj:gate", "attribute": "condition", "value": "open",
+             "valid_from": 1.0},
+            {"entity": "obj:gate", "attribute": "condition", "value": "barred",
+             "valid_from": 2.0},
+        ])
+        barred = next(r for r in rows if r.value == "barred")
+        h = world.buffer.head()
+        before = establishing(asserted_as_of=h)
+        assert ("condition", "open") in before          # the world at rest
+        # the author pins the siege as world-defining — after H
+        world.ingest_structured([
+            {"entity": barred.id, "attribute": "world_defining", "value": True,
+             "timeless": True},
+        ])
+        # today: the as-of-H view already served the later pin ("barred")
+        assert establishing(asserted_as_of=h) == before
+        assert ("condition", "barred") in establishing()  # honored at head
