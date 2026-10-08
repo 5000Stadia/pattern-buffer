@@ -1,0 +1,78 @@
+diff -ru /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/indexes.py /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/indexes.py
+--- /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/indexes.py	2026-10-08 14:56:57.000000000 -0700
++++ /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/indexes.py	2026-10-08 15:29:50.517327599 -0700
+@@ -939,12 +939,16 @@
+                 (r for r in contributed if r.valid_from == top.valid_from),
+                 key=lambda r: r.asserted_at,
+             )
+-            if len({self._value_key(r) for r in current}) > 1:
+-                return FoldResult(
+-                    winner=current[0],
+-                    conflicted=True,
+-                    conflicting=tuple(r.id for r in current),
+-                )
++            state_now = [r for r in current
++                         if self._classifier.durability(r.id) == STATE]
++            if state_now:
++                current = state_now
++                if len({self._value_key(r) for r in current}) > 1:
++                    return FoldResult(
++                        winner=current[0],
++                        conflicted=True,
++                        conflicting=tuple(r.id for r in current),
++                    )
+             return FoldResult(winner=current[-1])
+ 
+         winners: dict[str, Assertion] = {}
+@@ -958,7 +962,12 @@
+             # Outside the containment family this still ends the fold: across
+             # classes such a key flags under §7.2 anyway (§3's non-goal).
+             tied = [r for r in rs if r.valid_from == top.valid_from]
+-            if len({self._value_key(r) for r in tied}) > 1:
++            state_tied = [r for r in tied
++                          if self._classifier.durability(r.id) == STATE]
++            if state_tied:
++                tied = state_tied
++                top = max(tied, key=self._recency_key)
++            if state_tied and len({self._value_key(r) for r in tied}) > 1:
+                 earliest = min(tied, key=lambda r: r.asserted_at)
+                 return FoldResult(
+                     winner=earliest,
+diff -ru /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/project.py /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/project.py
+--- /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/project.py	2026-10-08 14:56:57.000000000 -0700
++++ /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/project.py	2026-10-08 15:29:50.554844715 -0700
+@@ -250,9 +250,11 @@
+                             served[row.id] = "open"
+                         continue  # the frontier is named, never painted (§10)
+                     durability = self._classifier.durability(row.id)
+-                    if establishing and durability == STATE and not result._value_rows:
+-                        row = self._establishing_state(entity, attr, m) or None
+-                        if row is None:
++                    if establishing and not result._value_rows and durability in (STATE, DISPOSITIONAL):
++                        est = self._establishing_state(entity, attr, m)
++                        if est is not None:
++                            row = est
++                        elif durability == STATE:
+                             continue
+                     if served is not None:
+                         served[row.id] = "concrete"
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/buffer.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/buffer.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/classify.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/classify.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/codec.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/codec.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/decay.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/decay.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/dump.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/dump.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/identity.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/identity.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/indexes.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/indexes.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/ingest.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/ingest.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/__init__.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/__init__.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/mcp.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/mcp.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/model.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/model.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/porcelain.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/porcelain.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/project.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/project.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/refer.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/refer.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/roles.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/roles.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/salience.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/salience.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/semantics.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/semantics.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/testing.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/testing.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/thunks.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/thunks.cpython-312.pyc differ
+Binary files /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/a/src/patternbuffer/__pycache__/tmaint.cpython-312.pyc and /tmp/claude-1000/-home-k-pattern-buffer/cafbabcb-db1e-4e65-aed2-91e1e23dc6ff/scratchpad/fix3/src/patternbuffer/__pycache__/tmaint.cpython-312.pyc differ

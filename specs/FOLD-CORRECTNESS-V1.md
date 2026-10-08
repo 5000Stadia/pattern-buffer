@@ -189,3 +189,34 @@ updated in the same commit, with the audit finding cited.
     deputy_warden (t=14) over off-shift (t=3).
   - anchor (§7): 44 keys renamed. Default neighborhoods are unchanged
     everywhere.
+
+## Internal pre-review (2026-10-08): RED. Fix before pbr
+
+Measured on 9 real worlds (anchor, plus 8 of construct's) and a 4000-log fuzz.
+The reviewer's tested patch for findings 1–2 is
+`specs/FOLD-CORRECTNESS-V1-prereview-fixes.diff` (601 pass with it).
+
+1. **MAJOR: the establishing view serves the latest habit.** r2's "serves a
+   DISPOSITIONAL winner as is" breaks §13's "first non-event-effect value" and
+   ignores `world_defining` pins. The at-rest view then changes with later
+   events. Construct's opening screen reads this lens.
+   - Fix: send a DISPOSITIONAL winner through `_establishing_state` too, and
+     keep it as is only when no establishing STATE row exists. Withdraw the r2
+     bullet.
+2. **MAJOR: same-time ties between standing rows now conflict.** This includes
+   a STATE row against a habit. Construct writes two drives per character at
+   one stamp, so all 6 bodycase drives become conflicted and 4 change value.
+   Emberroad and thedeep are hit too.
+   - Fix (both tie tests): at one instant a STATE row outranks a habit with the
+     same stamp, and habit-only ties don't flag (base behaviour). Withdraw r2's
+     "within one source" bullet.
+3. **Minor (§6): numeric strings.** A numeric string time ("1660") used to work
+   and is now dropped. Coerce strings that parse as a finite float.
+4. **Nits.**
+   - Ints ≥ 2**63 crash the insert (old bug).
+   - §2's identity is current, so a `same_as` merge now erases ties in as-of
+     reads from before the merge.
+   - The ship notice must list construct's worlds: 12 `locate()` changes, all
+     correct §1/§3 fixes.
+   - `"timeless": "false"` as a string makes a row timeless.
+   - A bad `at=` poisons the cursor.
