@@ -208,6 +208,23 @@ class TestDispositionalAndRebuild:
         after = {r.id: classifier.durability(r.id) for r in buf.all_rows()}
         assert before == after
 
+    def test_durability_reads_follow_every_sidecar_write(self, world_parts):
+        # get()/durability() memoize sidecar rows; any write on the connection
+        # (set, another classifier on the same buffer, rebuild) is re-read.
+        buf, stub, classifier, indexes, tm, roles = world_parts
+        row = _stated(buf, roles, "person:dale", "mood", "calm", valid_from=1.0)
+        assert classifier.get(row.id) is None
+        assert classifier.durability(row.id) == "STATE"           # unclassified reads STATE
+        classifier.set(row.id, "DISPOSITIONAL", 0.7)
+        assert classifier.durability(row.id) == "DISPOSITIONAL"
+        other = Classifier(buf, stub)
+        other.set(row.id, "CONSTITUTIVE", 1)
+        assert classifier.durability(row.id) == "CONSTITUTIVE"
+        assert type(classifier.get(row.id).class_confidence) is float   # as stored (REAL)
+        stub.enqueue({"durability": "STATE", "class_confidence": 0.8})
+        classifier.rebuild()
+        assert classifier.durability(row.id) == "STATE"
+
 
 class TestLateralGraph:
     def test_path_and_non_connection(self, world_parts):

@@ -1044,3 +1044,96 @@ class TestCommitSetOpSchemaIsExact:
         world.commit_set([
             {"op": "retract", "assertion_id": rid, "reason": "superseded"},
         ])
+
+
+class TestDerivedViewsFollowRollback:
+    """The in-memory read caches (head, identity closure, durability, attribute
+    semantics) are derived views: whatever a unit wrote and read, a rollback
+    leaves no trace in them — including after re-appends bring the head back
+    to the value it had inside the unit (they key on the buffer's log
+    version, never on the head)."""
+
+    @staticmethod
+    def _append(w, **kw):
+        return w.buffer.append(role=w.ingestor._role, status="stated", **kw)
+
+    def _reappend_to(self, w, head):
+        while w.buffer.head() < head:
+            self._append(w, entity="obj:desk", attribute="note",
+                         value=w.buffer.head(), valid_from=8.0)
+
+    def test_rolled_back_merge_and_durability_leave_no_trace(self, world):
+        w = world
+        _seed(w)
+        lamp = self._append(w, entity="obj:lamp", attribute="hue", value="red", valid_from=2.0)
+        w.classifier.set(lamp.id, "STATE", 0.9)
+        assert w.registry.resolve("obj:lamp") == "obj:lamp"       # views warm
+        assert w.classifier.durability(lamp.id) == "STATE"
+        inside = {}
+
+        def body():
+            w.registry.merge("obj:desk", "obj:lamp", "staged merge")
+            w.classifier.set(lamp.id, "CONSTITUTIVE", 0.9)
+            inside["resolve"] = w.registry.resolve("obj:lamp")
+            inside["closure"] = w.registry.closure("obj:desk")
+            inside["durability"] = w.classifier.durability(lamp.id)
+            inside["hue"] = w.state("obj:desk", "hue").winner.value
+            inside["head"] = w.buffer.head()
+            raise RuntimeError("abort the unit")
+
+        with pytest.raises(RuntimeError):
+            w.buffer.atomic_unit(body)
+        assert inside["resolve"] == "obj:desk"
+        assert inside["closure"] == {"obj:desk", "obj:lamp"}
+        assert inside["durability"] == "CONSTITUTIVE"
+        assert inside["hue"] == "red"
+        for _ in range(2):          # straight after the rollback, then at the same head again
+            assert w.registry.resolve("obj:lamp") == "obj:lamp"
+            assert w.registry.closure("obj:desk") == {"obj:desk"}
+            assert w.classifier.durability(lamp.id) == "STATE"
+            assert w.state("obj:desk", "hue").winner is None
+            self._reappend_to(w, inside["head"])
+        assert w.buffer.head() == inside["head"]
+
+    def test_rolled_back_declaration_is_gone_at_the_same_head(self, world):
+        # A view keyed on the head would serve the rolled-back declaration
+        # here: the re-append lands the head exactly where the view was built.
+        w = world
+        _seed(w)
+        inside = {}
+
+        def body():
+            self._append(w, entity="attr:shade", attribute="arity", value="set_valued")
+            inside["declared"] = w.semantics.is_declared("shade")
+            inside["head"] = w.buffer.head()
+            raise RuntimeError("abort the unit")
+
+        with pytest.raises(RuntimeError):
+            w.buffer.atomic_unit(body)
+        self._reappend_to(w, inside["head"])                      # no read in between
+        assert inside["declared"] is True
+        assert w.buffer.head() == inside["head"]
+        assert w.semantics.is_declared("shade") is False
+        assert w.semantics.semantics("shade").arity == "functional"
+
+    def test_public_abort_discards_a_merge_the_set_read_through(self, world):
+        # Ingesting the second item resolves obj:lamp INSIDE the unit, so the
+        # identity view is rebuilt over the staged same_as row before the
+        # unknown retract target aborts the set.
+        w = world
+        _seed(w)
+        w.ingest_structured([{"entity": "obj:lamp", "attribute": "kind", "value": "lamp",
+                              "timeless": True}])
+        assert w.registry.resolve("obj:lamp") == "obj:lamp"
+        with pytest.raises(AtomicAbort):
+            w.commit_set([
+                {"op": "assert", "item": {"entity": "obj:desk", "attribute": "same_as",
+                                          "value": "obj:lamp", "value_type": "entity",
+                                          "timeless": True}},
+                {"op": "assert", "item": {"entity": "obj:lamp", "attribute": "hue",
+                                          "value": "red", "valid_from": 2.0}},
+                {"op": "retract", "assertion_id": "a:999999", "reason": "no such row"},
+            ])
+        assert w.registry.resolve("obj:lamp") == "obj:lamp"
+        assert w.registry.closure("obj:desk") == {"obj:desk"}
+        assert w.state("obj:lamp", "hue").winner is None

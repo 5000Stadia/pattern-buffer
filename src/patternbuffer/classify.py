@@ -114,6 +114,14 @@ class Classifier:
         self._buffer = buffer
         self._model = model
         self._semantics = semantics or AttributeSemantics(buffer)
+        # Read-through memo of sidecar rows (assertion id -> Classification, or
+        # None when unclassified). Valid while neither the buffer's log version
+        # (a rollback can discard sidecar writes) nor the connection's change
+        # count (any row write — this classifier's, another one's, a rebuild's)
+        # has moved since it was filled. Derived and disposable, like the
+        # sidecar itself.
+        self._memo: dict[str, Classification | None] = {}
+        self._memo_key: tuple[int, int] | None = None
         conn = buffer.raw_connection()
         conn.executescript(_SIDECAR_SCHEMA)
         conn.execute(
@@ -229,7 +237,22 @@ class Classifier:
         self._store(Classification(assertion_id, durability, confidence, False))
 
     def get(self, assertion_id: str) -> Classification | None:
-        r = self._buffer.raw_connection().execute(
+        conn = self._buffer.raw_connection()
+        if not isinstance(assertion_id, str):
+            return self._read(conn, assertion_id)   # odd ids keep the uncached path
+        key = (self._buffer.log_version, conn.total_changes)
+        if key != self._memo_key:
+            self._memo = {}
+            self._memo_key = key
+        try:
+            return self._memo[assertion_id]
+        except KeyError:
+            c = self._memo[assertion_id] = self._read(conn, assertion_id)
+            return c
+
+    @staticmethod
+    def _read(conn: Any, assertion_id: str) -> Classification | None:
+        r = conn.execute(
             "SELECT assertion_id, durability, class_confidence, needs_review"
             " FROM sidecar_classification WHERE assertion_id = ?",
             (assertion_id,),
