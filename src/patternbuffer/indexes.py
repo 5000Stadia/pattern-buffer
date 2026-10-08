@@ -215,8 +215,28 @@ class Indexes:
             row.asserted_at,
         )
 
+    def _value_key(self, row: Assertion) -> tuple[str, object]:
+        """The one value identity every tie test compares (FOLD-CORRECTNESS-V1
+        §2) — the CONSTITUTIVE comparator (Cx 065), lifted: an entity value
+        is its resolved identity, so two rows naming one later-merged thing
+        are one value; anything else compares by its exact repr."""
+        if row.value_type == "entity" and isinstance(row.value, str):
+            return ("entity", self._resolve(row.value))
+        return ("literal", repr(row.value))
+
+    def _values_agree(self, old: Assertion, new: Assertion) -> bool:
+        """Does `new` agree with `old` — the cross-source corroboration test.
+        Two entity-valued rows agree iff they name one identity
+        (FOLD-CORRECTNESS-V1 §2: once merged, `obj:purse` and `obj:pouch` are
+        one value, not a disagreement); otherwise it stays directional on the
+        literal values (`_refines`)."""
+        if (old.value_type == "entity" and new.value_type == "entity"
+                and isinstance(old.value, str) and isinstance(new.value, str)):
+            return self._resolve(old.value) == self._resolve(new.value)
+        return self._refines(old.value, new.value)
+
     @staticmethod
-    def _values_agree(old: object, new: object) -> bool:
+    def _refines(old: object, new: object) -> bool:
         """Equal, or `new` refines an explicitly approximate `old`
         ({'gte': x} / {'lte': x} / {'approx': x}) — spec §7. When `new` is
         an exact Decimal, bounds coerce via Decimal(str(...)) for the
@@ -481,11 +501,7 @@ class Indexes:
             # rows that point to a later-MERGED whole are NOT a conflict — resolve
             # before comparing, so a `part_of` (or place containment) edge to
             # h1/h1_alias collapses once they are same_as. Literals compare raw.
-            def _value_key(r: Assertion):
-                if r.value_type == "entity" and isinstance(r.value, str):
-                    return ("entity", self._resolve(r.value))
-                return ("literal", repr(r.value))
-            values = {_value_key(r) for r in rows}
+            values = {self._value_key(r) for r in rows}
             earliest = min(rows, key=lambda r: r.asserted_at)
             if len(values) > 1:
                 return FoldResult(
@@ -885,9 +901,10 @@ class Indexes:
             # Supersession requires world-time progression: rows tied at the
             # winner's valid_from with a DIFFERENT value are a simultaneous
             # contradiction, not an update — flag, serve earliest-asserted
-            # (run-4 finding: log order alone must never pick a truth).
+            # (run-4 finding: log order alone must never pick a truth). Values
+            # compare by identity (FOLD-CORRECTNESS-V1 §2), never raw text.
             tied = [r for r in rs if r.valid_from == top.valid_from]
-            if len({repr(r.value) for r in tied}) > 1:
+            if len({self._value_key(r) for r in tied}) > 1:
                 earliest = min(tied, key=lambda r: r.asserted_at)
                 return FoldResult(
                     winner=earliest,
@@ -911,7 +928,7 @@ class Indexes:
                 w for w in winners.values()
                 if (w.valid_from if w.valid_from is not None else float("-inf")) == top_vf
             ]
-            if len({repr(w.value) for w in current}) > 1:
+            if len({self._value_key(w) for w in current}) > 1:
                 earliest = min(current, key=lambda r: r.asserted_at)
                 return FoldResult(
                     winner=earliest,
@@ -927,7 +944,7 @@ class Indexes:
         serving = incumbent
         corroborations: list[str] = []
         for challenger in rest:
-            if self._values_agree(serving.value, challenger.value):
+            if self._values_agree(serving, challenger):
                 corroborations.append(challenger.id)
                 serving = challenger  # the refinement is the more precise value
         # SOURCE-IDENTITY-V1 r2 (pbr): the parties are recomputed against the
@@ -945,7 +962,7 @@ class Indexes:
         # `_values_agree({gte:10}, 12)` holds while `_values_agree(12, {gte:10})`
         # does not. Asking it one way round here would report an approximate
         # row that the served exact value satisfies as a conflicting party.
-        def compatible(a: object, b: object) -> bool:
+        def compatible(a: Assertion, b: Assertion) -> bool:
             return self._values_agree(a, b) or self._values_agree(b, a)
 
         # `corroborated_by` keeps its existing meaning EXACTLY — the challengers
@@ -956,7 +973,7 @@ class Indexes:
         # conflict parties are recomputed here.
         disagreeing = [
             w.id for w in ordered
-            if w.id != serving.id and not compatible(serving.value, w.value)
+            if w.id != serving.id and not compatible(serving, w)
         ]
         if disagreeing:
             return FoldResult(

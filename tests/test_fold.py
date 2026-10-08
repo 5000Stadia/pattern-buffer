@@ -721,3 +721,52 @@ class TestOneRecencyKey:
             assert "person:p" not in later.scope
         finally:
             w.close()
+
+
+class TestOneValueIdentity:
+    """§2: every tie test compares entity values by resolved identity."""
+
+    def test_merged_containers_collapse_a_same_time_tie(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "obj:coin", "attribute": "in", "value": "obj:purse",
+                 "valid_from": 1.0},
+                {"entity": "obj:coin", "attribute": "in", "value": "obj:pouch",
+                 "valid_from": 1.0},
+            ])
+            before = w.state("obj:coin", "in")
+            assert before.conflicted and len(before.conflicting) == 2
+            assert w.registry.merge("obj:purse", "obj:pouch", "one bag, two names")
+            after = w.state("obj:coin", "in")
+            # today: still conflicted — the tie compared raw value text
+            assert not after.conflicted
+            assert w.locate("obj:coin") == [w.registry.resolve("obj:pouch")]
+        finally:
+            w.close()
+
+    def test_entity_values_agree_by_identity_in_and_across_classes(self, tmp_path):
+        """The spec's other two §2 bullets on a non-containment key: the
+        per-class tie, and `_values_agree` across source classes."""
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                # one class, same time: a tie
+                {"entity": "obj:letter", "attribute": "addressed_to",
+                 "value": "person:dan", "valid_from": 1.0},
+                {"entity": "obj:letter", "attribute": "addressed_to",
+                 "value": "person:daniel", "valid_from": 1.0},
+                # two classes: a document and the narration
+                {"entity": "obj:ring", "attribute": "owner", "value": "person:dan",
+                 "valid_from": 1.0, "source_doc": "doc:will"},
+                {"entity": "obj:ring", "attribute": "owner", "value": "person:daniel",
+                 "valid_from": 2.0},
+            ])
+            assert w.state("obj:letter", "addressed_to").conflicted
+            assert w.state("obj:ring", "owner").conflicted
+            assert w.registry.merge("person:dan", "person:daniel", "one man")
+            assert not w.state("obj:letter", "addressed_to").conflicted
+            ring = w.state("obj:ring", "owner")
+            assert not ring.conflicted and ring.corroborated_by == (ring.winner.id,)
+        finally:
+            w.close()
