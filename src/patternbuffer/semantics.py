@@ -105,6 +105,10 @@ class AttributeSemantics:
     def __init__(self, buffer: PatternBuffer) -> None:
         self._buffer = buffer
         self._declared: dict[str, dict[str, object]] = {}
+        # Memos over `_declared`, cleared with it on every rebuild: the resolved
+        # per-attribute Semantics and the two family sets.
+        self._resolved: dict[str, Semantics] = {}
+        self._families: dict[str, frozenset[str]] = {}
         self._rebuilt_at = -1
         self.rebuild()
 
@@ -117,10 +121,14 @@ class AttributeSemantics:
                 name = row.entity[len(ATTR_PREFIX):]
                 declared.setdefault(name, {})[row.attribute] = row.value
         self._declared = declared
-        self._rebuilt_at = self._buffer.head()
+        self._resolved = {}
+        self._families = {}
+        # Keyed on the buffer's log version, not its head: a rollback followed
+        # by re-appends can return the head to a value this view was built at.
+        self._rebuilt_at = self._buffer.log_version
 
     def _refresh(self) -> None:
-        if self._buffer.head() != self._rebuilt_at:
+        if self._buffer.log_version != self._rebuilt_at:
             self.rebuild()
 
     # ----------------------------------------------------------------- read
@@ -128,6 +136,13 @@ class AttributeSemantics:
     def semantics(self, attribute: str) -> Semantics:
         """Declared semantics over the built-in default for one attribute."""
         self._refresh()
+        resolved = self._resolved.get(attribute)
+        if resolved is None:
+            resolved = self._resolved[attribute] = self._overlay(attribute)
+        return resolved
+
+    def _overlay(self, attribute: str) -> Semantics:
+        """The declared axes laid over the built-in default (unmemoized)."""
         base = builtin_default(attribute)
         d = self._declared.get(attribute)
         if not d:
@@ -162,27 +177,27 @@ class AttributeSemantics:
     def containment_family(self) -> set[str]:
         """All attributes that fold as the single containment key — the
         built-in family plus any declared ``relation_family=containment``."""
-        self._refresh()
-        out = {
-            name for name in _BUILTIN_DEFAULT_ATTRIBUTES
-            if builtin_default(name).relation_family == CONTAINMENT
-        }
-        for name in self._declared:
-            if self.semantics(name).relation_family == CONTAINMENT:
-                out.add(name)
-        return out
+        return self._family(CONTAINMENT)
 
     def lateral_family(self) -> set[str]:
         """All attributes that form the lateral graph (``path``)."""
+        return self._family(LATERAL)
+
+    def _family(self, relation_family: str) -> set[str]:
+        """The built-in members of one relation family plus every declared
+        member — memoized per view; each caller gets its own copy."""
         self._refresh()
-        out = {
-            name for name in _BUILTIN_DEFAULT_ATTRIBUTES
-            if builtin_default(name).relation_family == LATERAL
-        }
-        for name in self._declared:
-            if self.semantics(name).relation_family == LATERAL:
-                out.add(name)
-        return out
+        members = self._families.get(relation_family)
+        if members is None:
+            out = {
+                name for name in _BUILTIN_DEFAULT_ATTRIBUTES
+                if builtin_default(name).relation_family == relation_family
+            }
+            for name in self._declared:
+                if self.semantics(name).relation_family == relation_family:
+                    out.add(name)
+            members = self._families[relation_family] = frozenset(out)
+        return set(members)
 
     # ------------------------------------------------------------- authority
 
