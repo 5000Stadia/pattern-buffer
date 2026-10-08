@@ -35,6 +35,14 @@ logger = logging.getLogger(__name__)
 _FAMILY_KEY = "__containment__"
 _NEIGHBORHOOD_EDGES = frozenset({"containment", "lateral", "relations", "events"})
 _NEIGHBORHOOD_DEPTH_CAP = 3
+# Evidence rank (the assumption quarantine, generalized): provisional classes
+# never hold incumbency against authoritative ones — an authored/observed fact
+# arriving over a character's inference or a working assumption is
+# confirmation or correction, never a conflict to ask about. Peers ({stated,
+# observed}) keep the full corroborate-vs-flag machinery. (Found by
+# chapter-test run 3: a narrator's wrong `inferred` theory outheld later
+# `stated` canon.) Governs every durability class (FOLD-CORRECTNESS-V1 §4).
+_EVIDENCE_RANK = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
 CONFIDENCE_PARAMS = {
     # CONFIDENCE-V1: fixed, tunable read-layer weights. These scores are
     # derived on demand and are never stored in the assertion log or sidecar.
@@ -214,6 +222,14 @@ class Indexes:
             row.valid_from if row.valid_from is not None else float("-inf"),
             row.asserted_at,
         )
+
+    @staticmethod
+    def _top_evidence(rows: list[Assertion]) -> list[Assertion]:
+        """The rows at the best evidence rank present (`_EVIDENCE_RANK`), in
+        their given order — the first filter of every durability class's fold
+        (FOLD-CORRECTNESS-V1 §4)."""
+        top = max(_EVIDENCE_RANK.get(r.status, 0) for r in rows)
+        return [r for r in rows if _EVIDENCE_RANK.get(r.status, 0) == top]
 
     def _value_key(self, row: Assertion) -> tuple[str, object]:
         """The one value identity every tie test compares (FOLD-CORRECTNESS-V1
@@ -490,13 +506,22 @@ class Indexes:
         if self._semantics.is_set_valued(attribute):
             return self._fold_set_valued(candidates)
 
-        by_class = {STATE: [], DISPOSITIONAL: [], CONSTITUTIVE: []}
+        constitutive: list[Assertion] = []
+        standing: list[Assertion] = []   # STATE ∪ DISPOSITIONAL, in log order
         for row in candidates:
-            by_class.setdefault(self._classifier.durability(row.id), []).append(row)
+            durability = self._classifier.durability(row.id)
+            if durability == CONSTITUTIVE:
+                constitutive.append(row)
+            elif durability in (STATE, DISPOSITIONAL):
+                standing.append(row)
 
         # CONSTITUTIVE outranks: structure is never superseded by recency.
-        if by_class[CONSTITUTIVE]:
-            rows = by_class[CONSTITUTIVE]
+        if constitutive:
+            # FOLD-CORRECTNESS-V1 §4: evidence rank first, as in every class —
+            # a later stated `kind` overrides an earlier inferred one (the
+            # earliest row used to serve whatever its evidence). Within the top
+            # rank, structure still outranks recency: the earliest serves.
+            rows = self._top_evidence(constitutive)
             # Identity-aware value identity (Cx 065): entity-valued CONSTITUTIVE
             # rows that point to a later-MERGED whole are NOT a conflict — resolve
             # before comparing, so a `part_of` (or place containment) edge to
@@ -511,14 +536,17 @@ class Indexes:
                 )
             return FoldResult(winner=earliest)
 
-        if by_class[STATE]:
+        if standing:
+            # FOLD-CORRECTNESS-V1 §4: STATE and DISPOSITIONAL fold together
+            # through one rank, source-class and recency machinery. The old
+            # DISPOSITIONAL branch skipped rank and §7.2 (a later inferred habit
+            # replaced a stated one; two sources disagreeing never flagged), and
+            # any STATE row on the key hid every DISPOSITIONAL one whatever the
+            # times. A timeless habit still yields to a timed STATE row of its
+            # class (None sorts first); a timed one now competes on recency.
             return self._fold_state(
-                by_class[STATE], asserted_as_of, is_containment=(fa == _FAMILY_KEY)
+                standing, asserted_as_of, is_containment=(fa == _FAMILY_KEY)
             )
-
-        if by_class[DISPOSITIONAL]:
-            rows = by_class[DISPOSITIONAL]
-            return FoldResult(winner=max(rows, key=self._recency_key))
         return FoldResult(winner=None)
 
     def state_union(
@@ -872,7 +900,8 @@ class Indexes:
         self, rows: list[Assertion], asserted_as_of: int | None,
         is_containment: bool = False,
     ) -> FoldResult:
-        """STATE: recency wins within a source class; across classes,
+        """STATE ∪ DISPOSITIONAL (FOLD-CORRECTNESS-V1 §4): the top evidence
+        rank only; recency wins within a source class; across classes,
         agreement corroborates (serve the more precise value), disagreement
         flags and keeps serving the prior in-class winner (spec §7).
 
@@ -883,16 +912,7 @@ class Indexes:
         cross-source disagreement still flags. A class's same-time tie is a
         contradiction only while it is the latest word: a later move from
         any class supersedes it (FOLD-CORRECTNESS-V1 §3)."""
-        # Evidence rank (the assumption quarantine, generalized): provisional
-        # classes never hold incumbency against authoritative ones — an
-        # authored/observed fact arriving over a character's inference or a
-        # working assumption is confirmation or correction, never a conflict
-        # to ask about. Peers ({stated, observed}) keep the full
-        # corroborate-vs-flag machinery below. (Found by chapter-test run 3:
-        # a narrator's wrong `inferred` theory outheld later `stated` canon.)
-        rank = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
-        top = max(rank.get(r.status, 0) for r in rows)
-        rows = [r for r in rows if rank.get(r.status, 0) == top]
+        rows = self._top_evidence(rows)
 
         by_source: dict[str, list[Assertion]] = {}
         for r in rows:

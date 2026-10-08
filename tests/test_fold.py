@@ -817,3 +817,80 @@ class TestStaleTieNeverOutvotesAMove:
             assert fold.winner.value == "room:c"  # earliest-asserted current row
         finally:
             w.close()
+
+
+class TestEvidenceRankEveryClass:
+    """§4: evidence rank governs CONSTITUTIVE and DISPOSITIONAL as it did
+    STATE; STATE ∪ DISPOSITIONAL fold through one machinery."""
+
+    @staticmethod
+    def _dispositional(w, rows, attribute):
+        for row in rows:
+            if row.attribute == attribute:
+                w.classifier.set(row.id, "DISPOSITIONAL")
+
+    def test_later_inferred_disposition_never_replaces_a_stated_one(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:holmes", "attribute": "plays", "value": "violin",
+                 "timeless": True},
+                {"entity": "person:holmes", "attribute": "plays", "value": "cello",
+                 "timeless": True, "status": "inferred"},
+            ])
+            self._dispositional(w, rows, "plays")
+            fold = w.state("person:holmes", "plays")
+            # today: cello — the DISPOSITIONAL branch skipped evidence rank
+            assert fold.winner.value == "violin" and not fold.conflicted
+        finally:
+            w.close()
+
+    def test_promoted_habit_competes_with_state_on_recency(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                *({"entity": "person:dale", "attribute": "mood", "value": "cheerful",
+                   "valid_from": t} for t in (1.0, 2.0, 3.0)),
+                {"entity": "person:dale", "attribute": "mood", "value": "grumpy",
+                 "valid_from": 0.5},
+            ])
+            assert w.classifier.promote_accruals(threshold=3) == 3
+            fold = w.state("person:dale", "mood")
+            # today: grumpy@0.5 — any STATE row hid every DISPOSITIONAL one
+            assert fold.winner.value == "cheerful" and fold.winner.valid_from == 3.0
+            assert not fold.conflicted
+        finally:
+            w.close()
+
+    def test_later_stated_kind_overrides_an_earlier_inferred_one(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "thing:x", "attribute": "kind", "value": "person",
+                 "timeless": True, "status": "inferred"},
+                {"entity": "thing:x", "attribute": "kind", "value": "place",
+                 "timeless": True},
+            ])
+            fold = w.state("thing:x", "kind")
+            # today: person, conflicted — the earliest CONSTITUTIVE row served
+            # whatever its evidence
+            assert fold.winner.value == "place" and not fold.conflicted
+        finally:
+            w.close()
+
+    def test_stated_dispositions_from_two_sources_flag(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:dale", "attribute": "restocks_on", "value": "monday",
+                 "timeless": True, "source_doc": "doc:schedule"},
+                {"entity": "person:dale", "attribute": "restocks_on", "value": "tuesday",
+                 "timeless": True, "source_doc": "person:ann"},
+            ])
+            self._dispositional(w, rows, "restocks_on")
+            fold = w.state("person:dale", "restocks_on")
+            # today: tuesday, silently — the DISPOSITIONAL branch skipped §7.2
+            assert fold.conflicted and len(fold.conflicting) == 2
+            assert fold.winner.value == "monday"  # the incumbent keeps serving
+        finally:
+            w.close()
