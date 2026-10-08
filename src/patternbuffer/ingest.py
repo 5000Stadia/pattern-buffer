@@ -52,6 +52,7 @@ class _GateSkip(Exception):
 # The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
 # A malformed id (person:/you) is SKIPPED with a typed receipt, never
 # normalized — guessing person:you would manufacture the phantom well-formed.
+_INVERSE_RECEIPT_SUFFIX = "(inverse)"   # GATE-INVERSE-ALIAS-V1 §2
 _ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
 
 # Built-in attribute aliases: the fold key must never fragment. Domain
@@ -61,14 +62,21 @@ _BUILTIN_ALIASES = {
     "located_in": "in",
     "location": "in",
     "contained_in": "in",
-    "wearing": "worn_by",  # direction repaired by the extractor contract
-    "holds": "held_by",
     "connected_to": "connects_to",
     "adjacent": "adjacent_to",
     "feature_of": "part_of",      # compositional axis (PLACE-FEATURE-ABSTRACTION-V1)
     "component_of": "part_of",
     "type": "kind",
     "is_a": "kind",
+}
+
+# GATE-INVERSE-ALIAS-V1 §1: INVERSE relations — the forward form names the same
+# fact with subject and object exchanged, so a rename alone would invert the
+# containment edge. These are applied only by the entity-value swap in
+# `_ingest_item` (§2); a text value keeps the attribute as authored (§3).
+_BUILTIN_INVERSE_ALIASES = {
+    "holds": "held_by",
+    "wearing": "worn_by",
 }
 
 _EXTRACT_SCHEMA = {
@@ -126,6 +134,8 @@ _EXTRACT_RULES_FULL = (
     "- entity ids namespaced: person:/place:/obj:/event:/doc: + snake_case.\n"
     "- attributes: use 'in' for all containment/location; 'connects_to' for "
     "passage; 'kind' for what a thing is; domain attributes freely otherwise.\n"
+    "- possession is '<thing> held_by <person>' and clothing is '<garment> "
+    "worn_by <person>' (GATE-INVERSE-ALIAS-V1 §6).\n"
     "- value_type 'entity' when the value is another entity id.\n"
     "- MOVEMENT: when the text narrates a person actually leaving or arriving "
     "at a place (goes out, slips away, comes in, arrives, departs, walks/rides/"
@@ -196,6 +206,8 @@ _EXTRACT_RULES_LEAN = (
     "- entity ids namespaced: person:/place:/obj:/event: + snake_case.\n"
     "- attributes: 'in' for containment/location; 'connects_to' for passage; "
     "'kind' for what a thing is; domain attributes otherwise.\n"
+    "- possession is '<thing> held_by <person>' and clothing is '<garment> "
+    "worn_by <person>' (GATE-INVERSE-ALIAS-V1 §6).\n"
     "- value_type 'entity' when the value is another entity id.\n"
     "- FRAMES: world facts are frame 'canon' (give their true historical "
     "valid_from even if revealed late); use 'knows:<person_id>' ONLY for the "
@@ -344,7 +356,7 @@ class Ingestor:
         self.last_skipped: list[SkipRecord] = []
         # INGEST-LATENCY-V2 Win 3: cursor governs valid_from for this ingest call.
         self._cursor_authoritative: bool = False
-        self._alias_map: dict[str, str] = dict(_BUILTIN_ALIASES)
+        self._alias_map: dict[str, str] = {}
         self._rebuild_alias_map()
 
     # -------------------------------------------------- canonicalization
@@ -352,11 +364,21 @@ class Ingestor:
     def _rebuild_alias_map(self) -> None:
         """The map is a sidecar judgment, rebuildable from the receipts in
         the log (spec §3.7, letter 002 Q6)."""
-        self._alias_map = dict(_BUILTIN_ALIASES)
+        self._alias_map = {}
         for row in self._buffer.visible(attribute="canonicalized_from"):
             if isinstance(row.value, str) and "->" in row.value:
+                # GATE-INVERSE-ALIAS-V1 §4: an "(inverse)" receipt records a
+                # swap — it is not a map entry.
+                if row.value.rstrip().endswith(_INVERSE_RECEIPT_SUFFIX):
+                    continue
                 src, dst = row.value.split("->", 1)
                 self._alias_map[src.strip()] = dst.strip()
+        # GATE-INVERSE-ALIAS-V1 §4: replayed receipts first, built-ins last, so
+        # a built-in always wins — an old forward `holds->held_by` receipt
+        # must not install a forward alias for an inverse relation.
+        self._alias_map.update(_BUILTIN_ALIASES)
+        for inverse_attr in _BUILTIN_INVERSE_ALIASES:
+            self._alias_map.pop(inverse_attr, None)
 
     def add_attribute_alias(self, alias: str, canonical: str) -> None:
         self._alias_map[alias.strip().lower()] = canonical
@@ -368,6 +390,13 @@ class Ingestor:
             return attr, None
         canonical = self._alias_map[attr]
         return canonical, f"{attr}->{canonical}"
+
+    def _inverse_of(self, attr: str) -> str | None:
+        """The forward attribute for an inverse relation (GATE-INVERSE-ALIAS-V1
+        §1), or None. ``attr`` is already normalized by `_canonicalize`."""
+        if attr in _BUILTIN_INVERSE_ALIASES and not self._semantics.is_structural(attr):
+            return _BUILTIN_INVERSE_ALIASES[attr]
+        return None
 
     # ---------------------------------------------------- attr semantics
 
@@ -841,6 +870,18 @@ class Ingestor:
             "entity" if isinstance(value, str) and _ID_RE.fullmatch(value)
             else "literal"
         )
+        # GATE-INVERSE-ALIAS-V1 §2: an inverse relation with an ENTITY value
+        # swaps subject and object here — immediately after canonicalization,
+        # before the malformed-id gate, identity resolution, interval checks
+        # and the per-edge checks, so every later check sees the true
+        # direction. A text value keeps the attribute as authored (§3).
+        # Item-level identity data stays with the ORIGINAL subject.
+        identity_subject = entity
+        forward = self._inverse_of(attribute)
+        if forward is not None and value_type == "entity" and isinstance(value, str):
+            receipt = f"{attribute}->{forward} {_INVERSE_RECEIPT_SUFFIX}"
+            attribute = forward
+            entity, value = value, entity
         timeless = bool(item.get("timeless", False))
         valid_from = item.get("valid_from")
         # INGEST-LATENCY-V2 Win 3: in cursor-authoritative ingest (bible
@@ -887,6 +928,7 @@ class Ingestor:
         entity = self._registry.resolve(entity)
         if value_type == "entity" and isinstance(value, str):
             value = self._registry.resolve(value)
+        identity_subject = self._registry.resolve(identity_subject)
 
         # Decay-policy declarations must be valid physics (TRACKING-MODE-V1
         # §B3): a malformed half-life is skip-receipted at the gate, never
@@ -1017,7 +1059,7 @@ class Ingestor:
                 )
             )
         for alias in item.get("aliases", []):
-            self._registry.add_alias(entity, alias, status=item.get("status", "stated"))
+            self._registry.add_alias(identity_subject, alias, status=item.get("status", "stated"))
         if item.get("correction"):
             # The proposal is itself logged (auditable; the promotion's
             # receipts chain ends here, at the utterance's chunk).
@@ -1034,9 +1076,9 @@ class Ingestor:
             # Same malformed-id gate as the main row (SHAPE-FIX-V1 4a).
             same_as = str(item["same_as"])
             if not _ID_RE.fullmatch(same_as):
-                self._record_skip(entity, "same_as", same_as, "malformed_id")
+                self._record_skip(identity_subject, "same_as", same_as, "malformed_id")
             else:
-                self._registry.maybe_same_as(entity, same_as,
+                self._registry.maybe_same_as(identity_subject, same_as,
                                              evidence="extractor late binding")
         if self.classify_inline:
             self._classifier.classify(row)

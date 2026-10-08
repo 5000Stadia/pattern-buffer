@@ -1,6 +1,6 @@
 # GATE-INVERSE-ALIAS-V1: inverse predicates swap direction at the gate
 
-**Status:** DRAFT r1 (2026-10-08), fast-tracked out of batch B of
+**Status:** DRAFT r1.1 (2026-10-08; §5 output shape per construct's request), fast-tracked out of batch B of
 `docs/AUDIT-2026-10.md` because it is **corrupting live host worlds**.
 
 - Construct's play path (`p.ingest` over narration) reaches it whenever the
@@ -70,14 +70,24 @@ Rows written before the fix keep their receipt and stay as they are (append-only
 A host lists and repairs them with the porcelain it already has:
 
 ```python
-bad_ids = {f["entity"] for f in p.facts("canon", attribute="canonicalized_from",
-                                         include_meta=True)
-           if f["value"] in ("holds->held_by", "wearing->worn_by")}
+receipt_of = {f["entity"]: f["provenance"]["assertion_id"]
+              for f in p.facts("canon", attribute="canonicalized_from", include_meta=True)
+              if f["value"] in ("holds->held_by", "wearing->worn_by")}
+inverted = []
 for frame in host_frames:
     for f in p.facts(frame, attribute="held_by") + p.facts(frame, attribute="worn_by"):
-        if f["provenance"]["assertion_id"] in bad_ids:
-            ...  # commit_set([retract(id), assert(swapped)]) — host-judged
+        aid = f["provenance"]["assertion_id"]
+        if aid in receipt_of:
+            inverted.append({"assertion_id": aid, "frame": frame,
+                             "entity": f["entity"], "attribute": f["attribute"],
+                             "value": f["value"], "receipt_id": receipt_of[aid]})
+        # repair: commit_set([retract(aid), assert(swapped)]) — host-judged
 ```
+
+**r1.1: output shape per construct's request.** Per world, `inverted` holds one
+dict per already-inverted row: `{assertion_id, frame, entity, attribute, value
+(as stored), receipt_id}`, where `receipt_id` is the `canonicalized_from`
+receipt row's own assertion id. The §5 test asserts this shape.
 
 The recipe goes into ADOPTION. Repair is the host's call per row, because some
 inverted rows may have been nonsense either way.

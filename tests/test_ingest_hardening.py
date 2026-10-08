@@ -370,3 +370,150 @@ def test_numeric_string_and_oversize_int_times_are_coerced(tmp_path) -> None:
         assert w.state("person:b", "in").winner.valid_from == float(2 ** 70)
     finally:
         w.close()
+
+
+# ------------------------------------- GATE-INVERSE-ALIAS-V1: inverse predicates
+
+def _receipts(w):
+    return [r.value for r in w.buffer.visible(attribute="canonicalized_from")]
+
+
+def _seed_prefix_row(w, entity, attribute, value, receipt, frame="canon"):
+    """Build the PRE-FIX state honestly: the old gate renamed without swapping
+    and left a forward receipt. The new gate cannot write this shape, so append
+    the two rows through the buffer (GATE-INVERSE-ALIAS-V1 §4/§5 tests)."""
+    role = w.ingestor._role
+    row = w.buffer.append(entity=entity, attribute=attribute, value=value,
+                          value_type="entity", valid_from=1.0, frame=frame,
+                          status="stated", role=role)
+    rec = w.buffer.append(entity=row.id, attribute="canonicalized_from",
+                          value=receipt, status="inferred", role=role)
+    return row, rec
+
+
+def _reopen(path, wid):
+    return World(path, world_id=wid, model=StubModel(fallback=rule_classifier_fallback()))
+
+
+@pytest.mark.parametrize("inverse,forward", [("holds", "held_by"), ("wearing", "worn_by")])
+def test_inverse_entity_value_swaps(world, inverse, forward):
+    # GATE-INVERSE-ALIAS-V1 §2: (ralph holds key) is stored (key held_by ralph).
+    world.ingest_structured([
+        {"entity": "place:hall", "attribute": "kind", "value": "place", "timeless": True},
+        {"entity": "person:ralph", "attribute": "in", "value": "place:hall", "valid_from": 1.0},
+        {"entity": "person:ralph", "attribute": inverse, "value": "obj:key", "valid_from": 1.0},
+    ])
+    assert world.locate("obj:key") == ["person:ralph", "place:hall"]
+    assert world.locate("person:ralph") == ["place:hall"]          # unchanged
+    assert f"{inverse}->{forward} (inverse)" in _receipts(world)
+    assert not any(r.attribute == inverse for r in world.buffer.all_rows())
+
+
+def test_inverse_follow_up_not_refused_as_cycle(world):
+    # §2 again: the correctly-directed follow-up is admitted, not a cycle.
+    world.ingest_structured([
+        {"entity": "person:ralph", "attribute": "holds", "value": "obj:key", "valid_from": 1.0},
+    ])
+    r = world.porcelain.ingest_structured([
+        {"entity": "obj:key", "attribute": "held_by", "value": "person:ralph", "valid_from": 2.0},
+    ])
+    assert r.skipped == []
+
+
+def test_inverse_item_identity_data_stays_with_original_subject(world):
+    # §2 identity data: aliases describe the item's subject (ralph), not the key.
+    world.ingest_structured([
+        {"entity": "person:ralph", "attribute": "holds", "value": "obj:key",
+         "valid_from": 1.0, "aliases": ["the keeper"]},
+    ])
+    alias_rows = [r for r in world.buffer.all_rows() if r.attribute == "alias"]
+    assert [(r.entity, r.value) for r in alias_rows] == [("person:ralph", "the keeper")]
+
+
+@pytest.mark.parametrize("inverse", ["holds", "wearing"])
+def test_inverse_text_value_is_not_aliased(world, inverse):
+    # §3: a text value stays a literal domain fact; ralph keeps his location.
+    world.ingest_structured([
+        {"entity": "place:hall", "attribute": "kind", "value": "place", "timeless": True},
+        {"entity": "person:ralph", "attribute": "in", "value": "place:hall", "valid_from": 1.0},
+        {"entity": "person:ralph", "attribute": inverse, "value": "a lantern", "valid_from": 1.0},
+    ])
+    assert world.locate("person:ralph") == ["place:hall"]
+    row = next(r for r in world.buffer.all_rows()
+               if r.entity == "person:ralph" and r.attribute == inverse)
+    assert row.value == "a lantern"
+    assert _receipts(world) == []
+
+
+def test_old_forward_receipt_does_not_resurrect_alias(tmp_path):
+    # §4: a world carrying an old `holds->held_by` receipt, after reopen, still
+    # swaps new holds items (built-ins beat replayed receipts).
+    path = tmp_path / "old.world"
+    w = _reopen(path, "w:old")
+    _seed_prefix_row(w, "person:ann", "held_by", "obj:ring", "holds->held_by")
+    w.close()
+    w = _reopen(path, "w:old")
+    assert "holds" not in w.ingestor._alias_map
+    w.ingest_structured([
+        {"entity": "person:ralph", "attribute": "holds", "value": "obj:key", "valid_from": 5.0},
+    ])
+    assert w.locate("obj:key") == ["person:ralph"]
+    assert "holds->held_by (inverse)" in _receipts(w)
+    w.close()
+
+
+def test_inverse_receipt_is_not_a_map_entry(tmp_path):
+    # §4: "(inverse)" receipts are records, never replayed as map entries.
+    path = tmp_path / "rec.world"
+    w = _reopen(path, "w:rec")
+    w.ingest_structured([
+        {"entity": "person:ralph", "attribute": "wearing", "value": "obj:coat", "valid_from": 1.0},
+    ])
+    w.close()
+    w = _reopen(path, "w:rec")
+    assert "wearing" not in w.ingestor._alias_map
+    assert not any("(inverse)" in v for v in w.ingestor._alias_map.values())
+    w.close()
+
+
+def test_recipe_finds_exactly_prefix_rows(world):
+    # §5 (r1.1 output shape): ADOPTION's recipe, verbatim, yields per inverted
+    # row {assertion_id, frame, entity, attribute, value, receipt_id}.
+    p = world.porcelain
+    bad1, rec1 = _seed_prefix_row(world, "person:ann", "held_by", "obj:ring", "holds->held_by")
+    bad2, rec2 = _seed_prefix_row(world, "person:bo", "worn_by", "obj:hat", "wearing->worn_by",
+                                  frame="knows:person:bo")
+    # decoys: a correctly-directed hand-written row, and a post-fix swapped row
+    world.ingest_structured([
+        {"entity": "obj:cup", "attribute": "held_by", "value": "person:ann", "valid_from": 2.0},
+        {"entity": "person:cy", "attribute": "holds", "value": "obj:pen", "valid_from": 2.0},
+    ])
+    host_frames = ["canon", "knows:person:bo"]
+    receipt_of = {f["entity"]: f["provenance"]["assertion_id"]
+                  for f in p.facts("canon", attribute="canonicalized_from", include_meta=True)
+                  if f["value"] in ("holds->held_by", "wearing->worn_by")}
+    inverted = []
+    for frame in host_frames:
+        for f in p.facts(frame, attribute="held_by") + p.facts(frame, attribute="worn_by"):
+            aid = f["provenance"]["assertion_id"]
+            if aid in receipt_of:
+                inverted.append({"assertion_id": aid, "frame": frame,
+                                 "entity": f["entity"], "attribute": f["attribute"],
+                                 "value": f["value"], "receipt_id": receipt_of[aid]})
+    key = lambda d: d["assertion_id"]
+    assert sorted(inverted, key=key) == sorted([
+        {"assertion_id": bad1.id, "frame": "canon", "entity": "person:ann",
+         "attribute": "held_by", "value": "obj:ring", "receipt_id": rec1.id},
+        {"assertion_id": bad2.id, "frame": "knows:person:bo", "entity": "person:bo",
+         "attribute": "worn_by", "value": "obj:hat", "receipt_id": rec2.id},
+    ], key=key)
+
+
+def test_inverse_swap_inside_atomic_unit(world):
+    # atomic=True: a swapped item commits inside the unit.
+    world.porcelain.ingest_structured([
+        {"entity": "person:ralph", "attribute": "holds", "value": "obj:key", "valid_from": 1.0},
+        {"entity": "person:ralph", "attribute": "wearing", "value": "obj:coat", "valid_from": 1.0},
+    ], atomic=True, classify="rules")
+    assert world.locate("obj:key") == ["person:ralph"]
+    assert world.locate("obj:coat") == ["person:ralph"]

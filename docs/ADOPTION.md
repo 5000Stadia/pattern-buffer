@@ -168,10 +168,34 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   `valid_to`). A second value asserted over the same window is a same-time
   contradiction (the key reads `conflicted`): to correct a value, `retract` the
   old row first.
-- **NEVER** (until the gate fix lands) send the inverse predicates `holds` or
-  `wearing` — the built-in aliases rename them to `held_by` / `worn_by`
-  **without swapping subject and object**, so `person:ralph holds thing:key`
-  puts Ralph inside the key. Write `thing:key held_by person:ralph`.
+- **Inverse predicates (`holds`, `wearing`) — GATE-INVERSE-ALIAS-V1.** The gate
+  now swaps direction: `person:ralph holds thing:key` is stored as `thing:key
+  held_by person:ralph` (receipt `holds->held_by (inverse)`); `wearing` likewise
+  to `worn_by`. A text value (`ralph holds "a lantern"`) is NOT aliased — it
+  stays an ordinary `holds` domain fact. Prefer writing `<thing> held_by
+  <person>` directly. **Rows written BEFORE the fix** were renamed without the
+  swap (Ralph stored inside the key) and keep their forward receipt
+  `holds->held_by` / `wearing->worn_by`; the engine never rewrites them. Find
+  them with the porcelain you already have, then repair per row (your call —
+  some may have been nonsense either way):
+
+  ```python
+  receipt_of = {f["entity"]: f["provenance"]["assertion_id"]
+                for f in p.facts("canon", attribute="canonicalized_from", include_meta=True)
+                if f["value"] in ("holds->held_by", "wearing->worn_by")}
+  inverted = []            # one dict per already-inverted row
+  for frame in host_frames:
+      for f in p.facts(frame, attribute="held_by") + p.facts(frame, attribute="worn_by"):
+          aid = f["provenance"]["assertion_id"]
+          if aid in receipt_of:
+              inverted.append({"assertion_id": aid, "frame": frame,
+                               "entity": f["entity"], "attribute": f["attribute"],
+                               "value": f["value"], "receipt_id": receipt_of[aid]})
+  # repair per row, host-judged: commit_set([retract(aid), assert(swapped)])
+  ```
+
+  Receipt rows live in `canon` whatever frame the row they describe is in;
+  post-fix swapped rows carry the `(inverse)` receipt and are not matched.
 - **NEVER** let your renderer/narrator append. The component that speaks must
   not decide what is true. Resolution-as-a-tool is fine — the tool's
   implementation is the resolver, which holds the append authority.
