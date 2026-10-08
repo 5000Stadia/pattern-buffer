@@ -880,7 +880,9 @@ class Indexes:
         family, relocation is inherently time-sequential — a later move
         supersedes an earlier placement across source classes, instead of
         raising the §7.2 cross-source flag. A genuine same-valid-time
-        cross-source disagreement still flags."""
+        cross-source disagreement still flags. A class's same-time tie is a
+        contradiction only while it is the latest word: a later move from
+        any class supersedes it (FOLD-CORRECTNESS-V1 §3)."""
         # Evidence rank (the assumption quarantine, generalized): provisional
         # classes never hold incumbency against authoritative ones — an
         # authored/observed fact arriving over a character's inference or a
@@ -895,6 +897,35 @@ class Indexes:
         by_source: dict[str, list[Assertion]] = {}
         for r in rows:
             by_source.setdefault(self._source_class(r, asserted_as_of), []).append(r)
+
+        if is_containment:
+            # Movement is time-sequential: the latest-valid move supersedes
+            # earlier placements across source classes (HD 002 finding 2).
+            # FOLD-CORRECTNESS-V1 §3: every class contributes the rows at its
+            # OWN latest valid_from (one row, or a tied set) and only rows at
+            # the overall latest one are current. A class's same-time tie used
+            # to return before the other classes were heard, so one gossip
+            # line placing p in two rooms at t=1 outvoted every later narrated
+            # move. Only a disagreement AMONG the current rows contradicts —
+            # serve earliest-asserted, flag them all. With one class this is
+            # exactly the in-class tie rule below.
+            contributed: list[Assertion] = []
+            for rs in by_source.values():
+                latest = max(rs, key=self._recency_key)
+                contributed += [r for r in rs if r.valid_from == latest.valid_from]
+            top = max(contributed, key=self._recency_key)
+            current = sorted(
+                (r for r in contributed if r.valid_from == top.valid_from),
+                key=lambda r: r.asserted_at,
+            )
+            if len({self._value_key(r) for r in current}) > 1:
+                return FoldResult(
+                    winner=current[0],
+                    conflicted=True,
+                    conflicting=tuple(r.id for r in current),
+                )
+            return FoldResult(winner=current[-1])
+
         winners: dict[str, Assertion] = {}
         for sc, rs in by_source.items():
             top = max(rs, key=self._recency_key)
@@ -903,6 +934,8 @@ class Indexes:
             # contradiction, not an update — flag, serve earliest-asserted
             # (run-4 finding: log order alone must never pick a truth). Values
             # compare by identity (FOLD-CORRECTNESS-V1 §2), never raw text.
+            # Outside the containment family this still ends the fold: across
+            # classes such a key flags under §7.2 anyway (§3's non-goal).
             tied = [r for r in rs if r.valid_from == top.valid_from]
             if len({self._value_key(r) for r in tied}) > 1:
                 earliest = min(tied, key=lambda r: r.asserted_at)
@@ -914,28 +947,6 @@ class Indexes:
             winners[sc] = top
         if len(winners) == 1:
             return FoldResult(winner=next(iter(winners.values())))
-
-        if is_containment:
-            # Movement is time-sequential: the latest-valid move supersedes
-            # earlier placements across source classes (HD 002 finding 2).
-            # Only a same-latest-valid_from disagreement is a true
-            # contradiction — serve earliest-asserted, flag those rows.
-            top_vf = max(
-                (w.valid_from if w.valid_from is not None else float("-inf"))
-                for w in winners.values()
-            )
-            current = [
-                w for w in winners.values()
-                if (w.valid_from if w.valid_from is not None else float("-inf")) == top_vf
-            ]
-            if len({self._value_key(w) for w in current}) > 1:
-                earliest = min(current, key=lambda r: r.asserted_at)
-                return FoldResult(
-                    winner=earliest,
-                    conflicted=True,
-                    conflicting=tuple(sorted(r.id for r in current)),
-                )
-            return FoldResult(winner=max(current, key=lambda r: r.asserted_at))
 
         # Multiple source classes on one key: order in-class winners by
         # arrival; the earliest-arrived class is the incumbent.

@@ -770,3 +770,50 @@ class TestOneValueIdentity:
             assert not ring.conflicted and ring.corroborated_by == (ring.winner.id,)
         finally:
             w.close()
+
+
+class TestStaleTieNeverOutvotesAMove:
+    """§3: in the containment family a source class's stale same-time tie no
+    longer ends the fold before a later move from another class is heard."""
+
+    _GOSSIP = [
+        {"entity": "person:p", "attribute": "in", "value": "room:a", "valid_from": 1.0,
+         "source_doc": "person:gossip"},
+        {"entity": "person:p", "attribute": "in", "value": "room:b", "valid_from": 1.0,
+         "source_doc": "person:gossip"},
+    ]
+    _MOVE = {"entity": "person:p", "attribute": "in", "value": "room:c",
+             "valid_from": 10.0}
+
+    @pytest.mark.parametrize("move_first", [False, True])
+    def test_later_narrated_move_beats_a_stale_gossip_tie(self, tmp_path, move_first):
+        w = _fc_world(tmp_path)
+        try:
+            items = [self._MOVE, *self._GOSSIP] if move_first else [*self._GOSSIP, self._MOVE]
+            w.ingest_structured(items)
+            fold = w.state("person:p", "in")
+            # today: [room:a], conflicted, forever — the gossip tie returned
+            # before the narrator's class was compared
+            assert not fold.conflicted
+            assert w.locate("person:p") == ["room:c"]
+            # the stale tie is still a conflict where it IS the latest word
+            early = w.state("person:p", "in", valid_as_of=5.0)
+            assert early.conflicted and early.winner.value == "room:a"
+        finally:
+            w.close()
+
+    def test_same_time_cross_class_disagreement_at_the_top_still_flags(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                *self._GOSSIP,
+                self._MOVE,
+                {"entity": "person:p", "attribute": "in", "value": "room:d",
+                 "valid_from": 10.0, "source_doc": "doc:ledger"},
+            ])
+            top = {r.id for r in rows if r.attribute == "in" and r.valid_from == 10.0}
+            fold = w.state("person:p", "in")
+            assert fold.conflicted and set(fold.conflicting) == top
+            assert fold.winner.value == "room:c"  # earliest-asserted current row
+        finally:
+            w.close()
