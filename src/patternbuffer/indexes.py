@@ -371,7 +371,7 @@ class Indexes:
         valid_as_of: float | None,
         asserted_as_of: int | None,
     ) -> list[Assertion]:
-        fa = self.fold_attribute(attribute)
+        fa = attribute if attribute == _FAMILY_KEY else self.fold_attribute(attribute)
         attrs = sorted(self._semantics.containment_family()) if fa == _FAMILY_KEY else [attribute]
         return self._buffer.visible(
             entity_in=sorted(self._closure_of(entity)),
@@ -380,6 +380,19 @@ class Indexes:
             valid_as_of=valid_as_of,
             asserted_as_of=asserted_as_of,
         )
+
+    def key_rows(
+        self,
+        entity: str,
+        fold_key: str,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> list[Assertion]:
+        """The visible rows of one fold key (an attribute, or the containment
+        family key) over `entity`'s identity closure — an indexed fetch, never
+        a whole-log scan."""
+        return self._visible_key_rows(entity, fold_key, frame, valid_as_of, asserted_as_of)
 
     # ----------------------------------------------------------------- fold
 
@@ -1609,6 +1622,24 @@ class Indexes:
         out["neighbors"] = shaped
         return out
 
+    def _lateral_edges(
+        self, frame: str, valid_as_of: float | None, asserted_as_of: int | None,
+    ) -> dict[str, set[str]]:
+        """The as-of lateral graph as undirected adjacency over identity
+        closures — the one structure `path()` and `route()` both search."""
+        edges: dict[str, set[str]] = {}
+        for row in self._buffer.visible(
+            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of, frame=frame,
+            attribute_in=sorted(self._semantics.lateral_family()),
+        ):
+            if (row.value_type == "entity"
+                    and not row.entity.startswith("a:")
+                    and not row.entity.startswith(ATTR_PREFIX)):
+                x, y = self._resolve(row.entity), self._resolve(row.value)
+                edges.setdefault(x, set()).add(y)
+                edges.setdefault(y, set()).add(x)
+        return edges
+
     def path(
         self,
         a: str,
@@ -1626,19 +1657,7 @@ class Indexes:
         as-of query — `removed` is derived from temporal validity, never a
         stored flag. Default ``None`` = no bound (unchanged)."""
         a, b = self._resolve(a), self._resolve(b)
-        edges: dict[str, set[str]] = {}
-        for row in self._buffer.visible(
-            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of, frame=frame
-        ):
-            if (
-                row.attribute in self._semantics.lateral_family()
-                and row.value_type == "entity"
-                and not row.entity.startswith("a:")
-                and not row.entity.startswith(ATTR_PREFIX)
-            ):
-                x, y = self._resolve(row.entity), self._resolve(row.value)
-                edges.setdefault(x, set()).add(y)
-                edges.setdefault(y, set()).add(x)
+        edges = self._lateral_edges(frame, valid_as_of, asserted_as_of)
         if a == b:
             return [a]
         frontier = [[a]]
@@ -1728,17 +1747,7 @@ class Indexes:
             if p:
                 seg.update(p)
             return {"route": [a], "status": st, "segments": [seg]}
-        edges: dict[str, set[str]] = {}
-        for row in self._buffer.visible(
-            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of, frame=frame
-        ):
-            if (row.attribute in self._semantics.lateral_family()
-                    and row.value_type == "entity"
-                    and not row.entity.startswith("a:")
-                    and not row.entity.startswith(ATTR_PREFIX)):
-                x, y = self._resolve(row.entity), self._resolve(row.value)
-                edges.setdefault(x, set()).add(y)
-                edges.setdefault(y, set()).add(x)
+        edges = self._lateral_edges(frame, valid_as_of, asserted_as_of)
 
         status_of: dict[str, str] = {}
         payload_of: dict[str, dict | None] = {}
@@ -1802,9 +1811,11 @@ class Indexes:
             return []
         endpoints = self._closure_of(a) | self._closure_of(b)
         out: list[dict] = []
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=frame):
-            if (row.attribute in self._semantics.lateral_family()
-                    and row.value_type == "entity"
+        for row in self._buffer.visible(
+            asserted_as_of=asserted_as_of, frame=frame,
+            attribute_in=sorted(self._semantics.lateral_family()),
+        ):
+            if (row.value_type == "entity"
                     and isinstance(row.value, str)
                     and row.valid_to is not None
                     and row.valid_to <= valid_as_of

@@ -14,7 +14,7 @@ from typing import Any, Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import ATTR_PREFIX, CANON
+from patternbuffer.model import ATTR_PREFIX, CANON, TASK_REFER, task_schema
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ CANDIDATES = "candidates"
 UNDERDETERMINED = "underdetermined"
 
 _TIER2_SCHEMA = {
+    "title": TASK_REFER,
     "type": "object",
     "properties": {
         "entity_id": {"type": ["string", "null"]},
@@ -237,7 +238,7 @@ class Refer:
             "valid, expected outcome, never an error."
         )
         try:
-            out = self._model(prompt, _TIER2_SCHEMA)
+            out = self._model(prompt, task_schema(_TIER2_SCHEMA))
         except Exception:
             logger.exception("refer tier-2 model call failed")
             return Resolution(CANDIDATES, candidates=candidates,

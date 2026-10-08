@@ -8,6 +8,7 @@ special-cased.
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from typing import Any
 
@@ -73,6 +74,26 @@ SET_VALUED_ATTRIBUTES = frozenset({"name", "alias", "connects_to", "adjacent_to"
 VALUE_TYPES = frozenset({"entity", "literal", "unresolved", "delta"})
 
 CANON = "canon"
+
+# Model task keys. Every schema the engine hands the injected model callable
+# carries one of these as its JSON-Schema `title`, so a host can route a call
+# (to a cheaper tier, a stricter validator) by what the call is for. The
+# titles are frozen; prompt wording is not a contract and may change.
+TASK_EXTRACT = "patternbuffer_extract"
+TASK_CLASSIFY = "patternbuffer_classify"
+TASK_CLASSIFY_BATCH = "patternbuffer_classify_batch"
+TASK_RESOLVE = "patternbuffer_resolve"
+TASK_REFER = "patternbuffer_refer"
+TASK_ASK_PLAN = "patternbuffer_ask_plan"
+MODEL_TASKS = frozenset({TASK_EXTRACT, TASK_CLASSIFY, TASK_CLASSIFY_BATCH,
+                         TASK_RESOLVE, TASK_REFER, TASK_ASK_PLAN})
+
+
+def task_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """A private copy of a task schema for one model call: an adapter that
+    edits the schema in place (strict-mode rewrites) cannot corrupt the
+    engine's shared definition for every later call."""
+    return copy.deepcopy(schema)
 
 
 @dataclass(frozen=True, slots=True)

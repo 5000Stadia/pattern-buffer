@@ -20,7 +20,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 from patternbuffer.codec import decode_value, encode_out
-from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES
+from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, TASK_ASK_PLAN, task_schema
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
 from patternbuffer.tmaint import AtomicAbort
 
@@ -78,6 +78,7 @@ class Answer:
 
 
 _ASK_PLAN_SCHEMA = {
+    "title": TASK_ASK_PLAN,
     "type": "object",
     "properties": {
         "refer_targets": {"type": "array", "items": {"type": "string"}},
@@ -955,7 +956,7 @@ class Porcelain:
             "wants_location true for where-questions.\n"
             f"QUESTION: {question}"
         )
-        plan = self._w.ingestor._model(prompt, _ASK_PLAN_SCHEMA)
+        plan = self._w.ingestor._model(prompt, task_schema(_ASK_PLAN_SCHEMA))
         # HD 003: identity/existence is a CANON question; only the answer is
         # knowledge-scoped. Resolve references against canon with a scene
         # scope mirroring the observe path — the asker (from a knows:<id>

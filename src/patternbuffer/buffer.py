@@ -65,6 +65,10 @@ CREATE TRIGGER IF NOT EXISTS assertions_append_only_delete
 """
 
 
+def _prefix_upper_bound(prefix: str) -> str:
+    """The least string greater than every string starting with ``prefix``."""
+    return prefix[:-1] + chr(ord(prefix[-1]) + 1)
+
 class WorldMismatch(ValueError):
     """A buffer was opened or written with the wrong world_id (1:1 invariant)."""
 
@@ -455,8 +459,10 @@ class PatternBuffer:
             clauses.append(f"a.entity IN ({','.join('?' * len(entity_in))})")
             params.extend(entity_in)
         if entity_prefix is not None:
-            clauses.append("a.entity LIKE ?")
-            params.append(entity_prefix + "%")
+            # A half-open range, not LIKE: indexable, and `_`/`%` in a prefix
+            # match literally (ids are lowercase by the gate's grammar).
+            clauses.append("a.entity >= ? AND a.entity < ?")
+            params.extend([entity_prefix, _prefix_upper_bound(entity_prefix)])
         if attribute is not None:
             clauses.append("a.attribute = ?")
             params.append(attribute)

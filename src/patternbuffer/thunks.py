@@ -20,7 +20,7 @@ from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, Classifier
 from patternbuffer.codec import json_default
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import CANON, Assertion
+from patternbuffer.model import CANON, TASK_RESOLVE, Assertion, task_schema
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ POLICIES = frozenset({INVENT_UNDER_CANON, OBSERVE_OR_UNKNOWN, DENY})
 UNKNOWN = object()  # the honest answer in observe_or_unknown worlds
 
 _RESOLVE_SCHEMA = {
+    "title": TASK_RESOLVE,
     "type": "object",
     "properties": {
         "items": {
@@ -169,7 +170,7 @@ class Resolver:
             "nothing that contradicts them. Plain, concrete items only.\n\n"
             "Constraints (canon, in force):\n- " + "\n- ".join(constraints or ["(none)"])
         )
-        out = self._model(prompt, _RESOLVE_SCHEMA)
+        out = self._model(prompt, task_schema(_RESOLVE_SCHEMA))
         appended: list[Assertion] = []
         if thunk_row.attribute == "contents":
             # Contents are never literal rows on one key (P2: emptiness and

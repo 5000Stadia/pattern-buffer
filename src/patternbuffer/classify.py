@@ -16,7 +16,14 @@ from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.codec import json_default
-from patternbuffer.model import ATTR_PREFIX, META_ATTRIBUTES, Assertion
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    META_ATTRIBUTES,
+    TASK_CLASSIFY,
+    TASK_CLASSIFY_BATCH,
+    Assertion,
+    task_schema,
+)
 from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
@@ -54,12 +61,33 @@ CREATE TABLE IF NOT EXISTS sidecar_classifier_meta (
 """
 
 _MODEL_SCHEMA = {
+    "title": TASK_CLASSIFY,
     "type": "object",
     "properties": {
         "durability": {"enum": sorted(_STANDING_DURABILITIES)},
         "class_confidence": {"type": "number"},
     },
     "required": ["durability", "class_confidence"],
+}
+
+_BATCH_SCHEMA = {
+    "title": TASK_CLASSIFY_BATCH,
+    "type": "object",
+    "properties": {
+        "verdicts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "index": {"type": "integer"},
+                    "durability": {"enum": sorted(_STANDING_DURABILITIES)},
+                    "class_confidence": {"type": "number"},
+                },
+                "required": ["index", "durability", "class_confidence"],
+            },
+        }
+    },
+    "required": ["verdicts"],
 }
 
 
@@ -155,7 +183,7 @@ class Classifier:
             "CONSTITUTIVE."
         )
         try:
-            out = self._model(prompt, _MODEL_SCHEMA)
+            out = self._model(prompt, task_schema(_MODEL_SCHEMA))
             durability = out["durability"]
             confidence = float(out["class_confidence"])
             if durability not in _STANDING_DURABILITIES:
@@ -271,24 +299,6 @@ class Classifier:
             f"{i}. {r.entity} · {r.attribute} · {json.dumps(r.value, default=json_default)}"
             for i, r in enumerate(rows)
         )
-        schema = {
-            "type": "object",
-            "properties": {
-                "verdicts": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "index": {"type": "integer"},
-                            "durability": {"enum": sorted(_STANDING_DURABILITIES)},
-                            "class_confidence": {"type": "number"},
-                        },
-                        "required": ["index", "durability", "class_confidence"],
-                    },
-                }
-            },
-            "required": ["verdicts"],
-        }
         prompt = (
             "Classify the lifetime of each fact about a world. Classes:\n"
             "CONSTITUTIVE: what the thing IS (identity, structure, fixtures, era); "
@@ -302,7 +312,7 @@ class Classifier:
         )
         verdicts: dict[int, tuple[str, float]] = {}
         try:
-            out = self._model(prompt, schema)
+            out = self._model(prompt, task_schema(_BATCH_SCHEMA))
             for v in out["verdicts"]:
                 # EVENT (or any non-standing verdict) is rejected -> the row
                 # falls to the asymmetric default below, never erased.

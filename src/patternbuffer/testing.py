@@ -13,6 +13,8 @@ import logging
 import re
 from typing import Any, Callable
 
+from patternbuffer.model import TASK_CLASSIFY, TASK_CLASSIFY_BATCH
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,11 +69,12 @@ def rule_classifier_fallback(movable_prefixes: tuple[str, ...] = ("obj:",)):
         return "STATE"
 
     def fallback(prompt: str, schema: dict[str, Any]) -> Any:
-        if not prompt.startswith("Classify the lifetime"):
+        task = schema.get("title")
+        if task not in (TASK_CLASSIFY, TASK_CLASSIFY_BATCH):
             raise StubModelExhausted(f"unscripted non-classify call: {prompt[:80]!r}")
-        # Batch path (INGEST-HARDENING-V1): the schema asks for `verdicts` and the
-        # prompt lists facts as "N. entity · attribute · value".
-        if "verdicts" in schema.get("properties", {}):
+        # Batch path (INGEST-HARDENING-V1): the prompt lists facts as
+        # "N. entity · attribute · value".
+        if task == TASK_CLASSIFY_BATCH:
             verdicts = []
             for line in prompt.splitlines():
                 m = re.match(r"\s*(\d+)\.\s+(\S+)\s+·", line)

@@ -264,12 +264,11 @@ class Projector:
         to an EVENT — the world at rest (spec §9.1); honors world_defining."""
         rows = [
             r
-            for r in self._buffer.visible(
-                frame=m.frame,
+            for r in self._indexes.key_rows(
+                entity, attr, frame=m.frame,
                 valid_as_of=m.as_of, asserted_as_of=m.asserted_as_of,
             )
-            if self._indexes.resolve_entity(r.entity) == entity
-            and not r.entity.startswith("a:")
+            if not r.entity.startswith("a:")
             and not r.entity.startswith(ATTR_PREFIX)
             and self._indexes.fold_attribute(r.attribute) == attr  # already fold-keyed
             and r.value_type != "unresolved"

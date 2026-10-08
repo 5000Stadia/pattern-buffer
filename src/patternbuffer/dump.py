@@ -103,8 +103,10 @@ def build(jsonl: str, path: str | Path) -> PatternBuffer:
 
     buffer = PatternBuffer(path, world_id=rows[0].world_id)
     try:
-        for row in rows:
-            buffer._insert(row)
+        # One transaction for the whole replay: a per-row commit made a 20k-row
+        # rebuild take minutes. All-or-none is unchanged (the file is removed
+        # on any failure).
+        buffer.atomic_unit(lambda: [buffer._insert(row) for row in rows])
     except Exception:
         buffer.close()
         path.unlink(missing_ok=True)

@@ -24,7 +24,14 @@ from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.codec import decode_value, encode_out
 from patternbuffer.identity import IdentityRegistry
-from patternbuffer.model import ATTR_PREFIX, CANON, SEMANTICS_PREDICATES, Assertion
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    SEMANTICS_PREDICATES,
+    TASK_EXTRACT,
+    Assertion,
+    task_schema,
+)
 from patternbuffer.roles import WriterRole
 from patternbuffer.semantics import AttributeSemantics
 from patternbuffer.tmaint import AtomicAbort
@@ -66,6 +73,7 @@ _BUILTIN_ALIASES = {
 }
 
 _EXTRACT_SCHEMA = {
+    "title": TASK_EXTRACT,
     "type": "object",
     "properties": {
         "items": {
@@ -376,6 +384,7 @@ class Ingestor:
         with `valid_to` ABSENT (the standing destination — never `[t,t)`, else
         `locate()` could never flip to it). An `attribute="complete"` row is
         stray and never durable."""
+        items = list(items)  # stamp a copy: the caller's extract() output stays raw
         cursor = self.cursor.position
 
         def ev_id(it: dict[str, Any]) -> str | None:
@@ -1030,7 +1039,7 @@ class Ingestor:
         # consumer auditing/persisting extraction output must see what the model
         # said. Re-targeting a batch (staging/quarantine) is host policy over a
         # COPY — see ADOPTION's strip idiom and the Receipt warning.
-        return self._model(prompt, _EXTRACT_SCHEMA)["items"]
+        return self._model(prompt, task_schema(_EXTRACT_SCHEMA))["items"]
 
     def ingest(self, text: str, context: str = "", frame: str | None = None,
                classify: str = "inline", extract: str = "full",
