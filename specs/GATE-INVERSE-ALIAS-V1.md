@@ -120,3 +120,39 @@ source; the gate swap stays the guarantee.
 - **`wearing`:** the same cases.
 - **`atomic=True`:** a swapped item commits inside the unit.
 - **Full suite green.**
+
+## Internal pre-review (2026-10-08): RED on §5 only, gate GREEN-with-nits
+
+Fix these before pbr signs off. Probes (p1–p13) are in the session scratchpad.
+
+**§5 recipe**
+1. **It misses receipt-less copies.** Construct re-ingests promoted values into
+   canon already as `held_by`, which leaves 17 rows without a receipt across 3
+   files. The fix: also report any `held_by`/`worn_by` row with the same
+   (entity, attribute, value) as a receipted row, with `receipt_id: None`.
+2. **Text-valued inverted rows can't be repaired by a swap.** There are 8 of
+   them. Repair is retract, then re-assert as a literal `holds`/`wearing`. Add
+   `value_type` to the output.
+3. **Duplicates in one frame refuse each other's repair as a cycle.** The fix:
+   group by (frame, triple), retract all, assert once.
+4. **The output drops `valid`.** Add it.
+5. **ADOPTION gap.** It should say that until repair, correct writes on those
+   pairs are skipped as cycles, and atomic sets abort.
+
+**Gate nits**
+6. A skip record should carry the authored form as well as the swapped one.
+7. **Alias rebuild order.** Rebuild as built-ins → receipts → pop the inverse
+   keys. Record the first hop of an alias chain. Reject inverse keys in
+   `add_attribute_alias`. Today the order discards host overrides such as
+   `type->genre`.
+8. **Older engines misread the new receipt.** An older engine reading
+   `holds->held_by (inverse)` installs the alias `held_by (inverse)`. Put the
+   marker first, or use a separate meta attribute.
+9. **Prompt wording.**
+   - The rules say "use 'in' for ALL containment" right beside the new line.
+   - Say "an object physically held or carried", not "possession".
+   - Drop the spec tag from the prompt.
+
+**Host notes for construct**
+- The settle guard checks `attribute == "in"` only.
+- `wearing` is not in construct's set-valued list.
