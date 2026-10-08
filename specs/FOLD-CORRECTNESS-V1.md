@@ -1,6 +1,9 @@
 # FOLD-CORRECTNESS-V1: one set of fold rules across classes, ties and time
 
-**Status:** DRAFT r1 (2026-10-08). Not yet reviewed by pbr. Built from batch A of
+**Status:** DRAFT r2 (2026-10-08). The gated implementation is on branch
+`impl/fold-correctness-v1`: 27 oracle tests, 604 green, no existing test
+changed. r2 records what the build made explicit (see "r2 clarifications" at
+the end). Not yet reviewed by pbr. Built from batch A of
 `docs/AUDIT-2026-10.md`, which reproduced every case below. It changes served
 answers only where today's answers are wrong. It waits on Kabe's go-ahead before
 review. Construct asked for §3 in particular, since its player moves every few
@@ -156,3 +159,33 @@ One test per oracle above, in `tests/test_fold.py` (§1–§4),
 `tests/test_world_retrieval.py` (§7). The full suite must stay green. Any
 existing test whose expectation encodes one of the wrong answers above is
 updated in the same commit, with the audit finding cited.
+
+## r2 clarifications (from the gated build)
+
+- **§4, across sources.** "A timed STATE row still supersedes a timeless habit"
+  holds within one source class. Across classes, a disagreement between them now
+  raises the §7.2 flag instead of silently serving STATE, which is the
+  whitepaper's cross-source rule applied to habits too.
+- **§4, within one source.** A timeless STATE row and a timeless DISPOSITIONAL
+  row with different values tie at the same (absent) time, so they now conflict.
+  Two undated contradictory standing claims are a contradiction to surface, not
+  a silent STATE win.
+- **§4 in the establishing lens.** The establishing view serves a DISPOSITIONAL
+  winner as is.
+- **§6 receipt.** `SkipRecord` gains an optional `detail` (the offending value).
+  It is emitted only when set, so every existing receipt is byte-identical.
+- **§7 leftovers.**
+  - The sentinel remains reachable through the engine-internal
+    `Indexes.fold_attribute()`/`key_rows()`. Neither is porcelain.
+  - Salience was re-keyed, so its scores are unchanged.
+  - Resolver prompt lines now say `in`.
+- **§3 conflict order.** A cross-source containment conflict lists its rows in
+  assertion order (previously id-string order). The set is the same.
+- **Blast radius, measured on fresh copies:**
+  - case-1660: §1–§6 change nothing; §7 renames 55 keys.
+  - anchor (§1): `place:anchor water_allocation_balance`'s establishing value
+    becomes the earliest row (t=−3650), no longer the t=0.0 one.
+  - anchor (§4): `person:pell duty_assignment` serves the later DISPOSITIONAL
+    deputy_warden (t=14) over off-shift (t=3).
+  - anchor (§7): 44 keys renamed. Default neighborhoods are unchanged
+    everywhere.
