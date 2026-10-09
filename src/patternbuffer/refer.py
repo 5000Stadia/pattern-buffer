@@ -111,11 +111,14 @@ class Refer:
     ) -> Resolution:
         # ---- Tier 1a: exact name/alias hit through the identity registry.
         # Try the raw expression and its determiner-stripped core (HD 003):
-        # "my brass measuring spoon" misses the exact name otherwise.
+        # "my brass measuring spoon" misses the exact name otherwise. Names
+        # and aliases are read in the call's frame only, with no canon
+        # fallback (FRAME-SCOPED-IDENTITY-V1 §2): a name private to Alice
+        # resolves in Alice's frame and never in canon's.
         core = self._strip_determiner(description)
-        hits = self._registry.by_alias(description)
+        hits = self._registry.by_alias(description, frame=frame)
         if core != description.strip().lower():
-            hits = hits | self._registry.by_alias(core)
+            hits = hits | self._registry.by_alias(core, frame=frame)
         if len(hits) == 1:
             return Resolution(RESOLVED, next(iter(hits)),
                               receipt={"tier": 1, "signals": ["alias_exact"]})

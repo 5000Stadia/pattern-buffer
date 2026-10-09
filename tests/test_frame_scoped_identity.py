@@ -9,10 +9,16 @@ Alice's frame is `knows:person:alice`; Marn's is `knows:person:marn`.
 
 from __future__ import annotations
 
+import os
+import shutil
+import sqlite3
+from pathlib import Path
+
 import pytest
 
 from patternbuffer import AtomicAbort, World
-from patternbuffer.refer import RESOLVED
+from patternbuffer.refer import RESOLVED, UNDERDETERMINED
+from patternbuffer.roles import _make_engine_roles
 from patternbuffer.testing import StubModel, rule_classifier_fallback
 
 ALICE = "knows:person:alice"
@@ -136,3 +142,198 @@ def test_1g_refer_accrues_in_the_calls_frame(world):
     assert r.status == RESOLVED and r.entity_id == "person:bob"
     rows = world.buffer.visible(attribute="alias", value="the traitor")
     assert [(row.entity, row.frame) for row in rows] == [("person:bob", ALICE)]
+
+
+# --------------------------------------------- §2 identity reads are canon reads
+
+INGESTOR = _make_engine_roles()["ingestor"]
+
+
+def _legacy_row(world: World, entity: str, attribute: str, value, frame: str,
+                value_type: str = "entity"):
+    """A row already in a log, appended past the gate with the ingestor role
+    (what today's gate let through, or a log written before this spec)."""
+    return world.buffer.append(entity=entity, attribute=attribute, value=value,
+                               value_type=value_type, status="stated",
+                               role=INGESTOR, frame=frame)
+
+
+def test_2a_legacy_same_as_outside_canon_is_inert(world):
+    """2a: a legacy `same_as` in Alice's frame merges nothing: the closure is
+    canon's, so canon never serves the stranger's "spy" under Bob's id."""
+    world.ingest_structured([
+        {"entity": "person:bob", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:stranger", "attribute": "occupation", "value": "spy",
+         "valid_from": 1.0},
+    ])
+    _legacy_row(world, "person:stranger", "same_as", "person:bob", ALICE)
+    assert world.registry.closure("person:stranger") == {"person:stranger"}
+    assert world.porcelain.state("person:bob", "occupation")["status"] == "unknown"
+
+
+def test_2b_a_private_name_never_drives_canon_reconcile(world):
+    """2b: a name known only to Alice is no canon anchor: reconcile merges 0
+    pairs and proposes none."""
+    world.ingest_structured([
+        {"entity": "person:bob", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:bob", "attribute": "name", "value": "Bob", "timeless": True},
+        {"entity": "person:hooded", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    world.ingest_structured([
+        {"entity": "person:hooded", "attribute": "name", "value": "Bob", "timeless": True},
+    ], frame=ALICE)
+    out = world.porcelain.reconcile()
+    assert out["merges"] == 0 and out["proposals"] == []
+    assert world.registry.closure("person:hooded") == {"person:hooded"}
+
+
+def test_2c_a_private_alias_resolves_only_in_its_frame(world):
+    """2c: `by_alias` and `refer` read names and aliases in the asked frame
+    only, with no canon fallback."""
+    world.ingest_structured([
+        {"entity": "person:bob", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    world.ingest_structured([
+        {"entity": "person:bob", "attribute": "alias", "value": "the traitor",
+         "timeless": True},
+    ], frame=ALICE)
+    assert world.registry.by_alias("the traitor") == set()
+    assert world.registry.by_alias("the traitor", frame=ALICE) == {"person:bob"}
+    assert world.refer("the traitor").status == UNDERDETERMINED
+    r = world.refer("the traitor", frame=ALICE)
+    assert r.status == RESOLVED and r.entity_id == "person:bob"
+
+
+def test_2d_canon_retype_retracts_only_canon_kind_rows(world):
+    """2d: `retype` retracts canon kind rows only; Marn's "ghost" survives."""
+    world.ingest_structured([
+        {"entity": "obj:crown", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    marn_row = world.ingest_structured([
+        {"entity": "obj:crown", "attribute": "kind", "value": "ghost", "timeless": True},
+    ], frame=MARN)[0]
+    canon_row = world.buffer.visible(entity="obj:crown", attribute="kind", frame="canon")[0]
+    receipt = world.porcelain.retype("obj:crown", "relic", "a slip")
+    assert receipt["outcome"] == "retyped"
+    assert receipt["retracted"] == [canon_row.id]
+    assert world.porcelain.state("obj:crown", "kind")["fact"]["value"] == "relic"
+    marn = world.porcelain.state("obj:crown", "kind", frame=MARN)
+    assert marn["fact"]["value"] == "ghost"
+    assert world.buffer.visible(entity=marn_row.id, attribute="retracts") == []
+
+
+def test_2e_a_slip_is_anchored_on_canon_names(world):
+    """2e: canon `place:harth` (named "Harth") beside canon `person:harth`,
+    whose "Harth" lives only in Marn's frame: no typing conflict."""
+    world.ingest_structured([
+        {"entity": "place:harth", "attribute": "kind", "value": "place", "timeless": True},
+        {"entity": "place:harth", "attribute": "name", "value": "Harth", "timeless": True},
+        {"entity": "obj:well", "attribute": "in", "value": "place:harth"},
+        {"entity": "person:harth", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    world.ingest_structured([
+        {"entity": "person:harth", "attribute": "name", "value": "Harth", "timeless": True},
+    ], frame=MARN)
+    assert world.porcelain.typing_conflicts() == []
+
+
+def test_2f_a_belief_relation_never_blocks_a_canon_merge(world):
+    """2f: two canon "Clay"s, with `clay1 · father_of · clay2` only in Alice's
+    frame: canon's own rules decide, and they say mergeable."""
+    world.ingest_structured([
+        {"entity": "person:clay1", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:clay1", "attribute": "name", "value": "Clay", "timeless": True},
+        {"entity": "person:clay2", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:clay2", "attribute": "name", "value": "Clay", "timeless": True},
+    ])
+    world.ingest_structured([
+        {"entity": "person:clay1", "attribute": "father_of", "value": "person:clay2"},
+    ], frame=ALICE)
+    assert world.registry._mergeable("person:clay1", "person:clay2") is True
+
+
+def test_2g_a_belief_containment_never_vetoes_a_canon_merge(world):
+    """2g: `obj:a · in · obj:b` only in Alice's frame: the canon guarded merge
+    goes through."""
+    world.ingest_structured([
+        {"entity": "obj:a", "attribute": "in", "value": "obj:b"},
+    ], frame=ALICE)
+    assert world.porcelain.merge("obj:a", "obj:b", "one box")["outcome"] == "merged"
+
+
+def test_2h_durable_contradictions_read_canon(world):
+    """2h: a contradiction carried only by a `knows:` attribute is none (its
+    folds were already canon); the same contradiction in canon is reported."""
+    world.ingest_structured([
+        {"entity": "person:p", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:q", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:p", "attribute": "rank", "value": "king", "timeless": True},
+    ])
+    private = world.ingest_structured([
+        {"entity": "person:q", "attribute": "rank", "value": "beggar", "timeless": True},
+    ], frame=ALICE)[0]
+    for row in world.buffer.visible(attribute="rank"):
+        world.classifier.set(row.id, "CONSTITUTIVE", 1.0)
+    assert private.frame == ALICE
+    assert world.registry.durable_contradictions("person:p", "person:q") == []
+    canon = world.ingest_structured([
+        {"entity": "person:q", "attribute": "rank", "value": "beggar", "timeless": True},
+    ])[0]
+    world.classifier.set(canon.id, "CONSTITUTIVE", 1.0)
+    assert world.registry.durable_contradictions("person:p", "person:q") == [
+        "rank: 'king' vs 'beggar'"]
+
+
+def test_2i_election_is_first_seen_among_canon_rows(world):
+    """2i (the rule): a closure's representative is its first-seen member among
+    canon rows — a non-canon row that mentions a member earlier elects
+    nothing."""
+    world.ingest_structured([
+        {"entity": "person:daniel", "attribute": "mood", "value": "calm"},
+    ], frame=ALICE)
+    world.ingest_structured([
+        {"entity": "person:dan", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:daniel", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    assert world.porcelain.merge("person:daniel", "person:dan", "one man")["outcome"] == "merged"
+    assert world.registry.resolve("person:daniel") == "person:dan"
+
+
+def _construct_worlds() -> list[Path]:
+    root = os.environ.get("PB_CONSTRUCT_WORLDS")
+    return sorted(Path(root).glob("*.world")) if root else []
+
+
+@pytest.mark.skipif(not _construct_worlds(),
+                    reason="opt-in corpus check: set PB_CONSTRUCT_WORLDS to a "
+                           "directory of host world files (read through copies)")
+def test_2i_construct_worlds_reelect_no_closure(tmp_path):
+    """2i (the measurement): over a host corpus, electing among canon rows
+    re-elects no closure that electing among all rows chose differently.
+    Each world is read through a copy; the originals are never opened."""
+    reelected: list[tuple[str, str, str]] = []
+    for source in _construct_worlds():
+        copy = tmp_path / source.name
+        shutil.copyfile(source, copy)
+        conn = sqlite3.connect(copy)
+        world_id = conn.execute(
+            "SELECT value FROM world_meta WHERE key = 'world_id'").fetchone()[0]
+        conn.close()
+        w = World(copy, world_id=world_id)
+        try:
+            reg = w.registry
+            closures = {frozenset(reg.closure(e)) for e in reg._components()}
+            merged = set().union(*closures) if closures else set()
+            canon_seen = reg._first_seen_scan(merged, None)
+            all_seen: dict[str, int] = {}
+            for row in w.buffer.visible():
+                for eid in (row.entity, row.value if row.value_type == "entity" else None):
+                    if isinstance(eid, str) and eid in merged and eid not in all_seen:
+                        all_seen[eid] = row.seq
+            for closure in closures:
+                old, new = reg._elect(closure, all_seen), reg._elect(closure, canon_seen)
+                if old != new:
+                    reelected.append((source.name, old, new))
+        finally:
+            w.close()
+    assert reelected == []

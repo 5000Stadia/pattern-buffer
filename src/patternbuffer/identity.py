@@ -137,7 +137,8 @@ class IdentityRegistry:
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
         out: list[str] = []
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+        # FRAME-SCOPED-IDENTITY-V1 §2: a canon merge veto reads canon only.
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=CANON):
             if row.attribute not in family or row.value_type != "entity":
                 continue
             if not isinstance(row.value, str):
@@ -155,7 +156,9 @@ class IdentityRegistry:
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
         out: list[str] = []
-        for row in self._buffer.visible(attribute="distinct_from", asserted_as_of=asserted_as_of):
+        # FRAME-SCOPED-IDENTITY-V1 §2: a canon merge veto reads canon only.
+        for row in self._buffer.visible(attribute="distinct_from",
+                                        asserted_as_of=asserted_as_of, frame=CANON):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             e, v = row.entity, row.value
@@ -174,7 +177,9 @@ class IdentityRegistry:
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
         out: list[str] = []
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+        # FRAME-SCOPED-IDENTITY-V1 §2: Alice's belief that two people are kin
+        # never blocks canon's merge of them — the signal reads canon only.
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=CANON):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             if row.attribute in family or row.attribute in _IDENTITY_ATTRS:
@@ -205,7 +210,9 @@ class IdentityRegistry:
 
         def authored_attrs(clos: set[str]) -> set[str]:
             out = set()
-            for row in self._buffer.visible():
+            # FRAME-SCOPED-IDENTITY-V1 §2: the folds below are canon already;
+            # the scan that picks their keys is scoped to match.
+            for row in self._buffer.visible(frame=CANON):
                 if row.entity not in clos:
                     continue
                 if row.attribute in ("name", "alias", "kind") \
@@ -381,9 +388,13 @@ class IdentityRegistry:
         return self._component_of
 
     def _same_as_edges(self, asserted_as_of: int | None) -> dict[str, set[str]]:
-        """Visible same_as rows as an undirected adjacency map."""
+        """Visible canon same_as rows as an undirected adjacency map. Identity
+        is canon's (FRAME-SCOPED-IDENTITY-V1 §2): a `same_as` outside canon is
+        inert, so a belief frame can never hold a merge of its own, and every
+        frame resolves ids through this one closure."""
         edges: dict[str, set[str]] = {}
-        for row in self._buffer.visible(attribute="same_as", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="same_as",
+                                        asserted_as_of=asserted_as_of, frame=CANON):
             if row.value_type == "entity":
                 edges.setdefault(row.entity, set()).add(row.value)
                 edges.setdefault(row.value, set()).add(row.entity)
@@ -402,10 +413,12 @@ class IdentityRegistry:
         return out
 
     def _first_seen_scan(self, members, asserted_as_of: int | None) -> dict[str, int]:
-        """The seq at which each of `members` first appears in a visible row,
-        as subject or as an entity value — the log order election reads."""
+        """The seq at which each of `members` first appears in a visible canon
+        row, as subject or as an entity value — the log order election reads.
+        The election is "first seen among canon rows" (FRAME-SCOPED-IDENTITY-V1
+        §2): a closure is canon's, and so is the name it is served under."""
         first_seen: dict[str, int] = {}
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=CANON):
             if row.entity in members and row.entity not in first_seen:
                 first_seen[row.entity] = row.seq
             if (
@@ -423,10 +436,11 @@ class IdentityRegistry:
         return min(closure, key=lambda e: (first_seen.get(e, 1 << 62), e))
 
     def candidates(self, entity: str) -> set[str]:
-        """Open maybe_same_as edges touching this entity's closure."""
+        """Open canon maybe_same_as edges touching this entity's closure
+        (FRAME-SCOPED-IDENTITY-V1 §2: proposals are canon's)."""
         closure = self.closure(entity)
         out = set()
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if row.entity in closure:
                 out.add(row.value)
             elif row.value in closure:
@@ -440,7 +454,9 @@ class IdentityRegistry:
         ``normalized_text`` is ``strip().lower()`` (the grouping key)."""
         closure = self.closure(entity)
         out: set[tuple[str, str]] = set()
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: a canon merge anchors on canon names
+        # only — a name known only to Alice never drives canon identity.
+        for row in self._buffer.visible(frame=CANON):
             if row.entity in closure and row.attribute in ("name", "alias") \
                     and isinstance(row.value, str):
                 out.add((row.attribute, row.value.strip().lower()))
@@ -575,9 +591,10 @@ class IdentityRegistry:
         return "unlinked", None                          # no edge yet — host runs reconcile
 
     def _has_proposal(self, a: str, b: str) -> bool:
-        """A visible maybe_same_as already relates a's closure to b's."""
+        """A visible canon maybe_same_as already relates a's closure to b's
+        (FRAME-SCOPED-IDENTITY-V1 §2)."""
         clos_a, clos_b = self.closure(a), self.closure(b)
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             if (row.entity in clos_a and row.value in clos_b) or \
@@ -592,12 +609,14 @@ class IdentityRegistry:
         never a containment pair). Otherwise it stays a proposal for explicit
         host confirmation (#31). Returns merges performed."""
         promoted = 0
-        for row in list(self._buffer.visible(attribute="maybe_same_as")):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals and their evidence are canon's.
+        for row in list(self._buffer.visible(attribute="maybe_same_as", frame=CANON)):
             a, b = row.entity, row.value
             if not isinstance(b, str):
                 continue
             if self._mergeable(a, b):
-                ev = self._buffer.visible(entity=row.id, attribute="evidence")
+                ev = self._buffer.visible(entity=row.id, attribute="evidence",
+                                          frame=CANON)
                 self.merge(a, b, evidence=(
                     f"promoted from {row.id}: gated coreference"
                     + (f"; proposal evidence: {ev[0].value}" if ev else "")))
@@ -616,7 +635,8 @@ class IdentityRegistry:
         pre-existing within-chunk proposals through the same gate. Idempotent.
         Returns merges performed."""
         text_to_closures: dict[str, set[str]] = {}
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: canon reconcile reads canon names only.
+        for row in self._buffer.visible(frame=CANON):
             if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
                 continue
             if row.entity.startswith("a:"):
@@ -710,10 +730,13 @@ class IdentityRegistry:
         merge before asserting distinctness (V2 §2)."""
         clos = self.closure(a)
         out: list[str] = []
-        for row in self._buffer.visible(attribute="same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: the closure is canon's, and so are the
+        # rows that make it.
+        for row in self._buffer.visible(attribute="same_as", frame=CANON):
             if (row.entity in clos and isinstance(row.value, str) and row.value in clos):
                 out.append(row.id)
-                for m in self._buffer.visible(entity=row.id, attribute="caused_by", value_type="entity"):
+                for m in self._buffer.visible(entity=row.id, attribute="caused_by",
+                                              value_type="entity", frame=CANON):
                     if isinstance(m.value, str):
                         out.append(m.value)
         return out
@@ -729,13 +752,15 @@ class IdentityRegistry:
         if not self._has_proposal(a, b):
             return self._receipt("no_proposal", ra)
         ev = None
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals and their evidence are canon's.
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             clos_a, clos_b = self.closure(a), self.closure(b)
             if (row.entity in clos_a and row.value in clos_b) or \
                     (row.entity in clos_b and row.value in clos_a):
-                evr = self._buffer.visible(entity=row.id, attribute="evidence")
+                evr = self._buffer.visible(entity=row.id, attribute="evidence",
+                                           frame=CANON)
                 ev = evr[0].value if evr else None
                 break
         return self.guarded_merge(a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}")
@@ -773,7 +798,8 @@ class IdentityRegistry:
         zero model calls, idempotent."""
         merged: list[dict] = []
         seen: set[tuple[str, str]] = set()
-        for row in list(self._buffer.visible(attribute="maybe_same_as")):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals are canon's.
+        for row in list(self._buffer.visible(attribute="maybe_same_as", frame=CANON)):
             if not isinstance(row.value, str):
                 continue
             ra, rb = self.resolve(row.entity), self.resolve(row.value)
@@ -812,7 +838,8 @@ class IdentityRegistry:
         family = self._containment_family()
         clos_a, clos_b = self.closure(a), self.closure(b)
         out = []
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: the slip signature is a canon decision.
+        for row in self._buffer.visible(frame=CANON):
             if row.attribute not in family or row.value_type != "entity":
                 continue
             if not isinstance(row.value, str):
@@ -829,7 +856,8 @@ class IdentityRegistry:
         re-point correctly after the absorb)."""
         clos = self.closure(entity)
         out = []
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: the slip signature is a canon decision.
+        for row in self._buffer.visible(frame=CANON):
             if row.entity not in clos:
                 continue
             if row.attribute in ("name", "alias", "kind") \
@@ -843,8 +871,9 @@ class IdentityRegistry:
         """Visible containment rows valued INTO the entity's closure."""
         family = self._containment_family()
         clos = {self.resolve(c) for c in self.closure(entity)}
+        # FRAME-SCOPED-IDENTITY-V1 §2: the slip signature is a canon decision.
         return [
-            row for row in self._buffer.visible()
+            row for row in self._buffer.visible(frame=CANON)
             if row.attribute in family and row.value_type == "entity"
             and isinstance(row.value, str) and self.resolve(row.value) in clos
         ]
@@ -872,7 +901,9 @@ class IdentityRegistry:
         so without this read the slips are invisible. Zero writes, zero model
         calls; the host adjudicates each with `retype(...)` or leaves it."""
         text_to_reps: dict[str, set[str]] = {}
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: a slip is a canon question, anchored on
+        # canon names only — a name living in Marn's frame is not canon's.
+        for row in self._buffer.visible(frame=CANON):
             if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
                 continue
             if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
@@ -946,7 +977,9 @@ class IdentityRegistry:
 
         def _retract_kind_rows(target_entity: str) -> None:
             clos = self.closure(target_entity)
-            for row in self._buffer.visible(attribute="kind"):
+            # FRAME-SCOPED-IDENTITY-V1 §2: a canon retype retracts canon kind
+            # rows only — Marn's belief about what the thing is survives.
+            for row in self._buffer.visible(attribute="kind", frame=CANON):
                 if row.entity not in clos:
                     continue
                 v = row.value
@@ -1066,7 +1099,8 @@ class IdentityRegistry:
         Excludes identity/meta/kind/caused_by edges and a:/attr: subjects."""
         clos_a, clos_b = self.closure(a), self.closure(b)
         out: list[dict] = []
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: triage evidence for a canon merge is canon.
+        for row in self._buffer.visible(frame=CANON):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             if row.attribute in _IDENTITY_ATTRS or row.attribute in META_ATTRIBUTES:
@@ -1099,7 +1133,8 @@ class IdentityRegistry:
         (live bindings are not unique — plural, Codex r1)."""
         clos_a, clos_b = self.closure(a), self.closure(b)
         out: list[str] = []
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals are canon's.
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             if (row.entity in clos_a and row.value in clos_b) or \
@@ -1178,7 +1213,8 @@ class IdentityRegistry:
         pair; stale (already-merged) proposals are skipped."""
         out: list[dict] = []
         seen: set[tuple[str, str]] = set()
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals and their evidence are canon's.
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             ra, rb = self.resolve(row.entity), self.resolve(row.value)
@@ -1190,7 +1226,7 @@ class IdentityRegistry:
             if key in seen:
                 continue
             seen.add(key)
-            evr = self._buffer.visible(entity=row.id, attribute="evidence")
+            evr = self._buffer.visible(entity=row.id, attribute="evidence", frame=CANON)
             ctx = self._decline_context(ra, rb)
             out.append({
                 "a": ra, "b": rb,
@@ -1200,14 +1236,25 @@ class IdentityRegistry:
             })
         return out
 
-    def by_alias(self, alias: str, asserted_as_of: int | None = None) -> set[str]:
+    def by_alias(self, alias: str, asserted_as_of: int | None = None,
+                 frame: str = CANON) -> set[str]:
+        """Entities a `name` or `alias` row in `frame` names exactly,
+        identity-resolved: refer's tier 1a.
+
+        Description is perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows
+        are read in `frame` only (an observer frame through its §7), with no
+        canon fallback for a non-canon frame — frames never inherit canon in
+        a read. A name private to Alice resolves in Alice's frame, never in
+        canon's."""
         needle = alias.strip().lower()
         hits = set()
-        for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of,
+                                        frame=frame):
             if row.value == needle:
                 hits.add(self.resolve(row.entity, asserted_as_of))
         # Names assert identity too: check 'name' rows.
-        for row in self._buffer.visible(attribute="name", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="name", asserted_as_of=asserted_as_of,
+                                        frame=frame):
             if isinstance(row.value, str) and row.value.strip().lower() == needle:
                 hits.add(self.resolve(row.entity, asserted_as_of))
         return hits
