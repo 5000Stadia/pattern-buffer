@@ -337,3 +337,99 @@ def test_2i_construct_worlds_reelect_no_closure(tmp_path):
         finally:
             w.close()
     assert reelected == []
+
+
+# ------------------------------- §3 aka vetoes act on whole correlation groups
+
+
+def _people(world: World, *names: str) -> None:
+    world.ingest_structured([
+        {"entity": f"person:{n}", "attribute": "kind", "value": "person", "timeless": True}
+        for n in names
+    ])
+
+
+def _masked_and_ilsa(world: World) -> None:
+    """The masked figure (alias "ilsa") and Ilsa (name "Ilsa"), correlated by
+    a reveal at t=10."""
+    world.ingest_structured([
+        {"entity": "person:masked", "attribute": "kind", "value": "person",
+         "timeless": True, "aliases": ["ilsa"]},
+        {"entity": "person:ilsa", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:ilsa", "attribute": "name", "value": "Ilsa", "timeless": True},
+    ])
+    assert world.correlate("person:masked", "person:ilsa", evidence="the reveal",
+                           valid_from=10.0)["outcome"] == "correlated"
+
+
+def test_3a_correlate_is_vetoed_across_groups(world):
+    """3a: canon a~b, then reject(a, c): correlate(b, c) would join two ids
+    the world says are different — vetoed, naming the edge; nothing written."""
+    _people(world, "a", "b", "c")
+    assert world.correlate("person:a", "person:b", evidence="r1")["outcome"] == "correlated"
+    assert world.porcelain.reject("person:a", "person:c")["outcome"] == "rejected"
+    head = world.buffer.head()
+    receipt = world.correlate("person:b", "person:c", evidence="r2")
+    assert receipt["outcome"] == "vetoed_distinct"
+    assert receipt["reason"] == "distinct_from"
+    assert receipt["blocking_edges"] == ["person:a·distinct_from·person:c"]
+    assert world.buffer.head() == head
+
+
+def test_3b_a_group_conflict_surfaces_as_of(world):
+    """3b: raw a~b (from 2) and b~c (from 5), over a reject(a, c) made before
+    either: one group entry at t=6, none at t=3."""
+    _people(world, "a", "b", "c")
+    world.porcelain.reject("person:a", "person:c")
+    world.ingest_structured([
+        {"entity": "person:a", "attribute": "aka", "value": "person:b", "valid_from": 2.0},
+        {"entity": "person:b", "attribute": "aka", "value": "person:c", "valid_from": 5.0},
+    ])
+    assert world.porcelain.correlation_conflicts(as_of=6.0) == [{
+        "a": "person:a", "b": "person:c", "aka_edge": None,
+        "aka_path": ["person:a·aka·person:b", "person:b·aka·person:c"],
+        "distinct_edges": ["person:a·distinct_from·person:c"],
+    }]
+    assert world.porcelain.correlation_conflicts(as_of=3.0) == []
+
+
+def test_3c_reconcile_never_collapses_a_reveal(world):
+    """3c: the shared anchor "ilsa" no longer merges the two facets, so the
+    masked figure's name does not leak to before the reveal."""
+    _masked_and_ilsa(world)
+    head = world.buffer.head()
+    assert world.registry.reconcile() == 0
+    assert world.buffer.head() == head                       # no proposal either
+    assert world.state("person:masked", "name", valid_as_of=5.0).winner is None
+
+
+def test_3d_a_proposal_between_facets_is_declined_correlated(world):
+    """3d: a `maybe_same_as` between correlated facets lists with decline code
+    `correlated`, and promotion merges nothing."""
+    _masked_and_ilsa(world)
+    world.registry.maybe_same_as("person:masked", "person:ilsa", evidence="extractor")
+    listed = [(p["a"], p["b"], p["auto_decline"]["code"])
+              for p in world.porcelain.proposals()]
+    assert listed == [("person:masked", "person:ilsa", "correlated")]
+    assert world.registry.promote_identity_proposals() == 0
+
+
+def test_3e_reject_of_correlated_facets_is_a_conflict(world):
+    """3e: after correlate(p, q), reject(p, q) names the `aka` row and writes
+    nothing."""
+    _people(world, "p", "q")
+    correlated = world.correlate("person:p", "person:q", evidence="reveal")
+    head = world.buffer.head()
+    assert world.porcelain.reject("person:p", "person:q") == {
+        "outcome": "conflict_already_correlated", "canonical_id": "person:p",
+        "merge_event_id": None, "reason": "already_correlated",
+        "blocking_edges": [correlated["aka_assertion_id"]],
+    }
+    assert world.buffer.head() == head
+
+
+def test_3f_a_host_merge_stays_available(world):
+    """3f: `aka` is a soft auto-merge block, never a hard veto."""
+    _masked_and_ilsa(world)
+    assert world.porcelain.merge("person:masked", "person:ilsa",
+                                 "the host judged")["outcome"] == "merged"

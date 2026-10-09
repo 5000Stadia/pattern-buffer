@@ -640,7 +640,10 @@ class Porcelain:
         """Assert these are definitively different (`distinct_from`) — the
         sticky separation that keeps two same-named entities (two Clays) apart
         on every future reconcile. Returns a Receipt
-        (rejected | noop_already_distinct | conflict_already_merged)."""
+        (rejected | noop_already_distinct | conflict_already_merged |
+        conflict_already_correlated — the pair are facets of one canon
+        correlation group; `blocking_edges` names its `aka` rows, and nothing
+        is written: FRAME-SCOPED-IDENTITY-V1 §3(d))."""
         return self._w.registry.reject(a, b)
 
     # -------------------------------------------- SHAPE-FIX-V1 (identity shape)
@@ -679,7 +682,10 @@ class Porcelain:
         `aka`), without merging them — the reveal/dual-persona/amalgamation call.
         `at` is the reveal's valid_from. Returns a Receipt
         (correlated | noop_already_correlated | vetoed_distinct). The hard
-        `distinct_from` veto is absolute."""
+        `distinct_from` veto is absolute, and acts on whole correlation groups:
+        a `distinct_from` between a's group and b's vetoes too
+        (FRAME-SCOPED-IDENTITY-V1 §3(a)). A correlated pair is never
+        auto-merged (`reconcile`, promotion); `merge`/`confirm` still can."""
         return self._w.registry.correlate(a, b, evidence, valid_from=at)
 
     def correlations(self, entity: str, as_of: float | None = None,
@@ -710,10 +716,14 @@ class Porcelain:
 
     def correlation_conflicts(self, as_of: float | None = None,
                               frame: str = CANON) -> list[dict]:
-        """Pairs carrying both an `aka` and a `distinct_from` (a raw-authored
-        contradiction) for host adjudication. The guarded `correlate()` prevents
-        these at the source; this surfaces any that slipped in via raw ingest.
-        `aka` rows are filtered by `as_of`/`frame`; `distinct_from` is global."""
+        """Every `distinct_from` whose endpoints lie in one correlation group (a
+        raw-authored contradiction) for host adjudication. The guarded
+        `correlate()` prevents these at the source; this surfaces any that
+        slipped in via raw ingest. Both edges are the frame's own: `aka` rows
+        filtered by `as_of`, `distinct_from` valid-time-blind. Direct entries
+        (one `aka` row joins the pair) come first; group entries carry
+        `aka_edge: None` and the `aka_path` that joins them
+        (FRAME-SCOPED-IDENTITY-V1 §3(b))."""
         return self._w.registry.correlation_conflicts(valid_as_of=as_of, frame=frame)
 
     def salience(
