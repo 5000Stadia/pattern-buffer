@@ -43,6 +43,7 @@ V1_READS = (
     "entities", "facts", "fidelity_audit", "axis_heads", "proposals",
     "correlations", "correlation_conflicts", "typing_conflicts",
     "identity_conflicts",                                # FRAME-SCOPED-IDENTITY-V1 §4
+    "canonical_attribute",                               # READ-SURFACE-V1 §3
 )
 V1_MUTATIONS = (
     "ingest_structured", "commit_set", "retract", "reconcile",

@@ -65,10 +65,11 @@ def _seed(world):
 
 # ------------------------------------------------------------- registry
 
-def test_registry_is_exactly_the_declared_40():
+def test_registry_is_exactly_the_declared_tools():
     reg = build_registry()
     # 39 -> 40: FRAME-SCOPED-IDENTITY-V1 §4 adds the identity_conflicts read.
-    assert len(reg) == 40 and set(reg) == set(V1_TOOLS)
+    # 40 -> 41: READ-SURFACE-V1 §3/§11 adds the canonical_attribute read.
+    assert len(reg) == 41 and set(reg) == set(V1_TOOLS)
     assert "state_union" in reg                       # the Cx-caught omission
     for absent in ("extract", "ingest", "ask", "resolve"):   # V1.1, not V1
         assert absent not in reg
@@ -180,6 +181,7 @@ def test_every_v1_tool_makes_zero_model_calls(spy_world, tmp_path):
         "correlation_conflicts": {},
         "typing_conflicts": {},
         "identity_conflicts": {},                # FRAME-SCOPED-IDENTITY-V1 §4
+        "canonical_attribute": {"name": "Located In"},   # READ-SURFACE-V1 §3/§11
         "ingest_structured": {"items": [
             {"entity": "obj:coin", "attribute": "state", "value": "dusty",
              "valid_from": 2.0}]},
@@ -388,7 +390,9 @@ async def test_stdio_initialize_list_call_shutdown(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            assert len(tools.tools) == 40    # FRAME-SCOPED-IDENTITY-V1 §4: +identity_conflicts
+            # FRAME-SCOPED-IDENTITY-V1 §4: +identity_conflicts;
+            # READ-SURFACE-V1 §3/§11: +canonical_attribute
+            assert len(tools.tools) == 41
             by_name = {t.name: t for t in tools.tools}
             assert by_name["snapshot"].annotations.readOnlyHint is True
             assert by_name["retract"].annotations.destructiveHint is True

@@ -183,6 +183,12 @@ class Porcelain:
     def _is_numeric(value: object) -> bool:
         return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
 
+    def _attr(self, name: Any) -> Any:
+        """An attribute argument as the gate names it (READ-SURFACE-V1 §3):
+        every porcelain argument that names an attribute passes through here
+        first. A non-string argument passes through unchanged."""
+        return self._w.canonical_attribute(name) if isinstance(name, str) else name
+
     # ------------------------------------------------- BUILD-SESSION-V1
 
     def begin_build(self, at: float | None = None) -> dict:
@@ -367,7 +373,7 @@ class Porcelain:
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON) -> dict:
         try:
-            out = self._w.resolve(entity, aspect, frame)
+            out = self._w.resolve(entity, self._attr(aspect), frame)
         except ResolutionDenied as exc:
             return {"status": "denied", "facts": [],
                     "receipt": self._receipt([]).to_dict(), "reason": str(exc)}
@@ -401,6 +407,15 @@ class Porcelain:
         return receipt
 
     # --------------------------------------------------- reads (LLM-free)
+
+    def canonical_attribute(self, name: str) -> str:
+        """The gate's name for an attribute (READ-SURFACE-V1 §3): its own
+        normalization (strip, lowercase, spaces to `_`) and its forward alias
+        map, exactly as applied on write — "Located In" -> "in", "type" ->
+        "kind". Every porcelain argument that names an attribute passes
+        through it, so an alias spelling reads the key the gate stored.
+        Inverse spellings (`holds`, `wearing`) are not renamed."""
+        return self._attr(name)
 
     def _is_known(self, entity: str, frame: str = CANON) -> bool:
         """Whether `entity` exists from `frame`'s perspective: some visible row
@@ -474,7 +489,7 @@ class Porcelain:
         time: {"status": "unknown"} when nothing is recorded, else "known" or
         "conflicted" with the served fact (and the conflicting assertion ids, or
         the derived quantity for an accrue attribute)."""
-        fold = self._w.state(entity, attribute, frame, valid_as_of=as_of)
+        fold = self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of)
         if fold.winner is None:
             return {"status": "unknown"}
         # Accrue: the host-facing value is the derived total, not the last
@@ -502,6 +517,7 @@ class Porcelain:
         }
         if op not in comparators:
             raise ValueError(f"unknown comparison operator {op!r}")
+        attribute = self._attr(attribute)
         value = decode_value(value)   # tag-form symmetry: {"$decimal": ...} ok
         if not self._is_numeric(value):
             return []
@@ -538,7 +554,7 @@ class Porcelain:
         """A bounded rollup (sum, count, min, max, avg) of `member_attribute`
         over a container's members, optionally recursive; derived, never stored."""
         return encode_out(self._w.aggregate(
-            container, member_attribute, op,
+            container, self._attr(member_attribute), op,
             frame=frame, as_of=as_of, recursive=recursive,
         ))
 
@@ -574,6 +590,8 @@ class Porcelain:
         unless `include_meta=True`."""
         if not frame:
             raise ValueError("facts() requires a frame — every read fixes perspective")
+        if attribute is not None:
+            attribute = self._attr(attribute)
         if entity is not None and not entity.startswith("a:"):
             clos = sorted(self._w.registry.closure(entity))
             rows = self._w.buffer.visible(entity_in=clos, frame=frame,
@@ -735,7 +753,7 @@ class Porcelain:
         correlated facets, as-of. Same shape as `state`. NOT a default read —
         `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
         uncorrelated view (no leak)."""
-        fold = self._w.state_union(entity, attribute, frame, valid_as_of=as_of)
+        fold = self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of)
         if fold.winner is None:
             return {"status": "unknown"}
         fact = (self._quantity_fact(fold.winner, fold.quantity)
@@ -784,8 +802,8 @@ class Porcelain:
         # now (TRACKING-MODE-V1): the WALL-time staleness reference in tracking
         # worlds (defaults to the injected clock; unused in fiction). The
         # payload carries recency/recency_status/last_confirmed_at_wallclock.
-        return self._w.confidence(entity, attribute, frame=frame, as_of=as_of,
-                                  now=now)
+        return self._w.confidence(entity, self._attr(attribute), frame=frame,
+                                  as_of=as_of, now=now)
 
     def neighborhood(
         self,
@@ -887,7 +905,7 @@ class Porcelain:
         inverse of `frame_diff` (WHO-KNOWS-INVERSE-V1). A frame qualifies iff its
         folded winner is present and (when `value` given) value-matches,
         identity-aware. No stored `known_by`; superseded/retracted beliefs drop."""
-        return self._w.who_knows(entity, attribute, value, valid_as_of=as_of)
+        return self._w.who_knows(entity, self._attr(attribute), value, valid_as_of=as_of)
 
     def frame_diff(self, a: str, b: str | list[str], scope,
                    as_of: float | None = None) -> list[dict]:
@@ -1034,7 +1052,7 @@ class Porcelain:
             idx = key.get("target_index", 0)
             if not (0 <= idx < len(resolved)) or resolved[idx] is None:
                 continue
-            fold = self._w.state(resolved[idx], key["attribute"], frame,
+            fold = self._w.state(resolved[idx], self._attr(key["attribute"]), frame,
                                  valid_as_of=as_of)
             if fold.winner is not None:
                 if fold.quantity is not None:

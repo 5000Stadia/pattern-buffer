@@ -583,10 +583,18 @@ def test_s3_who_knows_alias_spelling(wm):
 
 
 def test_s3_confidence_alias_spelling(wm):
-    """READ-SURFACE-V1 §3: confidence(ann, "located_in")["value"]: None → "place:hall"."""
+    """READ-SURFACE-V1 §3: confidence(ann, "located_in") reads the `in` key
+    (today it scores an empty key)."""
+    # Corrected at build: the spec's oracle reads `["value"]`, but the
+    # confidence payload has no `value` key (CONFIDENCE-V1 keeps it distinct
+    # from state's served value), and §3 adds none. The rule under test —
+    # the alias spelling reaches the `in` fold — is checked on the payload's
+    # own fields: the empty payload (score None) before, the `in` key's after.
     w, _ = wm
     _seed_ann(w)
-    assert w.porcelain.confidence("person:ann", "located_in")["value"] == "place:hall"
+    via_alias = w.porcelain.confidence("person:ann", "located_in")
+    assert via_alias == w.porcelain.confidence("person:ann", "in")
+    assert via_alias["score"] is not None and via_alias["status"] == "stated"
 
 
 def test_s3_type_reads_kind(wm):

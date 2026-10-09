@@ -150,6 +150,11 @@ class World:
 
     # Reads (deterministic, no LLM — P7).
 
+    def canonical_attribute(self, name: str) -> str:
+        """The gate's name for an attribute (READ-SURFACE-V1 §3): its
+        normalization and forward alias map, as applied on write."""
+        return self.ingestor.canonical_attribute(name)
+
     def locate(self, entity: str, **kw) -> list[str]:
         return self.indexes.locate(entity, **kw)
 

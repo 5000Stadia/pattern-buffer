@@ -518,6 +518,17 @@ class Ingestor:
         canonical = self._alias_map[attr]
         return canonical, f"{attr}->{canonical}"
 
+    def canonical_attribute(self, name: str) -> str:
+        """The one function that names an attribute (READ-SURFACE-V1 §3): the
+        gate's own normalization (strip, lowercase, spaces to `_`) and its
+        forward alias map (built-ins, replayed receipts, runtime
+        `add_attribute_alias` entries), skipped for a structural attribute,
+        exactly as the gate applies them on write. An inverse spelling
+        (`holds`, `wearing`) is not renamed: its entity-valued facts are stored
+        on the other entity and its text-valued facts under the spelling
+        itself (GATE-INVERSE-ALIAS-V1)."""
+        return self._canonicalize(name)[0]
+
     def _inverse_of(self, attr: str) -> str | None:
         """The forward attribute for an inverse relation (GATE-INVERSE-ALIAS-V1
         §1), or None. ``attr`` is already normalized by `_canonicalize`."""
