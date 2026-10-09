@@ -12,14 +12,20 @@ circularity.
 from __future__ import annotations
 
 import logging
-import re
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 from patternbuffer.codec import decode_value, encode_out
-from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, TASK_ASK_PLAN, task_schema
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    ID_RE,
+    META_ATTRIBUTES,
+    TASK_ASK_PLAN,
+    task_schema,
+)
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
 from patternbuffer.tmaint import AtomicAbort
 
@@ -27,8 +33,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from patternbuffer import World
 
 logger = logging.getLogger(__name__)
-
-_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
 
 
 # ---------------------------------------------------------------- payloads
@@ -393,7 +397,7 @@ class Porcelain:
         # its aka correlation union (the whole reveal scene) and/or inline each
         # place's part_of-feature children. Default off = unchanged.
         roots = [scope] if isinstance(scope, str) else list(scope)
-        bad = [s for s in roots if not _ID_RE.fullmatch(s) or not self._is_known(s)]
+        bad = [s for s in roots if not ID_RE.fullmatch(s) or not self._is_known(s)]
         if bad:
             return {"error": "snapshot scope must be KNOWN entity ids "
                              "(use ask for references)", "bad": bad}

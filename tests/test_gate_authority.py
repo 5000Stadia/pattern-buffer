@@ -817,3 +817,65 @@ def test_s5_read_side_ignores_invalid_declared_values(tmp_path):
     assert w.semantics.is_structural("mood2") is False
     assert w.semantics.semantics("mood2").arity == "functional"
     w.close()
+
+
+# ---------------------------- §7 id-shaped values on entity-valued predicates
+
+def test_s7_id_shaped_typo_never_relocates_its_subject(world):
+    """§7: Ann is in place:cellar; `in: "Place:Cellar"` is skipped
+    `malformed_id` and Ann stays in the cellar."""
+    world.ingest_structured([
+        {"entity": "place:cellar", "attribute": "kind", "value": "cellar",
+         "timeless": True},
+        {"entity": "person:ann", "attribute": "in", "value": "place:cellar",
+         "valid_from": 1.0}], classify="rules")
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:ann", "attribute": "in", "value": "Place:Cellar",
+         "valid_from": 2.0}], classify="rules")
+    assert r.skipped == [{"entity": "person:ann", "attribute": "in",
+                          "value": "Place:Cellar", "reason": "malformed_id"}]
+    assert world.locate("person:ann") == ["place:cellar"]
+    assert world.contents("place:cellar") == ["person:ann"]
+
+
+@pytest.mark.parametrize("entity,attribute,value", [
+    ("person:ann", "in", "place:/cellar"),
+    ("person:ann", "in", "place:the cellar"),
+    ("place:hall", "connects_to", "Place:Hall"),
+    ("place:alcove", "part_of", "Place:House"),
+    ("obj:key", "held_by", "person:Bob"),
+    ("event:smoke", "caused_by", "Event:Fire"),
+    ("person:ann", "distinct_from", "Person:B"),
+    ("obj:coin", "stowed_in", "Obj:Chest"),     # a declared containment member
+])
+def test_s7_id_shaped_values_are_malformed_ids(world, entity, attribute, value):
+    """§7: an id-shaped value failing the grammar on an entity-valued
+    predicate (the families via semantics, part_of, caused_by, the identity
+    predicates) is skipped `malformed_id`."""
+    world.ingest_structured([
+        {"entity": "attr:stowed_in", "attribute": "relation_family",
+         "value": "containment", "timeless": True}], classify="rules")
+    head = world.buffer.head()
+    r = world.porcelain.ingest_structured([
+        {"entity": entity, "attribute": attribute, "value": value,
+         "valid_from": 1.0}], classify="rules")
+    assert r.skipped == [{"entity": entity, "attribute": attribute, "value": value,
+                          "reason": "malformed_id"}]
+    assert world.buffer.head() == head
+
+
+@pytest.mark.parametrize("attribute,value,extra", [
+    ("in", "repaired: the rival arrives", {}),
+    ("in", "12:30", {}),
+    ("mood", "Note:see", {}),
+    ("in", "Place:Cellar", {"value_type": "literal"}),
+])
+def test_s7_admitted_as_before(world, attribute, value, extra):
+    """§7: not id-shaped, not an entity-valued predicate, or an explicit
+    literal — admitted as a literal, as before."""
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:ann", "attribute": attribute, "value": value,
+         "valid_from": 1.0, **extra}], classify="rules")
+    assert r.skipped == []
+    [row] = world.buffer.visible(entity="person:ann", attribute=attribute)
+    assert (row.value, row.value_type) == (value, "literal")

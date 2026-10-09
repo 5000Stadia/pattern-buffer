@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import logging
 import math
-import re
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -27,6 +26,9 @@ from patternbuffer.identity import IdentityRegistry
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    COMPOSITION_FAMILY,
+    ID_RE,
+    ID_SHAPED_RE,
     MECHANISM_ATTRIBUTES,
     SEMANTICS_PREDICATES,
     TASK_EXTRACT,
@@ -51,15 +53,18 @@ class _GateSkip(Exception):
         self.skipped = skipped
         super().__init__(f"{len(skipped)} gate skip(s) aborted the atomic set")
 
-# The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
-# A malformed id (person:/you) is SKIPPED with a typed receipt, never
-# normalized — guessing person:you would manufacture the phantom well-formed.
+# The id grammar (SHAPE-FIX-V1 4a) is `model.ID_RE`, shared with the porcelain.
+
 # GATE-INVERSE-ALIAS-V1 §2/§4: an inverse-swap receipt is "(inverse) holds->held_by".
 # The marker comes FIRST so an engine that predates the swap (which replays every
 # `src->dst` receipt as an alias, splitting on the first "->") reads the source as
 # "(inverse) holds" — an attribute that never occurs — and installs nothing.
 _INVERSE_RECEIPT_PREFIX = "(inverse)"
-_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
+
+# Entity-valued predicates beyond the containment and lateral families
+# (GATE-AUTHORITY-V1 §7): their engine readers only ever see entity values.
+# `same_as` is not here — a raw same_as is a guarded merge (§2).
+_ENTITY_VALUED = COMPOSITION_FAMILY | {"caused_by", "maybe_same_as", "distinct_from", "aka"}
 
 # Built-in attribute aliases: the fold key must never fragment. Domain
 # vocabulary emerges freely; these structural repairs are fixed.
@@ -619,7 +624,7 @@ class Ingestor:
                 dest[eid] = it.get("value")
                 vt = it.get("value_type") or (
                     "entity" if isinstance(it.get("value"), str)
-                    and _ID_RE.fullmatch(str(it.get("value"))) else "literal")
+                    and ID_RE.fullmatch(str(it.get("value"))) else "literal")
                 dest_is_entity[eid] = vt == "entity"
 
         for eid in moved_ids:
@@ -944,6 +949,15 @@ class Ingestor:
             return f"lateral self-loop: {entity!r} cannot {attribute} itself"
         return None
 
+    def _entity_valued(self, attribute: str) -> bool:
+        """An entity-valued predicate (GATE-AUTHORITY-V1 §7): one whose engine
+        readers only ever see entity values — the containment and lateral
+        families (declared members included, via semantics), `part_of`,
+        `caused_by`, and the identity predicates other than `same_as`."""
+        return (attribute in _ENTITY_VALUED
+                or self._semantics.is_containment(attribute)
+                or self._semantics.is_lateral(attribute))
+
     def _record_skip(self, entity: Any, attribute: Any, value: Any, reason: str,
                      detail: Any = None) -> None:
         logger.warning("ingest skipped edge: %s · %s · %r — %s%s",
@@ -1106,7 +1120,7 @@ class Ingestor:
         # a prose value with a colon ("repaired: the rival arrives") is a
         # literal, never a phantom entity reference (SHAPE-FIX-V1 4a).
         value_type = item.get("value_type") or (
-            "entity" if isinstance(value, str) and _ID_RE.fullmatch(value)
+            "entity" if isinstance(value, str) and ID_RE.fullmatch(value)
             else "literal"
         )
         # GATE-INVERSE-ALIAS-V1 §2: an inverse relation with an ENTITY value
@@ -1151,12 +1165,24 @@ class Ingestor:
         # authority violation must still raise, never be swallowed by a skip —
         # the INGEST-HARDENING ordering), BEFORE the edge guard — and on the
         # RAW ids, before resolution touches them (Cx final).
-        if not _ID_RE.fullmatch(entity) or (
+        if not ID_RE.fullmatch(entity) or (
             value_type == "entity" and isinstance(value, str)
-            and not _ID_RE.fullmatch(value)
+            and not ID_RE.fullmatch(value)
         ):
             self._record_skip(entity, attribute, value, "malformed_id",
                               detail=authored_detail)
+            return out
+
+        # GATE-AUTHORITY-V1 §7: on an entity-valued predicate, a value with no
+        # declared value_type that LOOKS like an id but fails the grammar
+        # (`in: "Place:Cellar"`) is a typo, not text — stored as a literal it
+        # would win the location fold and silently relocate its subject. The
+        # same treatment the subject position gets. An explicit value_type is
+        # the author's word: "entity" was checked above, "literal" stands.
+        if ("value_type" not in item and isinstance(value, str)
+                and ID_SHAPED_RE.match(value) and not ID_RE.fullmatch(value)
+                and self._entity_valued(attribute)):
+            self._record_skip(entity, attribute, value, "malformed_id")
             return out
         raw_entity, raw_value = entity, value
         entity = self._registry.resolve(entity)
@@ -1309,7 +1335,7 @@ class Ingestor:
             # Side-channel entity edge: same malformed-id gate as the main row
             # (SHAPE-FIX-V1 4a, Cx final) — a phantom cause never enters.
             caused_by = str(item["caused_by"])
-            if not _ID_RE.fullmatch(caused_by):
+            if not ID_RE.fullmatch(caused_by):
                 self._record_skip(entity, "caused_by", caused_by, "malformed_id")
             else:
                 out.append(
@@ -1352,7 +1378,7 @@ class Ingestor:
             # in view (promote_identity_proposals / self-check / tier-2).
             # Same malformed-id gate as the main row (SHAPE-FIX-V1 4a).
             same_as = str(item["same_as"])
-            if not _ID_RE.fullmatch(same_as):
+            if not ID_RE.fullmatch(same_as):
                 self._record_skip(identity_subject, "same_as", same_as, "malformed_id")
             else:
                 self._registry.maybe_same_as(identity_subject, same_as,
@@ -1382,7 +1408,7 @@ class Ingestor:
             raise RuntimeError("no model callable injected; use ingest_structured")
         rules = _EXTRACT_RULES_LEAN if extract == "lean" else _EXTRACT_RULES_FULL
         if pov is not None:
-            if not _ID_RE.fullmatch(pov):
+            if not ID_RE.fullmatch(pov):
                 raise ValueError(f"pov {pov!r} is not a valid entity id")
             rules += (
                 # The FULL deictic family incl. possessives (HD 126: "my hand"
