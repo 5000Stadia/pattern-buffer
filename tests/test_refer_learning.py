@@ -501,6 +501,42 @@ class TestLegacyLearnedAliases:
         assert [(f["entity"], f["value"]) for f in learned] == [("obj:garage_cabinet", WORD)]
 
 
+# ------------------------------------------------- §8 ask never learns
+
+
+class TestAskNeverLearns:
+    """§8: ask binds its targets through refer with learn=False."""
+
+    def test_ambiguous_target_appends_nothing(self, world):
+        _two_rooms(world)
+        world._stub.enqueue({"refer_targets": ["the cabinet"], "keys": [],
+                             "wants_location": True})
+        _judge(world, "obj:kitchen_cabinet")  # a canon ask: tier 1c picks
+        head = world.buffer.head()
+        a = world.porcelain.ask("where is the cabinet?")
+        assert a.answered and not a.asks
+        assert a.facts[0]["value"] == "place:kitchen"
+        assert world.buffer.head() == head
+
+    def test_vocabulary_miss_appends_nothing(self, world):
+        _two_rooms(world)
+        world.ingest_structured([
+            {"entity": "person:alice", "attribute": "kind", "value": "person",
+             "timeless": True},
+            {"entity": "person:alice", "attribute": "in", "value": "place:kitchen"},
+            {"entity": "obj:kitchen_cabinet", "attribute": "in", "value": "place:kitchen",
+             "frame": ALICE},
+        ])
+        world._stub.enqueue({"refer_targets": [WORD], "keys": [],
+                             "wants_location": True})
+        _judge(world, "obj:kitchen_cabinet")  # Alice's scene: the escalation
+        head = world.buffer.head()
+        a = world.porcelain.ask("where is the old cupboard?", frame=ALICE)
+        assert a.answered and not a.asks
+        assert a.facts[0]["value"] == "place:kitchen"
+        assert world.buffer.head() == head
+
+
 # ------------------------------------------------- the no-growth invariant
 
 
