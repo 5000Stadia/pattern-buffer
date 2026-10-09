@@ -1,11 +1,18 @@
-# FRAME-SCOPED-IDENTITY-V1: identity is canon's, description is perspectival, an observer follows its identity
+# FRAME-SCOPED-IDENTITY-V1: identity is canon's, description is perspectival
 
-**Status:** DRAFT r1 (2026-10-08). Batch C of `docs/AUDIT-2026-10.md` (P1 #1, #7,
-#8, the snapshot existence leak, the `identity_conflicts()` read). Not yet
-reviewed by pbr. Founder decisions 1 and 2 (2026-10-08, below) are binding
-inputs. Every case below reproduced on `212754f` (`polish/audit-2026-10`) before
-it was written down. Host blast radius measured read-only on construct's 52
-world files (`/home/k/Newproject/worlds/*.world`). Line numbers are at `212754f`.
+**Status:** r2 (2026-10-09; r1 2026-10-08). Batch C of `docs/AUDIT-2026-10.md`
+(P1 #1, #7, #8, the snapshot existence leak, the `identity_conflicts()` read).
+r1 was built gated on `impl/frame-scoped-identity-v1`, over batch B r1. pbr
+returned RED on one point (§1's receipt codes) and ruled it; an internal
+pre-review measured on copies of construct's live worlds that §7 leaks
+knowledge. r2 is rebased onto batch B r2 (`impl/gate-authority-v1` at
+`dddbb64`), withdraws §7 from this build pending Kabe's gate g3bf5da (consult
+ccab80f), and resolves the rest: see "r2: review resolutions" at the end. Next:
+pbr on r2. Founder decisions 1 and 2 (2026-10-08, below) are binding inputs;
+§7, which builds decision 2, is held. Every case below reproduced on `212754f`
+(`polish/audit-2026-10`) before it was written down. Host blast radius measured
+read-only on construct's 52 world files (`/home/k/Newproject/worlds/*.world`).
+Line numbers are at `212754f`.
 
 **Why.** §6 promises that out-of-frame content is absent from every served
 payload. Identity breaks that promise in both directions:
@@ -31,6 +38,9 @@ Separately, the `aka` vetoes have holes (a chain bypasses `distinct_from`;
 2. **`knows:` frames resolve through identity at read time.** After
    `merge(dan, daniel)`, what was written to `knows:person:daniel` is readable as
    `knows:person:dan`, and `who_knows` reports the surviving frame name.
+   - *r2: held.* §7, which builds this, is withdrawn from this build pending
+     Kabe's gate g3bf5da: on construct's live worlds, automatic merges would
+     hand characters other characters' knowledge (§7).
 
 ## The model in three lines
 
@@ -44,7 +54,8 @@ Separately, the `aka` vetoes have holes (a chain bypasses `distinct_from`;
   frame they were written in, and are read only there.
 - **An observer is an identity.** A `knows:<id>` frame holds the knowledge of
   whoever `<id>` is, so it reads every stored `knows:<m>` for `m` in `<id>`'s
-  canon closure: an **observer frame**.
+  canon closure: an **observer frame**. *(§7; withdrawn from this build in r2.
+  In this build every frame reads only the rows stored under its own name.)*
 
 A perspectival identity *belief* ("Alice thinks the masked man is Bob") is an
 `aka` row in Alice's frame, read by `correlations`/`state_union(frame=...)` as
@@ -55,11 +66,17 @@ AKA-CORRELATION-V1 already allows. It is never a `same_as`.
 **Rule.**
 - **(a) Canon identity edges are canon-only.** An item whose canonicalized
   attribute is `same_as`, `maybe_same_as` or `distinct_from`, with an effective
-  frame other than `canon`, is skipped with reason `identity_edge_outside_canon`.
-  Nothing is appended for it.
-- **(b) The side-channel `same_as` key** on a non-canon item is skipped with the
-  same reason, as `SkipRecord(entity, "same_as", <value>, "identity_edge_outside_canon")`.
-  The item's main row is admitted as usual. No `maybe_same_as` is written.
+  frame other than `canon`, is skipped. Nothing is appended for it. The receipt
+  (r2, pbr's ruling; r1 gave all three `identity_edge_outside_canon`):
+  - a raw `same_as`: GATE-AUTHORITY-V1 §2's `same_as_not_canon`, with `detail:
+    {field: "frame", value: <frame>}`. That code is B's public contract for any
+    non-canon `same_as`;
+  - a `maybe_same_as` or `distinct_from`: `identity_edge_outside_canon`, no
+    `detail`.
+- **(b) The side-channel `same_as` key** on a non-canon item is skipped with
+  B's code and payload, as `SkipRecord(entity, "same_as", <value>,
+  "same_as_not_canon", detail={"field": "frame", "value": <frame>})` (r2). The
+  item's main row is admitted as usual. No `maybe_same_as` is written.
 - **(c) The side-channel `aliases` key** writes each alias row in the item's
   effective frame (today: always canon).
 - **(d) `aka` stays frame-scoped.** A raw `aka` row keeps its item's frame, as
@@ -71,13 +88,17 @@ AKA-CORRELATION-V1 already allows. It is never a `same_as`.
   `maybe_same_as`, `reject`, `correlate`.
 
 **Ordering.** The effective frame is the one the main row would carry:
-`item.get("frame", CANON)` after the call-level `frame=` default.
-- Check (a) runs on the raw ids, after the authority gate (which still raises
-  first) and after the malformed-id gate, and before identity resolution. So a
-  generated `same_as` aimed at `knows:` still raises, and a malformed one still
-  receipts `malformed_id`.
-- Check (b) runs where the side key is handled today, after its own
-  malformed-id check. It receipts the resolved entity, as that check does.
+`item.get("frame", CANON)` after the call-level `frame=` default. In
+GATE-AUTHORITY-V1 r2's thirteen steps (r2):
+- Check (a) for `maybe_same_as`/`distinct_from` runs at the head of step 9: on
+  the raw ids, after the authority raises (step 2) and the malformed-id checks
+  (steps 7 and 8), before identity resolution. So a generated edge aimed at
+  `knows:` still raises, and a malformed one still receipts `malformed_id`.
+- Check (a) for `same_as` is B's own, at step 11 in the guarded-merge path,
+  after its value check: one refusal path for it, never two.
+- Check (b) runs where the side key is handled (step 12), after its own
+  malformed-id check. It receipts the item's original subject, resolved (the
+  inverse swap's convention, GATE-INVERSE-ALIAS-V1), as that check does.
 - Under `atomic=True` either skip aborts the set through the existing
   `gate_skip` path.
 
@@ -92,8 +113,9 @@ AKA-CORRELATION-V1 already allows. It is never a `same_as`.
   honest outcome, and `aka` in the frame expresses the belief.
 
 **Location.** `ingest.py` `_ingest_item`: the new check goes between the
-malformed-id gate (839–848) and resolution (849–852). The `aliases` loop
-(971–972) and the `same_as` key (982–992) change. `identity.py` `add_alias`
+malformed-id gate (839–848) and resolution (849–852); on B r2, the head of step
+9. The `aliases` loop (971–972) and the `same_as` key (982–992), step 12 on B
+r2, change. `identity.py` `add_alias`
 (103) gains `frame: str = CANON`. In `refer.py`, the call's frame is threaded
 through `_resolve_tier2` (225) into `_accrue_alias` (77–95). The reason string
 joins the skip vocabulary in ADOPTION.
@@ -105,12 +127,13 @@ joins the skip vocabulary in ADOPTION.
 - 1b. The same item with `same_as: "person:bob"`.
   - Today it writes a canon `maybe_same_as`, and canon `proposals()` lists
     `(person:hooded, person:bob)`.
-  - After: `skipped == [{person:hooded, same_as, person:bob, identity_edge_outside_canon}]`,
-    no `maybe_same_as` row, and `proposals() == []`.
+  - After: `skipped == [{person:hooded, same_as, person:bob, same_as_not_canon,
+    detail: {field: frame, value: knows:person:alice}}]` (r2), no
+    `maybe_same_as` row, and `proposals() == []`.
 - 1c. A raw `person:stranger · same_as · person:bob` in Alice's frame.
   - Today it is appended, and the canon fold of `person:bob · occupation` serves
     the stranger's `"spy"`.
-  - After it is skipped, and the canon fold is unknown.
+  - After it is skipped `same_as_not_canon`, and the canon fold is unknown.
 - 1d. Raw `maybe_same_as` and `distinct_from` rows in `knows:` and in `plot:` are
   skipped with the same reason.
 - 1e. A raw `aka` in Alice's frame is admitted in Alice's frame (unchanged).
@@ -119,9 +142,25 @@ joins the skip vocabulary in ADOPTION.
   visible.
 - 1g. `refer("the traitor", frame=Alice)` with a tier-2 hit writes its alias row
   in Alice's frame.
+- 1h (r2). The full extraction rules' ALIASES bullet tells the extractor to emit
+  `same_as` on the entity's frame `canon` row.
+- 1i (r2). A raw `same_as` and an item's `same_as` key, both in Alice's frame,
+  give one identical receipt (`same_as_not_canon`, `detail: {field: frame,
+  value: knows:person:alice}`); raw `maybe_same_as`/`distinct_from` there give
+  `identity_edge_outside_canon`.
+
+**The extraction prompt (r2; a prompt change for pbr).** The full rules'
+ALIASES bullet said "if you minted a duplicate id for the same individual, emit
+same_as." Under B and this section a `same_as` on a non-canon item is refused,
+so a duplicate the extractor recognized in a `knows:` item would stay split.
+The sentence now ends "emit same_as on the entity's frame 'canon' row (identity
+is canon-only)." The lean rules carry no `same_as` sentence and are unchanged.
+Oracle 1h: the full rules' ALIASES bullet carries the new sentence.
 
 **Hosts see.**
-- `Receipt.skipped` gains `identity_edge_outside_canon` entries.
+- `Receipt.skipped` gains `identity_edge_outside_canon` entries (a non-canon
+  `maybe_same_as`/`distinct_from`) and `same_as_not_canon` entries for an
+  item's non-canon `same_as` key (r2).
 - Aliases supplied on non-canon items stop reaching canon (§2 then stops reading
   them in canon).
 
@@ -167,9 +206,11 @@ longer hold a merge of its own: that is decision 1.
   `correlation_set`/`correlations`/`correlation_conflicts` (1140, 1239), keep
   the caller's frame.
 - `by_alias` gains it: `by_alias(alias, asserted_as_of=None, frame=CANON)`
-  reads `alias`/`name` rows in that frame only (through §7 when the frame is an
-  observer frame). There is no canon fallback for a non-canon frame: frames never
-  inherit canon in a read.
+  reads `alias`/`name` rows in that frame only. There is no canon fallback for a
+  non-canon frame: frames never inherit canon in a read. So
+  `refer("bobby", frame="knows:person:alice")` no longer resolves an alias only
+  canon carries (the base engine read every frame's aliases); this goes in the
+  ship notice (r2).
 - `refer` tier 1a passes its own `frame` to both `by_alias` calls (110–112).
   `ask()` still resolves references against canon (HD 003, `porcelain.py`
   940–953), so an alias private to Alice does not resolve in
@@ -205,6 +246,9 @@ longer hold a merge of its own: that is decision 1.
   `[]`). The scan is scoped for consistency only.
 - 2i. Representative election on canon rows only re-elects 0 closures across
   construct's 52 worlds.
+- 2j (r2, for the notice). Canon `person:bob` with alias "bobby": `refer("bobby")`
+  resolves Bob; `refer("bobby", frame=Alice)` is underdetermined (the base engine
+  resolved it).
 
 **Hosts see.** Canon `refer`, `reconcile`, `proposals`, `typing_conflicts`,
 `retype` and every merge veto stop seeing non-canon rows. Measured on construct:
@@ -278,6 +322,26 @@ Steps 1 and 2 keep today's order, so every existing outcome is unchanged.
   reveal, so the masked figure's name leaks to before the reveal: the exact
   backward leak `aka` exists to prevent. `aka` becomes a **soft** auto-merge
   block, never a hard veto.
+- **(r2, pre-review NIT) The group-level `distinct_from` blocks the
+  auto-merger too.** r1 blocked only a directly correlated pair: after `a~b`,
+  `reject(b, x)` and a name shared by a and x, `reconcile()` merged a with x
+  (the base engine does too), which puts b's `distinct_from` inside one
+  correlation group, though `correlate(a, x)` refuses exactly that. Now
+  `correlate`'s own group check (one helper, `_group_distinct_block`: a canon
+  `distinct_from` with one endpoint in a's group and the other in b's, at every
+  valid time) is read by:
+  - `_mergeable`, right after the `aka` test (`correlate`'s order);
+  - `reconcile`'s proposal guard: such a pair is settled, never proposed;
+  - `adjudicate_deferred`'s inline checks, after the `aka` test;
+  - `_decline_context`: code `distinct_group`, right after `correlated` (a
+    direct distinct pair never lists); the display string names the first
+    edge, `distinct_group: person:b·distinct_from·person:x`;
+  - `name_collisions`' pair status: `hard_blocked`, reason `distinct_group`, so
+    the group is not live (reconcile would never act on it).
+  With no `aka` edge on either side the groups are the two closures, and the
+  check is `distinct_block` again, already tested first: byte-identical on a
+  world without `aka` (every construct world). The host's `merge`/`confirm`
+  stay available, as for a correlated pair.
 
 **(d) `reject(a, b)` (588).** After the `conflict_already_merged` check, if
 b's closure is in a's canon group the verb returns `conflict_already_correlated`
@@ -312,14 +376,21 @@ and writes nothing:
   `conflict_already_correlated` naming the `aka` row id, and the head is
   unchanged. Today it returns `rejected` and writes the contradiction.
 - 3f. `p.merge(masked, ilsa, ...)` still returns `merged`.
+- 3g (r2). `a~b`, `reject(b, x)`, a and x both named "Vell": `correlate(a, x)`
+  is `vetoed_distinct`; `reconcile()` merges 0 and proposes nothing (r1: merged
+  them); `correlation_conflicts()` stays `[]`; the "vell" collision pair is
+  `hard_blocked`/`distinct_group` and not live.
+- 3h (r2). Given a canon `maybe_same_as(a, x)`: `proposals()` lists it with
+  code `distinct_group` and reason `distinct_group: person:b·distinct_from·person:x`;
+  `promote_identity_proposals()` merges 0; `adjudicate_deferred()` merges 0.
 
 **Hosts see.**
 - Construct calls `reject()` on cross-kind collision pairs (`game.py` ~513–526).
   A correlated pair now returns `conflict_already_correlated` instead of writing
   a `distinct_from`. Construct ignores the outcome.
-- `auto_decline.code` gains the value `correlated`. Construct's residue triage
-  (`game.py` ~281–303) rejects only `containment`/`relating_edge` and leaves
-  such a proposal deferred.
+- `auto_decline.code` gains the values `correlated` and (r2) `distinct_group`.
+  Construct's residue triage (`game.py` ~281–303) rejects only
+  `containment`/`relating_edge` and leaves such a proposal deferred.
 - No construct world holds an `aka` row today. 0 of 52.
 
 **Byte-identical.** A world without `aka` edges: every identity answer.
@@ -384,7 +455,7 @@ holds an internal hard-veto edge).
 
 **Rule.**
 - `TruthMaintenance.open_conflicts(frame=CANON, valid_as_of=None, asserted_as_of=None)`
-  derives its keys from the rows visible in `frame` (§7 for observer frames).
+  derives its keys from the rows visible in `frame`.
   - A key is `(resolve(entity), fold key)`. The containment family is reported as
     `in`, as today.
   - It skips `a:`/`attr:` subjects and set-valued attributes, as today, and folds
@@ -397,8 +468,8 @@ holds an internal hard-veto edge).
 - `fidelity_audit(frame, as_of)` passes both through. No `truth.scan()` is
   needed first.
 - `scan()` stays as a below-porcelain all-frames read: the union over every
-  frame with a visible row, by canonical frame name (§7). It writes nothing and
-  returns the list.
+  stored frame name with a visible row (r1 named them canonically through §7;
+  r2 has no §7). It writes nothing and returns the list.
 - **The `sidecar_conflicts` table is retired.**
   - `TruthMaintenance` stops creating, filling and reading it.
   - Existing files keep an inert copy. The engine runs no DDL against a host's
@@ -445,12 +516,20 @@ holds an internal hard-veto edge).
 ## §6 `snapshot` existence follows perspective
 
 **Rule.** `Porcelain._is_known(entity, frame)` (380). An id is known in `frame`
-iff a visible subject row of its closure exists in `frame` (its observer frame,
-§7) **or in canon**.
+iff a visible subject row of its closure exists in `frame` **or in canon**.
 - Canon is the existence authority. HD 003: "identity/existence is a CANON
   question; only the answer is knowledge-scoped."
 - A frame may add entities that canon lacks: a belief, a plot arc.
 - `snapshot` (390–406) passes its `frame`.
+- **(r2, pre-review MINOR) One query.** `_is_known` reads the closure's rows
+  with one `visible(entity_in=)` call, as the base engine did, and keeps those
+  whose frame is `frame` or `canon`, in Python. r1 passed `frame=` to the
+  query, and SQLite then picked the frame index over the entity index. On the
+  pre-review's 100k-row perf world: 8.8 ms per id under r1 against 0.35 on the
+  base engine and 0.34 under r2; a 200-id snapshot in a `knows:` frame takes
+  1.85 s under r1, 0.11 s on base and under r2. Answers are identical to r1's
+  (624 (id, frame) pairs on that world, and every id × stored frame on
+  construct's copies: "r2: review resolutions").
 
 **Why not "requested frame only".** `knows:` frames are sparse by design (ADOPTION
 trap 2). Construct snapshots an NPC in the NPC's own frame for its character
@@ -465,6 +544,10 @@ those sheets into error payloads.
 - 6c. `snapshot("obj:ledger", frame="knows:person:marn")` errors.
 - 6d. A canon entity with no rows in `knows:person:marn` still snapshots in that
   frame, with empty facts (unchanged).
+- 6e (r2). Over ids known in canon, in one frame only, merged, or nowhere, and
+  frames `canon`, `plot:`, two `knows:` and a merged member's `knows:`,
+  `_is_known(e, F)` equals "a row in F or in canon" read per frame, and makes
+  exactly one `visible(entity_in=)` call, without `frame=`.
 
 **Hosts see.**
 - A canon (or other-frame) snapshot whose scope contains an id that lives only in
@@ -479,7 +562,45 @@ those sheets into error payloads.
 
 **Byte-identical.** Every snapshot of a canon-known id, in any frame.
 
-## §7 `knows:` frames follow merges (decision 2)
+## §7 `knows:` frames follow merges (decision 2): withdrawn from this build
+
+**r2: withdrawn from this build pending Kabe's gate g3bf5da (consult ccab80f).**
+r1's build of this section is kept on `hold/frame-scoped-identity-v1-r1` (its
+commit `cbbb93f`; head `c4c86b0`), and r2 carries none of it. In this build
+every frame reads only the rows stored under its own name, as on the base
+engine, and `who_knows` reports stored names.
+
+Why it is held. An internal pre-review measured on copies of construct's live
+worlds that following merges leaks knowledge, because automatic `reconcile`
+merges on garbage aliases had fused characters:
+- **"Minutes Before Bullets"** (`live_telegram_8786956263_2`): the merged closure
+  {mara, pavel, pavel_orra, tom_apprentice} includes the protagonist. Under r1
+  the protagonist's frame serves 58 rows instead of its own 19, including the 4
+  clues seeded into NPC Pavel's frame (3 genuine, 1 red herring).
+- **"The Quiet Shelf at Gullwick"** (`live_telegram_8897888758_1`, 4 files):
+  Lillian's 2 clues and Pearl's 1 become readable through the frames of may,
+  nora, annie and rose, merged on the alias "laughing into weather that had
+  tried and failed to erase them".
+- **"The Crate at Quay Seven"** (`live_telegram_8786956263_1`):
+  `person:baptiste_orsini` (the dock-union president) was merged with
+  `person:lucien`, a fragment of the protagonist, on the alias "received lucien
+  in the union hall"; their knowledge frames would fuse.
+- **Retraction alone does not repair.** `reconcile()` re-merges at once (2
+  merges for pavel, 5 for annie). A durable repair retracts the anchor alias
+  rows too, or retracts and rejects every pair.
+- **The write path** (pre-review MINOR): construct's frame-clearing loop scans
+  `facts(knows:X)` and retracts what it finds; under r1 it retracts a merged
+  partner's rows too (72 on `emberroad2` for `person:caldus`), and `facts()`
+  does not say which stored frame a row came from.
+
+Two outside model views and construct agreed that a frame reads only its own
+stored name by default, and that widening one must be an explicit, logged
+choice. That is the gate's point P1, which withdraws this section; P2–P4 (an
+explicit, reversible widening event; identity's root causes fixed first;
+row-level frame provenance before any cross-frame read ships) are Kabe's to
+accept. If he rejects P1, §7 is restored from the hold branch. The three bad
+live merges and their repair facts go to construct's repair list (its gate
+g698a80), not to this build. r1's text follows, unchanged, for reference.
 
 **Rule.**
 - **The observer frame.** For a frame `knows:<s>` whose suffix `<s>` is in the
@@ -593,15 +714,16 @@ and write nothing. Today `to_kind` is silently ignored.
 
 ## Non-goals
 
-- **Historical identity.** Closures, and therefore observer frames, are computed
-  at the log head even under `asserted_as_of`. This is the engine-wide known
-  limitation (`indexes.py` 167–173, 544–547). Frames follow it so a fold never
-  mixes two identity epochs.
+- **Historical identity.** Closures are computed at the log head even under
+  `asserted_as_of`. This is the engine-wide known limitation (`indexes.py`
+  167–173, 544–547). (r1: observer frames followed it, so a fold never mixed
+  two identity epochs; §7 is withdrawn in r2.)
 - **Non-id `knows:` suffixes** (`knows:lysa`, `knows:person_lysa`) are opaque
-  names. They are never resolved, and never unified with `knows:person:lysa`.
+  names. They are never resolved, and never unified with `knows:person:lysa`
+  (r2: with §7 withdrawn, every frame name is opaque).
   18 of 52 construct worlds carry such a pair. The gate warning for them is
   surfaces trap 1, and ADOPTION already says MUST use the full id.
-- **Write-time frame canonicalization.** Excluded; see §7.
+- **Write-time frame canonicalization.** Excluded; see §7 (withdrawn in r2).
 - **Wider reference resolution in `knows:` frames.** No frame-list `by_alias`, no
   canon fallback, no change to `ask()`'s canon reference resolution (Q5).
 - **A `frame=` parameter on `correlate()`.** A perspectival correlation stays a
@@ -623,8 +745,11 @@ and write nothing. Today `to_kind` is silently ignored.
   - Batch D: when refer learns, and `by_alias` normalization.
   - `perf/read-caches`.
   - The audit's P2 items: one merge-veto table (P2-1) and a single `bind()`
-    replacing the late-bound setters (P2-8). §7 adds one more setter.
-- **The extraction prompt** is unchanged. The gate enforces §1 with receipts.
+    replacing the late-bound setters (P2-8). (r1's §7 added one more setter;
+    r2 adds none.)
+- **The extraction prompt** beyond one sentence. r1 left it unchanged; r2
+  changes the ALIASES bullet's `same_as` sentence so the extractor emits it in
+  canon (§1). The gate still enforces §1 with receipts.
 
 ## Migration and notice
 
@@ -635,7 +760,7 @@ and write nothing. Today `to_kind` is silently ignored.
 | `same_as` / `maybe_same_as` / `distinct_from` outside canon | Inert: no identity read consults it. Raw scans still list it |
 | `name` / `alias` outside canon | Read in its own frame only |
 | Canon `alias` / `maybe_same_as` that the gate wrote for a non-canon item | Stays canon; indistinguishable from authored canon rows |
-| `knows:<id>` rows | Read through the observer frame of `<id>`; nothing rewritten |
+| `knows:<id>` rows | Read under their own stored frame name, as before (r2: §7 withdrawn); nothing rewritten |
 | `sidecar_conflicts` | Inert; never read |
 
 **Measured on construct** (52 world files, read-only, 2026-10-08):
@@ -648,7 +773,7 @@ and write nothing. Today `to_kind` is silently ignored.
 | Non-canon `maybe_same_as` / `distinct_from`; `aka` anywhere | 0 / 0; 0 |
 | Canon `by_alias` texts whose answer changes | 23 (4 ambiguous→unique, 4 non-canon-only) |
 | Closures re-elected by canon-only first-seen | 0 |
-| Observer frames with at least two stored names / stored names renamed | 15 in 11 worlds / 34 in 13 worlds |
+| Observer frames with at least two stored names / stored names renamed (§7 only; not in this build) | 15 in 11 worlds / 34 in 13 worlds |
 | Ids carried only by non-canon frames (§6) | 2,535 |
 | `sidecar_conflicts` rows; closures with an internal hard-veto edge | 0; 0 |
 
@@ -662,48 +787,60 @@ and write nothing. Today `to_kind` is silently ignored.
   minus rows targeted by a `retracts` row.
 
 **Ship notice to construct**, after build and GREEN. It covers:
-- the new receipt reason (§1);
-- the canon `refer`/`reconcile` deltas (§2);
-- `correlate`/`reject` outcomes (§3);
+- the receipt reasons (§1): `identity_edge_outside_canon` for a non-canon
+  `maybe_same_as`/`distinct_from`, and `same_as_not_canon` (B's code, with its
+  `detail`) for an item's non-canon `same_as` key as for a raw one (r2);
+- the extraction prompt's one-sentence change (§1, r2);
+- the canon `refer`/`reconcile` deltas (§2), and that `refer(...,
+  frame="knows:person:alice")` no longer falls back to canon aliases (r1
+  documented it; construct always passes canon, so it sees no change);
+- `correlate`/`reject` outcomes and the decline codes `correlated` and
+  `distinct_group` (§3);
 - the new `identity_conflicts()` read (§4);
 - that `fidelity_audit` no longer needs a scan (§5);
 - the two snapshot paths without a fallback (§6);
-- canonical `who_knows` names and the two fused observer frames on bad merges
-  (§7);
 - the `thedeep` confirm.
+
+r2: nothing about observer frames (§7 is held). The three bad live merges and
+the durable-repair facts (§7) go to construct's repair list under its gate
+g698a80, not to this build.
 
 **Docs, in the build commit.**
 - **ADOPTION.**
   - Identity is canon's: the skip reason, frame-scoped aliases, `by_alias`/`refer`
     take a frame.
-  - Observer frames: `who_knows` returns canonical names.
+  - (r1: observer frames, `who_knows` returning canonical names. Out in r2,
+    with §7.)
   - The snapshot existence rule.
   - Drop the `open_conflicts` CAUTION (358–363).
   - Document `identity_conflicts`, `conflict_already_correlated` and
     `vetoed_kind_mismatch`.
 - **WHITEPAPER.**
-  - §6: one paragraph on observer frames.
+  - §6: one sentence: identity is canon's in every frame (r1's observer-frame
+    paragraph is out in r2, with §7).
   - §11 and §25.2: identity is canon's; `aka` soft-blocks auto-merge;
     `identity_conflicts`.
   - §25.4: `open_conflicts` is computed.
-  - The next free amendment row.
+  - The next free amendment row: A21 (r2; main holds A18 and A19, and B r2
+    adds A20).
 - **LEXICON.**
-  - New terms: *canon identity edge*, *observer frame* (with *canonical frame
-    name*), *correlation group*, `identity_conflicts()`.
-  - Updated entries: `Frame`, `who_knows()`, `distinct_from`, `aka`,
-    `fidelity_audit()`.
+  - New terms: *canon identity edge*, *correlation group*,
+    `identity_conflicts()` (r1's *observer frame* / *canonical frame name* is
+    out in r2, with §7).
+  - Updated entries: `Frame`, `distinct_from`, `aka`, `fidelity_audit()` (r1's
+    `who_knows()` update is out in r2).
 - **MCP-WRAPPER** counts: 40 tools.
-- `specs/STATUS.md`.
+- `specs/STATUS.md` (r2: at the merge, with the README test count, as for
+  batches A and B).
 
 ## Tests
 
-- One test per oracle (1a–1g, 2a–2i, 3a–3f, 4a–4d, 5a–5f, 6a–6d, 7a–7i, §8)
-  in a new `tests/test_frame_scoped_identity.py`. That file also holds two
-  property tests:
-  - over small generated worlds, `open_conflicts(F, as_of)` lists exactly the
-    keys whose `state(...)` is `conflicted`;
-  - after `merge(x, y)`, every frame-taking read over `knows:x` equals the same
-    read over `knows:y`.
+- One test per oracle (1a–1i, 2a–2j, 3a–3h, 4a–4d, 5a–5f, 6a–6e, §8) in a new
+  `tests/test_frame_scoped_identity.py` (r2: 7a–7i are out with §7). That file
+  also holds the property test: over small generated worlds,
+  `open_conflicts(F, as_of)` lists exactly the keys whose `state(...)` is
+  `conflicted`. (r1's second one, every frame read over `knows:x` equal to the
+  same over `knows:y` after a merge, is out with §7.)
 - Updated in the same commit, each citing the audit finding:
   - `tests/test_mcp_wrapper.py` (39 → 40 tools, plus an `identity_conflicts`
     entry);
@@ -718,26 +855,30 @@ and write nothing. Today `to_kind` is silently ignored.
 - **Q2.** Decision 2 fuses knowledge frames along bad merges (2 observer frames
   in construct today). Default: ship as decided, flag it in the notice, and let
   hosts repair by retraction. `identity_conflicts` cannot see a soft-bad merge.
+  *r2: moot here. §7 is withdrawn from this build; the question is Kabe's gate
+  g3bf5da, and retraction alone was measured not to repair (§7).*
 - **Q3.** The frame expansion sits at `visible()` (one choke point; the audit's
   "rule missing on a sibling path" theme), not at about 30 caller sites.
-  Default: `visible()`. This is pbr's call on layering.
+  Default: `visible()`. This is pbr's call on layering. *r2: moot while §7 is
+  withdrawn.*
 - **Q4.** Snapshot existence is the requested frame plus canon, not the strict
   requested frame only. Default as written (§6).
 - **Q5.** `ask(frame=knows:X)` keeps resolving references against canon
   (HD 003), so X's private alias doesn't resolve there. Default: unchanged, and
   revisit with batch D/E.
 
-## Build notes for pbr (gated implementation on `impl/frame-scoped-identity-v1`, 739 green)
+## Build notes for pbr (r1: gated implementation on `impl/frame-scoped-identity-v1`, 739 green)
 
 - **One rule, two skip codes.** A raw `same_as` outside canon gets
   GATE-AUTHORITY-V1's `same_as_not_canon`. The side-key form gets this spec's
   `identity_edge_outside_canon`. pb recommends one code; please rule on which.
+  *(Ruled: `same_as_not_canon` for both; built in r2.)*
 - **Counts measured on this base are lower than the spec's.** The construct
   counts in this spec predate FOLD-CORRECTNESS-V1 and construct's 21:51 and
   22:15 rebuilds. Measured on this base:
   - 520 canon / 199 `knows:` / 102 named-frame conflicts across 40 worlds;
   - 17 `by_alias` texts;
-  - 13 merged observers.
+  - 13 merged observers (§7, withdrawn in r2).
 
   Oracle 5e pins a one-id difference that batch A's evidence rank causes.
 - **Reconciling D on top of C** was simulated, with no commits (776 green):
@@ -745,3 +886,80 @@ and write nothing. Today `to_kind` is silently ignored.
     `frame=CANON` parameter;
   - `refer` passes `frame` into tiers 1a and 1d;
   - D's three strict xfails drop their marker.
+
+## r2: review resolutions (2026-10-09)
+
+r1 went to pbr and to an internal pre-review. pbr returned **RED on one point**
+(§1's receipt codes) and ruled it. The pre-review measured on copies of
+construct's live worlds that §7 leaks knowledge (MAJOR), and found two MINORs
+and a NIT. Meanwhile batch B r2 replaced B r1 under this branch. r2 resolves
+each as below.
+
+**Rebase onto B r2.** The branch now starts at `dddbb64` (B r2 on main
+`950e351`, which holds batch A and GATE-INVERSE-ALIAS-V1). r1's commits were
+replayed in order without `cbbb93f` (§7), each keeping its message; r1's head
+stays on `hold/frame-scoped-identity-v1-r1` (`c4c86b0`). Conflicts:
+- `ingest.py`: §1(a)'s check sits at the head of B r2's step 9, after the
+  declaration plan and step 8's id-shaped check, before identity resolution.
+  B r2's thirteen-step numbering, `_gate_number`, mechanism set and first-use
+  declaration plan are untouched. The `aliases` and `same_as` side rows (step
+  12) use B r2's `identity_subject`, the inverse swap's original subject.
+- `tests/test_frame_scoped_identity.py`: §8's tests followed §7's, which are not
+  carried.
+- Docs: ADOPTION's skip block is B r2's, with §1's code added; LEXICON's
+  observer-frame row came with §7 and is not carried; the whitepaper's
+  amendment row follows A20 (renumbered below); r1's `specs/STATUS.md` edit is
+  dropped, left for the merge as B does.
+
+**pbr RED (§1): one receipt for a non-canon `same_as`.** pbr's ruling (b):
+`same_as_not_canon`, B's public contract, for both a raw and a side-key
+non-canon `same_as`; `identity_edge_outside_canon` only for a non-canon
+`maybe_same_as` or `distinct_from`. r1's build already gave a raw one B's
+code; r2 gives the side key the same code and `detail` (`{field: "frame",
+value: <frame>}`), and §1's prose, ADOPTION, LEXICON and the whitepaper row say
+so. Oracles 1b and 1f changed; 1i is new.
+
+**§7 withdrawn (pre-review MAJOR).** Following merges leaks knowledge on live
+worlds (the facts are under §7). Kabe's gate g3bf5da (consult ccab80f)
+decides; its P1 withdraws §7. r2 carries none of it: no frame resolver in
+`visible()`, no `frames_read`/`canonical_frame`/`observer_suffix`; `who_knows`,
+`confidence(frame=[...])`, `frame_diff` and `scan()` read exact stored frames
+as on the base engine; no §7 test, docstring, LEXICON term, ADOPTION rule or
+whitepaper paragraph remains. The remaining tests already read exact frames.
+Q2 points at the gate. The bad live merges and their durable repair (retract
+the anchor aliases too, or retract and reject every pair) go to construct's
+repair list under its gate g698a80, not to this build.
+
+**Pre-review MINOR: §6's existence check was slow.** Fixed as the pre-review
+measured it: one `visible(entity_in=)` call, filtered to `{frame, canon}` in
+Python. Numbers in §6; oracle 6e pins the single call and the answers.
+
+**Pre-review MINOR: a host's scan-then-retract loop.** Moot once §7 is out. A
+frame scan (`facts(knows:X)`) returns only rows stored under `knows:X`, so a
+host's frame-clearing loop retracts nothing of a merged partner's. The
+row-level frame provenance the pre-review asked for belongs to the gate's P4,
+before any cross-frame read ships.
+
+**Pre-review NIT (§3(c)): the group-level `distinct_from`.** The auto-merger
+read only a direct correlation, so `a~b`, `reject(b, x)` and a shared name let
+`reconcile` merge a with x, which `correlate(a, x)` would veto. `correlate`'s
+group check, now one helper, is read by `_mergeable`, `reconcile`'s proposal
+guard, `adjudicate_deferred`, `_decline_context` (code `distinct_group`) and
+`name_collisions` (§3(c); oracles 3g, 3h).
+
+**The extraction prompt (for pbr).** One sentence of the full rules' ALIASES
+bullet changes so the extractor emits `same_as` on the entity's canon row (§1;
+oracle 1h). It changes what the model is asked, so its wording is pbr's to
+review.
+
+**Renumbering.** The whitepaper's §25.9 row is **A21** (main holds A18,
+FOLD-CORRECTNESS-V1, and A19, GATE-INVERSE-ALIAS-V1; B r2 adds A20), and each
+whitepaper reference this spec added reads A21. `specs/STATUS.md` and the
+README test count follow the merge, as for A18–A20. The MCP count, which
+`tests/test_mcp_wrapper.py` pins, stays 40 where the docs state it (ADOPTION and
+the README's MCP road item).
+
+**The notice** gains the side-key receipt, the prompt sentence,
+`distinct_group`, and `refer(..., frame="knows:person:alice")` no longer
+falling back to canon aliases (oracle 2j pins it; construct always passes
+canon). It loses §7's canonical names and fused frames.
