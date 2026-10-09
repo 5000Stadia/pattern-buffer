@@ -267,7 +267,10 @@ def test_s0_skip_vocabulary(skip_reason_is_code):
 
 def test_s0_well_formed_corpus_dumps_byte_identically(tmp_path):
     """Tests: a fixed corpus of well-formed items writes the same log, byte for
-    byte, as the engine did before this spec."""
+    byte, as the engine did before this spec. Re-baselined for READ-SURFACE-V1
+    §7: each world's log gains its physics row at seq 3 and every later id
+    shifts by one; the fixture equals the earlier one under exactly that
+    transformation."""
     log, _ = build_corpus(tmp_path)
     assert log == CORPUS_LOG.read_text()
 
@@ -275,15 +278,16 @@ def test_s0_well_formed_corpus_dumps_byte_identically(tmp_path):
 # ------------------------------------------------- §1 mechanism attributes
 
 def _ann_calm(w: World) -> str:
-    """Ann's mood: the first row after the two charter rows, so `a:3`."""
+    """Ann's mood: the first row after the two charter rows and the physics
+    row, so `a:4` (READ-SURFACE-V1 §7 shifted it from `a:3`)."""
     [row] = w.ingest_structured([{"entity": "person:ann", "attribute": "mood",
                                   "value": "calm", "valid_from": 1.0}], classify="rules")
-    assert row.id == "a:3"
+    assert row.id == "a:4"
     return row.id
 
 
 def test_s1_forged_retraction_item_is_skipped(tmp_path):
-    """§1: `(a:3 · retracts · "forged")` is skipped `mechanism_attribute` on
+    """§1: `(a:4 · retracts · "forged")` is skipped `mechanism_attribute` on
     the item paths, nothing is written, and Ann's mood stays calm."""
     stub = StubModel(fallback=rule_classifier_fallback())
     w = World(tmp_path / "s1.world", world_id="w:s1", model=stub)
@@ -366,7 +370,7 @@ def test_s1_forged_resolution_marker_is_skipped(tmp_path):
 
 
 def test_s1_forged_alias_receipt_is_skipped_and_never_replayed(tmp_path):
-    """§1: `(a:3 · canonicalized_from · "allegiance->in")` is skipped, and
+    """§1: `(a:4 · canonicalized_from · "allegiance->in")` is skipped, and
     after reopening there is no alias: allegiance never becomes containment."""
     path = tmp_path / "alias.world"
     w = World(path, world_id="w:alias", model=StubModel(fallback=rule_classifier_fallback()))
@@ -944,9 +948,10 @@ def test_s2_a_passing_raw_same_as_writes_the_merge_verbs_rows(tmp_path):
     verb.porcelain.merge("person:x", "person:y", evidence="same_as item")
     assert dump(gate.buffer) == dump(verb.buffer)
     assert r.skipped == []
+    # READ-SURFACE-V1 §7: a fresh world's physics row shifts these ids by one.
     assert [(row["entity"], row["attribute"]) for row in r.rows] == [
-        ("event:merge_6", "kind"), ("person:x", "same_as"),
-        ("a:7", "caused_by"), ("event:merge_6", "evidence")]
+        ("event:merge_7", "kind"), ("person:x", "same_as"),
+        ("a:8", "caused_by"), ("event:merge_7", "evidence")]
     assert {gate.classifier.durability(row["assertion_id"]) for row in r.rows} == {"EVENT"}
     assert gate.registry.resolve("person:x") == gate.registry.resolve("person:y")
     edge = r.rows[1]["assertion_id"]
@@ -1175,8 +1180,8 @@ def test_s8_a_proposals_evidence_row_makes_no_model_call(world):
 
 
 def test_s8_host_metadata_on_an_assertion_is_kept_without_a_model_call(world):
-    """§8: `(a:3 · last_confirmed · 12.0)` makes no model call and
-    `state("a:3", "last_confirmed")` still serves it; a META attribute on an
+    """§8: `(a:4 · last_confirmed · 12.0)` makes no model call and
+    `state("a:4", "last_confirmed")` still serves it; a META attribute on an
     assertion stays EVENT, and a host id shaped like the namespace
     (`a:artifact`) is still judged by the model."""
     target = _ann_calm(world)
@@ -1197,7 +1202,8 @@ def test_s8_host_metadata_on_an_assertion_is_kept_without_a_model_call(world):
 
 def test_s8_rules_mode_sidecar_is_byte_identical(tmp_path):
     """§8: a rules-mode world's durability sidecar is byte-identical to the
-    one recorded before this spec."""
+    one recorded before this spec (re-baselined for READ-SURFACE-V1 §7: the
+    physics row's CONSTITUTIVE verdict at a:3, every later id shifted by one)."""
     _, sidecar = build_corpus(tmp_path)
     assert sidecar == CORPUS_SIDECAR.read_text()
 

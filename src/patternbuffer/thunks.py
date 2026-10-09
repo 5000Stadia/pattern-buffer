@@ -20,9 +20,13 @@ from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, Classifier
 from patternbuffer.codec import json_default
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import (
+from patternbuffer.model import (  # noqa: F401 — the policies are re-exported
     CANON,
+    DENY,
+    INVENT_UNDER_CANON,
     MECHANISM_STATUS,
+    OBSERVE_OR_UNKNOWN,
+    POLICIES,
     TASK_RESOLVE,
     Assertion,
     task_schema,
@@ -31,10 +35,8 @@ from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
 
-INVENT_UNDER_CANON = "invent_under_canon"
-OBSERVE_OR_UNKNOWN = "observe_or_unknown"
-DENY = "deny"
-POLICIES = frozenset({INVENT_UNDER_CANON, OBSERVE_OR_UNKNOWN, DENY})
+# INVENT_UNDER_CANON, OBSERVE_OR_UNKNOWN, DENY and POLICIES live in `model`
+# (READ-SURFACE-V1 §7: the buffer validates the physics row against them).
 
 UNKNOWN = object()  # the honest answer in observe_or_unknown worlds
 

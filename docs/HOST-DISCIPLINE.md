@@ -64,8 +64,9 @@ findable and correlatable.
    **accrue** (absolute baseline plus signed deltas). **Why:** the fold is key-local. Two names
    for the same attribute (`wall_color` vs `color`) split a fact across keys
    the corroborate/conflict machinery will never see meet. (The gate
-   canonicalizes a built-in set for you — lean on it, but don't fragment
-   what it doesn't know.)
+   canonicalizes a built-in set for you, and the porcelain's reads apply the
+   same canonicalization to their attribute arguments (READ-SURFACE-V1 §3) —
+   lean on it, but don't fragment what it doesn't know.)
 
 3. **Value & value_type.** `entity` when the value is another id (so walks
    and correlations traverse it); `literal` for scalars/structured;

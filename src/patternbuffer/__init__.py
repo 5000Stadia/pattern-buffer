@@ -14,12 +14,18 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
-from patternbuffer.buffer import PatternBuffer
+from patternbuffer.buffer import PatternBuffer, WorldPhysicsMismatch
 from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.indexes import Indexes
 from patternbuffer.ingest import Ingestor
-from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    META_ATTRIBUTES,
+    RESOLUTION_POLICY,
+    WORLD_PHYSICS_SUBJECT,
+)
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.refer import Refer, Resolution
 from patternbuffer.roles import _make_engine_roles
@@ -41,7 +47,8 @@ from patternbuffer.tmaint import AtomicAbort, TruthMaintenance
 __version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
-__all__ = ["World", "Materialization", "Resolution", "AtomicAbort", "__version__"]
+__all__ = ["World", "Materialization", "Resolution", "AtomicAbort",
+           "WorldPhysicsMismatch", "__version__"]
 
 
 class World:
@@ -51,6 +58,12 @@ class World:
     ``World("campaign.world", world_id="w:campaign", model=callable)`` is
     the entire harness interface — a parameter, not a framework. Role
     capabilities are minted here and nowhere else.
+
+    A world file carries its physics (READ-SURFACE-V1 §7): the resolution
+    policy is recorded at genesis as the physics row, and every later open
+    runs under it. An explicit ``policy=`` that disagrees with the stored one
+    raises ``WorldPhysicsMismatch`` and writes nothing; omitted, the stored
+    physics apply (``invent_under_canon`` for a world that records none).
     """
 
     def __init__(
@@ -58,20 +71,38 @@ class World:
         path: str | Path,
         world_id: str,
         model: Callable[[str, dict], Any] | None = None,
-        policy: str = INVENT_UNDER_CANON,
+        policy: str | None = None,
         clock: Callable[[], float] = time.time,
         stance: str = "fiction",
         title: str = "",
         description: str = "",
         attribute_default: Callable[[str], dict | None] | None = None,
     ) -> None:
-        if policy not in POLICIES:
+        if policy is not None and policy not in POLICIES:
             raise ValueError(f"unknown policy {policy!r}")
         if stance not in STANCES:
             raise ValueError(f"unknown stance {stance!r} (fixed enum; letter 026)")
         self.world_id = world_id
-        self.policy = policy
         self.buffer = PatternBuffer(path, world_id)
+        # READ-SURFACE-V1 §7: the stored physics, if the world records any.
+        # The physics row is immutable (the buffer refuses a second one or a
+        # retraction of it), so the visible row is the only one.
+        physics = self.buffer.visible(entity=WORLD_PHYSICS_SUBJECT,
+                                      attribute=RESOLUTION_POLICY)
+        stored = physics[0].value if physics else None
+        if policy is not None and stored is not None and policy != stored:
+            self.buffer.close()
+            raise WorldPhysicsMismatch(
+                f"world {world_id!r} at {self.buffer.path} records the physics "
+                f"{stored!r}; it cannot be opened as {policy!r} — omit policy= "
+                "to run it under its own")
+        self.policy = stored or policy or INVENT_UNDER_CANON
+        # Recorded at genesis, and on the first explicit-policy open of a world
+        # created before the physics row existed: the host is stating the
+        # physics it runs the world under. Opened without policy=, such a
+        # world is never written to.
+        genesis = self.buffer.head() == 0
+        record_physics = genesis or (stored is None and policy is not None)
         self.semantics = AttributeSemantics(self.buffer)
         roles = _make_engine_roles()
         self.classifier = Classifier(self.buffer, model or _no_model, self.semantics)
@@ -84,7 +115,7 @@ class World:
         # TRACKING-MODE-V1: tracking-vs-non-tracking selects on policy ONLY
         # (never stance — the no-bias invariant); deny is a resolution policy,
         # not an epistemic mode, so it takes the non-tracking branch.
-        self.indexes.set_time_physics(policy == OBSERVE_OR_UNKNOWN, clock)
+        self.indexes.set_time_physics(self.policy == OBSERVE_OR_UNKNOWN, clock)
         self.registry.set_kind_provider(lambda e: self.indexes.fold_key(e, "kind"))
         self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
         self.indexes.set_salience_provider(self.salience_index.salience)
@@ -105,7 +136,7 @@ class World:
         self.registry.set_durability_provider(self.classifier.durability)
         self.resolver = Resolver(
             self.buffer, self.classifier, self.indexes, roles["resolver"],
-            model or _no_model, policy,
+            model or _no_model, self.policy,
         )
         self.projector = Projector(
             self.buffer, self.classifier, self.indexes, self.semantics,
@@ -113,7 +144,7 @@ class World:
         )
         self.ingestor = Ingestor(
             self.buffer, self.classifier, self.registry, roles["ingestor"],
-            model, observe_mode=(policy == OBSERVE_OR_UNKNOWN), clock=clock,
+            model, observe_mode=(self.policy == OBSERVE_OR_UNKNOWN), clock=clock,
             resolver_role=roles["resolver"],
             semantics=self.semantics,
             attribute_default=attribute_default,
@@ -129,7 +160,7 @@ class World:
         # asserts its self-description — stance is ontological stored
         # truth (does this world claim to describe reality?), distinct
         # from operational policy. Ordinary appends; amendable forever.
-        if self.buffer.head() == 0:
+        if genesis:
             charter = [
                 {"entity": "world:self", "attribute": "kind", "value": "world",
                  "timeless": True},
@@ -147,8 +178,21 @@ class World:
             self.ingestor.classify_inline = True
             for row in self.buffer.all_rows():
                 self.classifier.set(row.id, "CONSTITUTIVE", 1.0)
+        if record_physics:
+            # One writer, by a direct ingestor-role append: no gate, no cursor,
+            # no attribute_default. Classified CONSTITUTIVE by its guardrail.
+            physics_row = self.buffer.append(
+                entity=WORLD_PHYSICS_SUBJECT, attribute=RESOLUTION_POLICY,
+                value=self.policy, status="stated", role=roles["ingestor"],
+            )
+            self.classifier.classify(physics_row)
 
     # Reads (deterministic, no LLM — P7).
+
+    def canonical_attribute(self, name: str) -> str:
+        """The gate's name for an attribute (READ-SURFACE-V1 §3): its
+        normalization and forward alias map, as applied on write."""
+        return self.ingestor.canonical_attribute(name)
 
     def locate(self, entity: str, **kw) -> list[str]:
         return self.indexes.locate(entity, **kw)
@@ -395,10 +439,12 @@ class World:
             self._porcelain = Porcelain(self)
         return self._porcelain
 
-    def charter(self) -> dict[str, Any]:
-        """The world's self-description, read from world:self (letter 026)."""
+    def charter(self, asserted_as_of: int | None = None) -> dict[str, Any]:
+        """The world's self-description, read from world:self (letter 026), as
+        of a log position when one is given (READ-SURFACE-V1 §8)."""
         out: dict[str, Any] = {}
-        for attr, result in self.indexes.current_state("world:self").items():
+        for attr, result in self.indexes.current_state(
+                "world:self", asserted_as_of=asserted_as_of).items():
             if result.winner is not None:
                 out[attr] = result.winner.value
         return out

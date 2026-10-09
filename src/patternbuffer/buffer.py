@@ -28,9 +28,12 @@ from patternbuffer.model import (
     CANON,
     INVIOLABLE_CORE,
     MECHANISM_STATUS,
+    POLICIES,
+    RESOLUTION_POLICY,
     SEMANTICS_PREDICATES,
     STATUSES,
     VALUE_TYPES,
+    WORLD_PHYSICS_SUBJECT,
     Assertion,
 )
 from patternbuffer.roles import RoleViolation, WriterRole
@@ -80,6 +83,12 @@ def _prefix_upper_bound(prefix: str) -> str:
 
 class WorldMismatch(ValueError):
     """A buffer was opened or written with the wrong world_id (1:1 invariant)."""
+
+
+class WorldPhysicsMismatch(ValueError):
+    """A world was opened with an explicit resolution policy that disagrees
+    with the physics row it stores (READ-SURFACE-V1 §7). The log was written
+    under its physics; a world that needs other physics is a new world."""
 
 
 class PoisonedConnection(RuntimeError):
@@ -394,6 +403,7 @@ class PatternBuffer:
                 f"buffer of world {self.world_id!r}"
             )
         self.check_declaration_authority(row.entity, row.attribute)
+        self._validate_physics_insert(row)
         self._live_conn().execute(
             "INSERT INTO assertions (seq, id, world_id, entity, attribute, value_type,"
             " value, valid_from, valid_to, frame, status, confidence, asserted_at)"
@@ -447,6 +457,54 @@ class PatternBuffer:
                 f"cannot declare semantics for attribute {target!r} after "
                 f"folded data already exists ({prior[0]})"
             )
+
+    def physics_row_id(self) -> str | None:
+        """The id of the world's physics row (READ-SURFACE-V1 §7), or None
+        for a world created before it — an indexed lookup on the row's key."""
+        row = self._live_conn().execute(
+            "SELECT id FROM assertions WHERE entity = ? AND attribute = ?"
+            " ORDER BY seq LIMIT 1",
+            (WORLD_PHYSICS_SUBJECT, RESOLUTION_POLICY),
+        ).fetchone()
+        return row[0] if row else None
+
+    def _validate_physics_insert(self, row: Assertion) -> None:
+        """The physics row is immutable (READ-SURFACE-V1 §7), checked in the
+        insert validator `append` and `dump.build` share, so a tampered dump
+        fails to build: at most one physics row per log, only in canon, only
+        in the shape World writes (stated, literal, timeless, no confidence),
+        only with a value in POLICIES — and no `retracts` row may target it (a
+        hidden physics row would leave the world unable to record its own).
+        Raises ValueError; a no-op for any other row."""
+        if row.entity == WORLD_PHYSICS_SUBJECT and row.attribute == RESOLUTION_POLICY:
+            if row.frame != CANON:
+                raise ValueError(
+                    f"the world's physics row lives in canon only (got frame {row.frame!r})")
+            # The whole shape World writes, not just its frame and value (pbr,
+            # on the build): a row replayed with another status — `retracted`
+            # hides it from every read while physics_row_id() still finds it —
+            # or with a time or a confidence is not the world's physics.
+            if (row.status != "stated" or row.value_type != "literal"
+                    or row.valid_from is not None or row.valid_to is not None
+                    or row.confidence is not None):
+                raise ValueError(
+                    "the world's physics row is stated, literal and timeless, "
+                    f"with no confidence (got status={row.status!r}, "
+                    f"value_type={row.value_type!r}, valid_from={row.valid_from!r}, "
+                    f"valid_to={row.valid_to!r}, confidence={row.confidence!r})")
+            if not isinstance(row.value, str) or row.value not in POLICIES:
+                raise ValueError(
+                    f"the world's physics row must name a policy in "
+                    f"{sorted(POLICIES)} (got {row.value!r})")
+            existing = self.physics_row_id()
+            if existing is not None:
+                raise ValueError(
+                    f"this world already records its physics ({existing}); the "
+                    "physics row is written once and is immutable")
+        elif row.attribute == "retracts" and row.entity == self.physics_row_id():
+            raise ValueError(
+                f"the world's physics row {row.entity} is immutable and cannot "
+                "be retracted")
 
     # ----------------------------------------------------------------- read
 

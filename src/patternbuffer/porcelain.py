@@ -12,6 +12,7 @@ circularity.
 from __future__ import annotations
 
 import logging
+import math
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
@@ -65,6 +66,10 @@ class Fact:
     provenance: dict
     divergent: bool = False
     b_value: Any = None
+    # READ-SURFACE-V1 §4: the row's value type ("entity", "literal",
+    # "unresolved", "delta"); a derived accrue total is "literal". Appended
+    # after b_value, so the existing keys keep their order.
+    value_type: str = "literal"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -77,6 +82,11 @@ class Answer:
     prose: str | None = None
     unknown_reason: str | None = None
     asks: list[dict] = field(default_factory=list)
+    # READ-SURFACE-V1 §4: the asked keys that hold an unresolved placeholder
+    # (never served as a fact) and the keys served conflicted, each
+    # `[entity, attribute]` as in snapshot's `unresolved`/`conflicted`.
+    unresolved: list[list[str]] = field(default_factory=list)
+    conflicted: list[list[str]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -98,6 +108,14 @@ _ASK_PLAN_SCHEMA = {
     },
     "required": ["refer_targets", "keys"],
 }
+
+
+def _finite_time(value: Any) -> bool:
+    """A valid valid-time coordinate: a finite real number, never a bool
+    (FOLD-CORRECTNESS-V1 §6's predicate; READ-SURFACE-V1 §6 reads the ask
+    plan's `as_of` through it)."""
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
 
 
 class Porcelain:
@@ -150,14 +168,21 @@ class Porcelain:
                 cursor.position = prior_position
             raise
 
-    def _fact(self, row, divergent=False, b_value=None) -> Fact:
-        chain = [m.value for m in self._w.buffer.visible(entity=row.id, attribute="source")]
+    def _source_chain(self, row, asserted_as_of: int | None = None) -> list:
+        """The row's `source` chain as of the read's log position: a `source`
+        row asserted after it is not in the chain (READ-SURFACE-V1 §8)."""
+        return [m.value for m in self._w.buffer.visible(
+            entity=row.id, attribute="source", asserted_as_of=asserted_as_of)]
+
+    def _fact(self, row, divergent=False, b_value=None,
+              asserted_as_of: int | None = None) -> Fact:
+        chain = self._source_chain(row, asserted_as_of)
         return Fact(
             entity=row.entity, attribute=row.attribute, value=row.value,
             valid=[row.valid_from, row.valid_to],
             provenance={"status": row.status, "source_chain": chain,
                         "assertion_id": row.id},
-            divergent=divergent, b_value=b_value,
+            divergent=divergent, b_value=b_value, value_type=row.value_type,
         )
 
     def _quantity_fact(
@@ -169,19 +194,71 @@ class Porcelain:
         attribute: str | None = None,
         divergent: bool = False,
         b_value: Any = None,
+        asserted_as_of: int | None = None,
     ) -> Fact:
-        chain = [m.value for m in self._w.buffer.visible(entity=row.id, attribute="source")]
+        chain = self._source_chain(row, asserted_as_of)
         return Fact(
             entity=entity or row.entity, attribute=attribute or row.attribute,
             value=quantity, valid=[row.valid_from, row.valid_to],
             provenance={"status": row.status, "source_chain": chain,
                         "assertion_id": row.id},
             divergent=divergent, b_value=b_value,
+            value_type="literal",    # a derived total (READ-SURFACE-V1 §4)
         )
+
+    def _key_payload(self, fold, value: Any = None,
+                     asserted_as_of: int | None = None) -> dict:
+        """The one payload `state` and `state_union` build from a fold
+        (READ-SURFACE-V1 §4). `status` is decided in order: nothing served ->
+        `unknown`; the fold flags -> `conflicted`; the served row is an
+        unresolved placeholder -> `unresolved` (the doctrine's
+        established-deferred state, whitepaper A6: `fact` is the placeholder,
+        its value the thunk spec, never a known value); else `known`. Keys
+        follow in order: `status`, `fact`, `quantity`, `conflicting`, then
+        `conflicting_facts` (one Fact per conflicting id, in that order) and
+        `values` (a set-valued key's current members, in member order;
+        `fact` stays the most recent). Given a `value`, `matches` comes last:
+        `who_knows`'s test of this frame's fold (§5; False on `unknown`)."""
+        winner = fold.winner
+        if winner is None:
+            return {"status": "unknown"} if value is None else {
+                "status": "unknown", "matches": False}
+        # Accrue: the host-facing value is the derived total, not the last
+        # delta row — keep `fact.value` consistent with ask()/snapshot().
+        aao = asserted_as_of
+        fact = (self._quantity_fact(winner, fold.quantity, asserted_as_of=aao)
+                if fold.quantity is not None else self._fact(winner, asserted_as_of=aao))
+        if fold.conflicted:
+            status = "conflicted"
+        elif winner.value_type == "unresolved":
+            status = "unresolved"
+        else:
+            status = "known"
+        out = {"status": status, "fact": fact.to_dict()}
+        if fold.quantity is not None:
+            out["quantity"] = fold.quantity
+        if fold.conflicted:
+            out["conflicting"] = list(fold.conflicting)
+            out["conflicting_facts"] = [
+                self._fact(self._w.buffer.get(i), asserted_as_of=aao).to_dict()
+                for i in fold.conflicting]
+        if fold._value_rows and status != "unresolved":
+            out["values"] = [self._fact(r, asserted_as_of=aao).to_dict()
+                             for r in fold._value_rows]
+        if value is not None:
+            # decoded first, so the `$decimal` tag works over JSON and MCP
+            out["matches"] = self._w.indexes.fold_matches(fold, decode_value(value))
+        return encode_out(out)
 
     @staticmethod
     def _is_numeric(value: object) -> bool:
         return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
+
+    def _attr(self, name: Any) -> Any:
+        """An attribute argument as the gate names it (READ-SURFACE-V1 §3):
+        every porcelain argument that names an attribute passes through here
+        first. A non-string argument passes through unchanged."""
+        return self._w.canonical_attribute(name) if isinstance(name, str) else name
 
     # ------------------------------------------------- BUILD-SESSION-V1
 
@@ -367,7 +444,7 @@ class Porcelain:
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON) -> dict:
         try:
-            out = self._w.resolve(entity, aspect, frame)
+            out = self._w.resolve(entity, self._attr(aspect), frame)
         except ResolutionDenied as exc:
             return {"status": "denied", "facts": [],
                     "receipt": self._receipt([]).to_dict(), "reason": str(exc)}
@@ -402,7 +479,17 @@ class Porcelain:
 
     # --------------------------------------------------- reads (LLM-free)
 
-    def _is_known(self, entity: str, frame: str = CANON) -> bool:
+    def canonical_attribute(self, name: str) -> str:
+        """The gate's name for an attribute (READ-SURFACE-V1 §3): its own
+        normalization (strip, lowercase, spaces to `_`) and its forward alias
+        map, exactly as applied on write — "Located In" -> "in", "type" ->
+        "kind". Every porcelain argument that names an attribute passes
+        through it, so an alias spelling reads the key the gate stored.
+        Inverse spellings (`holds`, `wearing`) are not renamed."""
+        return self._attr(name)
+
+    def _is_known(self, entity: str, frame: str = CANON,
+                  asserted_as_of: int | None = None) -> bool:
         """Whether `entity` exists from `frame`'s perspective: some visible row
         about a member of its identity closure lives in `frame` or in canon —
         an indexed check over the requested id only, never a whole-log scan
@@ -417,19 +504,21 @@ class Porcelain:
         One `visible(entity_in=)` call, filtered to the two frames here (r2):
         adding `frame=` to the query lets SQLite pick the frame index over the
         entity index (measured on a 100k-row log: 8.8 ms per id against
-        0.35)."""
+        0.35). As of a log position (READ-SURFACE-V1 §8), an id first asserted
+        after it is unknown, like an id nobody wrote."""
         members = sorted(self._w.registry.closure(entity))
         frames = {CANON, frame}
         return any(
             r.frame in frames
             and not r.entity.startswith("a:") and not r.entity.startswith(ATTR_PREFIX)
-            for r in self._w.buffer.visible(entity_in=members)
+            for r in self._w.buffer.visible(entity_in=members,
+                                            asserted_as_of=asserted_as_of)
         )
 
     def snapshot(self, scope, frame: str = CANON, as_of: float | None = None,
                  lens: str = "current_state", budget: int | None = None,
                  since: float | None = None, correlated: bool = False,
-                 features: bool = False) -> dict:
+                 features: bool = False, asserted_as_of: int | None = None) -> dict:
         """Materialize known entity ids (and what they contain) from one frame:
         folded facts, accrue quantities, unresolved aspects, conflicted keys and
         render-time defaults, under a lens (current_state, establishing_set,
@@ -437,27 +526,31 @@ class Porcelain:
         an optional budget. Unknown or malformed ids return {"error", "bad"};
         an id is known when some row about it lives in `frame` or in canon, so
         an id that only another frame carries is unknown here
-        (FRAME-SCOPED-IDENTITY-V1 §6)."""
+        (FRAME-SCOPED-IDENTITY-V1 §6). `asserted_as_of` reads the log as it
+        stood at that position (READ-SURFACE-V1 §8)."""
         # correlated/features (AWARENESS-READS-V1.1, opt-in): fold each entity over
         # its aka correlation union (the whole reveal scene) and/or inline each
         # place's part_of-feature children. Default off = unchanged.
         roots = [scope] if isinstance(scope, str) else list(scope)
         # Known in the snapshot's frame or in canon (FRAME-SCOPED-IDENTITY-V1 §6).
         bad = [s for s in roots
-               if not ID_RE.fullmatch(s) or not self._is_known(s, frame)]
+               if not ID_RE.fullmatch(s)
+               or not self._is_known(s, frame, asserted_as_of)]
         if bad:
             return {"error": "snapshot scope must be KNOWN entity ids "
                              "(use ask for references)", "bad": bad}
         m = self._w.materialize(roots, as_of=as_of, frame=frame, lens=lens,
                                 budget=budget, since=since,
-                                correlated=correlated, features=features)
+                                correlated=correlated, features=features,
+                                asserted_as_of=asserted_as_of)
         # encode_out at the return: the porcelain's plain-JSON contract —
         # exact-decimal values leave as the tag dict, never a raw Decimal.
         return encode_out({
             "world_id": self._w.world_id,
-            "charter": self._w.charter(),
+            "charter": self._w.charter(asserted_as_of=asserted_as_of),
             "frame": m.frame, "lens": m.lens, "as_of": m.as_of,
-            "facts": [self._fact(r).to_dict() for r in m.assertions],
+            "facts": [self._fact(r, asserted_as_of=asserted_as_of).to_dict()
+                      for r in m.assertions],
             "quantities": [
                 {"entity": e, "attribute": a, "value": v}
                 for e, a, v in m.quantities
@@ -469,28 +562,26 @@ class Porcelain:
         })
 
     def state(self, entity: str, attribute: str, frame: str = CANON,
-              as_of: float | None = None) -> dict:
+              as_of: float | None = None, value: Any = None,
+              asserted_as_of: int | None = None) -> dict:
         """The folded value of one (entity, attribute) key in a frame as of a valid
-        time: {"status": "unknown"} when nothing is recorded, else "known" or
-        "conflicted" with the served fact (and the conflicting assertion ids, or
-        the derived quantity for an accrue attribute)."""
-        fold = self._w.state(entity, attribute, frame, valid_as_of=as_of)
-        if fold.winner is None:
-            return {"status": "unknown"}
-        # Accrue: the host-facing value is the derived total, not the last
-        # delta row — keep `fact.value` consistent with ask()/snapshot().
-        fact = (self._quantity_fact(fold.winner, fold.quantity)
-                if fold.quantity is not None else self._fact(fold.winner))
-        out = {"status": "conflicted" if fold.conflicted else "known",
-               "fact": fact.to_dict()}
-        if fold.quantity is not None:
-            out["quantity"] = fold.quantity
-        if fold.conflicted:
-            out["conflicting"] = list(fold.conflicting)
-        return encode_out(out)
+        time: {"status": "unknown"} when nothing is recorded, else "known",
+        "conflicted" or "unresolved" (the served row is an unresolved
+        placeholder) with the served fact; plus the conflicting assertion ids
+        and their facts, a set-valued key's current members (`values`), or
+        the derived quantity for an accrue attribute. A host treats a status
+        it does not recognize as not known. Given a `value` (any JSON; a
+        `$decimal` tag decodes), the payload gains `matches`: whether this
+        frame's fold holds it, `who_knows`'s test (READ-SURFACE-V1 §5).
+        `asserted_as_of` reads the log as it stood at that position (§8)."""
+        return self._key_payload(
+            self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of,
+                          asserted_as_of=asserted_as_of),
+            value, asserted_as_of)
 
     def where(self, attribute: str, op: str, value, frame: str = CANON,
-              as_of: float | None = None) -> list[str]:
+              as_of: float | None = None,
+              asserted_as_of: int | None = None) -> list[str]:
         """Entity ids whose folded `attribute` satisfies `op value` (one of
         ">=", ">", "<=", "<", "==") in a frame as of a valid time."""
         comparators = {
@@ -502,20 +593,23 @@ class Porcelain:
         }
         if op not in comparators:
             raise ValueError(f"unknown comparison operator {op!r}")
+        attribute = self._attr(attribute)
         value = decode_value(value)   # tag-form symmetry: {"$decimal": ...} ok
         if not self._is_numeric(value):
             return []
         candidates = {
             self._w.registry.resolve(r.entity)
             for r in self._w.buffer.visible(
-                attribute=attribute, frame=frame, valid_as_of=as_of
+                attribute=attribute, frame=frame, valid_as_of=as_of,
+                asserted_as_of=asserted_as_of,
             )
             if not r.entity.startswith("a:")
             and not r.entity.startswith(ATTR_PREFIX)
         }
         out: list[str] = []
         for entity in sorted(candidates):
-            fold = self._w.state(entity, attribute, frame, valid_as_of=as_of)
+            fold = self._w.state(entity, attribute, frame, valid_as_of=as_of,
+                                 asserted_as_of=asserted_as_of)
             if fold.quantity is not None:
                 target = fold.quantity
             elif fold.winner is not None:
@@ -534,16 +628,19 @@ class Porcelain:
         frame: str = CANON,
         as_of: float | None = None,
         recursive: bool = False,
+        asserted_as_of: int | None = None,
     ) -> dict:
         """A bounded rollup (sum, count, min, max, avg) of `member_attribute`
         over a container's members, optionally recursive; derived, never stored."""
         return encode_out(self._w.aggregate(
-            container, member_attribute, op,
+            container, self._attr(member_attribute), op,
             frame=frame, as_of=as_of, recursive=recursive,
+            asserted_as_of=asserted_as_of,
         ))
 
     def entities(self, frame: str, prefix: str | None = None,
-                 as_of: float | None = None) -> list[str]:
+                 as_of: float | None = None,
+                 asserted_as_of: int | None = None) -> list[str]:
         """The roster read (BOUNDED-READS-V1): entity ids carried by ONE
         frame's rows, identity-resolved, deduped, sorted. `frame` is required —
         every read fixes perspective (a prefix-only enumeration would leak
@@ -554,7 +651,8 @@ class Porcelain:
             # unbounded cross-frame scan, exactly what this verb must not be.
             raise ValueError("entities() requires a frame — every read fixes perspective")
         out: set[str] = set()
-        for r in self._w.buffer.visible(frame=frame, valid_as_of=as_of):
+        for r in self._w.buffer.visible(frame=frame, valid_as_of=as_of,
+                                        asserted_as_of=asserted_as_of):
             if r.entity.startswith("a:") or r.entity.startswith(ATTR_PREFIX):
                 continue
             eid = self._w.registry.resolve(r.entity)
@@ -564,7 +662,8 @@ class Porcelain:
 
     def facts(self, frame: str, entity: str | None = None,
               attribute: str | None = None, prefix: str | None = None,
-              as_of: float | None = None, include_meta: bool = False) -> list[dict]:
+              as_of: float | None = None, include_meta: bool = False,
+              asserted_as_of: int | None = None) -> list[dict]:
         """The frame-scan read (BOUNDED-READS-V1): the visible rows OF one
         frame as Fact payloads — RAW log reads for audited scans (receipt
         trails, knowledge digests, marker rows), NOT folds (folded truth is
@@ -574,61 +673,78 @@ class Porcelain:
         unless `include_meta=True`."""
         if not frame:
             raise ValueError("facts() requires a frame — every read fixes perspective")
+        if attribute is not None:
+            attribute = self._attr(attribute)
+        aao = asserted_as_of
         if entity is not None and not entity.startswith("a:"):
             clos = sorted(self._w.registry.closure(entity))
             rows = self._w.buffer.visible(entity_in=clos, frame=frame,
-                                          attribute=attribute, valid_as_of=as_of)
+                                          attribute=attribute, valid_as_of=as_of,
+                                          asserted_as_of=aao)
         elif entity is not None:
             rows = self._w.buffer.visible(entity=entity, frame=frame,
-                                          attribute=attribute, valid_as_of=as_of)
+                                          attribute=attribute, valid_as_of=as_of,
+                                          asserted_as_of=aao)
         else:
             rows = [
                 r for r in self._w.buffer.visible(frame=frame, attribute=attribute,
-                                                  valid_as_of=as_of)
+                                                  valid_as_of=as_of, asserted_as_of=aao)
                 if include_meta or (not r.entity.startswith("a:")
                                     and not r.entity.startswith(ATTR_PREFIX))
             ]
         if prefix is not None:
             rows = [r for r in rows
                     if self._w.registry.resolve(r.entity).startswith(prefix)]
-        return encode_out([self._fact(r).to_dict() for r in rows])
+        return encode_out([self._fact(r, asserted_as_of=aao).to_dict() for r in rows])
 
-    def locate(self, entity: str, as_of: float | None = None) -> list[str]:
-        """The containment chain above an entity in canon, nearest container
+    def locate(self, entity: str, as_of: float | None = None, frame: str = CANON,
+               asserted_as_of: int | None = None) -> list[str]:
+        """The containment chain above an entity in a frame, nearest container
         first, as of a valid time (containment is single-parent)."""
-        return self._w.locate(entity, valid_as_of=as_of)
+        return self._w.locate(entity, frame=frame, valid_as_of=as_of,
+                              asserted_as_of=asserted_as_of)
 
-    def contents(self, container: str, as_of: float | None = None) -> list[str]:
-        """The entities directly contained in a container in canon as of a valid
-        time."""
-        return self._w.contents(container, valid_as_of=as_of)
+    def contents(self, container: str, as_of: float | None = None,
+                 frame: str = CANON, asserted_as_of: int | None = None) -> list[str]:
+        """The entities directly contained in a container in a frame as of a
+        valid time."""
+        return self._w.contents(container, frame=frame, valid_as_of=as_of,
+                                asserted_as_of=asserted_as_of)
 
     def composition(self, entity: str, frame: str = CANON,
-                    as_of: float | None = None) -> list[str]:
+                    as_of: float | None = None,
+                    asserted_as_of: int | None = None) -> list[str]:
         """The `part_of` chain up — the entity's place in the structure
         (PLACE-FEATURE-ABSTRACTION-V1). The compositional sibling of `locate`."""
-        return self._w.composition(entity, frame=frame, valid_as_of=as_of)
+        return self._w.composition(entity, frame=frame, valid_as_of=as_of,
+                                   asserted_as_of=asserted_as_of)
 
     def features(self, place: str, frame: str = CANON,
-                 as_of: float | None = None) -> list[str]:
+                 as_of: float | None = None,
+                 asserted_as_of: int | None = None) -> list[str]:
         """The `part_of`-children of a place — its structural sub-features
         (a burrow under a hillside). The compositional sibling of `contents`."""
-        return self._w.features(place, frame=frame, valid_as_of=as_of)
+        return self._w.features(place, frame=frame, valid_as_of=as_of,
+                                asserted_as_of=asserted_as_of)
 
-    def path(self, a: str, b: str, as_of: float | None = None) -> list[str] | None:
+    def path(self, a: str, b: str, as_of: float | None = None, frame: str = CANON,
+             asserted_as_of: int | None = None) -> list[str] | None:
         """A shortest route over the lateral graph (connects_to/adjacent_to) in
-        canon as of a valid time, or None: containment is not connectivity."""
+        a frame as of a valid time, or None: containment is not connectivity."""
         # as_of routes as the graph stood at that time: a severed edge
         # (valid_to passed) drops; history is preserved (PATH-TEMPORAL-V1).
-        return self._w.path(a, b, valid_as_of=as_of)
+        return self._w.path(a, b, frame=frame, valid_as_of=as_of,
+                            asserted_as_of=asserted_as_of)
 
-    def route(self, a: str, b: str, frame: str = CANON, as_of: float | None = None) -> dict:
+    def route(self, a: str, b: str, frame: str = CANON, as_of: float | None = None,
+              asserted_as_of: int | None = None) -> dict:
         """Passability-aware route (RFC-003): {route, status, segments}. Status
         per segment is clear|blocked|obscured (removed is temporal/diagnostic);
         blocked carries obstructing-fact evidence, obscured a computed
         unknown_basis. The engine derives status from portal facts under the
         host's declared traversal policy; the host supplies the words."""
-        return encode_out(self._w.route(a, b, frame=frame, valid_as_of=as_of))
+        return encode_out(self._w.route(a, b, frame=frame, valid_as_of=as_of,
+                                        asserted_as_of=asserted_as_of))
 
     # ----------------------------------- host reconciliation (MERGE-RECONCILE-VERB-V1)
 
@@ -723,33 +839,30 @@ class Porcelain:
         return self._w.registry.correlate(a, b, evidence, valid_from=at)
 
     def correlations(self, entity: str, as_of: float | None = None,
-                     frame: str = CANON) -> list[str]:
+                     frame: str = CANON,
+                     asserted_as_of: int | None = None) -> list[str]:
         """The facets correlated with `entity` as-of (the `aka` set minus its own
         same_as closure), first-seen ordered. Before a reveal's valid_from this
         is empty — the mystery is intact. Zero writes."""
-        return self._w.registry.correlations(entity, valid_as_of=as_of, frame=frame)
+        return self._w.registry.correlations(entity, valid_as_of=as_of,
+                                             asserted_as_of=asserted_as_of,
+                                             frame=frame)
 
     def state_union(self, entity: str, attribute: str, frame: str = CANON,
-                    as_of: float | None = None) -> dict:
+                    as_of: float | None = None, value: Any = None,
+                    asserted_as_of: int | None = None) -> dict:
         """The explicit correlated read: fold `attribute` over `entity` ∪ its
         correlated facets, as-of. Same shape as `state`. NOT a default read —
         `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
         uncorrelated view (no leak)."""
-        fold = self._w.state_union(entity, attribute, frame, valid_as_of=as_of)
-        if fold.winner is None:
-            return {"status": "unknown"}
-        fact = (self._quantity_fact(fold.winner, fold.quantity)
-                if fold.quantity is not None else self._fact(fold.winner))
-        out = {"status": "conflicted" if fold.conflicted else "known",
-               "fact": fact.to_dict()}
-        if fold.quantity is not None:
-            out["quantity"] = fold.quantity
-        if fold.conflicted:
-            out["conflicting"] = list(fold.conflicting)
-        return encode_out(out)
+        return self._key_payload(
+            self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of,
+                                asserted_as_of=asserted_as_of),
+            value, asserted_as_of)
 
     def correlation_conflicts(self, as_of: float | None = None,
-                              frame: str = CANON) -> list[dict]:
+                              frame: str = CANON,
+                              asserted_as_of: int | None = None) -> list[dict]:
         """Every `distinct_from` whose endpoints lie in one correlation group (a
         raw-authored contradiction) for host adjudication. The guarded
         `correlate()` prevents these at the source; this surfaces any that
@@ -758,7 +871,8 @@ class Porcelain:
         (one `aka` row joins the pair) come first; group entries carry
         `aka_edge: None` and the `aka_path` that joins them
         (FRAME-SCOPED-IDENTITY-V1 §3(b))."""
-        return self._w.registry.correlation_conflicts(valid_as_of=as_of, frame=frame)
+        return self._w.registry.correlation_conflicts(
+            valid_as_of=as_of, asserted_as_of=asserted_as_of, frame=frame)
 
     def salience(
         self, entity: str, frame: str = CANON, as_of: float | None = None
@@ -775,6 +889,7 @@ class Porcelain:
         frame: str | list[str] = CANON,
         as_of: float | None = None,
         now: float | None = None,
+        asserted_as_of: int | None = None,
     ) -> dict:
         """Derived trust in one functional key: the served value plus provenance
         rank, corroboration, conflict and recency (wall-clock decay in tracking
@@ -784,7 +899,8 @@ class Porcelain:
         # now (TRACKING-MODE-V1): the WALL-time staleness reference in tracking
         # worlds (defaults to the injected clock; unused in fiction). The
         # payload carries recency/recency_status/last_confirmed_at_wallclock.
-        return self._w.confidence(entity, attribute, frame=frame, as_of=as_of,
+        return self._w.confidence(entity, self._attr(attribute), frame=frame,
+                                  as_of=as_of, asserted_as_of=asserted_as_of,
                                   now=now)
 
     def neighborhood(
@@ -796,9 +912,11 @@ class Porcelain:
         edge_kinds: list[str] | None = None,
         max_fanout: int = 64,
         budget: int | None = None,
+        asserted_as_of: int | None = None,
     ) -> dict:
         """The salience-ranked local subgraph around an entity across
-        containment, lateral, relation and event edges, to a depth and budget."""
+        containment, lateral, relation and event edges, to a depth and budget.
+        Salience, and so the ranking, is read at the head."""
         return encode_out(self._w.neighborhood(
             entity,
             depth=depth,
@@ -807,20 +925,23 @@ class Porcelain:
             edge_kinds=edge_kinds,
             max_fanout=max_fanout,
             budget=budget,
+            asserted_as_of=asserted_as_of,
         ))
 
     def events(self, kind: str | None = None,
                participants: str | list[str] | None = None,
                since: float | None = None, until: float | None = None,
-               frame: str = CANON) -> list[dict]:
+               frame: str = CANON, asserted_as_of: int | None = None) -> list[dict]:
         """Reified events (`event:` entities) in a frame, optionally filtered by
         kind, participant and a valid-time window; each carries its payload and
         the movement keys (origin/destination/manner) when it is a move."""
         scope = sorted({
             self._w.registry.resolve(r.entity)
-            for r in self._w.buffer.visible(frame=frame, entity_prefix="event:")})
+            for r in self._w.buffer.visible(frame=frame, entity_prefix="event:",
+                                            asserted_as_of=asserted_as_of)})
         m = self._w.materialize(scope or ["event:none"], frame=frame,
-                                lens="what_happened", since=since, as_of=until)
+                                lens="what_happened", since=since, as_of=until,
+                                asserted_as_of=asserted_as_of)
         by_event: dict[str, dict] = {}
         for r in m.assertions:
             # § E1: every event dict — moved or not — ALWAYS carries the six
@@ -882,22 +1003,28 @@ class Porcelain:
         return encode_out(self._w.in_transit(agent=agent, as_of=as_of, frame=frame))
 
     def who_knows(self, entity: str, attribute: str, value: Any = None,
-                  as_of: float | None = None) -> list[str]:
+                  as_of: float | None = None,
+                  asserted_as_of: int | None = None) -> list[str]:
         """The `knows:*` frames that KNOW `(entity, attribute)` — the computed
         inverse of `frame_diff` (WHO-KNOWS-INVERSE-V1). A frame qualifies iff its
-        folded winner is present and (when `value` given) value-matches,
-        identity-aware. No stored `known_by`; superseded/retracted beliefs drop."""
-        return self._w.who_knows(entity, attribute, value, valid_as_of=as_of)
+        fold serves a concrete value and, when `value` is given, the folded value
+        matches it: identity-aware, any member of a set, an accrue key's total
+        (READ-SURFACE-V1 §5). A `$decimal` tag decodes first. No stored
+        `known_by`; superseded/retracted beliefs drop."""
+        return self._w.who_knows(entity, self._attr(attribute), decode_value(value),
+                                 valid_as_of=as_of, asserted_as_of=asserted_as_of)
 
     def frame_diff(self, a: str, b: str | list[str], scope,
-                   as_of: float | None = None) -> list[dict]:
+                   as_of: float | None = None,
+                   asserted_as_of: int | None = None) -> list[dict]:
         """Semantic fact diff: keys folded in `a`, absent or divergent in
         `b`. Never compares assertion ids (frames are sparse copies)."""
         # One frame is the one-element case of the effective-knowledge union
         # (WORLD-RETRIEVAL-V2 #25): a single shared path, never two copies.
         b_frames = [b] if isinstance(b, str) else list(b)
         roots = [scope] if isinstance(scope, str) else list(scope)
-        m_a = self._w.materialize(roots, frame=a, as_of=as_of)
+        aao = asserted_as_of
+        m_a = self._w.materialize(roots, frame=a, as_of=as_of, asserted_as_of=aao)
         out: list[dict] = []
 
         def _norm(value, value_type):
@@ -915,14 +1042,16 @@ class Porcelain:
                     row.asserted_at)
 
         for entity, attribute, quantity in m_a.quantities:
-            fold_a = self._w.state(entity, attribute, frame=a, valid_as_of=as_of)
+            fold_a = self._w.state(entity, attribute, frame=a, valid_as_of=as_of,
+                                   asserted_as_of=aao)
             if fold_a.winner is None:
                 continue
             covered = False
             held = False
             divergent: tuple[tuple[float, int], int | float | Decimal] | None = None
             for b_frame in b_frames:
-                fold_b = self._w.state(entity, attribute, frame=b_frame, valid_as_of=as_of)
+                fold_b = self._w.state(entity, attribute, frame=b_frame,
+                                       valid_as_of=as_of, asserted_as_of=aao)
                 if fold_b.quantity == quantity:
                     covered = True
                     break
@@ -936,14 +1065,15 @@ class Porcelain:
             if not held:
                 out.append(
                     self._quantity_fact(
-                        fold_a.winner, quantity, entity=entity, attribute=attribute
+                        fold_a.winner, quantity, entity=entity, attribute=attribute,
+                        asserted_as_of=aao,
                     ).to_dict()
                 )
             else:
                 out.append(
                     self._quantity_fact(
                         fold_a.winner, quantity, entity=entity, attribute=attribute,
-                        divergent=True, b_value=divergent[1],
+                        divergent=True, b_value=divergent[1], asserted_as_of=aao,
                     ).to_dict()
                 )
 
@@ -957,14 +1087,14 @@ class Porcelain:
                 b_members = set()
                 for b_frame in b_frames:
                     fold_b = self._w.state(entity, row.attribute, frame=b_frame,
-                                           valid_as_of=as_of)
+                                           valid_as_of=as_of, asserted_as_of=aao)
                     b_members.update(
                         _norm(br.value, br.value_type)
                         for br in (fold_b._value_rows
                                    or ((fold_b.winner,) if fold_b.winner else ()))
                     )
                 if _norm(row.value, row.value_type) not in b_members:
-                    out.append(self._fact(row).to_dict())
+                    out.append(self._fact(row, asserted_as_of=aao).to_dict())
                 continue
 
             held = False
@@ -972,7 +1102,7 @@ class Porcelain:
             divergent: tuple[tuple[float, int], Any] | None = None
             for b_frame in b_frames:
                 fold_b = self._w.state(entity, row.attribute, frame=b_frame,
-                                       valid_as_of=as_of)
+                                       valid_as_of=as_of, asserted_as_of=aao)
                 if fold_b.winner is None:
                     continue
                 held = True
@@ -985,10 +1115,45 @@ class Porcelain:
             if covered:
                 continue
             if not held:
-                out.append(self._fact(row).to_dict())
+                out.append(self._fact(row, asserted_as_of=aao).to_dict())
             else:
-                out.append(self._fact(row, divergent=True, b_value=divergent[1]).to_dict())
+                out.append(self._fact(row, divergent=True, b_value=divergent[1],
+                                      asserted_as_of=aao).to_dict())
         return encode_out(out)
+
+    # ------------------------------------------------------- reference
+
+    def refer(self, description: str, scope: str | list[str] | None = None,
+              frame: str = CANON, as_of: float | None = None,
+              constraints: list[list[str]] | None = None,
+              asserted_as_of: int | None = None,
+              learn: bool = True, model: bool = True) -> dict:
+        """Resolve a referring expression (whitepaper §9) to one entity, a
+        candidate set, or underdetermined: `{"status": "resolved" |
+        "candidates" | "underdetermined", "entity_id", "candidates",
+        "receipt"}` (READ-SURFACE-V1 §9). Tier 1 is deterministic: an authored
+        name or alias in `frame`, constraint inversion (`constraints` are
+        `[relation, anchor]` pairs: `contains`, `owned_by`, `held_by`), the one
+        entity of the named kind in `scope`, a word refer learned earlier.
+        `model=False` is tier 1 only: where tier 2 would judge, the result is
+        `candidates` with signal `no_model`, and nothing is learned. `learn`
+        (REFER-LEARNING-V1): a vocabulary miss that tier 2 maps onto one entity
+        in scope is remembered as a word; a pick never is. `asserted_as_of`
+        reads the log as it stood at that position and never learns."""
+        pairs: list[tuple[str, str]] | None = None
+        if constraints is not None:
+            pairs = []
+            for constraint in constraints:
+                if not (isinstance(constraint, (list, tuple)) and len(constraint) == 2
+                        and all(isinstance(part, str) for part in constraint)):
+                    raise ValueError(
+                        "a refer constraint is a [relation, anchor] pair of "
+                        f"strings, got {constraint!r}")
+                pairs.append((constraint[0], constraint[1]))
+        resolution = self._w.refer(
+            description, scope=scope, frame=frame, constraints=pairs, as_of=as_of,
+            asserted_as_of=asserted_as_of, learn=learn, model=model)
+        return encode_out(asdict(resolution))
 
     # ------------------------------------------------------------- ask
 
@@ -1005,8 +1170,18 @@ class Porcelain:
             f"QUESTION: {question}"
         )
         plan = self._w.ingestor._model(prompt, task_schema(_ASK_PLAN_SCHEMA))
+        # READ-SURFACE-V1 §6 rule A: one effective time `t`, governing every
+        # step below (the asker's scope, both refer passes, every key fold,
+        # the location fold and its chain, events). The caller's `as_of` is a
+        # ceiling the model's parse can lower but never raise: a valid plan
+        # `as_of` (a finite real number) is taken when the caller gave none,
+        # else the earlier of the two; an invalid one is ignored.
+        t = as_of
+        if _finite_time(plan.get("as_of")):
+            t = plan["as_of"] if as_of is None else min(as_of, plan["as_of"])
         # HD 003: identity/existence is a CANON question; only the answer is
-        # knowledge-scoped. Resolve references against canon with a scene
+        # knowledge-scoped. Wherever the asked frame cannot bind a reference
+        # by itself (rule B below), resolve it against canon with a scene
         # scope mirroring the observe path — the asker (from a knows:<id>
         # frame) plus the asker's current container chain — so co-located
         # objects become candidates and the 018 escalation can fire. The
@@ -1018,53 +1193,89 @@ class Porcelain:
         ask_scope: str | list[str] | None = None
         if frame.startswith("knows:"):
             asker = frame[len("knows:"):]
-            ask_scope = [asker, *self._w.locate(asker, valid_as_of=as_of)]
+            ask_scope = [asker, *self._w.locate(asker, valid_as_of=t)]
         resolved: list[str | None] = []
         asks: list[dict] = []
         for target in plan.get("refer_targets", []):
-            r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=as_of,
-                              learn=False)
+            r = None
+            if frame != CANON:
+                # READ-SURFACE-V1 §6 rule B: the asker's own words first — the
+                # asked frame's tier 1 alone (its names, aliases, learned
+                # words, a kind unique in its view of the scene), kept only if
+                # it resolves: zero model calls, zero writes. Canon stays the
+                # binding authority wherever the frame cannot bind the
+                # reference by itself (HD 003).
+                own = self._w.refer(target, scope=ask_scope, frame=frame, as_of=t,
+                                    learn=False, model=False)
+                if own.status == "resolved":
+                    r = own
+            if r is None:
+                r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=t,
+                                  learn=False)
             if r.status == "resolved":
                 resolved.append(r.entity_id)
             else:
                 resolved.append(None)
                 asks.append({"reference": target, "candidates": list(r.candidates)})
         facts: list[dict] = []
+        unresolved: list[list[str]] = []
+        conflicted: list[list[str]] = []
+
+        def note(names: list[list[str]], entity: str, attribute: str) -> None:
+            # snapshot's naming: the containment family is `in`.
+            key = [entity, "in" if self._w.semantics.is_containment(attribute)
+                   else attribute]
+            if key not in names:
+                names.append(key)
+
         for key in plan.get("keys", []):
             idx = key.get("target_index", 0)
             if not (0 <= idx < len(resolved)) or resolved[idx] is None:
                 continue
-            fold = self._w.state(resolved[idx], key["attribute"], frame,
-                                 valid_as_of=as_of)
-            if fold.winner is not None:
-                if fold.quantity is not None:
-                    facts.append(
-                        self._quantity_fact(fold.winner, fold.quantity).to_dict()
-                    )
-                else:
-                    facts.append(self._fact(fold.winner).to_dict())
-        effective_as_of = plan.get("as_of") if plan.get("as_of") is not None else as_of
+            attribute = self._attr(key["attribute"])
+            fold = self._w.state(resolved[idx], attribute, frame, valid_as_of=t)
+            if fold.winner is None:
+                continue
+            # READ-SURFACE-V1 §4: a placeholder is named, never served as a
+            # fact; a set-valued key serves every current member; a
+            # conflicted key serves its winner, as before, and is named.
+            if fold.quantity is not None:
+                facts.append(self._quantity_fact(fold.winner, fold.quantity).to_dict())
+            elif fold.winner.value_type == "unresolved":
+                note(unresolved, resolved[idx], attribute)
+            elif fold._value_rows:
+                facts.extend(self._fact(r).to_dict() for r in fold._value_rows)
+            else:
+                facts.append(self._fact(fold.winner).to_dict())
+            if fold.conflicted:
+                note(conflicted, resolved[idx], attribute)
         if plan.get("wants_location"):
             for eid in resolved:
                 if eid:
-                    fold = self._w.state(eid, "in", frame, valid_as_of=effective_as_of)
-                    if fold.winner is not None:
+                    fold = self._w.state(eid, "in", frame, valid_as_of=t)
+                    if fold.winner is None:
+                        continue
+                    # The location fold is the `in` key, under §4's rules.
+                    if fold.winner.value_type == "unresolved":
+                        note(unresolved, eid, "in")
+                    else:
                         f = self._fact(fold.winner).to_dict()
                         # Frame-scope the chain like the fold beside it — a
                         # canon-frame locate would leak containment into a
                         # knows: answer (HD 003, incidental).
-                        f["chain"] = self._w.locate(
-                            eid, frame=frame, valid_as_of=effective_as_of)
+                        f["chain"] = self._w.locate(eid, frame=frame, valid_as_of=t)
                         facts.append(f)
+                    if fold.conflicted:
+                        note(conflicted, eid, "in")
         if plan.get("wants_events"):
             participants = [e for e in resolved if e]
             for ev in self.events(participants=participants or None,
-                                  until=effective_as_of, frame=frame):
+                                  until=t, frame=frame):
                 facts.append({"event": ev})
         answered = bool(facts)
         return Answer(
             answered=answered, facts=encode_out(facts),
             unknown_reason=None if answered else
             ("unresolved references" if asks else "no folded facts on the asked keys"),
-            asks=asks,
+            asks=asks, unresolved=unresolved, conflicted=conflicted,
         )

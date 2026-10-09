@@ -21,7 +21,13 @@ from dataclasses import dataclass
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    RESOLUTION_POLICY,
+    WORLD_PHYSICS_SUBJECT,
+    Assertion,
+)
 from patternbuffer.roles import WriterRole
 from patternbuffer.semantics import AttributeSemantics
 
@@ -166,6 +172,12 @@ class TruthMaintenance:
             raise ValueError(
                 f"retract target {target_id!r} is not a committed assertion "
                 "(a staged, in-set-minted id is not an eligible target)")
+        if row.entity == WORLD_PHYSICS_SUBJECT and row.attribute == RESOLUTION_POLICY:
+            # READ-SURFACE-V1 §7: the log was written under its physics; a
+            # world that needs other physics is a new world.
+            raise ValueError(
+                f"retract target {target_id!r} is the world's physics row, "
+                "which is immutable")
         return self._buffer.append(
             entity=target_id,
             attribute="retracts",

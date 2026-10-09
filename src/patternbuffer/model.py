@@ -42,10 +42,28 @@ STRUCTURAL_PREDICATES = (
 # These low-level names live here so the buffer guard can enforce authority
 # without importing the semantics service.
 ATTR_PREFIX = "attr:"
+# `durability` is the host's durability pin (READ-SURFACE-V1 §1): a declared
+# class for its own attribute, read by the classifier before the model.
 SEMANTICS_PREDICATES = frozenset(
-    {"arity", "relation_family", "fold_policy", "structural"}
+    {"arity", "relation_family", "fold_policy", "structural", "durability"}
 )
 INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from", "aka"}
+
+# The resolution policies — the world's one switch (whitepaper §8). Defined
+# here so the buffer can validate the physics row without importing the
+# resolver; `thunks` re-exports them.
+INVENT_UNDER_CANON = "invent_under_canon"
+OBSERVE_OR_UNKNOWN = "observe_or_unknown"
+DENY = "deny"
+POLICIES = frozenset({INVENT_UNDER_CANON, OBSERVE_OR_UNKNOWN, DENY})
+
+# The world's physics row (READ-SURFACE-V1 §7): `attr:__world__ ·
+# resolution_policy · <policy>`, canon, timeless, stated, CONSTITUTIVE, written
+# once by World and immutable after. `attr:__world__` already carries the
+# world's decay default (TRACKING-MODE-V1), so a world's physics live together,
+# outside every world-fact read (`attr:` subjects are excluded everywhere).
+WORLD_PHYSICS_SUBJECT = "attr:__world__"
+RESOLUTION_POLICY = "resolution_policy"
 
 # The canon identity edges (FRAME-SCOPED-IDENTITY-V1): the rows that make,
 # propose or forbid a merge. Identity is canon's — which ids are one thing is
@@ -75,8 +93,17 @@ META_ATTRIBUTES = frozenset(
         # like same_as/aka, never identity: EVENT by the classifier guardrail,
         # so it never folds, stands as a fact, or counts as an unstamped row.
         "learned_alias",
+        # Four of the five semantics predicates, listed by name (READ-SURFACE-V1
+        # §1). The fifth, `durability`, is an ordinary domain word too (a
+        # sword's durability), and a META attribute is erased from every fold.
+        # A semantics predicate means something only on an `attr:` subject;
+        # the classifier's own step keeps the pin row model-free.
+        "arity",
+        "relation_family",
+        "fold_policy",
+        "structural",
     }
-) | SEMANTICS_PREDICATES
+)
 
 # Mechanism attributes (GATE-AUTHORITY-V1 §1): rows the engine writes about
 # OTHER rows. Each has exactly one owning engine component and is recognized by

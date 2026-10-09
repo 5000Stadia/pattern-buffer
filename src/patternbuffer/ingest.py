@@ -34,9 +34,11 @@ from patternbuffer.model import (
     ID_RE,
     ID_SHAPED_RE,
     MECHANISM_ATTRIBUTES,
+    RESOLUTION_POLICY,
     SEMANTICS_PREDICATES,
     TASK_EXTRACT,
     VALUE_TYPES,
+    WORLD_PHYSICS_SUBJECT,
     Assertion,
     task_schema,
 )
@@ -272,7 +274,11 @@ _EXTRACT_RULES_LEAN = (
 )
 
 _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
-_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
+# The host's `attribute_default` may also declare `structural` and the
+# durability pin (READ-SURFACE-V1 §1). Neither is an item hint: a pin decides
+# which rows the model sees and which lens serves them — the host's decision
+# about its own vocabulary, made once, never carried in by a model-written item.
+_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural", "durability")
 
 
 # GATE-AUTHORITY-V1 §0: the fixed codes a skip receipt's `reason` is drawn
@@ -513,6 +519,17 @@ class Ingestor:
             return attr, None
         canonical = self._alias_map[attr]
         return canonical, f"{attr}->{canonical}"
+
+    def canonical_attribute(self, name: str) -> str:
+        """The one function that names an attribute (READ-SURFACE-V1 §3): the
+        gate's own normalization (strip, lowercase, spaces to `_`) and its
+        forward alias map (built-ins, replayed receipts, runtime
+        `add_attribute_alias` entries), skipped for a structural attribute,
+        exactly as the gate applies them on write. An inverse spelling
+        (`holds`, `wearing`) is not renamed: its entity-valued facts are stored
+        on the other entity and its text-valued facts under the spelling
+        itself (GATE-INVERSE-ALIAS-V1)."""
+        return self._canonicalize(name)[0]
 
     def _inverse_of(self, attr: str) -> str | None:
         """The forward attribute for an inverse relation (GATE-INVERSE-ALIAS-V1
@@ -1120,7 +1137,18 @@ class Ingestor:
         3. **Letter 029, for `generated`.** Never canon or `knows:*`, a
            resolver must be wired, and no side field whose row would carry
            no frame (`aliases_given` is judged on the value the host sent,
-           before normalization); then resolver authority."""
+           before normalization); then resolver authority.
+
+        Before all three, an item addressing the world's physics row
+        (READ-SURFACE-V1 §7) raises ValueError: only World writes it, once,
+        and it is immutable."""
+        entity, attribute = item.get("entity"), item.get("attribute")
+        if (entity == WORLD_PHYSICS_SUBJECT and isinstance(attribute, str)
+                and self._canonicalize(attribute)[0] == RESOLUTION_POLICY):
+            raise ValueError(
+                "the world's physics row (attr:__world__ · resolution_policy) "
+                "is written once by World and is immutable; a world that needs "
+                "other physics is a new world")
         status = item["status"]
         if status != "generated":
             self._role.check(status)
@@ -1377,6 +1405,17 @@ class Ingestor:
                                   detail={"field": attribute, "value": value,
                                           "source": "attr_row"})
                 return out
+            # READ-SURFACE-V1 §1: a declaration that could never take effect,
+            # or that contradicts one already on the attribute, skips too.
+            conflict = self._semantics.conflict(
+                entity[len(ATTR_PREFIX):], {attribute: value})
+            if conflict is not None:
+                self._record_skip(entity, attribute, value,
+                                  "invalid_semantics_declaration",
+                                  detail={"field": attribute, "value": value,
+                                          "source": "attr_row",
+                                          "conflicts_with": conflict[1]})
+                return out
         elif plan is not None:
             declaration, source = plan
             if declaration:
@@ -1396,6 +1435,18 @@ class Ingestor:
                                       "invalid_semantics_declaration",
                                       detail={"field": predicate, "value": declared,
                                               "source": source})
+                    return out
+                # READ-SURFACE-V1 §1: an incoherent declaration skips the item
+                # the same way, and leaves the callback unconsulted.
+                conflict = self._semantics.conflict(attribute, declaration)
+                if conflict is not None:
+                    predicate, conflicts_with = conflict
+                    self._record_skip(entity, attribute, value,
+                                      "invalid_semantics_declaration",
+                                      detail={"field": predicate,
+                                              "value": declaration[predicate],
+                                              "source": source,
+                                              "conflicts_with": conflicts_with})
                     return out
             if source == "attribute_default":
                 # Consulted once an item on the attribute reaches this step:

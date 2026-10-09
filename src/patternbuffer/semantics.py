@@ -1,11 +1,12 @@
 """Attribute semantics as data (ATTRIBUTE-SEMANTICS-V1).
 
 Attribute-level *behavior* — arity (functional vs set-valued), relation
-family (containment tree / lateral graph / none), fold policy (last-write
-vs move-supersession), and structural-ness — lifted out of the engine's
-code constants into per-world, rebuildable, *declared* semantics that every
-consumer reads through this one service. Domain vocabulary carries its own
-fold behavior without engine edits.
+family (containment tree / lateral graph / none), fold policy (by class,
+last write, accrue), structural-ness, and the host's durability pin
+(READ-SURFACE-V1 §1) — lifted out of the engine's code constants into
+per-world, rebuildable, *declared* semantics that every consumer reads
+through this one service. Domain vocabulary carries its own fold behavior
+without engine edits.
 
 Declarations are ordinary assertions about an ``attr:<name>`` entity (the
 canonicalization-as-receipts pattern generalized); the sidecar here is a
@@ -34,6 +35,7 @@ from patternbuffer.model import (
     ATTR_PREFIX,
     CONTAINMENT_FAMILY,
     INVIOLABLE_CORE,
+    META_ATTRIBUTES,
     SEMANTICS_PREDICATES,
     SET_VALUED_ATTRIBUTES,
     STRUCTURAL_PREDICATES,
@@ -44,26 +46,45 @@ logger = logging.getLogger(__name__)
 # Axis values (fixed enums).
 FUNCTIONAL, SET_VALUED = "functional", "set_valued"
 CONTAINMENT, LATERAL, NONE = "containment", "lateral", "none"
-LAST_WRITE, MOVE, ACCRUE = "last_write", "move", "accrue"
+LAST_WRITE, ACCRUE = "last_write", "accrue"
+# The fold of an attribute that declares no fold policy: by durability class,
+# the fold every undeclared attribute always had (READ-SURFACE-V1 §2).
+# Internal: never declarable.
+BY_CLASS = "by_class"
 
 ARITIES = frozenset({FUNCTIONAL, SET_VALUED})
 RELATION_FAMILIES = frozenset({CONTAINMENT, LATERAL, NONE})
-FOLD_POLICIES = frozenset({LAST_WRITE, MOVE, ACCRUE})
+# The declarable fold policies (READ-SURFACE-V1 §2). `move` was recorded but
+# never wired, and is removed: a `move` declaration skips at the gate and an
+# old one in a log is ignored on read. The containment family's cross-source
+# move rule (HD 002) is keyed on `relation_family`, as it always was.
+FOLD_POLICIES = frozenset({LAST_WRITE, ACCRUE})
+# The durability pin's classes (READ-SURFACE-V1 §1): the classifier's names,
+# spelled here because the classifier imports this module. Never EVENT:
+# occurrence stays structural (CLASSIFIER-EVENT-SAFETY-V1), and EVENT erases a
+# row from every fold.
+PINNABLE_DURABILITIES = frozenset({"CONSTITUTIVE", "DISPOSITIONAL", "STATE"})
 
 # Each string axis's vocabulary, by reference (GATE-AUTHORITY-V1 §5).
 _AXIS_VOCABULARIES = {
     "arity": ARITIES,
     "relation_family": RELATION_FAMILIES,
     "fold_policy": FOLD_POLICIES,
+    "durability": PINNABLE_DURABILITIES,
 }
+
+# Attributes whose class a classifier guardrail fixes before a pin is read
+# (READ-SURFACE-V1 §1): a pin on one could never take effect.
+_GUARDRAILED = frozenset({"name", "alias"}) | META_ATTRIBUTES
 
 
 def valid_declaration(predicate: str, value: object) -> bool:
     """Whether a declared ``value`` is in ``predicate``'s axis vocabulary
     (GATE-AUTHORITY-V1 §5): ``arity`` ∈ ARITIES, ``relation_family`` ∈
-    RELATION_FAMILIES, ``fold_policy`` ∈ FOLD_POLICIES, ``structural`` a real
-    bool. The gate validates every declaration it would write through this,
-    and the read side ignores a declared value that fails it."""
+    RELATION_FAMILIES, ``fold_policy`` ∈ FOLD_POLICIES, ``durability`` ∈
+    PINNABLE_DURABILITIES (READ-SURFACE-V1 §1), ``structural`` a real bool.
+    The gate validates every declaration it would write through this, and the
+    read side ignores a declared value that fails it."""
     if predicate == "structural":
         return isinstance(value, bool)
     vocabulary = _AXIS_VOCABULARIES.get(predicate)
@@ -97,24 +118,29 @@ _BUILTIN_DEFAULT_ATTRIBUTES = frozenset(
 
 @dataclass(frozen=True, slots=True)
 class Semantics:
-    """The four orthogonal attribute-level axes."""
+    """The orthogonal attribute-level axes. ``durability`` is the host's pin
+    (READ-SURFACE-V1 §1): a declared class, or None when the rows are
+    model-judged per row."""
 
     arity: str
     relation_family: str
     fold_policy: str
     structural: bool
+    durability: str | None = None
 
 
 def builtin_default(attribute: str) -> Semantics:
-    """Today's behavior, as data — the default for any undeclared attribute."""
+    """Today's behavior, as data — the default for any undeclared attribute.
+    Its fold policy is the internal `by_class` (READ-SURFACE-V1 §2): the fold
+    by durability class."""
     arity = SET_VALUED if attribute in SET_VALUED_ATTRIBUTES else FUNCTIONAL
     if attribute in CONTAINMENT_FAMILY:
-        family, policy = CONTAINMENT, MOVE
+        family = CONTAINMENT
     elif attribute in _LATERAL:
-        family, policy = LATERAL, LAST_WRITE
+        family = LATERAL
     else:
-        family, policy = NONE, LAST_WRITE
-    return Semantics(arity, family, policy, attribute in STRUCTURAL_PREDICATES)
+        family = NONE
+    return Semantics(arity, family, BY_CLASS, attribute in STRUCTURAL_PREDICATES)
 
 
 class AttributeSemantics:
@@ -179,7 +205,60 @@ class AttributeSemantics:
             relation_family=axis("relation_family", base.relation_family),
             fold_policy=axis("fold_policy", base.fold_policy),
             structural=axis("structural", base.structural),
+            durability=axis("durability", base.durability),
         )
+
+    def durability_pin(self, attribute: str) -> str | None:
+        """The class the host pinned for `attribute` (READ-SURFACE-V1 §1), or
+        None. The classifier reads it after its structural guardrails and
+        before `structural` and the model; a pin on an attribute a guardrail
+        decides first (`name`, `alias`, a META attribute) is never reached."""
+        return self.semantics(attribute).durability
+
+    def conflict(self, attribute: str,
+                 declaration: dict[str, object]) -> tuple[str, str] | None:
+        """The coherence check (READ-SURFACE-V1 §1): the first key of
+        `declaration` that could never take effect, or that contradicts
+        another declaration on `attribute` — one already in the log or
+        another key of `declaration` itself — as ``(field, conflicts_with)``;
+        None when the declaration is coherent. Every value is already in its
+        axis vocabulary (`valid_declaration`). The gate skips an incoherent
+        declaration `invalid_semantics_declaration`.
+
+        - A pin on `name`, `alias` or a META attribute: a guardrail fixes
+          their class before the pin is read (``"guardrail"``).
+        - A pin other than CONSTITUTIVE beside ``structural: true``, in either
+          order (``"structural=true"`` / ``"durability=<class>"``). Within one
+          declaration the pin is the key refused.
+        - ``fold_policy: last_write`` beside a set-valued arity or the
+          containment family (§2), declared or built in, in either order
+          (``"arity=set_valued"`` / ``"relation_family=containment"`` /
+          ``"fold_policy=last_write"``). Within one declaration the fold
+          policy is the key refused."""
+        current = self.semantics(attribute)
+        pin = declaration.get("durability")
+        structural = declaration.get("structural", current.structural)
+        if pin is not None:
+            if attribute in _GUARDRAILED:
+                return "durability", "guardrail"
+            if pin != "CONSTITUTIVE" and structural is True:
+                return "durability", "structural=true"
+        elif (declaration.get("structural") is True
+              and current.durability not in (None, "CONSTITUTIVE")):
+            return "structural", f"durability={current.durability}"
+        arity = declaration.get("arity", current.arity)
+        family = declaration.get("relation_family", current.relation_family)
+        if declaration.get("fold_policy") == LAST_WRITE:
+            if arity == SET_VALUED:
+                return "fold_policy", f"arity={SET_VALUED}"
+            if family == CONTAINMENT:
+                return "fold_policy", f"relation_family={CONTAINMENT}"
+        elif current.fold_policy == LAST_WRITE:
+            if declaration.get("arity") == SET_VALUED:
+                return "arity", f"fold_policy={LAST_WRITE}"
+            if declaration.get("relation_family") == CONTAINMENT:
+                return "relation_family", f"fold_policy={LAST_WRITE}"
+        return None
 
     def is_set_valued(self, attribute: str) -> bool:
         return self.semantics(attribute).arity == SET_VALUED
@@ -192,6 +271,15 @@ class AttributeSemantics:
 
     def is_accrue(self, attribute: str) -> bool:
         return self.semantics(attribute).fold_policy == ACCRUE
+
+    def is_last_write(self, attribute: str) -> bool:
+        """Declared `fold_policy: last_write` on a functional attribute outside
+        the containment family (READ-SURFACE-V1 §2): the fold serves the latest
+        row of the top evidence rank, whatever its durability. If a log
+        carries the pair anyway, set-valued and containment win."""
+        s = self.semantics(attribute)
+        return (s.fold_policy == LAST_WRITE and s.arity != SET_VALUED
+                and s.relation_family != CONTAINMENT)
 
     def is_structural(self, attribute: str) -> bool:
         return self.semantics(attribute).structural

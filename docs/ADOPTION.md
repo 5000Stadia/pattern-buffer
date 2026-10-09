@@ -34,8 +34,9 @@ from your side the engine is indistinguishable from sqlite3.
    reaching into process-global signal state or leaking the very thread it
    couldn't kill — both worse than honest blocking, both violations of "the
    engine never reaches into the host." Best of all, avoid the call: rows you
-   know are durable should be declared `structural` via `attribute_default` so
-   the classifier skips the model entirely.
+   know are durable should be declared `structural` via `attribute_default` (or
+   pinned to a durability class, see "Host-control vocabulary" below) so the
+   classifier skips the model entirely.
 2. **The binding table** — your scoping unit (workspace, channel, space) →
    `world_id`. Many scopes → one world is allowed; one scope → many worlds is
    not. Fiction scopes bind to private worlds; all real-life scopes bind to
@@ -47,8 +48,17 @@ from your side the engine is indistinguishable from sqlite3.
 ## The plumbing below the porcelain (reference)
 
 ```python
-World(path, world_id, model=None, policy="invent_under_canon", clock=time.time)
+World(path, world_id, model=None, policy=None, clock=time.time)
   # policy: "invent_under_canon" (fiction) | "observe_or_unknown" (tracking) | "deny"
+  # A world file carries its physics (READ-SURFACE-V1 §7): a new world records its
+  # policy as the physics row `attr:__world__ · resolution_policy · <policy>`
+  # (canon, timeless, immutable), and every later open runs under it. Omit policy=
+  # to run under the stored physics (invent_under_canon for a world that records
+  # none); an explicit policy= that disagrees raises WorldPhysicsMismatch (a
+  # ValueError) and writes nothing. A world created before this records its policy
+  # the first time it is opened with an explicit policy= (one row, permanent).
+  # world.policy reads the effective physics; facts("canon", entity="attr:__world__")
+  # lists the row. A world that needs other physics is a new world.
 
 # Writes — each behind its enforced role; you cannot mint write authority:
 world.ingest(text, context="", frame=None) -> list[Assertion]   # LLM extraction via the gate
@@ -94,7 +104,10 @@ world.confidence(entity, attribute, frame="canon", as_of=None,
 #   multi-frame frame_diff. Derived; functional-only.
 world.refer(description, scope=None, frame="canon",
             constraints=None, as_of=None, asserted_as_of=None,
-            learn=True) -> Resolution
+            learn=True, model=True) -> Resolution
+#   model=False (READ-SURFACE-V1 §9): tier 1 only — where tier 2 would judge,
+#   the result is candidates with signal "no_model", and nothing is learned.
+#   On the porcelain: p.refer (below).
 #   Tier 1 (no model call): a name/alias ("alias_exact"); a constraint
 #   (contains / owned_by -> the owner / held_by); the one entity of a kind in
 #   scope ("unique_kind_in_scope"); a word refer learned ("learned_alias").
@@ -152,7 +165,10 @@ Domain outcomes are values you must branch on:
   underdetermined reference is YOUR ask to deliver to the user; the engine
   never guesses below its confidence floor.
 - `FoldResult.conflicted` — the key is under an open truth-maintenance flag;
-  `winner` is the engine's holding answer, `conflicting` lists both sides.
+  `winner` is the engine's holding answer, `conflicting` lists both sides. On
+  the porcelain, `state()` adds `conflicting_facts` (one Fact per side) and
+  answers `unresolved` when the served row is a placeholder (READ-SURFACE-V1
+  §4).
 - `FoldResult.quantity` — for attributes declared `fold_policy="accrue"`,
   the folded numeric total. The `winner` is provenance for the latest ledger
   row, not the value a host should read.
@@ -191,6 +207,55 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   deterministic; sums are exact. Currency codes, units, and rounding *policy*
   are host meaning — model them as ordinary facts, not value forms.
 
+### Host-control vocabulary: the durability pin and `last_write`
+
+Two declarations (READ-SURFACE-V1 §1–§2) let a host fix how its OWN
+bookkeeping attributes behave, without the model. Both are ordinary
+`attr:<name>` declarations, from `attribute_default` or a manual `attr:` row;
+neither is an item hint.
+
+- **The durability pin** — `{"durability": "STATE" | "DISPOSITIONAL" |
+  "CONSTITUTIVE"}` (never `EVENT`: occurrence stays structural). Every row of
+  the attribute takes that class at confidence 1.0, before `structural` and the
+  model, on every classification path; the model is never asked, the row is
+  never `needs_review`, and accrual promotion skips it. Undeclared vocabulary
+  stays per-row and model-judged. A pin on `name`, `alias` or a META attribute
+  could never take effect, and a non-`CONSTITUTIVE` pin beside
+  `structural: true` contradicts it: both skip `invalid_semantics_declaration`
+  with `detail.conflicts_with`.
+- **`fold_policy: "last_write"`** — the key serves its latest row by
+  `(valid_from, asserted_at)` among the rows of the top evidence rank, whatever
+  their durability: never conflicted, no cross-source flag. A later
+  `inferred`/`assumed` row still never displaces a `stated` one. Functional
+  attributes outside the containment family only (beside `arity: set_valued` or
+  `relation_family: containment` it skips, `conflicts_with` naming the other
+  axis). `fold_policy: "move"` is no longer declarable (it skips); the
+  containment family's cross-source move rule is unchanged.
+
+They are two orthogonal axes: the pin decides the class (which lens serves the
+row, budget exemption, whether the model is asked), the fold policy decides
+which row of a key is served. The recipe:
+
+```python
+def attribute_default(attribute):
+    if attribute in MUTABLE_HOST_CONTROL:      # e.g. an arc phase you rewrite
+        return {"durability": "STATE", "fold_policy": "last_write"}
+    if attribute in IMMUTABLE_HOST_ENUMS:      # set once, never changed
+        return {"durability": "CONSTITUTIVE"}  # or {"structural": True}, as before
+    return None
+```
+
+A STATE pin alone still conflicts when you rewrite a key at the same stamp or
+timelessly; `last_write` alone still sends every row to the model. Two
+cautions:
+
+- A timeless STATE row is listed in `fidelity_audit`'s `unstamped_timed`.
+  Timeless bookkeeping should pin `DISPOSITIONAL` or `CONSTITUTIVE`.
+- **Declarations precede data.** Once an attribute has a row, any declaration
+  on it raises. Attributes that already carry rows (an existing `status` or
+  `phase`) keep their behavior; the levers apply to new attribute names or new
+  worlds.
+
 ## MUST / NEVER
 
 - **MUST** route every write through the gate — on the porcelain, `ingest` /
@@ -216,9 +281,29 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   frame, and `name`/`alias` rows are read only in their own frame:
   `registry.by_alias(text, frame=)` and `refer(..., frame=)` read the asked
   frame only, with no canon fallback, so Alice's private alias for Bob
-  resolves in `knows:person:alice` and never in canon. `ask()` still resolves
-  references against canon (HD 003). Canon `reconcile`, `proposals`,
-  `typing_conflicts`, `retype` and every merge veto read canon rows only.
+  resolves in `knows:person:alice` and never in canon. `ask()` in a
+  non-canon frame binds the asker's own words first — the asked frame's
+  tier 1 alone (its names, aliases, learned words, a kind unique in its view
+  of the scene), model-free and learning nothing — and otherwise resolves
+  against canon (HD 003; READ-SURFACE-V1 §6). Canon `reconcile`,
+  `proposals`, `typing_conflicts`, `retype` and every merge veto read canon
+  rows only.
+- **MAY** pass any spelling of an attribute to a read: every porcelain
+  argument that names an attribute (`state`, `state_union`, `where`,
+  `aggregate`, `facts`, `confidence`, `who_knows`, `resolve`, each `ask` plan
+  key) passes through the gate's own canonicalization first, so
+  `state(e, "located_in")` reads the `in` key the gate stored
+  (READ-SURFACE-V1 §3). `p.canonical_attribute(name)` returns the gate's name;
+  use it instead of copying the alias map. Payloads echo the stored name.
+  Inverse spellings (`holds`, `wearing`) are not renamed.
+- **MUST** treat a `status` you do not recognize as not known.
+  `state()`/`state_union()` answer `unknown`, `known`, `conflicted` or
+  `unresolved` (READ-SURFACE-V1 §4: the served row is an unresolved
+  placeholder — its `fact.value` is the thunk spec, never a value to show or
+  copy into another frame).
+- **NEVER** reopen a world under other physics: `World(..., policy=)` that
+  disagrees with the world's stored physics row raises `WorldPhysicsMismatch`.
+  Omit `policy=` to run a world as it was made (READ-SURFACE-V1 §7).
 - **MUST**, after reopening a world, place the scene cursor before the first
   untimed write (`at=`, e.g. from `axis_heads()["valid_head"]`): the cursor
   starts at 0.0 on every open, so an untimed row otherwise lands at t=0 and
@@ -447,8 +532,14 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    #   identity_edge_outside_canon   a maybe_same_as / distinct_from row outside canon
    #                    (FRAME-SCOPED-IDENTITY-V1 §1; a same_as there, raw or an item's
    #                    same_as key, is same_as_not_canon)
-   #   invalid_semantics_declaration   an arity/relation_family/fold_policy/structural
-   #                    value outside its vocabulary — the WHOLE item skips, nothing declared
+   #   invalid_semantics_declaration   an arity/relation_family/fold_policy/structural/
+   #                    durability value outside its vocabulary (fold_policy is last_write|
+   #                    accrue — `move` is gone; durability is STATE|DISPOSITIONAL|
+   #                    CONSTITUTIVE, never EVENT), or a declaration that could never take
+   #                    effect or contradicts another on the attribute (detail.conflicts_with:
+   #                    "guardrail", "structural=true", "durability=<class>",
+   #                    "arity=set_valued", "relation_family=containment",
+   #                    "fold_policy=last_write") — the WHOLE item skips, nothing declared
    # `detail` appears only when set: the bad field and value, the merge veto and blocking
    # edges, the declaration's source (item | attribute_default | attr_row), the bad time,
    # or the authored form of a swapped inverse item. Authority violations still RAISE,
@@ -456,8 +547,15 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    # chunk still ingests (no silent cap).
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
-p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False) -> dict
+p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False,
+           asserted_as_of=None) -> dict
    # contractually ZERO model calls and ZERO writes; id-only scopes; includes quantities
+   # asserted_as_of (READ-SURFACE-V1 §8) — on this and every read below that takes a
+   #   valid-time bound (not salience, in_transit, fidelity_audit or ask): a log position.
+   #   Rows asserted after it are invisible and retractions asserted after it don't apply;
+   #   it reaches every fold, walk, source chain, the existence check (an id first written
+   #   after it errors like an unknown id) and the charter. Identity closures and
+   #   salience ranking are still read at the head.
    # existence follows perspective (FRAME-SCOPED-IDENTITY-V1 §6): an id is KNOWN in `frame`
    #   iff some row about it lives in `frame` or in canon (canon is the existence authority;
    #   a frame may add entities canon lacks). An id only another frame carries (a plot:-only
@@ -468,22 +566,41 @@ p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, 
    #   as-of-before a reveal returns the uncorrelated view (no leak). The scene-wide state_union.
    # features=True: inline each scope place's `part_of`-feature children (the burrow under the
    #   hillside) one level. Both opt-in, orthogonal to `lens`; default off = unchanged.
-p.state(entity, attribute, frame=, as_of=) -> {status: known|unknown|conflicted, fact, quantity?}
-p.where(attribute, op, value, frame="canon", as_of=None) -> [entity_id]
+p.state(entity, attribute, frame=, as_of=, value=None, asserted_as_of=None)
+   -> {status: unknown|known|conflicted|unresolved, fact, quantity?, conflicting?,
+       conflicting_facts?, values?, matches?}
+   # READ-SURFACE-V1 §4: the whole key. status: nothing served -> unknown; the fold flags ->
+   #   conflicted; the served row is an unresolved placeholder -> unresolved (`fact` is the
+   #   placeholder, its value the thunk spec — never a value to show; treat any status you
+   #   don't recognize as not known); else known. values: a set-valued key's current
+   #   members, in member order (`fact` stays the latest). conflicting_facts: one Fact per
+   #   `conflicting` id, in that order. value= (any JSON; a {"$decimal"} tag decodes):
+   #   adds matches — does this frame's fold hold it? who_knows's test, for any frame
+   #   (False on unknown; a set's members, an accrue key's total).
+p.canonical_attribute(name) -> str
+   # READ-SURFACE-V1 §3: the gate's name for an attribute ("Located In" -> "in", "type" ->
+   # "kind"; holds/wearing stay as they are). Every attribute argument already passes
+   # through it.
+p.where(attribute, op, value, frame="canon", as_of=None, asserted_as_of=None) -> [entity_id]
    # op in >=, >, <=, <, ==; compares folded numeric values
-p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursive=False) -> dict
+p.aggregate(container, member_attribute, op, frame="canon", as_of=None, recursive=False,
+            asserted_as_of=None) -> dict
    # op in sum, count, min, max, avg; numeric rollup over contents()
-p.locate / p.contents / p.path
-p.composition(entity, frame="canon", as_of=None) -> [entity_id]
+p.locate(entity, as_of=None, frame="canon", asserted_as_of=None) -> [entity_id]
+p.contents(container, as_of=None, frame="canon", asserted_as_of=None) -> [entity_id]
+p.path(a, b, as_of=None, frame="canon", asserted_as_of=None) -> [entity_id] | None
+   # READ-SURFACE-V1 §8: frame= (after as_of, so positional calls survive) reads the
+   # rows stored under that frame's own name; default canon, as before.
+p.composition(entity, frame="canon", as_of=None, asserted_as_of=None) -> [entity_id]
    # PLACE-FEATURE-ABSTRACTION-V1: the `part_of` chain up (the entity's place in the
    # structure) — compositional sibling of locate(). A separate axis from containment:
    # a burrow part_of a hillside does NOT put an actor in the burrow "in" the hillside.
-p.features(place, frame="canon", as_of=None) -> [entity_id]
+p.features(place, frame="canon", as_of=None, asserted_as_of=None) -> [entity_id]
    # the place's `part_of`-children (its structural sub-features) — sibling of contents().
    # The sub-place is ONE entity answering both lenses (place: locate/contents/route/state;
    # feature: these). part_of is valid-timed; both reads HALT on a conflicted parent
    # (never silently pick) — the conflict surfaces via state(child,"part_of").
-p.route(a, b, frame="canon", as_of=None) -> {route, status, segments}
+p.route(a, b, frame="canon", as_of=None, asserted_as_of=None) -> {route, status, segments}
    # passability-aware routing (RFC-003). status/segment: clear|blocked|obscured
    # (removed is temporal/diagnostic, in former_passages). A blocked segment
    # carries obstructing-fact `evidence`; an obscured one a computed
@@ -493,7 +610,7 @@ p.route(a, b, frame="canon", as_of=None) -> {route, status, segments}
    # DERIVED, never stored. A portal kind gates passage only under a host-declared
    # `traversal:<kind>` policy (blocks_when_state / blocks_when_relation), scoped
    # to the kind; no policy => clear (no engine guess). The host supplies the words.
-p.confidence(entity, attribute, frame=, as_of=, now=) -> {score, status, last_observed_at,
+p.confidence(entity, attribute, frame=, as_of=, now=, asserted_as_of=None) -> {score, status, last_observed_at,
                        corroboration, conflicted, recency, recency_status, last_confirmed_at_wallclock}
    # derived trust over a functional key; never stored; functional-only (set/accrue -> score None)
    # frame is str | list[str]: a list = trust over the read-union (knows:O ∪ public);
@@ -518,16 +635,18 @@ p.correlate(a, b, evidence, at=None) -> Receipt
    # would leak the reveal backward), nor is a pair whose correlation groups a canon
    # distinct_from separates (decline code "distinct_group": correlate would refuse to
    # join them); your merge()/confirm() still can.
-p.correlations(entity, as_of=None, frame="canon") -> [entity_id]
+p.correlations(entity, as_of=None, frame="canon", asserted_as_of=None) -> [entity_id]
    # the facets correlated with entity as-of (first-seen ordered). Empty before a
    # reveal's valid_from — the mystery is intact. Zero writes.
-p.state_union(entity, attribute, frame="canon", as_of=None) -> {status, fact, quantity?, conflicting?}
+p.state_union(entity, attribute, frame="canon", as_of=None, value=None, asserted_as_of=None)
+   -> {status, fact, quantity?, conflicting?, conflicting_facts?, values?, matches?}
    # the EXPLICIT correlated read: fold attribute over entity ∪ its aka facets, as-of.
    # Same shape as p.state. Returns the SAME view whether facts were on one entity or
    # split across correlated facets (retrieval-invariance). NOT a default read —
    # state/snapshot/ask never union; as-of-before a reveal returns the uncorrelated view.
    # Divergent facets use existing fold conflict semantics (no new blanket rule).
-p.correlation_conflicts(as_of=None, frame="canon") -> [{a, b, aka_edge, aka_path, distinct_edges}]
+p.correlation_conflicts(as_of=None, frame="canon", asserted_as_of=None)
+   -> [{a, b, aka_edge, aka_path, distinct_edges}]
    # raw aka authored over a distinct_from (a contradiction) surfaced for adjudication;
    # the guarded correlate() prevents it at the source. FRAME-SCOPED-IDENTITY-V1 §3: every
    # distinct_from in `frame` whose endpoints lie in one correlation group of `frame`
@@ -573,11 +692,12 @@ p.retype(entity, to_kind, evidence, absorb=None) -> Receipt
    # (reason to_kind_not_target_kind, nothing written — FRAME-SCOPED-IDENTITY-V1 §8).
    # Retracts CANON kind rows only: a knows: belief about the kind survives (§2).
    # Outcomes: retyped | merged | vetoed_not_a_slip | vetoed_kind_mismatch | vetoed | noop_*.
-p.entities(frame, prefix=None, as_of=None) -> [entity_id]
+p.entities(frame, prefix=None, as_of=None, asserted_as_of=None) -> [entity_id]
    # BOUNDED-READS-V1: the roster read — entity ids carried by ONE frame's rows, resolved +
    # sorted. frame REQUIRED (a prefix-only enumeration leaks cross-frame existence; every
    # read fixes perspective). Your place roster is entities("canon", prefix="place:").
-p.facts(frame, entity=None, attribute=None, prefix=None, as_of=None, include_meta=False) -> [Fact]
+p.facts(frame, entity=None, attribute=None, prefix=None, as_of=None, include_meta=False,
+        asserted_as_of=None) -> [Fact]
    # BOUNDED-READS-V1: the frame-scan — ONE frame's visible rows as Fact dicts (provenance
    # included). RAW log reads for AUDITED scans (receipt trails, knowledge digests, marker
    # rows), NOT folds (folded truth = state/snapshot). frame REQUIRED. An exact a:<n>
@@ -617,35 +737,58 @@ p.axis_heads() -> {asserted_head: int, valid_head: float|None}
    # rows, ALL frames — the entry-epoch read (a pre-play coordinate must sit above every
    # seeded row wherever it landed). A coordinate scalar, never content.
 p.salience(entity, frame=, as_of=) -> float
-p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=) -> dict
-p.events(kind=, participants=str|list, since=, until=, frame=) -> [Event]
-p.frame_diff(a, b, scope, as_of=) -> [Fact]   # b is str|list[str]; divergent values marked
-p.who_knows(entity, attribute, value=None, as_of=None) -> [frame_id]
+p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=,
+               asserted_as_of=None) -> dict
+p.events(kind=, participants=str|list, since=, until=, frame=, asserted_as_of=None) -> [Event]
+p.frame_diff(a, b, scope, as_of=, asserted_as_of=None) -> [Fact]   # b is str|list[str]; divergent values marked
+p.who_knows(entity, attribute, value=None, as_of=None, asserted_as_of=None) -> [frame_id]
    # WHO-KNOWS-INVERSE-V1: the knows:* frames that KNOW a fact — the computed inverse of
-   # frame_diff (no stored known_by). A frame qualifies iff its FOLDED winner is present and
-   # (value given) value-matches, identity-aware; superseded/retracted beliefs drop. V1 is
-   # own-knows:-frame membership (the hidden-secret case); knows:O ∪ public union is V1.1.
-   # CAUTION (audit 2026-10, fix pending): V1 matches only the frame's single folded
-   # winner. On a set-valued attribute (alias, name, connects_to, any declared set) a
-   # member other than the winner reads as NOT known; on an accrue attribute it matches
-   # the last delta row, not the total. Use frame_diff for membership until then.
+   # frame_diff (no stored known_by). A frame qualifies iff its fold serves a CONCRETE value
+   # (a placeholder is not knowledge) and, value given, the FOLDED value matches it
+   # (READ-SURFACE-V1 §5): identity-aware; any current member of a set-valued key; an
+   # accrue key's total, numerically; a {"$decimal"} tag decodes first.
+   # Superseded/retracted beliefs drop. Own-knows:-frame membership (the hidden-secret
+   # case); the knows:O ∪ public union stays yours to apply. state(..., frame=F, value=v)
+   # ["matches"] is the same test for one frame.
    # A frame's whole knowledge as folded truth: snapshot(entities(F, as_of=h), frame=F,
    # as_of=h). (snapshot(person, frame=F) covers that ONE entity and its contents, not
    # what the person knows about others; facts(F) is raw rows, superseded ones included.)
+p.refer(description, scope=None, frame="canon", as_of=None, constraints=None,
+        asserted_as_of=None, learn=True, model=True)
+   -> {status: resolved|candidates|underdetermined, entity_id, candidates, receipt}
+   # READ-SURFACE-V1 §9: world.refer on the porcelain, encoded. constraints are
+   # [relation, anchor] pairs (contains | owned_by | held_by). model=False is tier 1 only:
+   # where tier 2 would judge, status candidates with receipt {"tier": 2, "signals":
+   # ["no_model"]}, no model call, nothing learned. learn (REFER-LEARNING-V1): only a
+   # vocabulary miss in scope that tier 2 maps onto one entity writes a learned word; a
+   # pick never does; asserted_as_of reads as of that log position and never writes.
 p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only
    # REFER-LEARNING-V1 §8: ask writes NOTHING. Its refer calls pass learn=False: it
    # reads words direct refer calls learned, and never learns its asker's.
+   # READ-SURFACE-V1 §6: one effective time t — your as_of, lowered (never raised) by a
+   # valid plan as_of (a finite number; anything else is ignored) — governs the asker's
+   # scope, the bindings, every fold, the location chain and events. Pass your play
+   # horizon as as_of and nothing after it is told. In a non-canon frame the asker's own
+   # words bind first (that frame's tier 1, model-free), then canon's.
+   # READ-SURFACE-V1 §4: a placeholder key is never served as a fact — it is named in
+   # Answer.unresolved ([[entity, attribute]]); a set-valued key serves one Fact per
+   # member; a conflicted key serves its winner and is named in Answer.conflicted.
 ```
 
 Every write returns a per-assertion Receipt; every fact carries
-`{status, source_chain, assertion_id}` provenance.
+`{status, source_chain, assertion_id}` provenance and its row's `value_type`
+(`entity`, `literal`, `unresolved` or `delta`; a derived accrue total is
+`literal` — READ-SURFACE-V1 §4).
 
 ## THE MCP SERVER (non-Python hosts)
 
 `pip install pbuffer[mcp]` →
 `patternbuffer-mcp --world w.world --world-id w:id` (env:
 `PATTERNBUFFER_WORLD`, `PATTERNBUFFER_WORLD_ID`) serves ONE world over stdio
-(the 1:1 invariant; multi-world = multiple servers). The 40 deterministic
+(the 1:1 invariant; multi-world = multiple servers). `--policy` (env
+`PATTERNBUFFER_POLICY`) names the world's physics: a fresh world records it;
+absent, the world's stored physics apply; a mismatch fails startup
+(`WorldPhysicsMismatch`, READ-SURFACE-V1 §7). The 42 deterministic
 porcelain verbs are MCP tools; results arrive as
 `structuredContent = {"result": <the porcelain return>}` (Receipts as dicts;
 exact-decimals as `{"$decimal": …}` tags) with the same object serialized in
@@ -653,11 +796,15 @@ the text block.
 
 MCP-specific narrowings (the genuinely model-free subset — the server's World
 has no model callable): `ingest_structured.classify` accepts `"rules"|"defer"`
-only (default `"rules"`); `seal_build` takes no `model` argument (always
-rules-only). Model-backed verbs (`extract`/`ingest`-prose/`ask`/`resolve`) are
-V1.1 via MCP sampling. Trust boundary: a connected MCP client is a **fully
-trusted world principal** — it can name any frame; tool annotations are hints,
-never authorization. Put untrusted consumers (players, NPCs) behind YOUR
+only (default `"rules"`); forced parameters are omitted from the schemas,
+refused if a client sends one, and filled by the server (`FORCED_PARAMS`):
+`seal_build` runs with `model=False` (always rules-only), and `refer` with
+`model=False, learn=False` — tier 1 only, read-only and idempotent; an
+ambiguous reference returns its `candidates` for the client to judge
+(READ-SURFACE-V1 §11). Model-backed verbs (`extract`/`ingest`-prose/`ask`/
+`resolve`, `refer` tier 2) are V1.1 via MCP sampling. Trust boundary: a
+connected MCP client is a **fully trusted world principal** — it can name any
+frame; tool annotations are hints, never authorization. Put untrusted consumers (players, NPCs) behind YOUR
 host-mediated surface; frame entitlement is a host concern.
 
 ## ATOMIC ACTIVATION SETS (`commit_set` / `atomic=True`)

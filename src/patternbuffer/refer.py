@@ -129,6 +129,7 @@ class Refer:
         as_of: float | None = None,
         asserted_as_of: int | None = None,
         learn: bool = True,
+        model: bool = True,
     ) -> Resolution:
         """Resolve a referring expression to one entity, a candidate set, or
         underdetermined (whitepaper §9).
@@ -146,6 +147,11 @@ class Refer:
         `frame`, unless `learn=False` or the read is pinned to a past log
         position (`asserted_as_of`). No other path writes: an ambiguity pick
         is never learned.
+
+        `model=False` (READ-SURFACE-V1 §9) is tier 1 only: wherever tier 2
+        would run, the result is the no-model shape — `candidates`, receipt
+        `{"tier": 2, "signals": ["no_model"]}` — so no model call is made and
+        nothing is learned.
         """
         # The scene's members, computed at most once per call: tier 1c, tier
         # 1d's scope filter and the escalation share it (REFER-LEARNING-V1 §3).
@@ -192,10 +198,12 @@ class Refer:
                                   receipt={"tier": 1, "signals": ["unique_kind_in_scope"]})
             if len(of_kind) > 1:
                 # A kind pick: judged afresh on every read, never learned (§2).
-                return self._resolve_tier2(description, tuple(sorted(of_kind)))
+                return self._resolve_tier2(description, tuple(sorted(of_kind)),
+                                           use_model=model)
         if len(hits) > 1:
             # An authored-alias collision: judged, never learned (§2).
-            return self._resolve_tier2(description, tuple(sorted(hits)))
+            return self._resolve_tier2(description, tuple(sorted(hits)),
+                                       use_model=model)
 
         # ---- Tier 1d (REFER-LEARNING-V1 §3): a learned word, read back only
         # on a vocabulary miss — names, aliases and a unique kind in scope all
@@ -212,7 +220,8 @@ class Refer:
                               receipt={"tier": 1, "signals": ["learned_alias"]})
         if len(learned) > 1:
             # A learned-word collision: judged, never learned (§2).
-            return self._resolve_tier2(description, tuple(sorted(learned)))
+            return self._resolve_tier2(description, tuple(sorted(learned)),
+                                       use_model=model)
 
         # ---- Zero-candidate escalation (letter 018, mechanic 1): a synonym
         # yields zero tier-1 matches; with a scope provided, that is exactly
@@ -222,7 +231,7 @@ class Refer:
         if scope is not None and members():
             learn_frame = frame if learn and asserted_as_of is None else None
             return self._resolve_tier2(description, tuple(sorted(members())),
-                                       learn_frame=learn_frame)
+                                       learn_frame=learn_frame, use_model=model)
 
         # Nothing deterministic and no candidates: underdetermined.
         return Resolution(UNDERDETERMINED, receipt={"tier": 3, "signals": []})
@@ -304,15 +313,17 @@ class Refer:
 
     def _resolve_tier2(
         self, description: str, candidates: tuple[str, ...],
-        learn_frame: str | None = None,
+        learn_frame: str | None = None, use_model: bool = True,
     ) -> Resolution:
         """Strict-contract cheap call judging candidates; returns a
         resolution receipt. Below the floor -> tier 3: never guess.
 
         `learn_frame` is the frame a confident answer is learned into as a
         word. Only the zero-candidate escalation passes one
-        (REFER-LEARNING-V1 §2); None never writes."""
-        if self._model is None:
+        (REFER-LEARNING-V1 §2); None never writes. `use_model=False` (the
+        caller's `model=False`, READ-SURFACE-V1 §9) returns the no-model
+        shape without a call."""
+        if self._model is None or not use_model:
             return Resolution(CANDIDATES, candidates=candidates,
                               receipt={"tier": 2, "signals": ["no_model"]})
         prompt = (

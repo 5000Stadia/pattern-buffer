@@ -52,8 +52,15 @@ answers "what exactly did you do to the log."
   resolver-free (it returns thunks as `unresolved`, never forces); no
   refer of any tier runs inside snapshot.
 - `state(entity, attribute, frame, as_of) -> Fact | Unknown | Conflicted`
-  — single-key fold, typed.
-- `locate / contents / path` — frozen as shipped, JSON-listified.
+  — single-key fold, typed. *(Note 2026-10-09, READ-SURFACE-V1 §4: a fourth
+  status, `Unresolved` — the served row is an unresolved placeholder, whose
+  value is the thunk spec, never a known value. The field stays a string; a
+  host treats a status it does not recognize as not known. The payload also
+  gains `values` (a set's members), `conflicting_facts` and, given `value=`,
+  `matches` (§5); every Fact gains `value_type`.)*
+- `locate / contents / path` — frozen as shipped, JSON-listified. *(Note
+  2026-10-09, READ-SURFACE-V1 §8: additive `frame=` after `as_of`, and
+  `asserted_as_of=` on these and every other read with a valid-time bound.)*
 - `events(kind=None, participants=None, since=None, until=None,
   frame="canon") -> list[Event]` — `participants: str | list[str]`,
   ALL-of matching (review r1: HD's atoms are plural) — what_happened, filtered; Event =
@@ -80,11 +87,18 @@ answers "what exactly did you do to the log."
   documented behavior (those writes are refer's, receipted as such, and
   are the ONLY writes ask can cause). *(Note 2026-10-08,
   REFER-LEARNING-V1 §8: ask now writes nothing. Its refer calls pass
-  `learn=False`; the model budget above stands.)* Fold and event
+  `learn=False`; the model budget above stands.)* *(Note 2026-10-09,
+  READ-SURFACE-V1 §6: in a non-canon frame each target is first bound by
+  that frame's own tier 1, with no model call and no write; only if that
+  does not resolve does refer's canon cascade run, as above.)* Fold and event
   execution after resolution is fully deterministic. `Answer = {answered: bool, facts: [...], prose: str|None,
   unknown_reason, asks: [...]}` — provenance on every fact; an
   underdetermined reference returns candidates as `asks`, never a guess;
-  every fact traces to a fold, never to the parser.
+  every fact traces to a fold, never to the parser. *(Note 2026-10-09,
+  READ-SURFACE-V1 §4: `Answer` gains `unresolved` and `conflicted`,
+  `[[entity, attribute]]` each. A placeholder key is named, never served as
+  a fact; a set-valued key serves one fact per member; a conflicted key
+  serves its winner and is named.)*
 
 ## 3. Out of scope at freeze
 MCP wrapper + `arch` CLI (mechanical mirrors, post-freeze); the 034
@@ -115,3 +129,7 @@ existing 119-test suite untouched.
   extensions of the Fact shape.
 - `ask` executes `wants_events` (participants = resolved targets,
   bounded by the plan's or caller's as_of) and honors the plan's `as_of`.
+  *(Note 2026-10-09, READ-SURFACE-V1 §6: "honors the plan's `as_of` up to
+  the caller's". One effective time — the caller's `as_of`, lowered but
+  never raised by a valid plan `as_of` (a finite number; anything else is
+  ignored) — governs every step, the events window included.)*
