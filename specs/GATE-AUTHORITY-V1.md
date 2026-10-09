@@ -811,7 +811,8 @@ r2 reopened copies of eleven construct worlds (the six `thedeep*` files,
 alias map, the visible rows, identity resolution, `locate()` for every entity,
 `state()` for every (entity, attribute, frame) key (12,419 keys), the thunk
 table, attribute semantics, the proposals and the head are identical, and
-nothing was written on open.
+nothing was written on open. The same check over all 165 world files
+(256,473 rows, 120,449 state keys) found no difference either.
 
 Docs on ship:
 - ADOPTION: the new MUST/NEVER items; the `Receipt.skipped` vocabulary;
@@ -1023,5 +1024,6 @@ items and the LEXICON's widened **mechanism attribute** ship on the branch,
 so it merges ready; `specs/STATUS.md` and the README count follow the merge,
 as for A18/A19.
 
-**Checks.** Full suite: 727 passed, 3 skipped (730). Eleven construct worlds
-read identically under main and r2 ("Migration and notice").
+**Checks.** Full suite: 727 passed, 3 skipped (730), and every rebased commit
+passes the full suite on its own. All 165 construct world files read
+identically under main and r2 ("Migration and notice").
