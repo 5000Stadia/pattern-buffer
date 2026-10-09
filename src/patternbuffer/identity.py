@@ -512,6 +512,13 @@ class IdentityRegistry:
         # (merge, confirm, retype's absorb) stay available.
         if self._aka_relates(a, b):            # soft: correlated facets are two things
             return False
+        # FRAME-SCOPED-IDENTITY-V1 §3(c) (r2): correlate's group-level veto —
+        # a canon `distinct_from` between a's correlation group and b's. The
+        # merge would put it inside one group (a~b, b distinct_from x: merging
+        # a with x joins x to b's group). In `correlate`'s order: after the
+        # already-correlated test.
+        if self._group_distinct_block(a, b):   # the world says the groups differ
+            return False
         if self.relating_edges_between(a, b):  # soft: related ⇒ probably distinct (§3a)
             return False
         if self.durable_contradictions(a, b):  # soft: standing facts contradict (Win 4)
@@ -592,6 +599,11 @@ class IdentityRegistry:
             return "hard_blocked", "containment"
         if self.distinct_block(a, b):
             return "hard_blocked", "distinct_from"
+        if self._group_distinct_block(a, b):
+            # FRAME-SCOPED-IDENTITY-V1 §3(c) (r2): a canon distinct_from between
+            # their correlation groups — reconcile neither merges nor proposes
+            # the pair, so it is settled, not a gap for reconcile to close.
+            return "hard_blocked", "distinct_group"
         if self._kind_state(a, b) == "conflict" and (
                 self._slip_asymmetry(a, b) or self._slip_asymmetry(b, a)):
             return "typing_slip", None                   # host fixes with retype(absorb=)
@@ -671,12 +683,15 @@ class IdentityRegistry:
                     elif (not self.containment_related(a, b)
                           and not self.distinct_block(a, b)
                           and not self._aka_relates(a, b)
+                          and not self._group_distinct_block(a, b)
                           and not self._has_proposal(a, b)):
                         # soft-declined (relating edge / non-distinctive anchor /
                         # kind) → adjudicable proposal; HARD-blocked (containment /
                         # distinct_from) pairs are settled, never re-proposed, and
                         # so is a correlated pair (FRAME-SCOPED-IDENTITY-V1 §3(c)):
-                        # two facets of one identity are two things by design.
+                        # two facets of one identity are two things by design —
+                        # and so is a pair whose correlation groups a canon
+                        # `distinct_from` separates (§3(c), r2).
                         self.maybe_same_as(a, b, evidence="reconcile: shared anchor, gate declined (adjudicate)")
 
         merged += self.promote_identity_proposals()
@@ -845,6 +860,8 @@ class IdentityRegistry:
             if self._aka_relates(ra, rb):
                 continue  # correlated facets are two things by design (Cx #3);
                           # the one predicate _mergeable reads too (FSI-V1 §3(c))
+            if self._group_distinct_block(ra, rb):
+                continue  # a distinct_from separates their groups (FSI-V1 §3(c), r2)
             if self._kind_state(ra, rb) == "conflict":
                 continue
             if self.durable_contradictions(ra, rb):
@@ -1201,6 +1218,11 @@ class IdentityRegistry:
             # _mergeable's order — a proposal between correlated facets is
             # declined by the soft aka block (distinct pairs never list).
             code = "correlated"
+        elif self._group_distinct_block(a, b):
+            # §3(c) (r2): a canon distinct_from between the two correlation
+            # groups, right after `correlated` (correlate's own order). A
+            # direct distinct pair never lists; this one does, declined.
+            code = "distinct_group"
         elif any(r["relation_family"] != "containment" for r in related):
             code = "relating_edge"
         elif contradictions:
@@ -1251,6 +1273,9 @@ class IdentityRegistry:
         if code == "durable_contradiction":
             cs = ctx.get("durable_contradictions") or []
             return f"durable_contradiction: {cs[0]}" if cs else code
+        if code == "distinct_group":
+            edges = self._group_distinct_block(a, b)
+            return f"distinct_group: {edges[0]}" if edges else code
         return code
 
     def enumerate_proposals(self) -> list[dict]:
@@ -1357,10 +1382,10 @@ class IdentityRegistry:
         identity-resolved: refer's tier 1a.
 
         Description is perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows
-        are read in `frame` only (an observer frame through its §7), with no
-        canon fallback for a non-canon frame — frames never inherit canon in
-        a read. A name private to Alice resolves in Alice's frame, never in
-        canon's."""
+        are read in `frame` only, with no canon fallback for a non-canon frame
+        — frames never inherit canon in a read. A name private to Alice
+        resolves in Alice's frame, never in canon's, and a name only canon
+        knows does not resolve in Alice's frame."""
         needle = alias.strip().lower()
         hits = set()
         for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of,
@@ -1471,6 +1496,19 @@ class IdentityRegistry:
                 out.append(f"{e}·distinct_from·{v}")
         return out
 
+    def _group_distinct_block(self, a: str, b: str) -> list[str]:
+        """Descriptors of the canon `distinct_from` rows between a's correlation
+        group and b's, at every valid time — `correlate`'s group-level veto
+        (FRAME-SCOPED-IDENTITY-V1 §3(a)). The auto-merger reads the same
+        predicate (§3(c), r2): merging a with b would put a `distinct_from`
+        inside one group, a contradiction `correlate` refuses to make. With no
+        `aka` edge on either side the groups are the two closures, so this is
+        `distinct_block` again."""
+        return self._group_distinct_edges(
+            self.correlation_set(a, valid_as_of=None, frame=CANON),
+            self.correlation_set(b, valid_as_of=None, frame=CANON),
+        )
+
     def _group_aka_ids(self, group: set[str]) -> list[str]:
         """Assertion ids of every canon `aka` row inside `group` (both
         endpoints in it), at every valid time, in log order — what a host
@@ -1503,10 +1541,7 @@ class IdentityRegistry:
             )
         if self._aka_relates(a, b):
             return self._receipt("noop_already_correlated", ra)
-        group_blocks = self._group_distinct_edges(
-            self.correlation_set(a, valid_as_of=None, frame=CANON),
-            self.correlation_set(b, valid_as_of=None, frame=CANON),
-        )
+        group_blocks = self._group_distinct_block(a, b)
         if group_blocks:
             return self._receipt(
                 "vetoed_distinct", ra, reason="distinct_from",

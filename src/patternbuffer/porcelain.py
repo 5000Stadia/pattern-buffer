@@ -404,21 +404,26 @@ class Porcelain:
 
     def _is_known(self, entity: str, frame: str = CANON) -> bool:
         """Whether `entity` exists from `frame`'s perspective: some visible row
-        about a member of its identity closure lives in `frame` (an observer
-        frame through its stored names) or in canon — an indexed check over
-        the requested id only, never a whole-log scan per call.
+        about a member of its identity closure lives in `frame` or in canon —
+        an indexed check over the requested id only, never a whole-log scan
+        per call.
 
         Existence follows perspective (FRAME-SCOPED-IDENTITY-V1 §6). Canon is
         the existence authority (HD 003: identity/existence is a canon
         question; only the answer is knowledge-scoped), and a frame may add
         entities canon lacks — a belief, a plot arc. An id that lives only in
-        another frame is unknown here, exactly like an id nobody wrote."""
+        another frame is unknown here, exactly like an id nobody wrote.
+
+        One `visible(entity_in=)` call, filtered to the two frames here (r2):
+        adding `frame=` to the query lets SQLite pick the frame index over the
+        entity index (measured on a 100k-row log: 8.8 ms per id against
+        0.35)."""
         members = sorted(self._w.registry.closure(entity))
-        frames = (CANON,) if frame == CANON else (frame, CANON)
+        frames = {CANON, frame}
         return any(
-            not r.entity.startswith("a:") and not r.entity.startswith(ATTR_PREFIX)
-            for f in frames
-            for r in self._w.buffer.visible(entity_in=members, frame=f)
+            r.frame in frames
+            and not r.entity.startswith("a:") and not r.entity.startswith(ATTR_PREFIX)
+            for r in self._w.buffer.visible(entity_in=members)
         )
 
     def snapshot(self, scope, frame: str = CANON, as_of: float | None = None,

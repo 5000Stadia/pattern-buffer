@@ -1,8 +1,8 @@
-"""FRAME-SCOPED-IDENTITY-V1: identity is canon's, description is perspectival,
-an observer follows its identity.
+"""FRAME-SCOPED-IDENTITY-V1: identity is canon's, description is perspectival.
 
 One test per oracle, by section (specs/FRAME-SCOPED-IDENTITY-V1.md), plus the
-two property tests the spec's Tests section names.
+property test the spec's Tests section names, and one test per r2 review
+resolution at the end.
 
 Alice's frame is `knows:person:alice`; Marn's is `knows:person:marn`.
 """
@@ -53,13 +53,14 @@ def test_1a_alias_lands_in_the_items_frame(world):
 
 def test_1b_same_as_key_outside_canon_is_receipted(world):
     """1b: the side-channel `same_as` on a non-canon item is skipped
-    `identity_edge_outside_canon`; no `maybe_same_as`, no canon proposal; the
-    main row is admitted as usual."""
+    `same_as_not_canon` with GATE-AUTHORITY-V1's detail (r2, pbr's ruling: one
+    code for any non-canon `same_as`, raw or side key); no `maybe_same_as`, no
+    canon proposal; the main row is admitted as usual."""
     p = world.porcelain
     receipt = p.ingest_structured([_hooded(same_as="person:bob")])
     assert receipt.skipped == [{"entity": "person:hooded", "attribute": "same_as",
-                                "value": "person:bob",
-                                "reason": "identity_edge_outside_canon"}]
+                                "value": "person:bob", "reason": "same_as_not_canon",
+                                "detail": {"field": "frame", "value": ALICE}}]
     assert world.buffer.visible(attribute="maybe_same_as") == []
     assert p.proposals() == []
     kind = world.buffer.visible(entity="person:hooded", attribute="kind")
@@ -122,8 +123,8 @@ def test_1f_atomic_set_aborts_on_the_skip(world):
                                 atomic=True, classify="rules")
     assert caught.value.cause == "gate_skip"
     assert caught.value.skipped == [{"entity": "person:hooded", "attribute": "same_as",
-                                     "value": "person:bob",
-                                     "reason": "identity_edge_outside_canon"}]
+                                     "value": "person:bob", "reason": "same_as_not_canon",
+                                     "detail": {"field": "frame", "value": ALICE}}]
     assert world.buffer.head() == head
     assert world.buffer.visible(entity="person:hooded") == []
 
@@ -717,3 +718,145 @@ def test_8_absorb_with_the_targets_kind_still_merges(world):
                                      absorb="place:harth")
     assert receipt["outcome"] == "merged"
     assert world.registry.resolve("person:harth") == world.registry.resolve("place:harth")
+
+
+# ------------------------------------------------------------ r2: review resolutions
+
+
+def test_r2_1h_the_extraction_prompt_puts_same_as_in_canon():
+    """1h (§1, r2, a prompt change for pbr): a `same_as` on a non-canon item is
+    refused, so the extractor is told to emit it on the entity's canon row."""
+    from patternbuffer.ingest import _EXTRACT_RULES_FULL
+    line = next(l for l in _EXTRACT_RULES_FULL.splitlines() if l.startswith("- ALIASES:"))
+    assert ("if you minted a duplicate id for the same individual, emit same_as "
+            "on the entity's frame 'canon' row (identity is canon-only).") in line
+
+
+def test_r2_1i_one_receipt_for_any_non_canon_same_as(world):
+    """1i (r2, pbr's ruling): a non-canon `same_as` is receipted
+    `same_as_not_canon`, the frame in `detail`, whether it is a raw row or the
+    item's side key — GATE-AUTHORITY-V1 §2's public contract, one payload.
+    `maybe_same_as` and `distinct_from` keep `identity_edge_outside_canon`."""
+    p = world.porcelain
+    raw = p.ingest_structured([{"entity": "person:hooded", "attribute": "same_as",
+                                "value": "person:bob", "frame": ALICE}]).skipped
+    side = p.ingest_structured([_hooded(same_as="person:bob")]).skipped
+    assert raw == side == [{"entity": "person:hooded", "attribute": "same_as",
+                            "value": "person:bob", "reason": "same_as_not_canon",
+                            "detail": {"field": "frame", "value": ALICE}}]
+    edges = p.ingest_structured([
+        {"entity": "person:hooded", "attribute": attribute, "value": "person:bob",
+         "frame": ALICE}
+        for attribute in ("maybe_same_as", "distinct_from")
+    ]).skipped
+    assert [s["reason"] for s in edges] == ["identity_edge_outside_canon"] * 2
+
+
+def test_r2_2j_refer_in_a_frame_reads_no_canon_alias(world):
+    """2j (r2, for the ship notice): `refer(..., frame=Alice)` reads Alice's
+    names and aliases only, so an alias only canon carries does not resolve
+    there (the base engine read every frame's). `refer` in canon still does."""
+    world.ingest_structured([
+        {"entity": "person:bob", "attribute": "kind", "value": "person",
+         "timeless": True, "aliases": ["bobby"]},
+    ])
+    r = world.refer("bobby")
+    assert r.status == RESOLVED and r.entity_id == "person:bob"
+    assert world.registry.by_alias("bobby", frame=ALICE) == set()
+    assert world.refer("bobby", frame=ALICE).status == UNDERDETERMINED
+
+
+def _vell_across_a_distinct(world: World) -> None:
+    """The pre-review's repro: canon a~b, then reject(b, x), then a and x share
+    the canon name "Vell"."""
+    _people(world, "a", "b", "x")
+    assert world.correlate("person:a", "person:b", evidence="one figure")["outcome"] \
+        == "correlated"
+    assert world.porcelain.reject("person:b", "person:x")["outcome"] == "rejected"
+    world.ingest_structured([
+        {"entity": f"person:{n}", "attribute": "name", "value": "Vell", "timeless": True}
+        for n in ("a", "x")
+    ])
+
+
+def test_r2_3g_reconcile_never_merges_across_a_group_distinct(world):
+    """3g (§3(c), r2, pre-review NIT): `correlate(a, x)` is vetoed by b's
+    `distinct_from`, so the auto-merger neither merges nor proposes the pair
+    (before r2 reconcile merged them, putting that `distinct_from` inside one
+    correlation group), and the fidelity audit reports it settled."""
+    _vell_across_a_distinct(world)
+    head = world.buffer.head()
+    assert world.correlate("person:a", "person:x", evidence="?")["outcome"] \
+        == "vetoed_distinct"
+    assert world.porcelain.reconcile() == {"merges": 0, "proposals": []}
+    assert world.buffer.head() == head
+    assert world.registry.closure("person:x") == {"person:x"}
+    assert world.porcelain.correlation_conflicts() == []
+    [group] = world.porcelain.fidelity_audit()["name_collisions"]
+    assert group["pairs"] == [{"a": "person:a", "b": "person:x",
+                               "status": "hard_blocked", "reason": "distinct_group"}]
+    assert group["live"] is False
+
+
+def test_r2_3h_a_proposal_across_a_group_distinct_is_declined(world):
+    """3h (§3(c), r2): a `maybe_same_as` between a and x lists with decline code
+    `distinct_group`, its reason naming the edge, and neither promotion nor
+    `adjudicate_deferred` merges it."""
+    _vell_across_a_distinct(world)
+    world.registry.maybe_same_as("person:a", "person:x", evidence="extractor")
+    [listed] = world.porcelain.proposals()
+    assert (listed["a"], listed["b"]) == ("person:a", "person:x")
+    assert listed["auto_decline"]["code"] == "distinct_group"
+    assert listed["auto_decline_reason"] == \
+        "distinct_group: person:b·distinct_from·person:x"
+    assert world.registry.promote_identity_proposals() == 0
+    assert world.porcelain.adjudicate_deferred()["merged"] == []
+    assert world.registry.closure("person:x") == {"person:x"}
+
+
+def test_r2_6e_is_known_reads_once_and_keeps_frame_and_canon(world, monkeypatch):
+    """6e (§6, r2, pre-review MINOR): `_is_known` reads the closure's rows in one
+    `visible(entity_in=)` call (no `frame=`, which made SQLite pick the frame
+    index) and keeps those in the asked frame or canon — the same answers as
+    one read per frame."""
+    world.ingest_structured([
+        {"entity": "place:hall", "attribute": "kind", "value": "hall", "timeless": True},
+        {"entity": "person:dan", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    world.ingest_structured([
+        {"entity": "obj:ledger", "attribute": "kind", "value": "ledger", "timeless": True},
+    ], frame="plot:twist")
+    world.ingest_structured([
+        {"entity": "obj:key", "attribute": "in", "value": "place:hall"},
+    ], frame=MARN)
+    world.ingest_structured([
+        {"entity": "person:daniel", "attribute": "mood", "value": "calm"},
+    ], frame=ALICE)
+    assert world.porcelain.merge("person:dan", "person:daniel", "one man")["outcome"] \
+        == "merged"
+
+    def per_frame(entity: str, frame: str) -> bool:
+        members = sorted(world.registry.closure(entity))
+        return any(not r.entity.startswith(("a:", "attr:"))
+                   for f in {frame, "canon"}
+                   for r in world.buffer.visible(entity_in=members, frame=f))
+
+    ids = ["place:hall", "person:dan", "person:daniel", "obj:ledger", "obj:key",
+           "obj:nothing"]
+    frames = ["canon", "plot:twist", MARN, ALICE, "knows:person:dan"]
+    answers = {(e, f): per_frame(e, f) for e in ids for f in frames}
+    assert answers[("obj:ledger", "canon")] is False
+    assert answers[("obj:key", MARN)] is True and answers[("obj:key", ALICE)] is False
+    calls: list[dict] = []
+    real = world.buffer.visible
+
+    def counting(*args, **kwargs):
+        if "entity_in" in kwargs:
+            calls.append(kwargs)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(world.buffer, "visible", counting)
+    for (e, f), expected in answers.items():
+        calls.clear()
+        assert world.porcelain._is_known(e, f) is expected, (e, f)
+        assert len(calls) == 1 and "frame" not in calls[0], (e, f, calls)

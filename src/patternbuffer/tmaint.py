@@ -89,10 +89,9 @@ class TruthMaintenance:
         """The conflicted folds of one frame, as of both axes — computed on
         read, never stored (FRAME-SCOPED-IDENTITY-V1 §5).
 
-        Keys come from the rows visible in `frame` (an observer frame reads
-        through its §7 names): `(resolve(entity), fold key)`, the containment
-        family reported as `in`, skipping `a:`/`attr:` subjects and set-valued
-        attributes. Only a key with two or more visible rows is folded (a
+        Keys come from the rows visible in `frame`: `(resolve(entity), fold
+        key)`, the containment family reported as `in`, skipping `a:`/`attr:`
+        subjects and set-valued attributes. Only a key with two or more visible rows is folded (a
         conflict needs two). Each conflicted fold is one `Conflict`, `kind`
         `constitutive_contradiction` when its winner is CONSTITUTIVE, else
         `cross_source`; `frame` echoes the requested string. Sorted by

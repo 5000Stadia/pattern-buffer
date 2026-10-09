@@ -198,7 +198,8 @@ _EXTRACT_RULES_FULL = (
     "- ALIASES: attach every referring expression used for an entity as "
     "aliases (e.g. 'the clerk with the tin ear', 'the vault'). When a "
     "previously-seen entity gains a name, keep its id and add the name; if "
-    "you minted a duplicate id for the same individual, emit same_as.\n"
+    "you minted a duplicate id for the same individual, emit same_as on the "
+    "entity's frame 'canon' row (identity is canon-only).\n"
     "- SPACE: emit connects_to edges for every passage/route the text "
     "describes (stairs, gates, corridors); never invent an edge the text "
     "does not support — vertical proximity is not connectivity.\n"
@@ -294,7 +295,8 @@ SKIP_REASONS = frozenset({
     "same_as_not_canon",                     # GATE-AUTHORITY-V1 §2
     "merge_vetoed",                          # GATE-AUTHORITY-V1 §2
     "invalid_semantics_declaration",         # GATE-AUTHORITY-V1 §5
-    "identity_edge_outside_canon",           # FRAME-SCOPED-IDENTITY-V1 §1
+    "identity_edge_outside_canon",           # FRAME-SCOPED-IDENTITY-V1 §1 (maybe_same_as,
+                                             # distinct_from; same_as is same_as_not_canon)
 })
 
 
@@ -1518,9 +1520,12 @@ class Ingestor:
                 # FRAME-SCOPED-IDENTITY-V1 §1(b): a proposal is a canon identity
                 # edge, and identity is canon's — a non-canon item's key is
                 # receipted, never turned into a canon `maybe_same_as`. The
-                # item's main row is admitted as usual.
+                # item's main row is admitted as usual. The receipt is
+                # GATE-AUTHORITY-V1 §2's public contract for any non-canon
+                # `same_as`, raw or side key (pbr's ruling, r2), detail and all.
                 self._record_skip(identity_subject, "same_as", same_as,
-                                  "identity_edge_outside_canon")
+                                  "same_as_not_canon",
+                                  detail={"field": "frame", "value": frame})
             else:
                 self._registry.maybe_same_as(identity_subject, same_as,
                                              evidence="extractor late binding")
