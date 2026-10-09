@@ -82,13 +82,13 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 - [x] R13 Behaviour-preserving polish and read caches, byte-identical, on main (`docs/AUDIT-2026-10.md` "Done on polish/audit-2026-10")
 - [x] R14 holds/wearing stored backwards, live in construct's worlds — pbr GREEN, merged 2026-10-09 (`specs/GATE-INVERSE-ALIAS-V1.md`; whitepaper A19)
 - [x] R15 Batch A, fold correctness — pbr GREEN, merged 2026-10-09 (`specs/FOLD-CORRECTNESS-V1.md` r3; whitepaper A18)
-- [~] R16 Batch B, gate authority (`specs/GATE-AUTHORITY-V1.md`; branch `impl/gate-authority-v1`; spec awaiting pbr)
-- [~] R17 Batch C, frame-scoped identity (`specs/FRAME-SCOPED-IDENTITY-V1.md`; branch `impl/frame-scoped-identity-v1`; spec awaiting pbr)
-- [~] R18 Batch D, refer learns words, not picks (`specs/REFER-LEARNING-V1.md`; branch `impl/refer-learning-v1`; spec awaiting pbr)
-- [~] R19 Batch E, the additive read surface: construct's three asks (`specs/READ-SURFACE-V1.md`; branch `spec/read-surface-v1`; spec awaiting pbr, not yet built)
+- [~] R16 Batch B, gate authority (`specs/GATE-AUTHORITY-V1.md`; branch `impl/gate-authority-v1`; r2, spec and code together, in pbr review)
+- [~] R17 Batch C, frame-scoped identity (`specs/FRAME-SCOPED-IDENTITY-V1.md`; branch `impl/frame-scoped-identity-v1`; r2 building on B r2, with §7, frames following merges, held for Kabe's gate g3bf5da)
+- [~] R18 Batch D, refer learns words, not picks (`specs/REFER-LEARNING-V1.md`; branch `impl/refer-learning-v1`; spec pbr GREEN; built, rebases onto C r2, then code to pbr)
+- [~] R19 Batch E, the additive read surface: construct's three asks (`specs/READ-SURFACE-V1.md`; branch `spec/read-surface-v1`; spec pbr GREEN; 116 oracle tests on `tests/read-surface-v1`; built after D)
 - [~] R20 Ship notices to construct as each batch lands; construct repairs its worlds with the holds/wearing recipe (live player worlds are Kabe's call; construct brings him the list) (`docs/ADOPTION.md` "Inverse predicates"). A and R14 noticed 2026-10-09; construct's 1,542 tests green on them, nothing to re-baseline
 - [ ] R21 P2 structure: one merge-veto gate table, one rows-between scan, `indexes.py` split behind its facade, the classifier rubric unified (`docs/AUDIT-2026-10.md` "P2")
-- [ ] R22 `events()` from one reader, shared with `in_transit`; `state()` on event entities (READ-SURFACE-V1 §10 deferral; audit addendum E8)
+- [~] R22 `events()` from one reader, shared with `in_transit`; `state()` on event entities (`specs/EVENTS-ONE-READER-V1.md` on `spec/events-one-reader-v1`; spec pbr GREEN, construct's consult folded in; built after B–E land)
 
 ## M3 — Book in, world out
 
