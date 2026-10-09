@@ -737,3 +737,22 @@ changes on its next call.
    `events()` changes what construct reads.
    - *Default:* send construct this spec's ship-notice section with the pbr
      request, and fold its reply in before the build.
+
+## Host consult folded in (construct, 2026-10-09; pbr GREEN on r1)
+
+- **Turn salience.** Construct's one kind-agnostic canon reader is turn salience
+  (turnloop ~2867): a first-seen kind wakes its generator.
+  - Construct made `identity_merge` routine on its side; it is the only engine
+    bookkeeping among the 42 newly visible live events.
+  - The other 28 are extractor-written story events (13 of generic kind
+    `event`, 2 with no kind, the rest one or two each) that classification
+    never reached. They are legitimate history. Whether the generic kind wakes
+    the generator is construct's call.
+- **`until=`.** No turn-loop assumption breaks. Today's leak of future events
+  made some kinds look already seen and suppressed real novelty, so the fix is
+  the intended behaviour. Construct's adapter already caps `until` at the play
+  horizon.
+- **`state()` on events.** The arc reads its conclusion and commitment markers
+  through `events()` in the session frame, which is unchanged.
+- **Before the build lands,** construct runs its full suite on the
+  implementation branch.
