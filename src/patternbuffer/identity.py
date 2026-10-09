@@ -110,10 +110,15 @@ class IdentityRegistry:
 
     # --------------------------------------------------------------- write
 
-    def add_alias(self, entity: str, alias: str, status: str = "stated") -> None:
+    def add_alias(self, entity: str, alias: str, status: str = "stated",
+                  frame: str = CANON) -> None:
+        """Append one `alias` row, normalized, in `frame`. Description is
+        perspectival (FRAME-SCOPED-IDENTITY-V1 §1(c)): the gate passes the
+        item's effective frame, so a name private to Alice stays in Alice's
+        frame and only identity reads of that frame see it."""
         self._buffer.append(
             entity=entity, attribute="alias", value=alias.strip().lower(),
-            status=status, role=self._ingestor,
+            status=status, role=self._ingestor, frame=frame,
         )
 
     def _containment_family(self) -> set[str]:

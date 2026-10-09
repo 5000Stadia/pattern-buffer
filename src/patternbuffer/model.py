@@ -47,6 +47,13 @@ SEMANTICS_PREDICATES = frozenset(
 )
 INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from", "aka"}
 
+# The canon identity edges (FRAME-SCOPED-IDENTITY-V1): the rows that make,
+# propose or forbid a merge. Identity is canon's — which ids are one thing is
+# one fact about the world, not a belief — so these are written and read in
+# canon only. `aka` is not among them: a perspectival identity belief ("Alice
+# thinks the masked man is Bob") stays an `aka` row in its own frame.
+CANON_IDENTITY_EDGES = frozenset({"same_as", "maybe_same_as", "distinct_from"})
+
 # The engine's own meta-attributes (subjects of these rows are assertion
 # ids or carry engine semantics).
 META_ATTRIBUTES = frozenset(
