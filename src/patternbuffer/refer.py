@@ -1,6 +1,12 @@
 """refer(): reference resolution, the fourth boundary operation
 (whitepaper §9; spec §9.3). Three-tier cascade, cheapest first; tier 1
 is deterministic and makes no model call. Low confidence never guesses.
+
+refer learns a word, never a pick (REFER-LEARNING-V1 §1; whitepaper A18).
+Only a vocabulary miss that tier 2 maps onto one entity in scope writes,
+and what it writes is a `learned_alias` row in the call's frame. Tier 1d
+reads it back only after the world's own vocabulary found nothing, and
+only where its entity is in the caller's scope.
 """
 
 from __future__ import annotations
@@ -12,7 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
-from patternbuffer.identity import IdentityRegistry
+from patternbuffer.identity import REFER_SOURCE_PREFIX, IdentityRegistry, ref_norm
 from patternbuffer.indexes import Indexes
 from patternbuffer.model import ATTR_PREFIX, CANON, TASK_REFER, task_schema
 
@@ -69,36 +75,50 @@ class Refer:
         self._indexes = indexes
         self._registry = registry
         self._model = model
-        # Alias accrual (letter 018, mechanic 2) appends through the gate's
-        # role; without an ingestor wired, resolution still works but the
-        # world does not learn its users' words.
+        # Word learning (letter 018 mechanic 2, as REFER-LEARNING-V1 §2
+        # reshapes it) writes through the gate; without an ingestor wired,
+        # resolution still works but the world learns no words.
         self._ingestor = ingestor
 
-    def _accrue_alias(self, description: str, entity_id: str, receipt: dict,
-                      frame: str = CANON) -> None:
-        """Memoize a tier-2 resolution as an alias assertion carrying the
-        resolution receipt — each synonym costs one tier-2 call once, then
-        is tier-1a forever. A learned alias never outranks an exact name
-        (by_alias hits both; exact-name uniqueness still wins tier 1a, and
-        a later collision is ordinary ambiguity -> tier 2).
-
-        The alias row lands in `frame`, the frame `refer` was called with
-        (FRAME-SCOPED-IDENTITY-V1 §1(e)): a word learned in Alice's frame is
-        Alice's, and canon never reads it. REFER-LEARNING-V1 decides *when*
-        this writes; this rule fixes only *where* it lands."""
+    def _learn(self, description: str, entity_id: str, receipt: dict, frame: str) -> None:
+        """Remember a word (REFER-LEARNING-V1 §2): the expression, normalized,
+        names `entity_id` in `frame`. One timeless, inferred `learned_alias`
+        item through the gate, whose `source_doc` makes the gate write the
+        `source` receipt. The word passes the membrane — its input, the user's
+        expression, is in no other row — while the pick, the scope and any
+        lifetime are recomputable or the host's, so none of them is stored."""
         if self._ingestor is None:
             return
-        rows = self._ingestor.ingest_structured([
-            {"entity": entity_id, "attribute": "alias",
-             "value": description.strip().lower(), "timeless": True,
-             "status": "inferred", "frame": frame},
-        ])
-        self._buffer.append(
-            entity=rows[0].id, attribute="source",
-            value=f"refer:tier2:{json.dumps(receipt.get('signals', []))[:80]}",
-            status="inferred", role=self._ingestor._role,
+        word = ref_norm(description)
+        if self._knows_word(word, entity_id, frame):
+            # Written once (§2). At the head the cascade cannot get here — an
+            # in-scope word is a tier-1d hit — so this is a guard, not a path.
+            return
+        rows = self._ingestor.ingest_structured(
+            [{"entity": entity_id, "attribute": "learned_alias", "value": word,
+              "timeless": True, "status": "inferred", "frame": frame,
+              "source_doc": REFER_SOURCE_PREFIX
+              + json.dumps(receipt.get("signals", []))[:80]}],
+            # §2: the META guardrail decides it EVENT with no model call;
+            # rules mode decides it even inside a deferred build session.
+            classify="rules",
         )
-        logger.info("alias accrued: %r -> %s", description, entity_id)
+        if not rows:
+            # §2: a gate skip is not an error; the resolution stands.
+            logger.warning("learned alias not written (gate skip): %r -> %s in %s",
+                           word, entity_id, frame)
+            return
+        logger.info("learned alias: %r -> %s in %s", word, entity_id, frame)
+
+    def _knows_word(self, word: str, entity_id: str, frame: str) -> bool:
+        """A visible `learned_alias` in `frame` already maps `word` to
+        `entity_id`'s identity (REFER-LEARNING-V1 §2)."""
+        target = self._indexes.resolve_entity(entity_id)
+        return any(
+            isinstance(row.value, str) and ref_norm(row.value) == word
+            and self._indexes.resolve_entity(row.entity) == target
+            for row in self._buffer.visible(attribute="learned_alias", frame=frame)
+        )
 
     def __call__(
         self,
@@ -108,7 +128,35 @@ class Refer:
         constraints: list[tuple[str, str]] | None = None,
         as_of: float | None = None,
         asserted_as_of: int | None = None,
+        learn: bool = True,
     ) -> Resolution:
+        """Resolve a referring expression to one entity, a candidate set, or
+        underdetermined (whitepaper §9).
+
+        Tier 1 makes no model call: (1a) an authored name or alias; (1b)
+        constraint inversion; (1c) the one entity of the named kind in scope;
+        (1d) a word refer learned earlier, its entity in scope
+        (REFER-LEARNING-V1 §3). Tier 2 judges two or more tier-1 candidates,
+        or, given a `scope`, a vocabulary miss over the scene's members
+        (letter 018). Below its floor the reference is underdetermined: the
+        host's ask.
+
+        `learn` (REFER-LEARNING-V1 §2): a vocabulary miss that tier 2 maps
+        onto one entity is remembered as a word, a `learned_alias` row in
+        `frame`, unless `learn=False` or the read is pinned to a past log
+        position (`asserted_as_of`). No other path writes: an ambiguity pick
+        is never learned.
+        """
+        # The scene's members, computed at most once per call: tier 1c, tier
+        # 1d's scope filter and the escalation share it (REFER-LEARNING-V1 §3).
+        scene: list[str] | None = None
+
+        def members() -> list[str]:
+            nonlocal scene
+            if scene is None:
+                scene = self._scope_members(scope, frame, as_of, asserted_as_of)
+            return scene
+
         # ---- Tier 1a: exact name/alias hit through the identity registry.
         # Try the raw expression and its determiner-stripped core (HD 003):
         # "my brass measuring spoon" misses the exact name otherwise. Names
@@ -116,9 +164,8 @@ class Refer:
         # fallback (FRAME-SCOPED-IDENTITY-V1 §2): a name private to Alice
         # resolves in Alice's frame and never in canon's.
         core = self._strip_determiner(description)
-        hits = self._registry.by_alias(description, frame=frame)
-        if core != description.strip().lower():
-            hits = hits | self._registry.by_alias(core, frame=frame)
+        texts = (description,) if core == ref_norm(description) else (description, core)
+        hits = {e for text in texts for e in self._registry.by_alias(text, frame=frame)}
         if len(hits) == 1:
             return Resolution(RESOLVED, next(iter(hits)),
                               receipt={"tier": 1, "signals": ["alias_exact"]})
@@ -135,27 +182,46 @@ class Refer:
         # holds exactly one drawer).
         kind = self._kind_word(description)
         if kind is not None:
-            members = self._scope_members(scope, frame, as_of, asserted_as_of)
             of_kind = [
-                e for e in members
+                e for e in members()
                 if self._entity_kind(e, frame, as_of, asserted_as_of) == kind
             ]
             if len(of_kind) == 1:
                 return Resolution(RESOLVED, of_kind[0],
                                   receipt={"tier": 1, "signals": ["unique_kind_in_scope"]})
             if len(of_kind) > 1:
-                return self._resolve_tier2(description, tuple(sorted(of_kind)), frame)
+                # A kind pick: judged afresh on every read, never learned (§2).
+                return self._resolve_tier2(description, tuple(sorted(of_kind)))
         if len(hits) > 1:
-            return self._resolve_tier2(description, tuple(sorted(hits)), frame)
+            # An authored-alias collision: judged, never learned (§2).
+            return self._resolve_tier2(description, tuple(sorted(hits)))
+
+        # ---- Tier 1d (REFER-LEARNING-V1 §3): a learned word, read back only
+        # on a vocabulary miss — names, aliases and a unique kind in scope all
+        # found nothing (one alias hit returned above; two or more went to
+        # tier 2) — and only where its entity is in the caller's scope. With
+        # no scope the whole world is the scene.
+        learned = {e for text in texts
+                   for e in self._registry.by_learned_alias(text, asserted_as_of, frame=frame)}
+        if scope is not None:
+            in_scene = set(members())
+            learned = {e for e in learned if self._indexes.resolve_entity(e) in in_scene}
+        if len(learned) == 1:
+            return Resolution(RESOLVED, next(iter(learned)),
+                              receipt={"tier": 1, "signals": ["learned_alias"]})
+        if len(learned) > 1:
+            # A learned-word collision: judged, never learned (§2).
+            return self._resolve_tier2(description, tuple(sorted(learned)))
 
         # ---- Zero-candidate escalation (letter 018, mechanic 1): a synonym
         # yields zero tier-1 matches; with a scope provided, that is exactly
         # tier 2's judgment — vocabulary miss must not masquerade as absence.
-        # Scope-bounded ONLY: never world-scope for this path.
-        if scope is not None:
-            members = self._scope_members(scope, frame, as_of, asserted_as_of)
-            if members:
-                return self._resolve_tier2(description, tuple(sorted(members)), frame)
+        # Scope-bounded ONLY: never world-scope for this path. The one path
+        # that learns (REFER-LEARNING-V1 §2), and never from a pinned read.
+        if scope is not None and members():
+            learn_frame = frame if learn and asserted_as_of is None else None
+            return self._resolve_tier2(description, tuple(sorted(members())),
+                                       learn_frame=learn_frame)
 
         # Nothing deterministic and no candidates: underdetermined.
         return Resolution(UNDERDETERMINED, receipt={"tier": 3, "signals": []})
@@ -231,12 +297,16 @@ class Refer:
 
     # ------------------------------------------------------------- tier 2
 
-    def _resolve_tier2(self, description: str, candidates: tuple[str, ...],
-                       frame: str = CANON) -> Resolution:
+    def _resolve_tier2(
+        self, description: str, candidates: tuple[str, ...],
+        learn_frame: str | None = None,
+    ) -> Resolution:
         """Strict-contract cheap call judging candidates; returns a
-        resolution receipt. Below the floor -> tier 3: never guess. `frame`
-        is the call's frame, where an accrued alias lands
-        (FRAME-SCOPED-IDENTITY-V1 §1(e))."""
+        resolution receipt. Below the floor -> tier 3: never guess.
+
+        `learn_frame` is the frame a confident answer is learned into as a
+        word. Only the zero-candidate escalation passes one
+        (REFER-LEARNING-V1 §2); None never writes."""
         if self._model is None:
             return Resolution(CANDIDATES, candidates=candidates,
                               receipt={"tier": 2, "signals": ["no_model"]})
@@ -263,7 +333,8 @@ class Refer:
         }
         if out.get("entity_id") in candidates and out.get("confidence", 0.0) >= _TIER2_FLOOR:
             resolution = Resolution(RESOLVED, out["entity_id"], receipt=receipt)
-            self._accrue_alias(description, out["entity_id"], receipt, frame)
+            if learn_frame is not None:
+                self._learn(description, out["entity_id"], receipt, learn_frame)
             return resolution
         # Tier 3 contract: the ask is the host's to deliver.
         return Resolution(UNDERDETERMINED, candidates=candidates, receipt=receipt)

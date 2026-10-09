@@ -509,22 +509,27 @@ class TestRefer018Extensions:
         ])
         world._stub.enqueue({"entity_id": "obj:cabinet", "confidence": 0.9,
                              "signals": ["synonym:cupboard~cabinet"]})
-        world._stub.enqueue({"durability": "CONSTITUTIVE", "class_confidence": 0.9})
+        # Audit 2026-10 P1 #4 / REFER-LEARNING-V1 §2: the scripted classify
+        # response this test once queued goes unused — the learned row is
+        # META bookkeeping, decided EVENT by the guardrail with no model call.
+        n0 = len(world._stub.calls)
         r = world.refer("the cupboard", scope="place:study")
         assert r.status == RESOLVED and r.entity_id == "obj:cabinet"
         assert r.receipt["tier"] == 2
+        assert len(world._stub.calls) == n0 + 1  # the tier-2 judgment only
 
-        # Second use: tier 1a via the accrued alias — zero model calls.
+        # Second use: tier 1d via the learned word (REFER-LEARNING-V1 §3) —
+        # zero model calls. Unscoped, so the whole world is the scene.
         n = len(world._stub.calls)
         r2 = world.refer("the cupboard")
         assert r2.status == RESOLVED and r2.entity_id == "obj:cabinet"
-        assert r2.receipt["signals"] == ["alias_exact"]
+        assert r2.receipt["signals"] == ["learned_alias"]
         assert len(world._stub.calls) == n
-        # Both receipts in the log: the alias row is inferred + sourced.
-        alias_rows = [x for x in world.buffer.all_rows()
-                      if x.attribute == "alias" and x.value == "the cupboard"]
-        assert len(alias_rows) == 1 and alias_rows[0].status == "inferred"
-        src = world.buffer.visible(entity=alias_rows[0].id, attribute="source")
+        # Both receipts in the log: the learned row is inferred + sourced.
+        learned_rows = [x for x in world.buffer.all_rows()
+                        if x.attribute == "learned_alias" and x.value == "the cupboard"]
+        assert len(learned_rows) == 1 and learned_rows[0].status == "inferred"
+        src = world.buffer.visible(entity=learned_rows[0].id, attribute="source")
         assert src and "refer:tier2" in str(src[0].value)
 
     def test_no_world_scope_escalation(self, world):

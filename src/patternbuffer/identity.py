@@ -40,6 +40,19 @@ _HONORIFICS = frozenset({
 })
 
 
+# REFER-LEARNING-V1 §2/§7: the `source` receipt prefix of every word refer
+# learns. On a `learned_alias` row it is the receipt; on an `alias` row it marks
+# a legacy learned alias, written by the retired pre-spec accrual path.
+REFER_SOURCE_PREFIX = "refer:tier2:"
+
+
+def ref_norm(text: str) -> str:
+    """The one normalization refer's vocabulary matches under
+    (REFER-LEARNING-V1 §5): outer whitespace and case. Interior whitespace
+    is kept, as for names — "old  faithful" is not "old faithful"."""
+    return text.strip().lower()
+
+
 def _content_tokens(text: str) -> list[str]:
     """Normalized informative tokens of a name/alias string."""
     t = text.strip().lower()
@@ -1398,6 +1411,38 @@ class IdentityRegistry:
             if isinstance(row.value, str) and row.value.strip().lower() == needle:
                 hits.add(self.resolve(row.entity, asserted_as_of))
         return hits
+
+    def by_learned_alias(self, alias: str, asserted_as_of: int | None = None,
+                         frame: str = CANON) -> set[str]:
+        """Entities refer has learned `alias` as a word for (REFER-LEARNING-V1
+        §3), identity-resolved, as of a log position. Read only by refer's
+        tier 1d, after the world's own vocabulary found nothing. A learned
+        word is never identity: no anchor, merge or collision read sees it."""
+        return {
+            self.resolve(row.entity, asserted_as_of)
+            for row in self._vocabulary_matches(alias, ("learned_alias",), asserted_as_of,
+                                                frame=frame)
+        }
+
+    def _vocabulary_matches(
+        self, text: str, attributes: tuple[str, ...], asserted_as_of: int | None,
+        frame: str = CANON,
+    ) -> list[Assertion]:
+        """The visible `attributes` rows whose string value equals `text`
+        under `ref_norm` (REFER-LEARNING-V1 §5): the one read set behind
+        refer's vocabulary, as of the caller's log position (§4).
+
+        The frame half of this read is FRAME-SCOPED-IDENTITY-V1 §2's: rows
+        are read in `frame` only (an observer frame through its §7), with no
+        canon fallback, once, for names, aliases and learned words alike
+        (§4: one frame rule for all of refer's vocabulary)."""
+        needle = ref_norm(text)
+        return [
+            row for row in self._buffer.visible(
+                attribute_in=list(attributes), asserted_as_of=asserted_as_of,
+                frame=frame)
+            if isinstance(row.value, str) and ref_norm(row.value) == needle
+        ]
 
     # ----------------------------------- AKA-CORRELATION-V1 (the third lane)
     # `aka` is the NON-collapsing identity relation — between `same_as`

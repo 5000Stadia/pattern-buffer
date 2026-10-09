@@ -71,6 +71,10 @@ META_ATTRIBUTES = frozenset(
         "world_defining",
         "correction_proposal",
         "source_valid_from",  # INGEST-LATENCY-V2: demoted cursor-authoritative coord
+        # REFER-LEARNING-V1 §2: refer's memory of words — timeless bookkeeping
+        # like same_as/aka, never identity: EVENT by the classifier guardrail,
+        # so it never folds, stands as a fact, or counts as an unstamped row.
+        "learned_alias",
     }
 ) | SEMANTICS_PREDICATES
 
