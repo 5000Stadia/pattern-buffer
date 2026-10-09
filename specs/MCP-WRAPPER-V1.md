@@ -26,6 +26,11 @@ tools expose the **narrower value domains that are genuinely model-free**:
 - `ingest_structured.classify ∈ {"rules", "defer"}`, **default `"rules"`** (safe:
   guardrails + STATE, zero LM).
 - `seal_build` does **not** expose `model` (server always calls `model=False`).
+  *(Note 2026-10-09, READ-SURFACE-V1 §11: one table, `FORCED_PARAMS`, now holds
+  every forced parameter — `seal_build.model`, `refer.model` and `refer.learn`,
+  all `False`. Each is omitted from its schema (`OMITTED_PARAMS =
+  frozenset(FORCED_PARAMS)`), refused before dispatch with a message naming
+  it, and filled by dispatch.)*
 - **Runtime validation rejects** `inline`/`batch`/`model=true` before dispatch —
   enforced in the dispatch layer, not merely described in tool docs.
 - The spec claim is precise: V1 tool signatures are the frozen porcelain
@@ -60,6 +65,16 @@ writes/identity/build: `ingest_structured`, `retract`, `reconcile`,
   can appear — the registry asserts its own completeness in tests, so an additive
   verb can neither appear accidentally nor go silently unclassified.
 
+*(Note 2026-10-09: the registry now holds 42 tools — `in_transit`
+(MOVED-EVENT-V1) and `commit_set` (ATOMIC-ACTIVATION-V1) made 39,
+`identity_conflicts` (FRAME-SCOPED-IDENTITY-V1 §4) 40, and READ-SURFACE-V1
+§11 adds the reads `canonical_attribute` and `refer`. `refer` is served
+deterministic: tier 1 is V1, tier 2 stays V1.1 (MCP sampling); its forced
+`model=False, learn=False` make no model call and no write even on a World
+with a model, and its annotations are read-only and idempotent. The
+deliberately permissive schemas are exactly `who_knows.value`,
+`state.value` and `state_union.value`.)*
+
 ## The wire convention (Cx 521 #3): one mechanical envelope
 MCP structured results are JSON **objects**; porcelain returns include top-level
 lists, primitives, `None`, and `Receipt` dataclasses. One uniform rule:
@@ -82,6 +97,11 @@ schemas declared to match the envelope.
   and requiring it beats the adapter peeking at private SQLite metadata (membrane).
   Fresh path ⇒ a new world is created with that id; existing path with a
   mismatched id ⇒ the engine's `WorldMismatch` fails startup loudly.
+  *(Note 2026-10-09, READ-SURFACE-V1 §7: `--policy
+  {invent_under_canon,observe_or_unknown,deny}` (env `PATTERNBUFFER_POLICY`)
+  is passed to `World`. A fresh world records it as its physics row; absent,
+  the stored physics apply; a mismatch fails startup with
+  `WorldPhysicsMismatch`, as a mismatched id does.)*
 - **One server ↔ one world** (the §16 1:1 invariant); multi-world = multiple
   server instances, never a multiplexer.
 - **`ToolAnnotations`, exact table:** deterministic reads `readOnlyHint=true`;

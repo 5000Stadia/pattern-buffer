@@ -29,6 +29,13 @@ Folded-not-raw means a **superseded or retracted** belief does not count (O no
 longer "knows" a value they've updated away from), and identity merges are
 respected — the transpose stays consistent with what `state(.., frame=O)` serves.
 
+*(Note 2026-10-09, READ-SURFACE-V1 §5: "value-matches" now reads the folded
+value, through one predicate `fold_matches` that `state(value=)["matches"]`
+shares: any current member of a set-valued key, an accrue key's total
+(numerically), else the served row. A frame whose fold serves only an
+unresolved placeholder no longer qualifies, and the porcelain decodes a
+`$decimal` tag argument first.)*
+
 ## Why computed, not a stored `known_by`
 A `known_by` edge is recomputable from the `knows:` frames → storing it breaches the
 membrane (RFC-002) and double-writes every belief. The inverse read is the transpose
@@ -52,6 +59,7 @@ world.who_knows(entity, attribute, value=None, valid_as_of=None, asserted_as_of=
   separately. Adding the union later reuses the shipped multi-frame read-union.
 - **Set-valued key membership** ("who knows alias X is among the names") — V1 folds
   functional keys + optional value; set-valued membership is a V1.1 nicety.
+  *(Note 2026-10-09: delivered by READ-SURFACE-V1 §5, with accrue totals.)*
 - A frame-membership index — only on a measured hot path.
 
 ## Tests (tests/test_who_knows.py)

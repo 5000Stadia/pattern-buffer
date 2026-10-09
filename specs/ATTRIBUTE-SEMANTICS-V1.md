@@ -71,12 +71,26 @@ canonicalization-as-receipts pattern generalized), rebuilt into a sidecar:
   non-core attribute is accepted and recorded but not yet wired (deferred
   until the family/policy split is proven live — Construct confirms it needs
   no non-core `move` today). `accrue` is reserved, not wired in v1.
+  *(Note 2026-10-09, READ-SURFACE-V1 §2: the declarable vocabulary is now
+  `{last_write, accrue}`. `last_write` has its meaning — the latest row of
+  the top evidence rank, whatever its durability, never conflicted — on a
+  functional attribute outside the containment family; `move` was never
+  wired and is removed (a `move` declaration skips; an old one in a log is
+  ignored on read); an undeclared attribute folds `by_class`, an internal,
+  undeclarable label for the fold by durability class it always had. The
+  containment family's cross-source rule stays keyed on `relation_family`.)*
 
 **Durability (STATE/DISPOSITIONAL/CONSTITUTIVE) stays per-row and
 model-judged — out of scope.** The seam (Kernos): attribute-level metadata
 is only for what is *genuinely invariant about the vocabulary*; lifting an
 instance-contingent property (durability above all) to attribute level would
-be schema rigidity and is forbidden.
+be schema rigidity and is forbidden. *(Note 2026-10-09: amended by
+READ-SURFACE-V1 §1, founder decision #4. Undeclared vocabulary stays per-row
+and model-judged; a host may declare that its own attribute's class is
+invariant — the durability pin `attr:<name> · durability ·
+STATE|DISPOSITIONAL|CONSTITUTIVE`, never EVENT — as `structural: true`
+already does for CONSTITUTIVE. The pin is a fifth semantics predicate, under
+§5's rules, read by the classifier before the model.)*
 
 **The philosophy guardrail (Kernos rejection-test), binding on this spec:** a
 declaration must never cause an assertion to be *rejected or dropped* — it
@@ -128,6 +142,10 @@ Deterministic; rebuildable; append-only-clean.
 | `SET_VALUED_ATTRIBUTES` (`name`,`alias`,`connects_to`,`adjacent_to`,`same_as`,`maybe_same_as`) | `arity=set_valued`; `connects_to`/`adjacent_to` also `relation_family=lateral` |
 | `STRUCTURAL_PREDICATES` | `structural=true` |
 | everything else | `arity=functional`, `relation_family=none`, `fold_policy=last_write` (unchanged from today) |
+
+*(Note 2026-10-09, READ-SURFACE-V1 §2: the built-in fold policy is now the
+internal `by_class` for every row of this table, the containment family
+included; the behaviour is unchanged.)*
 
 Defaults-preserve is verified by running the **entire existing suite green**
 with zero declarations present.
