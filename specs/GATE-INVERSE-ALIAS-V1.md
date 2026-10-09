@@ -1,6 +1,6 @@
 # GATE-INVERSE-ALIAS-V1: inverse predicates swap direction at the gate
 
-**Status:** DRAFT r1.1 (2026-10-08; §5 output shape per construct's request), fast-tracked out of batch B of
+**Status:** DRAFT r1.2 (2026-10-08; r1.1: §5 output shape per construct's request; r1.2: pre-review fixes, see the last section), fast-tracked out of batch B of
 `docs/AUDIT-2026-10.md` because it is **corrupting live host worlds**.
 
 - Construct's play path (`p.ingest` over narration) reaches it whenever the
@@ -46,7 +46,7 @@ immediately after canonicalization. That is before the malformed-id gate,
 identity resolution, interval checks and the per-edge checks, so every later
 check sees the true direction.
 
-- The receipt is `holds->held_by (inverse)`.
+- The receipt is `(inverse) holds->held_by` — marker FIRST (r1.2, pre-review item 8): an engine that predates the swap splits a receipt on `->` and would otherwise install the alias `held_by (inverse)`; with the marker first it reads the source `(inverse) holds`, an attribute that never occurs, and installs nothing.
 - Item-level identity data (`aliases`, `same_as`, `name`) stays with the
   **original subject**, the entity the item described, not the swapped one.
 - Under `atomic=True` nothing changes beyond the corrected row.
@@ -59,43 +59,49 @@ a subject; refusing would lose a real fact.
 
 ## §4 Built-ins beat replayed receipts
 
-`_rebuild_alias_map` applies the replayed receipts first and both built-in tables
-last, so a built-in mapping always wins. Old forward receipts `holds->held_by`
-therefore no longer install a forward alias. The `(inverse)` receipts are
-records, not map entries.
+`_rebuild_alias_map` (r1.2) runs **built-ins → replayed receipts (in log order;
+each records the first hop applied) → pop the inverse keys**. A host override of
+another built-in (`type->genre`) therefore outranks the built-in and survives
+reopen, while old forward receipts `holds->held_by` can never install a forward
+alias for an inverse relation. `(inverse) …` receipts are records, not map
+entries. `add_attribute_alias` raises `ValueError` for an inverse key.
 
 ## §5 Finding rows already inverted (no new verb; the engine never rewrites)
 
 Rows written before the fix keep their receipt and stay as they are (append-only).
-A host lists and repairs them with the porcelain it already has:
+A host lists and repairs them with the porcelain it already has. The recipe is
+the executable block in `docs/ADOPTION.md` (marked `recipe:inverted-rows`; the
+§5 test runs that block verbatim). Its contract (r1.2):
 
-```python
-receipt_of = {f["entity"]: f["provenance"]["assertion_id"]
-              for f in p.facts("canon", attribute="canonicalized_from", include_meta=True)
-              if f["value"] in ("holds->held_by", "wearing->worn_by")}
-inverted = []
-for frame in host_frames:
-    for f in p.facts(frame, attribute="held_by") + p.facts(frame, attribute="worn_by"):
-        aid = f["provenance"]["assertion_id"]
-        if aid in receipt_of:
-            inverted.append({"assertion_id": aid, "frame": frame,
-                             "entity": f["entity"], "attribute": f["attribute"],
-                             "value": f["value"], "receipt_id": receipt_of[aid]})
-        # repair: commit_set([retract(aid), assert(swapped)]) — host-judged
-```
+- **Finds** every `held_by`/`worn_by` row, in any host frame, that either carries
+  a pre-fix receipt (`holds->held_by`, `wearing->worn_by`) **or has the same
+  (entity, attribute, value) as a receipted row** — the receipt-less copies a
+  host leaves by re-ingesting promoted values into canon (`receipt_id: None`).
+- **Output** per row: `{assertion_id, frame, entity, attribute, value,
+  value_type, valid, receipt_id}`. `valid` is the original `[valid_from,
+  valid_to]`; `receipt_id` is the `canonicalized_from` row's own id, or `None`.
+  `value_type` is `entity` if the value fits the gate's id grammar, else `literal`.
+- **Repair is per group**, keyed by (frame, entity, attribute, value): retract
+  **all** copies, assert **once**, in one `commit_set`. (Repairing copies one by
+  one refuses the second as a cycle.) An entity-valued group is re-asserted
+  swapped (`value held_by entity`); a **text-valued** group cannot be swapped — it
+  is re-asserted as a literal `holds`/`wearing` (retract + re-assert, never a
+  swap). The re-assert keeps the original interval (`timeless` when the row had
+  no `valid_from`).
+- **Until repaired**, the correct write on those pairs (`key held_by ralph`) is
+  skipped as a containment cycle, and an `atomic=True`/`commit_set` containing it
+  aborts (`AtomicAbort`, cause `gate_skip`). ADOPTION says so.
 
-**r1.1: output shape per construct's request.** Per world, `inverted` holds one
-dict per already-inverted row: `{assertion_id, frame, entity, attribute, value
-(as stored), receipt_id}`, where `receipt_id` is the `canonicalized_from`
-receipt row's own assertion id. The §5 test asserts this shape.
-
-The recipe goes into ADOPTION. Repair is the host's call per row, because some
-inverted rows may have been nonsense either way.
+Repair is the host's call per group, because some inverted rows may have been
+nonsense either way.
 
 ## §6 The extractor says which way possession points
 
-Both extractor prompts gain one line: possession is `<thing> held_by <person>`
-and clothing is `<garment> worn_by <person>`. That is fewer inverse items at the
+Both extractor prompts gain one line: an object physically held or carried is
+`<thing> held_by <person>` and a garment worn is `<garment> worn_by <person>` (r1.2:
+the adjacent "use 'in' for all containment" line is reworded to "'in' for where a
+thing or person is (a place or a container)" so the two read together; no spec tag
+appears in the prompt text). That is fewer inverse items at the
 source; the gate swap stays the guarantee.
 
 ## Non-goals
@@ -116,12 +122,22 @@ source; the gate swap stays the guarantee.
   his location.
 - **§4:** a world carrying an old `holds->held_by` receipt, after
   rebuild/reopen, still swaps new `holds` items.
-- **§5:** the recipe finds exactly the pre-fix rows in a seeded world.
+- **§5:** the recipe (ADOPTION block, run verbatim) finds receipted rows, receipt-less
+  copies, text-valued rows and nothing else; a grouped `commit_set` repair clears
+  them; before repair the correct write is skipped / aborts an atomic set.
+- **Skip detail:** a swapped item's skip record carries `detail: "authored: …"`;
+  unswapped skips omit the key.
+- **Alias rebuild:** `type->genre` survives reopen; `add_attribute_alias("holds")`
+  raises; an older engine's `split("->")` replay of a post-fix world installs no
+  attribute-matching alias.
 - **`wearing`:** the same cases.
 - **`atomic=True`:** a swapped item commits inside the unit.
 - **Full suite green.**
 
 ## Internal pre-review (2026-10-08): RED on §5 only, gate GREEN-with-nits
+
+**r1.2: pre-review fixes.** Every item below is resolved:
+(1) the recipe also reports receipt-less copies (same triple as a receipted row, any frame, `receipt_id: None`); (2) `value_type` is in the output and a text-valued row is repaired by retract + re-assert as a literal `holds`/`wearing`; (3) repair groups by (frame, entity, attribute, value): retract all, assert once; (4) `valid` is in the output and the re-assert keeps it; (5) ADOPTION states that until repair correct writes are cycle-skipped and atomic sets abort; (6) `SkipRecord.detail` (optional, emitted only when set) carries the authored form of a swapped item; (7) rebuild order is built-ins → receipts → pop inverse keys, `add_attribute_alias` rejects inverse keys, `type->genre` survives reopen; (8) the receipt is `(inverse) holds->held_by`, verified against the base engine's replay logic (4404cc0); (9) both prompts reworded, spec tag dropped. Checked against copies of the construct worlds: see the commit message of r1.2. The findings follow as originally recorded.
 
 Fix these before pbr signs off. Probes (p1–p13) are in the session scratchpad.
 

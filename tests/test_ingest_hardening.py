@@ -405,7 +405,7 @@ def test_inverse_entity_value_swaps(world, inverse, forward):
     ])
     assert world.locate("obj:key") == ["person:ralph", "place:hall"]
     assert world.locate("person:ralph") == ["place:hall"]          # unchanged
-    assert f"{inverse}->{forward} (inverse)" in _receipts(world)
+    assert f"(inverse) {inverse}->{forward}" in _receipts(world)
     assert not any(r.attribute == inverse for r in world.buffer.all_rows())
 
 
@@ -458,7 +458,7 @@ def test_old_forward_receipt_does_not_resurrect_alias(tmp_path):
         {"entity": "person:ralph", "attribute": "holds", "value": "obj:key", "valid_from": 5.0},
     ])
     assert w.locate("obj:key") == ["person:ralph"]
-    assert "holds->held_by (inverse)" in _receipts(w)
+    assert "(inverse) holds->held_by" in _receipts(w)
     w.close()
 
 
@@ -472,41 +472,183 @@ def test_inverse_receipt_is_not_a_map_entry(tmp_path):
     w.close()
     w = _reopen(path, "w:rec")
     assert "wearing" not in w.ingestor._alias_map
-    assert not any("(inverse)" in v for v in w.ingestor._alias_map.values())
+    assert not any("(inverse)" in k or "(inverse)" in v
+                   for k, v in w.ingestor._alias_map.items())
     w.close()
 
 
-def test_recipe_finds_exactly_prefix_rows(world):
-    # §5 (r1.1 output shape): ADOPTION's recipe, verbatim, yields per inverted
-    # row {assertion_id, frame, entity, attribute, value, receipt_id}.
-    p = world.porcelain
-    bad1, rec1 = _seed_prefix_row(world, "person:ann", "held_by", "obj:ring", "holds->held_by")
-    bad2, rec2 = _seed_prefix_row(world, "person:bo", "worn_by", "obj:hat", "wearing->worn_by",
+def _run_adoption_recipe(p, host_frames):
+    """Execute ADOPTION.md's recipe block VERBATIM (the doc cannot drift from
+    the test) and return its namespace."""
+    import re
+    from pathlib import Path
+    doc = (Path(__file__).resolve().parent.parent / "docs" / "ADOPTION.md").read_text()
+    m = re.search(r"<!-- recipe:inverted-rows[^>]*-->\s*```python\n(.*?)```", doc, re.S)
+    assert m, "recipe block missing from docs/ADOPTION.md"
+    code = "\n".join(l[2:] if l.startswith("  ") else l for l in m.group(1).split("\n"))
+    ns = {"p": p, "host_frames": host_frames}
+    exec(code, ns)
+    return ns
+
+
+def _seed_prefix_world(w):
+    """Pre-fix state: receipted rows, a receipt-less copy in canon of a
+    knows:-frame receipted row, a text-valued row, a duplicated pair, and decoys."""
+    rows = {}
+    rows["ann"] = _seed_prefix_row(w, "person:ann", "held_by", "obj:ring", "holds->held_by")
+    rows["bo"] = _seed_prefix_row(w, "person:bo", "worn_by", "obj:hat", "wearing->worn_by",
                                   frame="knows:person:bo")
+    role = w.ingestor._role
+    # receipt-less copy of bo's triple, in ANOTHER frame (a re-ingested promotion)
+    rows["bo_copy"] = (w.buffer.append(entity="person:bo", attribute="worn_by", value="obj:hat",
+                                       value_type="entity", valid_from=1.0, frame="canon",
+                                       status="stated", role=role), None)
+    # two copies of one triple in ONE frame, one receipt-less, interval kept
+    rows["dee1"] = _seed_prefix_row(w, "person:dee", "held_by", "obj:map", "holds->held_by")
+    rows["dee2"] = (w.buffer.append(entity="person:dee", attribute="held_by", value="obj:map",
+                                    value_type="entity", valid_from=1.0, valid_to=9.0,
+                                    frame="canon", status="stated", role=role), None)
+    # text-valued inverted row
+    w_row = w.buffer.append(entity="person:ed", attribute="held_by", value="a lantern",
+                            value_type="literal", valid_from=2.0, frame="canon",
+                            status="stated", role=role)
+    rec = w.buffer.append(entity=w_row.id, attribute="canonicalized_from",
+                          value="holds->held_by", status="inferred", role=role)
+    rows["ed"] = (w_row, rec)
     # decoys: a correctly-directed hand-written row, and a post-fix swapped row
-    world.ingest_structured([
+    w.ingest_structured([
         {"entity": "obj:cup", "attribute": "held_by", "value": "person:ann", "valid_from": 2.0},
         {"entity": "person:cy", "attribute": "holds", "value": "obj:pen", "valid_from": 2.0},
     ])
-    host_frames = ["canon", "knows:person:bo"]
-    receipt_of = {f["entity"]: f["provenance"]["assertion_id"]
-                  for f in p.facts("canon", attribute="canonicalized_from", include_meta=True)
-                  if f["value"] in ("holds->held_by", "wearing->worn_by")}
-    inverted = []
-    for frame in host_frames:
-        for f in p.facts(frame, attribute="held_by") + p.facts(frame, attribute="worn_by"):
-            aid = f["provenance"]["assertion_id"]
-            if aid in receipt_of:
-                inverted.append({"assertion_id": aid, "frame": frame,
-                                 "entity": f["entity"], "attribute": f["attribute"],
-                                 "value": f["value"], "receipt_id": receipt_of[aid]})
-    key = lambda d: d["assertion_id"]
-    assert sorted(inverted, key=key) == sorted([
-        {"assertion_id": bad1.id, "frame": "canon", "entity": "person:ann",
-         "attribute": "held_by", "value": "obj:ring", "receipt_id": rec1.id},
-        {"assertion_id": bad2.id, "frame": "knows:person:bo", "entity": "person:bo",
-         "attribute": "worn_by", "value": "obj:hat", "receipt_id": rec2.id},
-    ], key=key)
+    return rows
+
+
+def test_recipe_finds_prefix_rows_and_receiptless_copies(world):
+    # §5 (r1.2): per inverted row {assertion_id, frame, entity, attribute, value,
+    # value_type, valid, receipt_id}; receipt-less copies of a receipted triple
+    # are reported with receipt_id None; decoys and post-fix rows are not.
+    rows = _seed_prefix_world(world)
+    ns = _run_adoption_recipe(world.porcelain, ["canon", "knows:person:bo"])
+    got = {d["assertion_id"]: d for d in ns["inverted"]}
+    expected = {rows[k][0].id: (rows[k][1].id if rows[k][1] is not None else None)
+                for k in ("ann", "bo", "bo_copy", "dee1", "dee2", "ed")}
+    assert {a: d["receipt_id"] for a, d in got.items()} == expected
+    d = got[rows["bo"][0].id]
+    assert d == {"assertion_id": rows["bo"][0].id, "frame": "knows:person:bo",
+                 "entity": "person:bo", "attribute": "worn_by", "value": "obj:hat",
+                 "value_type": "entity", "valid": [1.0, None],
+                 "receipt_id": rows["bo"][1].id}
+    assert got[rows["ed"][0].id]["value_type"] == "literal"
+    assert got[rows["dee2"][0].id]["valid"] == [1.0, 9.0]
+
+
+def test_unrepaired_inverse_refuses_correct_write_and_aborts_atomic(world):
+    # ADOPTION: until repair, the CORRECT write on the pair is skipped as a
+    # cycle, and an atomic set containing it aborts.
+    from patternbuffer.tmaint import AtomicAbort
+    _seed_prefix_row(world, "person:ann", "held_by", "obj:ring", "holds->held_by")
+    fix = {"entity": "obj:ring", "attribute": "held_by", "value": "person:ann", "valid_from": 3.0}
+    r = world.porcelain.ingest_structured([fix])
+    assert [s["reason"] for s in r.skipped] and "cycle" in r.skipped[0]["reason"]
+    with pytest.raises(AtomicAbort) as ei:
+        world.porcelain.ingest_structured([fix], atomic=True, classify="rules")
+    assert ei.value.cause == "gate_skip"
+
+
+def test_grouped_repair_via_commit_set(world):
+    # §5: group by (frame, triple); retract all copies, assert once. A per-row
+    # repair would refuse the second copy as a cycle. Text rows become a
+    # literal holds (never a swap); the original interval is kept.
+    rows = _seed_prefix_world(world)
+    p = world.porcelain
+    ns = _run_adoption_recipe(p, ["canon", "knows:person:bo"])
+    assert len(ns["groups"]) == 5          # ann, bo(knows), bo(canon copy), dee(x2 -> one), ed
+    for g in ns["groups"].values():
+        p.commit_set(ns["repair_ops"](g))
+    assert _run_adoption_recipe(p, ["canon", "knows:person:bo"])["inverted"] == []
+    assert world.locate("obj:ring") == ["person:ann"]
+    assert world.locate("obj:map") == ["person:dee"]
+    ed = [r for r in world.buffer.visible() if r.entity == "person:ed" and r.attribute == "holds"]
+    assert [(r.value, r.value_type, r.valid_from) for r in ed] == [("a lantern", "literal", 2.0)]
+    assert not any(r.attribute == "held_by" and r.entity == "person:ed"
+                   for r in world.buffer.visible())
+    mapx = [r for r in world.buffer.visible()
+            if r.entity == "obj:map" and r.attribute == "held_by"]
+    assert [(r.value, r.valid_from, r.valid_to) for r in mapx] == [("person:dee", 1.0, None)]   # earliest-starting copy; ties: first
+
+
+def test_swapped_skip_record_carries_authored_form(world):
+    # §2/nit 6: a skip on a swapped item names the authored form; `detail` is
+    # absent from unswapped skips (byte-identical wire form).
+    _seed_prefix_row(world, "person:ralph", "held_by", "obj:bag", "holds->held_by")
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:ralph", "attribute": "holds", "value": "obj:bag", "valid_from": 2.0},
+        {"entity": "obj:bag", "attribute": "in", "value": "obj:bag", "valid_from": 2.0},
+    ])
+    assert r.skipped[0]["detail"] == "authored: person:ralph holds obj:bag"
+    assert r.skipped[0]["entity"] == "obj:bag" and r.skipped[0]["attribute"] == "held_by"
+    assert "detail" not in r.skipped[1]
+
+
+def test_add_attribute_alias_rejects_inverse_keys(world):
+    for key in ("holds", "wearing", " Holds "):
+        with pytest.raises(ValueError):
+            world.ingestor.add_attribute_alias(key, "held_by")
+
+
+def test_host_override_of_builtin_alias_survives_reopen(tmp_path):
+    # nit 7: built-ins -> receipts -> pop inverse keys, so a host override
+    # (type->genre) outranks the built-in (type->kind) after reopen.
+    path = tmp_path / "ov.world"
+    w = _reopen(path, "w:ov")
+    w.ingestor.add_attribute_alias("type", "genre")
+    w.ingest_structured([{"entity": "doc:book", "attribute": "type", "value": "novel",
+                          "valid_from": 1.0}])
+    assert any(r.attribute == "genre" for r in w.buffer.all_rows())
+    w.close()
+    w = _reopen(path, "w:ov")
+    assert w.ingestor._alias_map["type"] == "genre"
+    assert w.ingestor._alias_map["is_a"] == "kind"           # other built-ins intact
+    assert "holds" not in w.ingestor._alias_map
+    w.close()
+
+
+def test_inverse_receipt_is_not_a_forward_alias_for_an_older_engine(tmp_path):
+    # nit 8: the pre-swap engine (4404cc0) replays every `src->dst` receipt via
+    # split("->", 1). A post-fix receipt must yield a source that never occurs.
+    path = tmp_path / "old_engine.world"
+    w = _reopen(path, "w:oe")
+    w.ingest_structured([
+        {"entity": "person:ralph", "attribute": "holds", "value": "obj:key", "valid_from": 1.0},
+        {"entity": "person:ralph", "attribute": "wearing", "value": "obj:coat", "valid_from": 1.0},
+    ])
+
+    def base_rebuild(buffer):          # verbatim logic of 4404cc0 _rebuild_alias_map
+        from patternbuffer.ingest import _BUILTIN_ALIASES
+        m = dict(_BUILTIN_ALIASES)
+        for row in buffer.visible(attribute="canonicalized_from"):
+            if isinstance(row.value, str) and "->" in row.value:
+                src, dst = row.value.split("->", 1)
+                m[src.strip()] = dst.strip()
+        return m
+
+    old = base_rebuild(w.buffer)
+    assert w.ingestor._alias_map == {k: v for k, v in old.items()
+                                     if not k.startswith("(inverse)")}
+    for attr in ("holds", "wearing", "held_by", "worn_by"):
+        assert attr not in old                       # nothing an attribute can match
+    assert all(k.startswith("(inverse)") for k in set(old) - set(w.ingestor._alias_map))
+    w.close()
+
+
+def test_extractor_prompts_read_consistently():
+    from patternbuffer.ingest import _EXTRACT_RULES_FULL, _EXTRACT_RULES_LEAN
+    for rules in (_EXTRACT_RULES_FULL, _EXTRACT_RULES_LEAN):
+        assert "held_by <person>" in rules and "worn_by <person>" in rules
+        assert "physically held or carried" in rules
+        assert "possession" not in rules
+        assert "GATE-INVERSE-ALIAS" not in rules
+        assert "all containment" not in rules
 
 
 def test_inverse_swap_inside_atomic_unit(world):
