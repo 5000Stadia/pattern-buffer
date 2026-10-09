@@ -86,7 +86,7 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 - [~] R17 Batch C, frame-scoped identity (`specs/FRAME-SCOPED-IDENTITY-V1.md`; branch `impl/frame-scoped-identity-v1`; spec awaiting pbr)
 - [~] R18 Batch D, refer learns words, not picks (`specs/REFER-LEARNING-V1.md`; branch `impl/refer-learning-v1`; spec awaiting pbr)
 - [~] R19 Batch E, the additive read surface: construct's three asks (`specs/READ-SURFACE-V1.md`; branch `spec/read-surface-v1`; spec awaiting pbr, not yet built)
-- [ ] R20 Ship notices to construct as each batch lands; construct repairs its worlds with the holds/wearing recipe (live player worlds are Kabe's call) (`docs/ADOPTION.md` recipe on the R14 branch)
+- [~] R20 Ship notices to construct as each batch lands; construct repairs its worlds with the holds/wearing recipe (live player worlds are Kabe's call; construct brings him the list) (`docs/ADOPTION.md` "Inverse predicates"). A and R14 noticed 2026-10-09; construct's 1,542 tests green on them, nothing to re-baseline
 - [ ] R21 P2 structure: one merge-veto gate table, one rows-between scan, `indexes.py` split behind its facade, the classifier rubric unified (`docs/AUDIT-2026-10.md` "P2")
 - [ ] R22 `events()` from one reader, shared with `in_transit`; `state()` on event entities (READ-SURFACE-V1 §10 deferral; audit addendum E8)
 
