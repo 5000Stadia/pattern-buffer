@@ -2,7 +2,7 @@
 (whitepaper §9; spec §9.3). Three-tier cascade, cheapest first; tier 1
 is deterministic and makes no model call. Low confidence never guesses.
 
-refer learns a word, never a pick (REFER-LEARNING-V1 §1; whitepaper A18).
+refer learns a word, never a pick (REFER-LEARNING-V1 §1; whitepaper A22).
 Only a vocabulary miss that tier 2 maps onto one entity in scope writes,
 and what it writes is a `learned_alias` row in the call's frame. Tier 1d
 reads it back only after the world's own vocabulary found nothing, and

@@ -1,6 +1,7 @@
 # REFER-LEARNING-V1: refer learns words, never picks
 
-**Status:** DRAFT r1 (2026-10-08). Not yet reviewed by pbr. Built from batch D of
+**Status:** DRAFT r1 (2026-10-08). Not yet reviewed by pbr. Rebased on C r2 (2026-10-09; see
+"Rebased onto batch C r2" at the end). Built from batch D of
 `docs/AUDIT-2026-10.md`: P1 #4, identity P2-9, and the gate auditor's `owned_by`
 finding. A probe on `polish/audit-2026-10` (212754f) reproduced every defect
 below before it was specced; line numbers are at that commit. A throwaway
@@ -223,8 +224,8 @@ log position. `identity.py` `by_alias` (1104–1114) reads every frame.
 - **The frame half is batch C's.** FRAME-SCOPED-IDENTITY-V1 (r1, `cee055b` on
   `spec/frame-scoped-identity-v1`, §2) does three things:
   - it gives `by_alias(alias, asserted_as_of=None, frame=CANON)`;
-  - `by_alias` reads `alias`/`name` rows in that frame only, with no canon
-    fallback; an observer frame is read through identity (C §7);
+  - `by_alias` reads `alias`/`name` rows in that frame only (the exact stored
+    frame, as C r2 reads every frame), with no canon fallback;
   - refer's tier 1a passes its own `frame`.
 
   D relies on all of it. §3's learned-alias lookup uses exactly the same read
@@ -546,3 +547,43 @@ next call.
   - The learned row is a `learned_alias`.
   - Its scripted classify response goes unused.
 - **The full suite stays green.**
+
+## Rebased onto batch C r2 (2026-10-09)
+
+D was built on C r1 (`c4c86b0`). C is now r2 (`7799598`, on B r2), so the nine
+commits were replayed onto it; the pre-rebase head is kept as
+`archive/refer-learning-v1-on-c-r1` (`99d4834`). D's behaviour is otherwise
+unchanged.
+
+- **Whitepaper row A22.** D's §25.9 row, which said A18, is **A22**, after A21
+  (FRAME-SCOPED-IDENTITY-V1). Main holds A18 (FOLD-CORRECTNESS-V1) and A19
+  (GATE-INVERSE-ALIAS-V1); B r2 holds A20; C r2 holds A21. Every reference to
+  D's own row reads A22: the §9 amendment line, the LEXICON entry, `refer.py`'s
+  module docstring, and the §1 commit message. No other row was touched.
+  `specs/STATUS.md` and the README test count were never edited by D; they
+  follow the merge.
+- **Conflicts and how they were resolved.**
+  - `docs/WHITEPAPER.md` (§25.9 table): kept C r2's A18-A21 rows, dropped C
+    r1's A19 row, added D's row as A22.
+  - `identity.py` `by_alias` docstring (twice: §5, then §7): C r2 had reworded
+    the frame sentence; D's text is kept with its frame sentence in C r2's
+    words.
+  - `docs/ADOPTION.md` (the `refer` signature block): D's block kept, with
+    C r2's example (an alias only canon carries does not resolve in `knows:X`).
+  - `docs/LEXICON.md`: D's `learned alias` row kept above C r2's `distinct_from`
+    row.
+- **The §7 check (C's observer-frame following).** C r2 withdrew its §7: a
+  `knows:<id>` frame reads only the rows stored under its own name, and merges
+  do not widen it. Nothing in D's code or tests relied on it: every frame
+  oracle uses one stored frame (`knows:person:alice`) and a name or alias
+  stored in that same frame, and the suite passes unchanged. Four texts did
+  lean on it and were corrected to exact-frame wording: this spec's §4 bullet
+  ("an observer frame is read through identity (C §7)"), the `by_alias` and
+  `_vocabulary_matches` docstrings ("an observer frame through its §7"), and
+  ADOPTION's "(an observer frame through its stored names)". A learned word
+  written in `knows:person:alice` is read in that frame only, as before.
+- **Other C r2 changes.** The extraction-prompt sentence, `same_as_not_canon`,
+  `distinct_group`, the `_is_known` speed fix and the group-level
+  `distinct_from` check do not touch refer, and no D oracle changed. The
+  coordination notes above still name C r1 and B r1 by SHA; those are the
+  versions D was specced against.
