@@ -894,3 +894,99 @@ class TestEvidenceRankEveryClass:
             assert fold.winner.value == "monday"  # the incumbent keeps serving
         finally:
             w.close()
+
+
+class TestPreReviewRegressions:
+    """FOLD-CORRECTNESS-V1 pre-review (2026-10-08): the two r2 consequences the
+    internal review measured as regressions on real host worlds."""
+
+    @staticmethod
+    def _set(w, rows, attribute, value, durability):
+        for row in rows:
+            if row.attribute == attribute and row.value == value:
+                w.classifier.set(row.id, durability)
+
+    def test_a_state_and_a_habit_at_one_stamp_do_not_conflict(self, tmp_path):
+        # construct writes two drives per character at one stamp, the second a
+        # habit: STATE ("right now") outranks, and it is not a contradiction.
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:nell", "attribute": "drive",
+                 "value": "tell enough truth", "valid_from": 1.0},
+                {"entity": "person:nell", "attribute": "drive",
+                 "value": "save money", "valid_from": 1.0},
+            ])
+            self._set(w, rows, "drive", "tell enough truth", "DISPOSITIONAL")
+            fold = w.state("person:nell", "drive")
+            assert fold.winner.value == "save money" and not fold.conflicted
+        finally:
+            w.close()
+
+    def test_habits_tied_at_one_stamp_coexist(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:mara", "attribute": "ability",
+                 "value": "tracking", "valid_from": 1.0},
+                {"entity": "person:mara", "attribute": "ability",
+                 "value": "herbcraft", "valid_from": 1.0},
+            ])
+            for row in rows:
+                if row.attribute == "ability":
+                    w.classifier.set(row.id, "DISPOSITIONAL")
+            assert not w.state("person:mara", "ability").conflicted
+        finally:
+            w.close()
+
+    def test_two_states_tied_at_one_stamp_still_conflict(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "person:mara", "attribute": "mood", "value": "calm",
+                 "valid_from": 1.0},
+                {"entity": "person:mara", "attribute": "mood", "value": "angry",
+                 "valid_from": 1.0},
+            ])
+            assert w.state("person:mara", "mood").conflicted
+        finally:
+            w.close()
+
+    def test_establishing_view_keeps_the_world_at_rest_under_a_later_habit(self, tmp_path):
+        # anchor's Pell key: off_shift@3 (STATE) then deputy_warden@14 (habit).
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:pell", "attribute": "duty", "value": "off_shift",
+                 "valid_from": 3.0},
+                {"entity": "person:pell", "attribute": "duty", "value": "deputy_warden",
+                 "valid_from": 14.0},
+            ])
+            self._set(w, rows, "duty", "deputy_warden", "DISPOSITIONAL")
+            assert w.state("person:pell", "duty").winner.value == "deputy_warden"
+            m = w.materialize("person:pell", lens="establishing_set")
+            duty = [r.value for r in m.assertions if r.attribute == "duty"]
+            assert duty == ["off_shift"]
+        finally:
+            w.close()
+
+    def test_establishing_view_honours_a_pin_over_a_promoted_habit(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "place:city", "attribute": "condition",
+                 "value": "under_siege", "valid_from": 0.0},
+                *({"entity": "place:city", "attribute": "condition",
+                   "value": "rationing", "valid_from": t} for t in (1.0, 2.0, 3.0)),
+            ])
+            siege = next(r for r in rows if r.value == "under_siege")
+            for r in rows:
+                w.classifier.set(r.id, "STATE")  # the pin, not structure, holds it
+            w.ingest_structured([{"entity": siege.id, "attribute": "world_defining",
+                                  "value": True, "timeless": True}])
+            assert w.classifier.promote_accruals(threshold=3) == 3
+            m = w.materialize("place:city", lens="establishing_set")
+            cond = [r.value for r in m.assertions if r.attribute == "condition"]
+            assert cond == ["under_siege"]
+        finally:
+            w.close()

@@ -1,9 +1,12 @@
 # FOLD-CORRECTNESS-V1: one set of fold rules across classes, ties and time
 
-**Status:** DRAFT r2 (2026-10-08). The gated implementation is on branch
-`impl/fold-correctness-v1`: 27 oracle tests, 604 green, no existing test
-changed. r2 records what the build made explicit (see "r2 clarifications" at
-the end). Not yet reviewed by pbr. Built from batch A of
+**Status:** DRAFT r3 (2026-10-08).
+- r2 recorded the build's clarifications.
+- r3 resolves the internal pre-review (RED → fixed; see "r3" at the end), which
+  withdraws two r2 bullets.
+
+The gated implementation is on `impl/fold-correctness-v1`. Not yet reviewed by
+pbr. Built from batch A of
 `docs/AUDIT-2026-10.md`, which reproduced every case below. It changes served
 answers only where today's answers are wrong. It waits on Kabe's go-ahead before
 review. Construct asked for §3 in particular, since its player moves every few
@@ -166,12 +169,13 @@ updated in the same commit, with the audit finding cited.
   holds within one source class. Across classes, a disagreement between them now
   raises the §7.2 flag instead of silently serving STATE, which is the
   whitepaper's cross-source rule applied to habits too.
-- **§4, within one source.** A timeless STATE row and a timeless DISPOSITIONAL
-  row with different values tie at the same (absent) time, so they now conflict.
+- ~~**§4, within one source.** A timeless STATE row and a timeless DISPOSITIONAL
+  row with different values tie at the same (absent) time, so they now
+  conflict.~~ **Withdrawn in r3.**
   Two undated contradictory standing claims are a contradiction to surface, not
   a silent STATE win.
-- **§4 in the establishing lens.** The establishing view serves a DISPOSITIONAL
-  winner as is.
+- ~~**§4 in the establishing lens.** The establishing view serves a
+  DISPOSITIONAL winner as is.~~ **Withdrawn in r3.**
 - **§6 receipt.** `SkipRecord` gains an optional `detail` (the offending value).
   It is emitted only when set, so every existing receipt is byte-identical.
 - **§7 leftovers.**
@@ -220,3 +224,36 @@ The reviewer's tested patch for findings 1–2 is
      correct §1/§3 fixes.
    - `"timeless": "false"` as a string makes a row timeless.
    - A bad `at=` poisons the cursor.
+
+## r3: the pre-review resolved
+
+1. **§4a: the at-rest view stays at rest.** In `establishing_set`, a
+   DISPOSITIONAL fold winner also goes through `_establishing_state` (the first
+   non-event-effect STATE, which honours `world_defining`). The habit is served
+   as is only when no establishing STATE exists.
+   - Oracles: Pell's at-rest duty stays `off_shift` under a later habit, and a
+     pinned `under_siege` survives promoted `rationing`.
+2. **§4b: same-stamp standing rows.**
+   - At one instant, a STATE row ("right now") outranks a habit stamped with it,
+     and is not a contradiction.
+   - Habits tied at one instant coexist (an NPC's drives), as they did before
+     this spec.
+   - Only STATE rows tied with different values conflict.
+   - This applies in both tie tests: the containment current set and the
+     per-class tie.
+   - Oracles: construct's two-drives-at-one-stamp shape is known and not
+     conflicted; two tied STATE moods still conflict.
+3. **§6 coercion.** A numeric string ("1660") is coerced to a float rather than
+   skipped (SQLite used to coerce it silently, and it worked). An int beyond
+   SQLite's 64-bit range becomes a float instead of crashing the insert. Text,
+   NaN, inf and bool are still skipped.
+4. **Noted, not changed.**
+   - §2 compares identities as they stand now. An `asserted_as_of` read from
+     before a merge sees the two values as one. This is identity's known as-of
+     limitation, out of scope here.
+   - `"timeless": "false"` as a string, and a bad `at=` poisoning the cursor,
+     go to GATE-AUTHORITY-V1's item normalization.
+5. **Ship notice.** It must also list construct's played worlds: 12 `locate()`
+   answers change (thedeep 8, ironhold 2, emberroad2 1, live_telegram 1), all
+   correct §1/§3 fixes. With r3, the reviewer measured no other changes to
+   construct's worlds beyond the intended §1–§4.

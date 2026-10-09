@@ -250,9 +250,17 @@ class Projector:
                             served[row.id] = "open"
                         continue  # the frontier is named, never painted (§10)
                     durability = self._classifier.durability(row.id)
-                    if establishing and durability == STATE and not result._value_rows:
-                        row = self._establishing_state(entity, attr, m) or None
-                        if row is None:
+                    # The at-rest view is the first non-event-effect value
+                    # (§13) for a habit winner too: a later-promoted habit must
+                    # not replace the world at rest, and a world_defining pin
+                    # still holds (FOLD-CORRECTNESS-V1 pre-review finding 1).
+                    # A habit is served as-is only with no establishing STATE.
+                    if (establishing and not result._value_rows
+                            and durability in (STATE, DISPOSITIONAL)):
+                        est = self._establishing_state(entity, attr, m)
+                        if est is not None:
+                            row = est
+                        elif durability == STATE:
                             continue
                     if served is not None:
                         served[row.id] = "concrete"

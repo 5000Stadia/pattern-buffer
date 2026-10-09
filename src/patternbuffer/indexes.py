@@ -939,12 +939,20 @@ class Indexes:
                 (r for r in contributed if r.valid_from == top.valid_from),
                 key=lambda r: r.asserted_at,
             )
-            if len({self._value_key(r) for r in current}) > 1:
-                return FoldResult(
-                    winner=current[0],
-                    conflicted=True,
-                    conflicting=tuple(r.id for r in current),
-                )
+            # At one instant a STATE row is "right now" and a habit stamped
+            # with it is "tends to" — not a contradiction (whitepaper §5/§14):
+            # STATE outranks, and only STATE rows can contradict each other
+            # (pre-review finding 2).
+            state_now = [r for r in current
+                         if self._classifier.durability(r.id) == STATE]
+            if state_now:
+                current = state_now
+                if len({self._value_key(r) for r in current}) > 1:
+                    return FoldResult(
+                        winner=current[0],
+                        conflicted=True,
+                        conflicting=tuple(r.id for r in current),
+                    )
             return FoldResult(winner=current[-1])
 
         winners: dict[str, Assertion] = {}
@@ -958,7 +966,15 @@ class Indexes:
             # Outside the containment family this still ends the fold: across
             # classes such a key flags under §7.2 anyway (§3's non-goal).
             tied = [r for r in rs if r.valid_from == top.valid_from]
-            if len({self._value_key(r) for r in tied}) > 1:
+            # A STATE row outranks a habit stamped with it, and habits tied at
+            # one instant coexist (an NPC's drives) — only STATE rows tied
+            # with different values contradict (pre-review finding 2).
+            state_tied = [r for r in tied
+                          if self._classifier.durability(r.id) == STATE]
+            if state_tied:
+                tied = state_tied
+                top = max(tied, key=self._recency_key)
+            if state_tied and len({self._value_key(r) for r in tied}) > 1:
                 earliest = min(tied, key=lambda r: r.asserted_at)
                 return FoldResult(
                     winner=earliest,

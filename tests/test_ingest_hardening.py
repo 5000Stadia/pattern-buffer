@@ -350,3 +350,23 @@ def test_cursor_authoritative_text_time_is_demoted_not_skipped(world):
     assert world.state("person:anne", "in").winner.valid_from == 3.0
     assert [row.value for row in world.buffer.all_rows()
             if row.attribute == "source_valid_from"] == ["spring 1660"]
+
+
+def test_numeric_string_and_oversize_int_times_are_coerced(tmp_path) -> None:
+    """FOLD-CORRECTNESS-V1 pre-review finding 3/nit: "1660" (SQLite used to
+    coerce it silently) and an int past 64 bits are coordinates, not skips."""
+    from patternbuffer import World
+
+    w = World(tmp_path / "t.world", world_id="w:t")
+    try:
+        r = w.porcelain.ingest_structured([
+            {"entity": "person:a", "attribute": "in", "value": "room:x",
+             "valid_from": "1660"},
+            {"entity": "person:b", "attribute": "in", "value": "room:x",
+             "valid_from": 2 ** 70},
+        ], classify="rules")
+        assert r.skipped == []
+        assert w.state("person:a", "in").winner.valid_from == 1660.0
+        assert w.state("person:b", "in").winner.valid_from == float(2 ** 70)
+    finally:
+        w.close()
