@@ -97,6 +97,13 @@ world.materialize(scope, as_of=None, frame="canon",
 #   entity reads as DEAD and won't surface — fail-safe, not an error, but it
 #   means situation returns the standing floor only until you wire durable
 #   consequences to their causing event. Model the residue, link it, it lights up.
+#   Which lens shows an event (EVENTS-ONE-READER-V1): lens="what_happened" serves
+#   the whole RECORDS of the events the scope is involved in — its id is in scope,
+#   or its record names a scope entity (an agent, a patient, the place it happened
+#   `in`, a cause) — as of as_of; situation emits its live events as records. The
+#   standing lenses (current_state, establishing_set, character_sheet) never show
+#   an event's rows: an event row never folds, classified or not, so an event is
+#   never inside a container either (contents/locate/the scope walk).
 world.confidence(entity, attribute, frame="canon", as_of=None,
                  asserted_as_of=None) -> dict
 #   frame accepts str | list[str]: a list is trust over an observer's EFFECTIVE
@@ -551,7 +558,8 @@ p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, 
            asserted_as_of=None) -> dict
    # contractually ZERO model calls and ZERO writes; id-only scopes; includes quantities
    # asserted_as_of (READ-SURFACE-V1 §8) — on this and every read below that takes a
-   #   valid-time bound (not salience, in_transit, fidelity_audit or ask): a log position.
+   #   valid-time bound (not salience, fidelity_audit or ask; in_transit too, since
+   #   EVENTS-ONE-READER-V1 §3): a log position.
    #   Rows asserted after it are invisible and retractions asserted after it don't apply;
    #   it reaches every fold, walk, source chain, the existence check (an id first written
    #   after it errors like an unknown id) and the charter. Identity closures and
@@ -577,6 +585,13 @@ p.state(entity, attribute, frame=, as_of=, value=None, asserted_as_of=None)
    #   `conflicting` id, in that order. value= (any JSON; a {"$decimal"} tag decodes):
    #   adds matches — does this frame's fold hold it? who_knows's test, for any frame
    #   (False on unknown; a set's members, an accrue key's total).
+   # on an EVENT (EVENTS-ONE-READER-V1 §4): an event's rows never fold, so its own
+   #   attributes are read from its record, the same before a sweep as after it —
+   #   kind/origin/destination/manner answer exactly what events() reports (top evidence
+   #   rank, then latest; conflicted when two disagree at one stamp); a description key
+   #   with several rows lists them all in values; every key is unknown until the event
+   #   has occurred (its first stamped row <= as_of). state_union reads the records of
+   #   the aka union. where/aggregate/who_knows/confidence/frame_diff stay standing-only.
 p.canonical_attribute(name) -> str
    # READ-SURFACE-V1 §3: the gate's name for an attribute ("Located In" -> "in", "type" ->
    # "kind"; holds/wearing stay as they are). Every attribute argument already passes
@@ -740,6 +755,17 @@ p.salience(entity, frame=, as_of=) -> float
 p.neighborhood(entity, depth=, frame=, as_of=, edge_kinds=, max_fanout=, budget=,
                asserted_as_of=None) -> dict
 p.events(kind=, participants=str|list, since=, until=, frame=, asserted_as_of=None) -> [Event]
+   # EVENTS-ONE-READER-V1 §2: each event is its RECORD (the event's rows minus identity /
+   #   provenance machinery), read whole. No sweep needed: an event is listed whether or
+   #   not its rows are classified (a build session, classify="defer", an identity merge's
+   #   own identity_merge event). Only event entities are listed (a row on another subject
+   #   that names an event never makes one), once per RESOLVED id (a merged event is one
+   #   entry, under its canonical id, holding every stored id's rows). The window:
+   #   until=T lists an event once it has occurred — its first stamped row <= T, or it has
+   #   none (a timeless event, such as a merge) — with its record as of T; since=S keeps
+   #   an event whose t (its latest stamp) >= S, its earlier and timeless rows included.
+   #   kind/origin/destination/manner are the pick (top evidence rank, then latest).
+   #   Ordered by t (None first), then by the event's earliest row.
 p.frame_diff(a, b, scope, as_of=, asserted_as_of=None) -> [Fact]   # b is str|list[str]; divergent values marked
 p.who_knows(entity, attribute, value=None, as_of=None, asserted_as_of=None) -> [frame_id]
    # WHO-KNOWS-INVERSE-V1: the knows:* frames that KNOW a fact — the computed inverse of
@@ -847,7 +873,9 @@ A movement is a reified `kind=moved` event with `agent`/`origin`/`destination`/
 entity). In prose ingestion the **engine** authors the timestamps: a `complete`
 move is a zero-duration `[t,t)` event and the arrival becomes a **standing**
 containment (`locate()` flips at `t`); an open move has no arrival and
-`in_transit(agent, as_of)` reports it with the last-known containment. `events()`
+`in_transit(agent, as_of)` reports it with the last-known containment (it reads
+`events()`'s records and parse — one parse, so the two agree on a corrected move —
+and takes `asserted_as_of`, EVENTS-ONE-READER-V1 §3). `events()`
 additively carries `origin`/`destination`/`manner`/`valid_to`/`origin_bound`/
 `destination_bound` for every event. The host doorway is preserved: a moved event
 never synthesizes a containment row — an `in` row exists only if extraction

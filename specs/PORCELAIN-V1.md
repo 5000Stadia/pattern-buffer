@@ -57,7 +57,12 @@ answers "what exactly did you do to the log."
   value is the thunk spec, never a known value. The field stays a string; a
   host treats a status it does not recognize as not known. The payload also
   gains `values` (a set's members), `conflicting_facts` and, given `value=`,
-  `matches` (§5); every Fact gains `value_type`.)*
+  `matches` (§5); every Fact gains `value_type`.)* *(Note 2026-10-09,
+  EVENTS-ONE-READER-V1 §4: on an event, whose rows never fold, `state()` reads
+  the event's record: `kind` and the movement keys answer what `events()`
+  reports — `conflicted` when two disagree at one stamp — a description key
+  with several rows lists them in `values`, and every key is `unknown` until
+  the event has occurred.)*
 - `locate / contents / path` — frozen as shipped, JSON-listified. *(Note
   2026-10-09, READ-SURFACE-V1 §8: additive `frame=` after `as_of`, and
   `asserted_as_of=` on these and every other read with a valid-time bound.)*
@@ -65,7 +70,10 @@ answers "what exactly did you do to the log."
   frame="canon") -> list[Event]` — `participants: str | list[str]`,
   ALL-of matching (review r1: HD's atoms are plural) — what_happened, filtered; Event =
   `{id, kind, agents, patients, t, caused_by}` (agents/patients read from
-  the entity-valued `agent`/`patient` convention).
+  the entity-valued `agent`/`patient` convention). *(Note 2026-10-09,
+  EVENTS-ONE-READER-V1 §2: "what_happened, filtered" now means the event
+  records: every event entity, classified or not, once per resolved id; `until`
+  lists an event once it has occurred and `since` keeps whole records.)*
 - **`frame_diff(a, b, scope, as_of=None) -> list[Fact]`** — the sixth
   read, shipping at freeze (letter 029 soft-ask; HD first consumer; the
   dramatic-irony instrument). **Comparison semantics, exact (review r1 —

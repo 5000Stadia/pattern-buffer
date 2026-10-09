@@ -670,7 +670,9 @@ policy vocabulary (`thunks.POLICIES` re-exports it, so the buffer needs no
     unknown id (C §6 adds the frame);
   - `snapshot`'s `charter` (`World.charter(asserted_as_of=None)`).
 - **Not here**, and why:
-  - `salience` and `in_transit`: their lower layers don't carry it yet;
+  - `salience` and `in_transit`: their lower layers don't carry it yet
+    *(note 2026-10-09: `in_transit(asserted_as_of=)` delivered by
+    EVENTS-ONE-READER-V1 §3)*;
   - `fidelity_audit`: C rebuilds `open_conflicts`;
   - `ask`: model-backed, and its refer passes would need it too.
 
@@ -752,6 +754,13 @@ p.refer(description: str, scope: str | list[str] | None = None,
 **MCP.** A new V1 read (§11).
 
 ## §10 Deferred: `events()` from one reader
+
+*(Note 2026-10-09: delivered by EVENTS-ONE-READER-V1 (roadmap R22) — its §1
+reader, `Indexes.event_records`, groups the event rows by resolved id without
+the sidecar, and `events()` (§2), `in_transit()` (§3), `state()` on an event
+(§4), the lenses (§5) and `neighborhood()` (§6) read it. The window rules
+changed where they were wrong: `since` reads whole records, and `until` lists
+an event only once it has occurred.)*
 
 This item moves to its own batch. It is not additive, and it is not in the
 approved batch-E row: it is the surfaces audit's P2-5.

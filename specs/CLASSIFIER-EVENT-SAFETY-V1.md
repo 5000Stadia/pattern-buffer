@@ -51,6 +51,12 @@ schema — the actual failure path).
    continue to short-circuit before the model. `Classifier.set()` (judgment
    injection) and `DURABILITIES` (the fold's universe) keep EVENT — only the
    *model's* assignable set narrows.
+   *(Note 2026-10-09, EVENTS-ONE-READER-V1 §1/§4: the guardrail's `event:` test
+   is now the shared predicate `model.is_event_row` — an `event:` subject,
+   other than a `delta` — and the fold side is structural too: the fold drops
+   an event row whether or not a sweep has classified it, so "EVENT never
+   folds" holds before classification as well as after it. No verdict
+   changed.)*
 5. **Whitepaper amendment (Cx 062):** `docs/WHITEPAPER.md` currently says
    past-perfective-with-agent can signal EVENT in the classifier. Amend that line:
    occurrence-ness is **structural** (`event:` / `caused_by` / host declaration);
