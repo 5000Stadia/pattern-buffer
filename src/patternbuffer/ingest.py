@@ -1292,22 +1292,41 @@ class Ingestor:
                     return out
                 out.extend(self._declare(attribute, declaration))
 
-        row = self._buffer.append(
-            entity=entity,
-            attribute=attribute,
-            value=value,
-            value_type=value_type,
-            valid_from=eff_valid_from,
-            valid_to=row_valid_to,
-            frame=frame,
-            status=status,
-            confidence=item.get("confidence"),
-            role=write_role,
-        )
-        out.append(row)
-        if is_manual_semantics_row:
-            self._semantics.rebuild()
-        if demoted_vf is not None:
+        # 10. The main row — or, for a raw `same_as`, the guarded merge (§2).
+        row: Assertion | None
+        if attribute == "same_as":
+            merged = self._merge_raw_same_as(raw_entity, raw_value, value_type, frame)
+            if merged is None:
+                return out                          # skipped with a receipt
+            out.extend(merged)
+            # The merge's rows join the call's classification (all EVENT by
+            # guardrail, zero model calls), and its `same_as` edge stands in
+            # for the main row: the main-row side rows attach to it. On
+            # `noop_already_merged` there is no main row, so they have nothing
+            # to attach to and are not written; the subject-level rows still
+            # are.
+            to_classify = merged
+            row = merged[1] if merged else None
+        else:
+            row = self._buffer.append(
+                entity=entity,
+                attribute=attribute,
+                value=value,
+                value_type=value_type,
+                valid_from=eff_valid_from,
+                valid_to=row_valid_to,
+                frame=frame,
+                status=status,
+                confidence=item.get("confidence"),
+                role=write_role,
+            )
+            out.append(row)
+            to_classify = [row]
+            if is_manual_semantics_row:
+                self._semantics.rebuild()
+
+        # 11. Side rows, in their existing order.
+        if row is not None and demoted_vf is not None:
             # The per-item story-time coordinate the cursor overrode — preserved
             # losslessly (META_ATTRIBUTES-hidden) for host promotion to a typed
             # content fact (year/era) if wanted (INGEST-LATENCY-V2 Win 3).
@@ -1317,21 +1336,21 @@ class Ingestor:
                     status="inferred", role=self._role,
                 )
             )
-        if receipt:
+        if row is not None and receipt:
             out.append(
                 self._buffer.append(
                     entity=row.id, attribute="canonicalized_from", value=receipt,
                     status="inferred", role=self._role,
                 )
             )
-        if item.get("source_doc"):
+        if row is not None and item.get("source_doc"):
             out.append(
                 self._buffer.append(
                     entity=row.id, attribute="source", value=str(item["source_doc"]),
                     status=status, role=self._role,
                 )
             )
-        if item.get("caused_by"):
+        if row is not None and item.get("caused_by"):
             # Side-channel entity edge: same malformed-id gate as the main row
             # (SHAPE-FIX-V1 4a, Cx final) — a phantom cause never enters.
             caused_by = str(item["caused_by"])
@@ -1348,7 +1367,7 @@ class Ingestor:
                         frame=frame,
                     )
                 )
-        if self._observe_mode and not timeless:
+        if row is not None and self._observe_mode and not timeless:
             # The A2 rider: wall-clock learned-at is a gate invariant here.
             out.append(
                 self._buffer.append(
@@ -1363,7 +1382,7 @@ class Ingestor:
                 self._registry.add_alias(identity_subject, alias, status=status)
             else:
                 self._record_skip(identity_subject, "alias", alias, "invalid_alias")
-        if item.get("correction"):
+        if row is not None and item.get("correction"):
             # The proposal is itself logged (auditable; the promotion's
             # receipts chain ends here, at the utterance's chunk).
             out.append(
@@ -1383,11 +1402,44 @@ class Ingestor:
             else:
                 self._registry.maybe_same_as(identity_subject, same_as,
                                              evidence="extractor late binding")
-        if self.classify_inline:
-            self._classifier.classify(row)
-        elif self._classify_collect is not None:
-            self._classify_collect.append(row)   # batched at end of the call
+        # 12. Classification.
+        for written in to_classify:
+            if self.classify_inline:
+                self._classifier.classify(written)
+            elif self._classify_collect is not None:
+                self._classify_collect.append(written)   # batched at end of the call
         return out
+
+    def _merge_raw_same_as(
+        self, entity: str, value: Any, value_type: str, frame: str
+    ) -> list[Assertion] | None:
+        """A raw `same_as` item is the guarded merge (GATE-AUTHORITY-V1 §2):
+        the same body as the porcelain `merge` verb, on the raw ids, with
+        evidence "same_as item". Its value must be a well-formed id string
+        given as an entity, whatever `value_type` says — text, an id-shaped
+        typo, or an id the item itself marks `literal` (which `closure()`
+        would ignore) is `malformed_id`; identity is not perspectival, so it
+        must be canon (`same_as_not_canon`); a hard veto skips it
+        (`merge_vetoed`, with the merge receipt's veto and blocking edges).
+        Returns the merge's rows in append order — none for a pair already
+        merged, which is neither a write nor a skip — or None after a skip.
+        The rows are `inferred` whatever the item's status: one merge shape,
+        one provenance."""
+        if not (value_type == "entity" and isinstance(value, str)
+                and ID_RE.fullmatch(value)):
+            self._record_skip(entity, "same_as", value, "malformed_id")
+            return None
+        if frame != CANON:
+            self._record_skip(entity, "same_as", value, "same_as_not_canon",
+                              detail={"field": "frame", "value": frame})
+            return None
+        receipt, rows = self._registry._guarded_merge(entity, value, "same_as item")
+        if receipt["outcome"] == "vetoed":
+            self._record_skip(entity, "same_as", value, "merge_vetoed",
+                              detail={"veto": receipt["reason"],
+                                      "blocking_edges": receipt["blocking_edges"]})
+            return None
+        return rows
 
     # ---------------------------------------------------------- extracted
 

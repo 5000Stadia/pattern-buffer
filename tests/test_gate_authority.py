@@ -879,3 +879,149 @@ def test_s7_admitted_as_before(world, attribute, value, extra):
     assert r.skipped == []
     [row] = world.buffer.visible(entity="person:ann", attribute=attribute)
     assert (row.value, row.value_type) == (value, "literal")
+
+
+# --------------------------------------- §2 a raw same_as is a guarded merge
+#
+# test_source_identity O14 and test_moved_event oracle 11 write passing raw
+# same_as rows; they stay green unchanged.
+
+_PEOPLE = [{"entity": f"person:{name}", "attribute": "kind", "value": "person",
+            "timeless": True} for name in ("x", "y", "z")]
+
+
+def _raw_same_as(world: World, a: str, b, **item):
+    return world.porcelain.ingest_structured(
+        [{"entity": a, "attribute": "same_as", "value": b, **item}], classify="rules")
+
+
+def test_s2_containment_veto_holds_for_a_raw_same_as(world):
+    """§2: with the key in the box, `(key · same_as · box)` is skipped
+    `merge_vetoed` naming the blocking edge; the key stays in the box."""
+    world.ingest_structured([
+        {"entity": "obj:box", "attribute": "kind", "value": "box", "timeless": True},
+        {"entity": "obj:key", "attribute": "in", "value": "obj:box", "valid_from": 1.0},
+    ], classify="rules")
+    head = world.buffer.head()
+    r = _raw_same_as(world, "obj:key", "obj:box")
+    assert r.skipped == [{"entity": "obj:key", "attribute": "same_as",
+                          "value": "obj:box", "reason": "merge_vetoed",
+                          "detail": {"veto": "containment",
+                                     "blocking_edges": ["obj:key·in·obj:box"]}}]
+    assert world.buffer.head() == head
+    assert world.registry.closure("obj:key") == {"obj:key"}
+    assert world.locate("obj:key") == ["obj:box"]
+
+
+def test_s2_distinct_from_veto_holds_for_a_raw_same_as(world):
+    """§2: after `reject(a, b)`, `(a · same_as · b)` is skipped `merge_vetoed`
+    with veto `distinct_from`; the pair stays distinct."""
+    world.ingest_structured(_PEOPLE, classify="rules")
+    assert world.porcelain.reject("person:x", "person:y")["outcome"] == "rejected"
+    r = _raw_same_as(world, "person:x", "person:y")
+    assert r.skipped == [{"entity": "person:x", "attribute": "same_as",
+                          "value": "person:y", "reason": "merge_vetoed",
+                          "detail": {"veto": "distinct_from",
+                                     "blocking_edges": ["person:x·distinct_from·person:y"]}}]
+    assert world.porcelain.reject("person:x", "person:y")["outcome"] == "noop_already_distinct"
+
+
+def test_s2_a_passing_raw_same_as_writes_the_merge_verbs_rows(tmp_path):
+    """§2: `(x · same_as · y)` with no veto writes the four rows
+    `p.merge(x, y, evidence="same_as item")` would, classified EVENT with the
+    call; the main-row side rows attach to the same_as edge."""
+    def seeded(name: str) -> World:
+        w = World(tmp_path / f"{name}.world", world_id="w:same",
+                  model=StubModel(fallback=rule_classifier_fallback()))
+        w.ingest_structured(_PEOPLE, classify="rules")
+        return w
+
+    gate, verb = seeded("gate"), seeded("verb")
+    r = _raw_same_as(gate, "person:x", "person:y", status="stated", valid_from=4.0)
+    verb.porcelain.merge("person:x", "person:y", evidence="same_as item")
+    assert dump(gate.buffer) == dump(verb.buffer)
+    assert r.skipped == []
+    assert [(row["entity"], row["attribute"]) for row in r.rows] == [
+        ("event:merge_6", "kind"), ("person:x", "same_as"),
+        ("a:7", "caused_by"), ("event:merge_6", "evidence")]
+    assert {gate.classifier.durability(row["assertion_id"]) for row in r.rows} == {"EVENT"}
+    assert gate.registry.resolve("person:x") == gate.registry.resolve("person:y")
+    edge = r.rows[1]["assertion_id"]
+    r = _raw_same_as(gate, "person:z", "person:x", source_doc="doc:ledger",
+                     caused_by="event:reveal", correction=True)
+    edge = r.rows[1]["assertion_id"]
+    assert [(row["entity"], row["attribute"]) for row in r.rows[4:]] == [
+        (edge, "source"), (edge, "caused_by"), (edge, "correction_proposal")]
+    gate.close()
+    verb.close()
+
+
+def test_s2_same_as_outside_canon_is_refused(world):
+    """§2: `(person:x · same_as · person:z)` in `knows:person:x` is skipped
+    `same_as_not_canon` and nothing is written."""
+    world.ingest_structured(_PEOPLE, classify="rules")
+    head = world.buffer.head()
+    r = _raw_same_as(world, "person:x", "person:z", frame="knows:person:x")
+    assert r.skipped == [{"entity": "person:x", "attribute": "same_as",
+                          "value": "person:z", "reason": "same_as_not_canon",
+                          "detail": {"field": "frame", "value": "knows:person:x"}}]
+    assert world.buffer.head() == head
+    assert world.registry.closure("person:x") == {"person:x"}
+
+
+@pytest.mark.parametrize("value,extra", [
+    ("Person:Y", {}), ("the same guy", {}), ("person:y", {"value_type": "literal"})])
+def test_s2_a_raw_same_as_value_must_be_an_id(world, value, extra):
+    """§2: `"Person:Y"`, `"the same guy"`, or `"person:y"` with an explicit
+    `value_type: "literal"` are skipped `malformed_id`."""
+    world.ingest_structured(_PEOPLE, classify="rules")
+    head = world.buffer.head()
+    r = _raw_same_as(world, "person:x", value, **extra)
+    assert r.skipped == [{"entity": "person:x", "attribute": "same_as",
+                          "value": value, "reason": "malformed_id"}]
+    assert world.buffer.head() == head
+
+
+def test_s2_an_already_merged_pair_writes_nothing(world):
+    """§2: a raw same_as for a pair already merged, or `x same_as x`, writes
+    no row and no skip; the item's subject-level rows still land."""
+    world.ingest_structured(_PEOPLE, classify="rules")
+    world.porcelain.merge("person:x", "person:y", evidence="host")
+    for a, b in (("person:x", "person:y"), ("person:y", "person:x"),
+                 ("person:z", "person:z")):
+        head = world.buffer.head()
+        r = _raw_same_as(world, a, b, source_doc="doc:ledger")
+        assert r.skipped == [] and r.rows == []
+        assert world.buffer.head() == head
+    r = _raw_same_as(world, "person:x", "person:y", aliases=["the twin"])
+    assert r.skipped == [] and r.rows == []
+    assert world.registry.by_alias("the twin") == {world.registry.resolve("person:x")}
+
+
+def test_s2_commit_set_carries_the_merge_or_aborts(world):
+    """§2: in commit_set a vetoed raw same_as aborts with `gate_skip`; a
+    passing one commits its merge rows with the set."""
+    world.ingest_structured(_PEOPLE + [
+        {"entity": "obj:box", "attribute": "kind", "value": "box", "timeless": True},
+        {"entity": "obj:key", "attribute": "in", "value": "obj:box", "valid_from": 1.0},
+    ], classify="rules")
+    head = world.buffer.head()
+    with pytest.raises(AtomicAbort) as ei:
+        world.commit_set([
+            {"op": "assert", "item": {"entity": "person:x", "attribute": "mood",
+                                      "value": "calm", "valid_from": 2.0}},
+            {"op": "assert", "item": {"entity": "obj:key", "attribute": "same_as",
+                                      "value": "obj:box"}},
+        ])
+    assert ei.value.cause == "gate_skip"
+    assert [s["reason"] for s in ei.value.skipped] == ["merge_vetoed"]
+    assert world.buffer.head() == head
+    rows = world.commit_set([
+        {"op": "assert", "item": {"entity": "person:x", "attribute": "mood",
+                                  "value": "calm", "valid_from": 2.0}},
+        {"op": "assert", "item": {"entity": "person:x", "attribute": "same_as",
+                                  "value": "person:y"}},
+    ])
+    assert [r.attribute for r in rows] == ["mood", "kind", "same_as", "caused_by",
+                                           "evidence"]
+    assert world.registry.resolve("person:y") == world.registry.resolve("person:x")
