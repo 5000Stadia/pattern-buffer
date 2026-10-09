@@ -638,3 +638,51 @@ def test_5_property_open_conflicts_lists_exactly_the_conflicted_keys(tmp_path):
                     assert listed == conflicted, (seed, frame, as_of)
         finally:
             w.close()
+
+
+# ------------------------------------------- §6 snapshot existence follows perspective
+
+
+def _plot_only_ledger(world: World) -> None:
+    """`obj:ledger` exists only in `plot:twist`; `place:hall` is canon's."""
+    world.ingest_structured([
+        {"entity": "place:hall", "attribute": "kind", "value": "hall", "timeless": True},
+    ])
+    world.ingest_structured([
+        {"entity": "obj:ledger", "attribute": "kind", "value": "ledger", "timeless": True},
+    ], frame="plot:twist")
+
+
+def test_6a_a_plot_only_id_is_unknown_to_canon(world):
+    """6a: a canon snapshot of an id only `plot:` carries errors exactly like
+    an id nobody wrote."""
+    _plot_only_ledger(world)
+    ledger = world.porcelain.snapshot("obj:ledger", frame="canon")
+    nothing = world.porcelain.snapshot("obj:nothing", frame="canon")
+    assert ledger == {"error": nothing["error"], "bad": ["obj:ledger"]}
+    assert nothing == {"error": nothing["error"], "bad": ["obj:nothing"]}
+
+
+def test_6b_the_frame_that_holds_it_snapshots_it(world):
+    """6b: the plot frame that carries the ledger snapshots it."""
+    _plot_only_ledger(world)
+    snap = world.porcelain.snapshot("obj:ledger", frame="plot:twist")
+    assert "error" not in snap
+    assert [(f["entity"], f["attribute"], f["value"]) for f in snap["facts"]] == [
+        ("obj:ledger", "kind", "ledger")]
+
+
+def test_6c_another_frame_does_not_know_it(world):
+    """6c: Marn's frame neither holds the ledger nor inherits it from canon."""
+    _plot_only_ledger(world)
+    snap = world.porcelain.snapshot("obj:ledger", frame=MARN)
+    assert snap["bad"] == ["obj:ledger"] and "error" in snap
+
+
+def test_6d_a_canon_entity_snapshots_in_a_sparse_frame(world):
+    """6d: canon is the existence authority — a canon entity with no rows in
+    Marn's frame still snapshots there, with empty facts (unchanged)."""
+    _plot_only_ledger(world)
+    snap = world.porcelain.snapshot("place:hall", frame=MARN)
+    assert "error" not in snap
+    assert snap["frame"] == MARN and snap["facts"] == []

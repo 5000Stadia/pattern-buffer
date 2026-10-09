@@ -402,14 +402,23 @@ class Porcelain:
 
     # --------------------------------------------------- reads (LLM-free)
 
-    def _is_known(self, entity: str) -> bool:
-        """Some visible row (any frame) is about a member of `entity`'s
-        identity closure — an indexed check over the requested id only,
-        never a whole-log scan per call."""
+    def _is_known(self, entity: str, frame: str = CANON) -> bool:
+        """Whether `entity` exists from `frame`'s perspective: some visible row
+        about a member of its identity closure lives in `frame` (an observer
+        frame through its stored names) or in canon — an indexed check over
+        the requested id only, never a whole-log scan per call.
+
+        Existence follows perspective (FRAME-SCOPED-IDENTITY-V1 §6). Canon is
+        the existence authority (HD 003: identity/existence is a canon
+        question; only the answer is knowledge-scoped), and a frame may add
+        entities canon lacks — a belief, a plot arc. An id that lives only in
+        another frame is unknown here, exactly like an id nobody wrote."""
         members = sorted(self._w.registry.closure(entity))
+        frames = (CANON,) if frame == CANON else (frame, CANON)
         return any(
             not r.entity.startswith("a:") and not r.entity.startswith(ATTR_PREFIX)
-            for r in self._w.buffer.visible(entity_in=members)
+            for f in frames
+            for r in self._w.buffer.visible(entity_in=members, frame=f)
         )
 
     def snapshot(self, scope, frame: str = CANON, as_of: float | None = None,
@@ -420,12 +429,17 @@ class Porcelain:
         folded facts, accrue quantities, unresolved aspects, conflicted keys and
         render-time defaults, under a lens (current_state, establishing_set,
         what_happened, character_sheet, situation) as of a valid time, shaped to
-        an optional budget. Unknown or malformed ids return {"error", "bad"}."""
+        an optional budget. Unknown or malformed ids return {"error", "bad"};
+        an id is known when some row about it lives in `frame` or in canon, so
+        an id that only another frame carries is unknown here
+        (FRAME-SCOPED-IDENTITY-V1 §6)."""
         # correlated/features (AWARENESS-READS-V1.1, opt-in): fold each entity over
         # its aka correlation union (the whole reveal scene) and/or inline each
         # place's part_of-feature children. Default off = unchanged.
         roots = [scope] if isinstance(scope, str) else list(scope)
-        bad = [s for s in roots if not ID_RE.fullmatch(s) or not self._is_known(s)]
+        # Known in the snapshot's frame or in canon (FRAME-SCOPED-IDENTITY-V1 §6).
+        bad = [s for s in roots
+               if not ID_RE.fullmatch(s) or not self._is_known(s, frame)]
         if bad:
             return {"error": "snapshot scope must be KNOWN entity ids "
                              "(use ask for references)", "bad": bad}
