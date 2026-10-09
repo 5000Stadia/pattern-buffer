@@ -30,6 +30,7 @@ from patternbuffer.model import (
     MECHANISM_ATTRIBUTES,
     SEMANTICS_PREDICATES,
     TASK_EXTRACT,
+    VALUE_TYPES,
     Assertion,
     task_schema,
 )
@@ -290,8 +291,10 @@ class SkipRecord:
     per-edge prose reason). Fields the item lacks are None. No silent caps —
     the host reads these off the porcelain Receipt's `skipped`."""
 
-    entity: str
-    attribute: str
+    # The item's own fields; None where it lacks one, and whatever it sent
+    # where a field is malformed (GATE-AUTHORITY-V1 §0/§4).
+    entity: Any
+    attribute: Any
     value: Any
     reason: str
     # Optional, set only when a skip needs more than the row to explain it:
@@ -334,6 +337,22 @@ def _time_value(t: Any) -> tuple[bool, float | int | None]:
         except OverflowError:  # past float range: no coordinate
             return False, t
     return math.isfinite(t), t
+
+
+# The fields an item must carry (GATE-AUTHORITY-V1 §4): `value` may be null,
+# the other two may not. Every other field is optional, and null means absent.
+_REQUIRED_FIELDS = ("entity", "attribute", "value")
+
+
+def _finite_real(x: Any) -> bool:
+    """A finite real number, never a bool (GATE-AUTHORITY-V1 §4: an item's
+    `confidence`) — and within SQLite's 64-bit integer range, since a larger
+    int cannot be stored."""
+    if isinstance(x, bool) or not isinstance(x, (int, float)):
+        return False
+    if isinstance(x, int):
+        return -(2 ** 63) <= x < 2 ** 63
+    return math.isfinite(x)
 
 
 def _aliases_given(raw: Any) -> bool:
@@ -517,7 +536,11 @@ class Ingestor:
         items = list(items)  # stamp a copy: the caller's extract() output stays raw
         cursor = self.cursor.position
 
-        def ev_id(it: dict[str, Any]) -> str | None:
+        def ev_id(it: Any) -> str | None:
+            # A non-object item passes through untouched, so it reaches the
+            # gate's `malformed_item` receipt (GATE-AUTHORITY-V1 §4).
+            if not isinstance(it, dict):
+                return None
             e = it.get("entity")
             return e if isinstance(e, str) and e.startswith("event:") else None
 
@@ -601,7 +624,8 @@ class Ingestor:
             if agent.get(eid) is not None and dest.get(eid) is not None \
                     and dest_is_entity.get(eid):
                 for idx, it in enumerate(items):
-                    if (it.get("entity") == agent[eid] and cattr(it) == "in"
+                    if (isinstance(it, dict)
+                            and it.get("entity") == agent[eid] and cattr(it) == "in"
                             and it.get("value") == dest[eid]
                             and eff_frame(it) == frame_of[eid]):
                         arrival_idxs.append(idx)
@@ -710,9 +734,9 @@ class Ingestor:
                 items = self._apply_moved_coordinate_pass(items, frame)
             appended: list[Assertion] = []
             for item in items:
-                if frame is not None and "frame" not in item:
-                    item = {**item, "frame": frame}
-                appended.extend(self._ingest_item(item))
+                # `frame` fills unframed items inside the gate's normalization
+                # (GATE-AUTHORITY-V1 §4).
+                appended.extend(self._ingest_item(item, frame))
             if collect:
                 self._classifier.classify_rows(collect, model=(classify == "batch"))
             return appended
@@ -852,10 +876,9 @@ class Ingestor:
             appended: list[Assertion] = []
             for op in ops:
                 if op["op"] == "assert":
-                    item = op["item"]
-                    if frame is not None and "frame" not in item:
-                        item = {**item, "frame": frame}
-                    appended.extend(self._ingest_item(item))
+                    # `frame` fills an unframed item inside the gate's
+                    # normalization (GATE-AUTHORITY-V1 §4).
+                    appended.extend(self._ingest_item(op["item"], frame))
                 else:
                     appended.append(truth.retract(op["assertion_id"], op["reason"]))
             if collect:
@@ -908,7 +931,7 @@ class Ingestor:
             return f"lateral self-loop: {entity!r} cannot {attribute} itself"
         return None
 
-    def _record_skip(self, entity: str, attribute: str, value: Any, reason: str,
+    def _record_skip(self, entity: Any, attribute: Any, value: Any, reason: str,
                      detail: Any = None) -> None:
         logger.warning("ingest skipped edge: %s · %s · %r — %s%s",
                        entity, attribute, value, reason,
@@ -916,24 +939,100 @@ class Ingestor:
         if self._skipped is not None:
             self._skipped.append(SkipRecord(entity, attribute, value, reason, detail))
 
-    def _authorize(self, item: dict[str, Any]) -> WriterRole:
+    def _normalize_item(self, item: Any, call_frame: str | None) -> dict[str, Any] | None:
+        """Step 1 of the gate (GATE-AUTHORITY-V1 §4): the item's shape only,
+        on a copy — the caller's dict is never mutated and nothing is
+        written. Returns the normalized item, or None once a
+        `malformed_item` skip is receipted.
+
+        - Not an object: skipped, with the item itself as the record's value.
+        - Null means absent for every optional field: a null `frame` takes the
+          call's default frame (else canon), a null `status` is `stated`, and
+          null `aliases` means none. `value` is required but may be null (a
+          null literal); a null `entity`/`attribute` counts as missing at
+          step 3.
+        - `frame` must be a non-empty string. A malformed frame is never
+          defaulted to canon: that would leak a row meant for a private frame.
+        - `aliases` becomes the list of its members: a string is one member
+          (never one alias per character), a list its members, and any other
+          value one member, dropped as a whole. Members that are not non-empty
+          strings are dropped with an `invalid_alias` receipt where the alias
+          rows are written (step 11), so an item skipped for another reason
+          yields exactly one record.
+        """
+        if not isinstance(item, dict):
+            self._record_skip(None, None, item, "malformed_item")
+            return None
+        norm = {k: v for k, v in item.items() if v is not None or k == "value"}
+        # The call-level default frame (letter 028) fills an unframed item here
+        # — it used to be filled by `_ingest_body` / `_apply_ops`.
+        norm.setdefault("frame", CANON if call_frame is None else call_frame)
+        norm.setdefault("status", "stated")
+        frame = norm["frame"]
+        if not isinstance(frame, str) or not frame:
+            self._record_skip(norm.get("entity"), norm.get("attribute"),
+                              norm.get("value"), "malformed_item",
+                              detail={"field": "frame", "value": frame})
+            return None
+        aliases = norm.get("aliases")
+        if aliases is not None:
+            norm["aliases"] = ([aliases] if isinstance(aliases, str)
+                               else list(aliases) if isinstance(aliases, (list, tuple))
+                               else [aliases])
+        return norm
+
+    def _content_ok(self, item: dict[str, Any]) -> bool:
+        """Step 3 of the gate (GATE-AUTHORITY-V1 §4), after authority: the
+        content checks. Receipts the first failure and returns False; writes
+        nothing. Record fields are the item's own (it is not canonicalized
+        yet); fields it lacks are None."""
+        entity, attribute = item.get("entity"), item.get("attribute")
+        value = item.get("value")
+
+        def skip(reason: str, detail: Any = None) -> bool:
+            self._record_skip(entity, attribute, value, reason, detail=detail)
+            return False
+
+        missing = [field for field in _REQUIRED_FIELDS if field not in item]
+        if missing:
+            return skip("malformed_item", {"missing": missing})
+        if not isinstance(entity, str):
+            return skip("malformed_id")
+        if not isinstance(attribute, str) or not attribute.strip():
+            return skip("malformed_item", {"field": "attribute", "value": attribute})
+        value_type = item.get("value_type")
+        if value_type is not None and (
+                not isinstance(value_type, str) or value_type not in VALUE_TYPES):
+            return skip("invalid_field", {"field": "value_type", "value": value_type})
+        for flag in ("timeless", "correction"):
+            if flag in item and not isinstance(item[flag], bool):
+                return skip("invalid_field", {"field": flag, "value": item[flag]})
+        if "confidence" in item and not _finite_real(item["confidence"]):
+            return skip("invalid_field",
+                        {"field": "confidence", "value": item["confidence"]})
+        if value_type == "entity" and not isinstance(value, str):
+            return skip("malformed_id")
+        return True
+
+    def _authorize(self, item: dict[str, Any], aliases_given: bool) -> WriterRole:
         """Settle an item's write authority before its first write
         (GATE-AUTHORITY-V1 §3). Raises, never writes, never skips: an
         authority violation must raise even when the item is also malformed
         or a structurally invalid edge (INGEST-HARDENING-V1 Cx final).
 
-        Reads only `status`, `frame` and side-field presence. A status in
-        the ingestor's grant writes under ingestor authority; `generated`
+        Reads only `status`, `frame` and side-field presence (`aliases_given`
+        is judged on the value the host sent, before normalization). A status
+        in the ingestor's grant writes under ingestor authority; `generated`
         passes letter 029's checks, then writes under resolver authority;
         anything else is refused by the ingestor role's own check(), so the
         message is the one the buffer used to raise after the declarations."""
-        status = item.get("status", "stated")
+        status = item["status"]
         if status != "generated":
             self._role.check(status)
             return self._role
         # Letter 029: host-authored generated rows land only in host-owned
         # named frames (plot:*), never canon or knows:*.
-        frame_target = item.get("frame", CANON)
+        frame_target = item["frame"]
         if frame_target == CANON or frame_target.startswith("knows:"):
             raise ValueError(
                 "generated provenance through the gate is permitted only "
@@ -948,7 +1047,7 @@ class Ingestor:
         # ingestor's grant and need no check.)
         carried = [field for field, given in (
             ("source_doc", bool(item.get("source_doc"))),
-            ("aliases", _aliases_given(item.get("aliases"))),
+            ("aliases", aliases_given),
         ) if given]
         if carried:
             raise RoleViolation(
@@ -958,13 +1057,29 @@ class Ingestor:
             )
         return self._resolver_role
 
-    def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
+    def _ingest_item(self, item: Any, call_frame: str | None = None) -> list[Assertion]:
+        """One item through the gate, in GATE-AUTHORITY-V1 §0's order:
+        normalize, authority, content checks, canonicalize, mechanism
+        attribute, malformed ids, id-shaped values, identity / half-life /
+        time / interval / per-edge checks, declarations, the main row, its
+        side rows, classification. Everything that can refuse the item runs
+        before its first write. ``call_frame`` is the call's default frame
+        for an item that carries none (letter 028)."""
         out: list[Assertion] = []
-        # Authority FIRST (GATE-AUTHORITY-V1 §3, step 2): settled before
+        # 1. Normalize (§4): shape only, on a copy; no write.
+        fields = self._normalize_item(item, call_frame)
+        if fields is None:
+            return out
+        # 2. Authority FIRST (§3): settled before the content checks,
         # canonicalization, any declaration or the main row, so a violation
         # raises with nothing of the item written.
-        write_role = self._authorize(item)
-        status = item.get("status", "stated")
+        write_role = self._authorize(fields, _aliases_given(item.get("aliases")))
+        item = fields
+        # 3. Content checks (§4): skips.
+        if not self._content_ok(item):
+            return out
+        status = item["status"]
+        frame = item["frame"]
         attribute, receipt = self._canonicalize(item["attribute"])
         # RAW ids first (Cx final): validation must see what the author wrote,
         # not what resolution mapped it to — resolve happens AFTER the
@@ -995,7 +1110,7 @@ class Ingestor:
             authored_detail = f"authored: {entity} {attribute} {value}"
             attribute = forward
             entity, value = value, entity
-        timeless = bool(item.get("timeless", False))
+        timeless = item.get("timeless", False)    # a real bool (§4)
         valid_from = item.get("valid_from")
         # INGEST-LATENCY-V2 Win 3: in cursor-authoritative ingest (bible
         # source-build) the CURSOR governs the story-time axis — the per-item
@@ -1080,8 +1195,7 @@ class Ingestor:
         # typed receipt — the invariant holds (it never enters) and the rest of
         # the chunk still ingests. (Authority failures already raised above.)
         skip = self._edge_skip_reason(
-            entity, attribute, value, value_type,
-            item.get("frame", CANON), eff_valid_from,
+            entity, attribute, value, value_type, frame, eff_valid_from,
         )
         if skip is not None:
             # INGESTION-FIDELITY-V2 §D: two raw ids that resolve to one
@@ -1111,7 +1225,7 @@ class Ingestor:
             value_type=value_type,
             valid_from=eff_valid_from,
             valid_to=row_valid_to,
-            frame=item.get("frame", CANON),
+            frame=frame,
             status=status,
             confidence=item.get("confidence"),
             role=write_role,
@@ -1140,7 +1254,7 @@ class Ingestor:
             out.append(
                 self._buffer.append(
                     entity=row.id, attribute="source", value=str(item["source_doc"]),
-                    status=item.get("status", "stated"), role=self._role,
+                    status=status, role=self._role,
                 )
             )
         if item.get("caused_by"):
@@ -1157,7 +1271,7 @@ class Ingestor:
                         # The effect-edge rides in its effect's frame: a non-canon
                         # effect's cause must be reachable from a frame-scoped read
                         # (else the situation lens false-deads it — Codex post-impl).
-                        frame=item.get("frame", CANON),
+                        frame=frame,
                     )
                 )
         if self._observe_mode and not timeless:
@@ -1169,7 +1283,12 @@ class Ingestor:
                 )
             )
         for alias in item.get("aliases", []):
-            self._registry.add_alias(identity_subject, alias, status=item.get("status", "stated"))
+            # GATE-AUTHORITY-V1 §4: a member that is not a non-empty string is
+            # dropped with a receipt; the item's other rows still land.
+            if isinstance(alias, str) and alias.strip():
+                self._registry.add_alias(identity_subject, alias, status=status)
+            else:
+                self._record_skip(identity_subject, "alias", alias, "invalid_alias")
         if item.get("correction"):
             # The proposal is itself logged (auditable; the promotion's
             # receipts chain ends here, at the utterance's chunk).

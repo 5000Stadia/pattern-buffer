@@ -505,3 +505,205 @@ def test_s3_a_violation_mid_call_keeps_the_per_row_contract(world):
         ], classify="rules")
     assert [(r.entity, r.attribute) for r in world.buffer.all_rows()[head:]] == [
         ("obj:a", "hue")]
+
+
+# ------------------------------------------------- §4 one _normalize_item
+
+_BEFORE = {"entity": "obj:before", "attribute": "hue", "value": "red", "valid_from": 1.0}
+_AFTER = {"entity": "obj:after", "attribute": "hue", "value": "blue", "valid_from": 1.0}
+
+
+def _around(world: World, bad, **kw):
+    """Ingest [good, bad, good] through the porcelain and check that the rest
+    of the call still ingests (every §4 oracle asserts it)."""
+    r = world.porcelain.ingest_structured([_BEFORE, bad, _AFTER], classify="rules", **kw)
+    assert {"obj:before", "obj:after"} <= {row["entity"] for row in r.rows}
+    return r
+
+
+def _aliases_of(world: World, entity: str) -> list:
+    return [row.value for row in world.buffer.visible(entity=entity, attribute="alias")]
+
+
+def test_s4_string_aliases_are_one_alias(world):
+    """§4: `aliases: "the vault"` writes one alias row, `"the vault"`."""
+    r = _around(world, {"entity": "obj:vault", "attribute": "kind", "value": "vault",
+                        "timeless": True, "aliases": "the vault"})
+    assert r.skipped == []
+    assert _aliases_of(world, "obj:vault") == ["the vault"]
+    assert world.registry.by_alias("the vault") == {"obj:vault"}
+
+
+def test_s4_null_aliases_are_no_aliases(world):
+    """§4: `aliases: None` writes no alias rows and no skip."""
+    r = _around(world, {"entity": "obj:vault", "attribute": "kind", "value": "vault",
+                        "timeless": True, "aliases": None})
+    assert r.skipped == [] and _aliases_of(world, "obj:vault") == []
+    assert "obj:vault" in {row["entity"] for row in r.rows}
+
+
+def test_s4_invalid_alias_members_are_receipted(world):
+    """§4: `aliases: ["", "  ", 5, "ok"]` writes one alias row and three
+    `invalid_alias` records; `aliases: 5` gives one, and the main row lands."""
+    r = _around(world, {"entity": "obj:vault", "attribute": "kind", "value": "vault",
+                        "timeless": True, "aliases": ["", "  ", 5, "ok"]})
+    assert _aliases_of(world, "obj:vault") == ["ok"]
+    assert r.skipped == [
+        {"entity": "obj:vault", "attribute": "alias", "value": bad,
+         "reason": "invalid_alias"} for bad in ("", "  ", 5)]
+    r = _around(world, {"entity": "obj:safe", "attribute": "kind", "value": "safe",
+                        "timeless": True, "aliases": 5})
+    assert r.skipped == [{"entity": "obj:safe", "attribute": "alias", "value": 5,
+                          "reason": "invalid_alias"}]
+    assert "obj:safe" in {row["entity"] for row in r.rows}
+    assert _aliases_of(world, "obj:safe") == []
+
+
+def test_s4_null_frame_takes_the_default_frame(world):
+    """§4: `frame: None` lands in canon, or in the call's `frame=`; generated
+    lands in the call's plot frame, and with no call frame it is canon, which
+    raises letter 029."""
+    item = {"entity": "obj:x", "attribute": "hue", "value": "red", "valid_from": 1.0,
+            "frame": None}
+    r = _around(world, item)
+    assert [row["frame"] for row in r.rows if row["entity"] == "obj:x"] == ["canon"]
+    r = _around(world, {**item, "entity": "obj:y"}, frame="knows:person:ann")
+    assert [row["frame"] for row in r.rows if row["entity"] == "obj:y"] == [
+        "knows:person:ann"]
+    generated = {"entity": "arc:a", "attribute": "beat", "value": "rise",
+                 "status": "generated", "frame": None, "valid_from": 1.0}
+    r = _around(world, generated, frame="plot:x")
+    assert [(row["frame"]) for row in r.rows if row["entity"] == "arc:a"] == ["plot:x"]
+    head = world.buffer.head()
+    with pytest.raises(ValueError, match="letter 029"):
+        world.ingest_structured([generated], classify="rules")
+    assert world.buffer.head() == head
+
+
+@pytest.mark.parametrize("frame", [5, ""])
+def test_s4_malformed_frame_is_malformed_item(world, frame):
+    """§4: `frame: 5` or `""` gives `malformed_item`, never canon."""
+    r = _around(world, {"entity": "obj:x", "attribute": "hue", "value": "red",
+                        "frame": frame})
+    assert r.skipped == [{"entity": "obj:x", "attribute": "hue", "value": "red",
+                          "reason": "malformed_item",
+                          "detail": {"field": "frame", "value": frame}}]
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+def test_s4_missing_required_field_is_malformed_item(world):
+    """§4: a missing `entity`, `attribute` or `value` (or a null entity or
+    attribute) gives `malformed_item` with the missing fields."""
+    full = {"entity": "obj:x", "attribute": "hue", "value": "red"}
+    for missing in ("entity", "attribute", "value"):
+        r = _around(world, {k: v for k, v in full.items() if k != missing})
+        assert _reasons(r) == ["malformed_item"]
+        assert r.skipped[0]["detail"] == {"missing": [missing]}
+        assert r.skipped[0][missing] is None
+    for null in ("entity", "attribute"):
+        r = _around(world, {**full, null: None})
+        assert r.skipped[0]["detail"] == {"missing": [null]}
+    r = _around(world, {"value": "red"})
+    assert r.skipped[0]["detail"] == {"missing": ["entity", "attribute"]}
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+def test_s4_non_string_entity_and_blank_attribute(world):
+    """§4: `entity: 5` gives `malformed_id`; `attribute: 7` or `"  "` gives
+    `malformed_item`."""
+    r = _around(world, {"entity": 5, "attribute": "hue", "value": "red"})
+    assert r.skipped == [{"entity": 5, "attribute": "hue", "value": "red",
+                          "reason": "malformed_id"}]
+    for attribute in (7, "  "):
+        r = _around(world, {"entity": "obj:x", "attribute": attribute, "value": "red"})
+        assert r.skipped == [{"entity": "obj:x", "attribute": attribute, "value": "red",
+                              "reason": "malformed_item",
+                              "detail": {"field": "attribute", "value": attribute}}]
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+def test_s4_bare_string_item_is_malformed_item(world):
+    """§4: a bare string item gives `malformed_item`, in ordinary and in
+    `extracted=True` mode (where the moved-event pass passes it through)."""
+    record = {"entity": None, "attribute": None, "value": "obj:x hue red",
+              "reason": "malformed_item"}
+    r = _around(world, "obj:x hue red")
+    assert r.skipped == [record]
+    world.ingestor.cursor.advance(4.0)
+    r = _around(world, "obj:x hue red", extracted=True)
+    assert r.skipped == [record]
+    moved = [
+        {"entity": "event:m1", "attribute": "kind", "value": "moved", "complete": True},
+        {"entity": "event:m1", "attribute": "agent", "value": "person:ann",
+         "value_type": "entity"},
+        {"entity": "event:m1", "attribute": "destination", "value": "place:yard",
+         "value_type": "entity"},
+        "obj:x hue red",
+        {"entity": "person:ann", "attribute": "in", "value": "place:yard",
+         "value_type": "entity"},
+    ]
+    r = world.porcelain.ingest_structured(moved, classify="rules", extracted=True)
+    assert r.skipped == [record]
+    assert world.locate("person:ann") == ["place:yard"]
+
+
+def test_s4_entity_typed_non_string_value_is_malformed_id(world):
+    """§4: `in: 5` with `value_type: "entity"` gives `malformed_id`."""
+    r = _around(world, {"entity": "person:ann", "attribute": "in", "value": 5,
+                        "value_type": "entity"})
+    assert r.skipped == [{"entity": "person:ann", "attribute": "in", "value": 5,
+                          "reason": "malformed_id"}]
+    assert world.locate("person:ann") == []
+
+
+def test_s4_unknown_value_type_is_invalid_field(world):
+    """§4: `value_type: "thing"` gives `invalid_field`, and no first-use
+    declaration is left behind."""
+    r = _around(world, {"entity": "person:ann", "attribute": "allies",
+                        "value": "person:bob", "value_type": "thing",
+                        "arity": "set_valued"})
+    assert r.skipped == [{"entity": "person:ann", "attribute": "allies",
+                          "value": "person:bob", "reason": "invalid_field",
+                          "detail": {"field": "value_type", "value": "thing"}}]
+    assert not world.semantics.is_declared("allies")
+
+
+@pytest.mark.parametrize("field,bad", [
+    ("timeless", "false"), ("correction", "false"), ("confidence", "high")])
+def test_s4_mistyped_flags_and_confidence_are_invalid_field(world, field, bad):
+    """§4: `timeless: "false"`, `correction: "false"` and `confidence: "high"`
+    each give `invalid_field`."""
+    r = _around(world, {"entity": "obj:x", "attribute": "hue", "value": "red",
+                        "valid_from": 1.0, field: bad})
+    assert r.skipped == [{"entity": "obj:x", "attribute": "hue", "value": "red",
+                          "reason": "invalid_field",
+                          "detail": {"field": field, "value": bad}}]
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+def test_s4_null_status_reads_as_stated(world):
+    """§4: `status: None` reads as `stated`."""
+    r = _around(world, {"entity": "obj:x", "attribute": "hue", "value": "red",
+                        "valid_from": 1.0, "status": None})
+    assert r.skipped == []
+    [row] = world.buffer.visible(entity="obj:x")
+    assert row.status == "stated"
+
+
+def test_s4_atomic_null_aliases_commit_and_invalid_alias_aborts(world):
+    """§4: under `atomic=True`, `aliases: None` commits, and `aliases: [5]`
+    aborts the set with `gate_skip`."""
+    item = {"entity": "obj:vault", "attribute": "kind", "value": "vault",
+            "timeless": True}
+    r = world.porcelain.ingest_structured([{**item, "aliases": None}, _AFTER],
+                                          classify="rules", atomic=True)
+    assert r.skipped == [] and len(r.rows) == 2
+    head = world.buffer.head()
+    with pytest.raises(AtomicAbort) as ei:
+        world.porcelain.ingest_structured(
+            [{**item, "entity": "obj:safe", "aliases": [5]}, _BEFORE],
+            classify="rules", atomic=True)
+    assert ei.value.cause == "gate_skip"
+    assert ei.value.skipped == [{"entity": "obj:safe", "attribute": "alias",
+                                 "value": 5, "reason": "invalid_alias"}]
+    assert world.buffer.head() == head
