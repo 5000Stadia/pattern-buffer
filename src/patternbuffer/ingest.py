@@ -258,12 +258,36 @@ _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
 _SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
 
 
+# GATE-AUTHORITY-V1 §0: the fixed codes a skip receipt's `reason` is drawn
+# from. The three per-edge structural reasons ("cycle-forming containment
+# edge: …", "lateral self-loop: …", "merged_self_edge: …") stay prose and
+# byte-identical outside it — tests and hosts match substrings of them.
+SKIP_REASONS = frozenset({
+    "malformed_id",                          # SHAPE-FIX-V1; widened by §2, §4, §7
+    "invalid_decay_halflife",                # TRACKING-MODE-V1
+    "valid_to_without_valid_from",           # MOVED-EVENT-V1 §B.2
+    "valid_to_before_valid_from",            # MOVED-EVENT-V1 §B.2
+    "moved_marker_invalid",                  # MOVED-EVENT-V1
+    "moved_open_with_arrival",               # MOVED-EVENT-V1
+    "moved_complete_attribute_not_durable",  # MOVED-EVENT-V1
+    "invalid_valid_time",                    # FOLD-CORRECTNESS-V1 §6
+    "malformed_item",                        # GATE-AUTHORITY-V1 §4
+    "invalid_field",                         # GATE-AUTHORITY-V1 §4
+    "invalid_alias",                         # GATE-AUTHORITY-V1 §4
+    "mechanism_attribute",                   # GATE-AUTHORITY-V1 §1
+    "same_as_not_canon",                     # GATE-AUTHORITY-V1 §2
+    "merge_vetoed",                          # GATE-AUTHORITY-V1 §2
+    "invalid_semantics_declaration",         # GATE-AUTHORITY-V1 §5
+})
+
+
 @dataclass(frozen=True)
 class SkipRecord:
-    """An edge skipped at the gate (INGEST-HARDENING-V1 Part B): a single
-    structurally-invalid edge (cycle / self-edge / lateral self-loop) dropped
-    with a reason, while the rest of the chunk ingests. No silent caps — the
-    host reads these off the porcelain Receipt's `skipped`."""
+    """A refusal at the gate, receipted while the rest of the chunk ingests
+    (INGEST-HARDENING-V1 Part B; GATE-AUTHORITY-V1 §0): an item, or one of
+    its side rows, dropped with a `reason` from `SKIP_REASONS` (or a legacy
+    per-edge prose reason). Fields the item lacks are None. No silent caps —
+    the host reads these off the porcelain Receipt's `skipped`."""
 
     entity: str
     attribute: str
