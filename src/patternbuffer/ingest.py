@@ -272,7 +272,11 @@ _EXTRACT_RULES_LEAN = (
 )
 
 _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
-_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
+# The host's `attribute_default` may also declare `structural` and the
+# durability pin (READ-SURFACE-V1 §1). Neither is an item hint: a pin decides
+# which rows the model sees and which lens serves them — the host's decision
+# about its own vocabulary, made once, never carried in by a model-written item.
+_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural", "durability")
 
 
 # GATE-AUTHORITY-V1 §0: the fixed codes a skip receipt's `reason` is drawn
@@ -1377,6 +1381,17 @@ class Ingestor:
                                   detail={"field": attribute, "value": value,
                                           "source": "attr_row"})
                 return out
+            # READ-SURFACE-V1 §1: a declaration that could never take effect,
+            # or that contradicts one already on the attribute, skips too.
+            conflict = self._semantics.conflict(
+                entity[len(ATTR_PREFIX):], {attribute: value})
+            if conflict is not None:
+                self._record_skip(entity, attribute, value,
+                                  "invalid_semantics_declaration",
+                                  detail={"field": attribute, "value": value,
+                                          "source": "attr_row",
+                                          "conflicts_with": conflict[1]})
+                return out
         elif plan is not None:
             declaration, source = plan
             if declaration:
@@ -1396,6 +1411,18 @@ class Ingestor:
                                       "invalid_semantics_declaration",
                                       detail={"field": predicate, "value": declared,
                                               "source": source})
+                    return out
+                # READ-SURFACE-V1 §1: an incoherent declaration skips the item
+                # the same way, and leaves the callback unconsulted.
+                conflict = self._semantics.conflict(attribute, declaration)
+                if conflict is not None:
+                    predicate, conflicts_with = conflict
+                    self._record_skip(entity, attribute, value,
+                                      "invalid_semantics_declaration",
+                                      detail={"field": predicate,
+                                              "value": declaration[predicate],
+                                              "source": source,
+                                              "conflicts_with": conflicts_with})
                     return out
             if source == "attribute_default":
                 # Consulted once an item on the attribute reaches this step:

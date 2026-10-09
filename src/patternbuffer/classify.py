@@ -20,6 +20,7 @@ from patternbuffer.model import (
     ASSERTION_ID_RE,
     ATTR_PREFIX,
     META_ATTRIBUTES,
+    SEMANTICS_PREDICATES,
     TASK_CLASSIFY,
     TASK_CLASSIFY_BATCH,
     Assertion,
@@ -145,8 +146,20 @@ class Classifier:
             # Meta-assertions ride with their subject; they never fold as
             # world facts. Classified EVENT-like for lens purposes: immutable.
             return EVENT, 1.0
+        if row.entity.startswith(ATTR_PREFIX) and row.attribute in SEMANTICS_PREDICATES:
+            # READ-SURFACE-V1 §1 step 5: a semantics declaration is
+            # vocabulary bookkeeping. The four older predicates are META and
+            # stop above; this catches the durability pin's own row, whose
+            # predicate is also an ordinary domain word (not META).
+            return EVENT, 1.0
         if row.value_type == "unresolved":
             return STATE, 1.0  # a thunk occupies its key like mutable state
+        pin = self._semantics.durability_pin(row.attribute)
+        if pin is not None:
+            # READ-SURFACE-V1 §1 step 8: the host pinned this attribute's
+            # class, so a pinned row never reaches the model on any path
+            # (inline, batch, rules, a seal, classify_all, rebuild).
+            return pin, 1.0
         if self._semantics.is_containment(row.attribute):
             if row.attribute in {"held_by", "worn_by", "carried_by"}:
                 return STATE, 0.95  # things held by agents are movable
@@ -382,6 +395,8 @@ class Classifier:
                 or row.entity.startswith(ATTR_PREFIX)
                 or row.value_type in ("unresolved", "delta")
                 or self._semantics.is_accrue(row.attribute)
+                # READ-SURFACE-V1 §1: a declared class is not a habit to learn
+                or self._semantics.durability_pin(row.attribute) is not None
             ):
                 continue  # deltas / accrue quantities are summed, never a habit
             if self.durability(row.id) != STATE:

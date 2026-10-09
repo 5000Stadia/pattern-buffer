@@ -42,8 +42,10 @@ STRUCTURAL_PREDICATES = (
 # These low-level names live here so the buffer guard can enforce authority
 # without importing the semantics service.
 ATTR_PREFIX = "attr:"
+# `durability` is the host's durability pin (READ-SURFACE-V1 §1): a declared
+# class for its own attribute, read by the classifier before the model.
 SEMANTICS_PREDICATES = frozenset(
-    {"arity", "relation_family", "fold_policy", "structural"}
+    {"arity", "relation_family", "fold_policy", "structural", "durability"}
 )
 INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from", "aka"}
 
@@ -75,8 +77,17 @@ META_ATTRIBUTES = frozenset(
         # like same_as/aka, never identity: EVENT by the classifier guardrail,
         # so it never folds, stands as a fact, or counts as an unstamped row.
         "learned_alias",
+        # Four of the five semantics predicates, listed by name (READ-SURFACE-V1
+        # §1). The fifth, `durability`, is an ordinary domain word too (a
+        # sword's durability), and a META attribute is erased from every fold.
+        # A semantics predicate means something only on an `attr:` subject;
+        # the classifier's own step keeps the pin row model-free.
+        "arity",
+        "relation_family",
+        "fold_policy",
+        "structural",
     }
-) | SEMANTICS_PREDICATES
+)
 
 # Mechanism attributes (GATE-AUTHORITY-V1 §1): rows the engine writes about
 # OTHER rows. Each has exactly one owning engine component and is recognized by
