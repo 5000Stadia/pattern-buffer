@@ -1,9 +1,11 @@
 # EVENTS-ONE-READER-V1: every event read goes through one reader
 
-**Status:** DRAFT r1 (2026-10-09). Roadmap R22: the item READ-SURFACE-V1 §10
-deferred from batch E, together with the October audit's surfaces P2-5, folds
-P2-7 and probe addendum E8 (`docs/AUDIT-2026-10.md`). Spec only: nothing is
-built. Not yet reviewed by pbr.
+**Status:** r1, built (2026-10-09). Spec pbr GREEN on r1; built on batch E
+(ba26d29) on `impl/events-one-reader-v1`, then rebased onto E's r1.1 head
+(2dcc017); the code goes to pbr next. See "Build notes for pbr" at the end.
+Roadmap R22: the item READ-SURFACE-V1 §10 deferred from batch E, together with
+the October audit's surfaces P2-5, folds P2-7 and probe addendum E8
+(`docs/AUDIT-2026-10.md`).
 
 **Its four decisions take their defaults** (pb's call: reversible engine
 semantics, with pbr as the gate):
@@ -756,3 +758,140 @@ changes on its next call.
   through `events()` in the session frame, which is unchanged.
 - **Before the build lands,** construct runs its full suite on the
   implementation branch.
+
+## Build notes for pbr
+
+Built 2026-10-09 on batch E (ba26d29, READ-SURFACE-V1 r1 built) on
+`impl/events-one-reader-v1`, and rebased onto E's r1.1 head (2dcc017), which
+touches nothing this build reads. One commit per section, in order (§1–§6),
+then the Tests section's two property tests, the docs, and two follow-ups (a
+set-valued key on an event, below, and its docs). Each section's commit passes
+the full suite on its own; §4's needed E's O2f test amended (below). The four
+decisions took their defaults.
+
+**Where this spec and E's code meet.**
+- **E §8.** The reader takes `frame` and `asserted_as_of`; `events()` and
+  `in_transit()` read records at a log position, and `in_transit`'s
+  containment comparison runs there too. `in_transit` is no longer on E §8's
+  "not here" list (whitepaper §25.1, ADOPTION).
+- **E §4.** `event_attribute` returns a `FoldResult`, so E's payload applies
+  unchanged: a record whose pick is a placeholder answers `unresolved` (6 live
+  `caused_by` keys do), a same-stamp kind conflict carries
+  `conflicting_facts`, and `values` serves a record's description from two
+  rows. A set-valued attribute on an event (`alias`, `name`, `connects_to`)
+  keeps E §4's own rule — its members, each value once, whenever there are
+  members. Read literally, "values whenever there are two or more" dropped a
+  one-member `values` from 19 live keys that the unclassified fold had served
+  and listed a thrice-asserted alias three times on 3 (follow-up commit). The
+  fact is always the pick.
+- **E §6.** `ask`'s `events(until=t)` reads records as of its one effective
+  time, so an event that has not occurred by `t` is no longer listed through
+  a timeless row; its key reads go through the same point read as `state()`,
+  at `t`.
+- **E §2 O2f.** E's test asserted `p.state("event:bell", "arc_phase")` is
+  `unknown` (a last_write attribute). The rule it pins — the fold never serves
+  an event row — holds: `World.state` still serves nothing. The porcelain now
+  reads the event's record (Rule B), so the test asserts the fold, and
+  tests/test_events_one_reader.py pins the porcelain side. This is the one
+  existing test changed.
+- **E §1 and §7** are untouched: `is_event_row` is the guardrail's existing
+  test (no verdict changes), and the physics row is not an event row.
+
+**Implementer's readings.**
+- §1: `event_payload` is `Indexes.event_payload`, a classmethod with no
+  instance state, and the pick is `Indexes._event_pick`. `event_records`
+  returns its dict already in the listing order (t, None first, then the
+  earliest row), each record's rows in `_recency_key` order. With `ids` it
+  queries only the stored `event:` members of each closure, so a closure
+  without one (any standing entity) costs no query.
+- §4 Rule A in `_establishing_scope`: "skips event rows the same way" is read
+  as the fold's own test (`is_event_row`, or classified EVENT). A classified
+  event's containment row therefore stops qualifying too; that is what makes
+  the view agree with `contents()` (one live case below).
+- §4 Rule B reads the named attribute's rows only: the containment family is
+  a fold key, and a record is not folded, so `state(event:x, "in")` reads
+  `in` rows.
+- §4: `ask`'s location fold (`wants_location`) stays fold-only. Its chain is
+  a containment walk, and under Rule A an event is in no container; an event
+  target's `in` is served by the plan's key read.
+- Consequences of Rule A beyond the spec's list, each as a sweep already
+  behaves: `refer`'s unique-kind tier and `route`'s portal kinds (both
+  `fold_key` callers) stop seeing an unclassified event's kind, and
+  `open_conflicts` loses conflicts on unclassified event keys (5, in 3
+  non-live files).
+
+**Oracle tests.** tests/test_events_one_reader.py, 66 tests: one per oracle
+(O1a–O6b), the byte-identical pin for a classified single-id event, five
+pins on rules the oracles do not reach (in_transit's containment comparison
+at a log position, `state_union` over an `aka` union, a bad event/standing
+merge, a set-valued key on an event, a non-event `agent` row in
+`neighborhood`), E's O2f meeting point, and the two cross-cutting tests over
+12 generated worlds each. Where the spec states
+"today X" for an oracle, the test fails against ba26d29 (checked); the two
+property tests fail on every seed there.
+
+**Existing tests changed.** One: tests/test_read_surface.py's O2f (above).
+
+**Host impact, re-measured.** The spec's own 165 copies (52 live, logically
+identical to the D-check copies; 20 attic and 93 retired, freshly backed up
+and content-equal), base ba26d29 against the built head, construct's
+`attribute_default`, `PYTHONHASHSEED=0`; 0 writes and 0 model calls in every
+file. Confirmed as stated:
+- `events()` in `session:`/`plot:`/`knows:` frames: 0 of 2,194 calls differ;
+  the per-turn canon window: 0 of 310 turns; `until=floor`: 142 of 310 turns
+  in 13 live files; the horizon leak: 188 events in 18 live files, 0 after;
+  `in_transit()`: 0 differ (356 distinct calls; 360 with repeats).
+- Missed events: 171 in 71 files, 42 in 18 live; pseudo-events: 61 in 13
+  files, none live; merged stored ids: 17 in 13 files, 2 live
+  (`event:joss_sends_mara`); `event:quake` gains `t: 0.0`; the listing order
+  differs in 8 of 348 frames, all attic or retired; 61 live events carry a
+  timeless kind beside stamped rows.
+- `contents()`: 4 events leave, in 3 live files. Rule C's build-time view:
+  the same answer for all 637 single-kind live events; of the 11 two-kind
+  ones, 5 the same and 6 the same conflict naming the later kind.
+- Identity on the sealed live copies: `proposals()` keeps every pair, and
+  its decline context changes in 15 files (42 `alias_not_specific` and 8
+  `kind_absent` become `kind_conflict`); `typing_conflicts()` changes in 12
+  files with 12 new candidates (2 existing ones now name the event's kind);
+  `name_collisions` keep their groups and show event kinds in 21 files.
+- The situation lens: 35 of 771 live place scopes (83 with live events)
+  change their bucket, 98 rows leave and 2 join. No `name` row on an event in
+  a live file.
+
+Beyond the spec's figures (each from a rule as written):
+- The 42 newly visible live events are not all canon: 37 are canon (13
+  files) and 5 are in `proposed:main` (cry, summons, walk and two `event`),
+  which the spec lists among canon `events()`. Two canon ones have no kind
+  (`event:runner_arrival` in the two bodycase harness files), so game.py
+  ~2449's `e.kind.replace(...)` meets a `None` kind there; the spec's "after
+  this spec it cannot" covers pseudo-events only.
+- `state()` on the 3,296 live event keys: 3,084 unknown→known, 6
+  unknown→conflicted (`event:mending_night`, `event:fog_bell_hour`, 4 files),
+  6 unknown→unresolved (`caused_by` placeholders, E §4), 81 machinery keys
+  stay unknown (O4d), 117 keep their values, and 2 `same_as` keys on
+  `event:fog_bell_hour` go known→unknown (O4d). The spec's 3,172 and 119 count
+  the machinery and placeholder keys as known: its simulation predates O4d's
+  rule and E's status.
+- Snapshots: `current_state` changes in 5 live place scopes, not 4 —
+  `place:persephone_lock` in thedeep.critic.ep.checkpoint holds the alcove in
+  its subtree and loses `event:wet_trail`'s 8 facts too (7–9 each). Those 5
+  scopes are also the situation floor changes. `establishing_set` changes in
+  7: the same 4 places, `place:orpheus` (the alcove's establishing chain),
+  and `place:sanction_line` in live_telegram_8786956263_3 and its critic
+  copy, where the classified `event:burning_four` (`in` the place) held
+  `obj:yellow_button_cap`: its 5 facts leave the establishing view, which now
+  agrees with `contents()` and `current_state`.
+- `events(since=)`: in 10 windows (the two live ironhold files, one retired)
+  events with equal `t` change order, because an event's earlier and timeless
+  rows now count for its earliest row; the windows now order as the
+  unfiltered listing does.
+- `neighborhood()`: no difference, in any file. No event row in the 165
+  files carries `valid_to`, and the 4 live non-event `agent` rows are
+  self-references.
+- Speed: canon `events()` on the six largest live files, 17–29 ms to
+  0.8–2.5 ms (best of five, warm).
+
+**For pbr's eye.** E's O2f amendment; the set-valued follow-up, which goes
+past the letter of "two or more"; Rule A reaching a classified event in the
+establishing lens; and the two kind-less events construct's canon reads will
+meet. `specs/STATUS.md` and the README's test count move at merge.
