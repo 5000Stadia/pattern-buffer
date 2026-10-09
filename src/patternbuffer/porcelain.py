@@ -934,53 +934,26 @@ class Porcelain:
                frame: str = CANON, asserted_as_of: int | None = None) -> list[dict]:
         """Reified events (`event:` entities) in a frame, optionally filtered by
         kind, participant and a valid-time window; each carries its payload and
-        the movement keys (origin/destination/manner) when it is a move."""
-        scope = sorted({
-            self._w.registry.resolve(r.entity)
-            for r in self._w.buffer.visible(frame=frame, entity_prefix="event:",
-                                            asserted_as_of=asserted_as_of)})
-        m = self._w.materialize(scope or ["event:none"], frame=frame,
-                                lens="what_happened", since=since, as_of=until,
-                                asserted_as_of=asserted_as_of)
-        by_event: dict[str, dict] = {}
-        for r in m.assertions:
-            # § E1: every event dict — moved or not — ALWAYS carries the six
-            # additive keys, so the payload byte-shape is a contract, never
-            # "omitted-or-null". All prior keys/defaults are untouched.
-            ev = by_event.setdefault(r.entity, {"id": r.entity, "kind": None,
-                                                "agents": [], "patients": [],
-                                                "t": r.valid_from, "caused_by": [],
-                                                "origin": None, "destination": None,
-                                                "manner": None, "valid_to": None,
-                                                "origin_bound": None,
-                                                "destination_bound": None})
-            # stored r.attribute is already the canonical fold key (canonicalized
-            # at the ingest gate), so compare it directly as the prior keys do.
-            if r.attribute == "kind":
-                ev["kind"] = r.value
-            elif r.attribute == "agent":
-                ev["agents"].append(r.value)
-            elif r.attribute == "patient":
-                ev["patients"].append(r.value)
-            elif r.attribute == "caused_by":
-                ev["caused_by"].append(r.value)
-            elif r.attribute == "origin":
-                ev["origin"] = r.value
-                # discriminator is the STORED value_type, not grammar (§ E1/F4.1)
-                ev["origin_bound"] = r.value_type == "entity"
-            elif r.attribute == "destination":
-                ev["destination"] = r.value
-                ev["destination_bound"] = r.value_type == "entity"
-            elif r.attribute == "manner":
-                ev["manner"] = r.value
-            if r.valid_from is not None:
-                ev["t"] = r.valid_from
-            # closing coordinate: movement payload rows share one valid_to;
-            # None = open event (zero-duration completes carry valid_from==valid_to)
-            if r.attribute in ("kind", "agent", "origin", "destination", "manner") \
-                    and r.valid_to is not None:
-                ev["valid_to"] = r.valid_to
-        out = list(by_event.values())
+        the movement keys (origin/destination/manner) when it is a move.
+
+        Each event is its record, read whole (EVENTS-ONE-READER-V1 §2): every
+        event entity in the frame, classified or not, and nothing else, one
+        entry per resolved id. `until` lists an event once it has occurred
+        (its first stamped row is <= `until`, or it has none) with its record
+        as of `until`; `since` keeps an event whose `t` (its latest stamp) is
+        >= `since`. `participants` is all-of over the resolved agents and
+        patients. Ordered by `t` (None first), then by the event's earliest
+        row."""
+        # §2: no `materialize` — the reader groups the frame's event rows by
+        # resolved id without the sidecar, so a sweep changes nothing here, a
+        # row on another subject never lists an event, and a merged event is
+        # one entry. § E1's twelve keys come from `Indexes.event_payload`.
+        indexes = self._w.indexes
+        out = [indexes.event_payload(event_id, record)
+               for event_id, record in indexes.event_records(
+                   frame, valid_as_of=until, asserted_as_of=asserted_as_of).items()]
+        if since is not None:
+            out = [e for e in out if e["t"] is not None and e["t"] >= since]
         if kind is not None:
             out = [e for e in out if e["kind"] == kind]
         if participants:
@@ -989,9 +962,7 @@ class Porcelain:
             out = [e for e in out
                    if wanted <= {self._w.registry.resolve(x)
                                  for x in e["agents"] + e["patients"]}]
-        return encode_out(
-            sorted(out, key=lambda e: (e["t"] if e["t"] is not None else float("-inf")))
-        )
+        return encode_out(out)
 
     def in_transit(self, agent: str | None = None, as_of: float | None = None,
                    frame: str = CANON) -> list[dict]:

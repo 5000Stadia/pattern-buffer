@@ -287,3 +287,130 @@ def test_s1_o1h_classifier_verdicts_unchanged(world):
     delta = next(r for r in rows if r.value_type == "delta")
     assert w.classifier.durability(delta.id) == STATE and not is_event_row(delta)
 
+
+# ===================================================== §2 events() reads records
+
+
+def test_s2_o2a_events_needs_no_sweep(world):
+    """§2 O2a (EV1): a move ingested with classify="defer": events() lists it,
+    as in_transit() does; classify_all() then changes neither."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, _walk(), classify="defer")
+    p = w.porcelain
+    events, moving = p.events(), p.in_transit()
+    assert _ids(events) == ["event:walk_1"]
+    assert events[0]["kind"] == "moved" and events[0]["agents"] == ["person:mara"]
+    assert [m["agent"] for m in moving] == ["person:mara"]
+    w.classifier.classify_all()
+    assert p.events() == events
+    assert p.in_transit() == moving
+
+
+def test_s2_o2b_no_pseudo_events(world):
+    """§2 O2b (EV2), in O1b's world: today five events (doc:note, person:ilsa
+    and obj:barn with kind null, plus the two real ones); after, event:convoy
+    and event:fire."""
+    w = world
+    _seed_pseudo(w)
+    events = w.porcelain.events()
+    assert _ids(events) == ["event:convoy", "event:fire"]
+    assert [e["kind"] for e in events] == ["convoy", "fire"]
+    assert all(e["caused_by"] == [] for e in events)
+
+
+def test_s2_o2c_a_merged_event_is_listed_once(world):
+    """§2 O2c (EV3), in O1c's world, leaving aside the merge's own
+    identity_merge event: one event, event:wedding, kind wedding, agents
+    ["person:ines"]; events(participants="person:ines") returns it."""
+    w = world
+    _seed_wedding(w)
+    p = w.porcelain
+    events = [e for e in p.events() if e["kind"] != "identity_merge"]
+    assert [(e["id"], e["kind"], e["agents"]) for e in events] == [
+        ("event:wedding", "wedding", ["person:ines"])]
+    assert _ids(p.events(participants="person:ines")) == ["event:wedding"]
+    merges = [e for e in p.events() if e["kind"] == "identity_merge"]
+    assert len(merges) == 1 and merges[0]["t"] is None
+
+
+def test_s2_o2d_the_window_reads_whole_records(world):
+    """§2 O2d (EV4), in O1d's world: `since` no longer cuts an event's earlier
+    or timeless rows, and `until` no longer lists an event before its first
+    stamped row."""
+    w = world
+    _seed_window(w)
+    p = w.porcelain
+
+    def shape(events):
+        return [(e["id"], e["kind"], e["agents"], e["patients"], e["t"]) for e in events]
+
+    assert shape(p.events(since=6.0)) == [
+        ("event:siege", "siege", ["person:k"], [], 7.0),
+        ("event:summons", "summons", [], ["person:k"], 8.0)]
+    assert shape(p.events(since=6.0, kind="summons")) == [
+        ("event:summons", "summons", [], ["person:k"], 8.0)]
+    assert shape(p.events(until=6.0)) == [("event:siege", "siege", [], [], 5.0)]
+    # the window's inclusion is otherwise the per-row one: [since, until]
+    assert shape(p.events(since=5.0, until=5.0)) == [("event:siege", "siege", [], [], 5.0)]
+    assert _ids(p.events(since=7.5, until=8.0)) == ["event:summons"]
+    assert p.events(since=8.5) == []
+
+
+def test_s2_o2e_existing_events_reads_unchanged(tmp_path):
+    """§2 O2e: the existing events() tests pass unchanged (test_porcelain's
+    events and ask tests, test_tracking_mode B3, test_moved_event 6c and 11).
+    Representative here: B3 — a future event is filtered by `until`."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "b3.world", world_id="w:b3", model=stub)
+    try:
+        _ingest(w, [{"entity": "event:inspection", "attribute": "kind",
+                     "value": "inspection", "valid_from": 500.0}])
+        assert w.porcelain.events(until=100.0) == []
+        assert _ids(w.porcelain.events(until=600.0)) == ["event:inspection"]
+    finally:
+        w.close()
+
+
+def test_s2_o2f_no_model_call_and_no_write(world):
+    """§2 O2f: events() makes no model call and no write."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, _walk(), classify="defer")
+    _seed_window(w)
+    head, calls = w.buffer.head(), len(w._stub.calls)
+    for kw in ({}, {"since": 6.0}, {"until": 6.0}, {"kind": "moved"},
+               {"participants": "person:k"}, {"frame": "knows:person:k"},
+               {"asserted_as_of": 3}):
+        json.dumps(w.porcelain.events(**kw))
+    assert w.buffer.head() == head and len(w._stub.calls) == calls
+
+
+def test_s2_byte_identical_classified_single_id_event(world):
+    """§2 byte-identical: a canon event whose rows are all classified, with
+    one stored id and no timeless row beside stamped ones, reads the same
+    twelve-key dict in any window that admits it."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, [
+        *_walk(valid_to=5.0),
+        {"entity": "event:walk_1", "attribute": "manner", "value": "stroll",
+         "valid_from": 5.0, "valid_to": 5.0},
+        {"entity": "event:walk_1", "attribute": "caused_by", "value": "event:bell",
+         "value_type": "entity", "valid_from": 5.0},
+        {"entity": "event:bell", "attribute": "kind", "value": "bell", "valid_from": 4.0},
+    ])
+    walk = {"id": "event:walk_1", "kind": "moved", "agents": ["person:mara"],
+            "patients": [], "t": 5.0, "caused_by": ["event:bell"],
+            "origin": "place:hall", "destination": "place:yard", "manner": "stroll",
+            "valid_to": 5.0, "origin_bound": True, "destination_bound": True}
+    bell = {"id": "event:bell", "kind": "bell", "agents": [], "patients": [], "t": 4.0,
+            "caused_by": [], "origin": None, "destination": None, "manner": None,
+            "valid_to": None, "origin_bound": None, "destination_bound": None}
+    p = w.porcelain
+    assert p.events() == [bell, walk]
+    assert list(p.events()[1]) == list(walk)          # the key order too
+    assert p.events(since=4.5) == [walk]
+    assert p.events(until=4.5) == [bell]
+    assert p.events(since=5.0, until=5.0) == [walk]
+    assert p.events(kind="moved", participants=["person:mara"]) == [walk]
