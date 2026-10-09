@@ -12,6 +12,7 @@ circularity.
 from __future__ import annotations
 
 import logging
+import math
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
@@ -107,6 +108,14 @@ _ASK_PLAN_SCHEMA = {
     },
     "required": ["refer_targets", "keys"],
 }
+
+
+def _finite_time(value: Any) -> bool:
+    """A valid valid-time coordinate: a finite real number, never a bool
+    (FOLD-CORRECTNESS-V1 §6's predicate; READ-SURFACE-V1 §6 reads the ask
+    plan's `as_of` through it)."""
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
 
 
 class Porcelain:
@@ -1061,6 +1070,15 @@ class Porcelain:
             f"QUESTION: {question}"
         )
         plan = self._w.ingestor._model(prompt, task_schema(_ASK_PLAN_SCHEMA))
+        # READ-SURFACE-V1 §6 rule A: one effective time `t`, governing every
+        # step below (the asker's scope, both refer passes, every key fold,
+        # the location fold and its chain, events). The caller's `as_of` is a
+        # ceiling the model's parse can lower but never raise: a valid plan
+        # `as_of` (a finite real number) is taken when the caller gave none,
+        # else the earlier of the two; an invalid one is ignored.
+        t = as_of
+        if _finite_time(plan.get("as_of")):
+            t = plan["as_of"] if as_of is None else min(as_of, plan["as_of"])
         # HD 003: identity/existence is a CANON question; only the answer is
         # knowledge-scoped. Resolve references against canon with a scene
         # scope mirroring the observe path — the asker (from a knows:<id>
@@ -1074,12 +1092,25 @@ class Porcelain:
         ask_scope: str | list[str] | None = None
         if frame.startswith("knows:"):
             asker = frame[len("knows:"):]
-            ask_scope = [asker, *self._w.locate(asker, valid_as_of=as_of)]
+            ask_scope = [asker, *self._w.locate(asker, valid_as_of=t)]
         resolved: list[str | None] = []
         asks: list[dict] = []
         for target in plan.get("refer_targets", []):
-            r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=as_of,
-                              learn=False)
+            r = None
+            if frame != CANON:
+                # READ-SURFACE-V1 §6 rule B: the asker's own words first — the
+                # asked frame's tier 1 alone (its names, aliases, learned
+                # words, a kind unique in its view of the scene), kept only if
+                # it resolves: zero model calls, zero writes. Canon stays the
+                # binding authority wherever the frame cannot bind the
+                # reference by itself (HD 003).
+                own = self._w.refer(target, scope=ask_scope, frame=frame, as_of=t,
+                                    learn=False, model=False)
+                if own.status == "resolved":
+                    r = own
+            if r is None:
+                r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=t,
+                                  learn=False)
             if r.status == "resolved":
                 resolved.append(r.entity_id)
             else:
@@ -1101,7 +1132,7 @@ class Porcelain:
             if not (0 <= idx < len(resolved)) or resolved[idx] is None:
                 continue
             attribute = self._attr(key["attribute"])
-            fold = self._w.state(resolved[idx], attribute, frame, valid_as_of=as_of)
+            fold = self._w.state(resolved[idx], attribute, frame, valid_as_of=t)
             if fold.winner is None:
                 continue
             # READ-SURFACE-V1 §4: a placeholder is named, never served as a
@@ -1117,11 +1148,10 @@ class Porcelain:
                 facts.append(self._fact(fold.winner).to_dict())
             if fold.conflicted:
                 note(conflicted, resolved[idx], attribute)
-        effective_as_of = plan.get("as_of") if plan.get("as_of") is not None else as_of
         if plan.get("wants_location"):
             for eid in resolved:
                 if eid:
-                    fold = self._w.state(eid, "in", frame, valid_as_of=effective_as_of)
+                    fold = self._w.state(eid, "in", frame, valid_as_of=t)
                     if fold.winner is None:
                         continue
                     # The location fold is the `in` key, under §4's rules.
@@ -1132,15 +1162,14 @@ class Porcelain:
                         # Frame-scope the chain like the fold beside it — a
                         # canon-frame locate would leak containment into a
                         # knows: answer (HD 003, incidental).
-                        f["chain"] = self._w.locate(
-                            eid, frame=frame, valid_as_of=effective_as_of)
+                        f["chain"] = self._w.locate(eid, frame=frame, valid_as_of=t)
                         facts.append(f)
                     if fold.conflicted:
                         note(conflicted, eid, "in")
         if plan.get("wants_events"):
             participants = [e for e in resolved if e]
             for ev in self.events(participants=participants or None,
-                                  until=effective_as_of, frame=frame):
+                                  until=t, frame=frame):
                 facts.append({"event": ev})
         answered = bool(facts)
         return Answer(
