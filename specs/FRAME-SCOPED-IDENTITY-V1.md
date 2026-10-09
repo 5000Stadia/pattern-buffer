@@ -115,8 +115,7 @@ GATE-AUTHORITY-V1 r2's thirteen steps (r2):
 **Location.** `ingest.py` `_ingest_item`: the new check goes between the
 malformed-id gate (839–848) and resolution (849–852); on B r2, the head of step
 9. The `aliases` loop (971–972) and the `same_as` key (982–992), step 12 on B
-r2, change. `identity.py` `add_alias`
-(103) gains `frame: str = CANON`. In `refer.py`, the call's frame is threaded
+r2, change. `identity.py` `add_alias` (103) gains `frame: str = CANON`. In `refer.py`, the call's frame is threaded
 through `_resolve_tier2` (225) into `_accrue_alias` (77–95). The reason string
 joins the skip vocabulary in ADOPTION.
 
@@ -135,7 +134,7 @@ joins the skip vocabulary in ADOPTION.
     the stranger's `"spy"`.
   - After it is skipped `same_as_not_canon`, and the canon fold is unknown.
 - 1d. Raw `maybe_same_as` and `distinct_from` rows in `knows:` and in `plot:` are
-  skipped with the same reason.
+  skipped `identity_edge_outside_canon`.
 - 1e. A raw `aka` in Alice's frame is admitted in Alice's frame (unchanged).
 - 1f. `ingest_structured([...non-canon same_as...], atomic=True, classify="rules")`
   raises `AtomicAbort(cause="gate_skip")` carrying the receipt, and nothing is
@@ -527,9 +526,9 @@ iff a visible subject row of its closure exists in `frame` **or in canon**.
   query, and SQLite then picked the frame index over the entity index. On the
   pre-review's 100k-row perf world: 8.8 ms per id under r1 against 0.35 on the
   base engine and 0.34 under r2; a 200-id snapshot in a `knows:` frame takes
-  1.85 s under r1, 0.11 s on base and under r2. Answers are identical to r1's
-  (624 (id, frame) pairs on that world, and every id × stored frame on
-  construct's copies: "r2: review resolutions").
+  1.85 s under r1, 0.11 s on base and under r2. Answers are identical to r1's:
+  624 (id, frame) pairs on that world, and 101,422 (id, stored frame) pairs on
+  copies of construct's 52 worlds ("r2: review resolutions", Checks).
 
 **Why not "requested frame only".** `knows:` frames are sparse by design (ADOPTION
 trap 2). Construct snapshots an NPC in the NPC's own frame for its character
@@ -936,9 +935,11 @@ Python. Numbers in §6; oracle 6e pins the single call and the answers.
 
 **Pre-review MINOR: a host's scan-then-retract loop.** Moot once §7 is out. A
 frame scan (`facts(knows:X)`) returns only rows stored under `knows:X`, so a
-host's frame-clearing loop retracts nothing of a merged partner's. The
-row-level frame provenance the pre-review asked for belongs to the gate's P4,
-before any cross-frame read ships.
+host's frame-clearing loop retracts nothing of a merged partner's: on a fresh
+`emberroad2` copy, construct's loop for `person:caldus` retracts its own 25
+rows and 0 of `knows:person:brother_caldus`'s (r1 with §7: 97, 72 of them the
+protagonist's). The row-level frame provenance the pre-review asked for
+belongs to the gate's P4, before any cross-frame read ships.
 
 **Pre-review NIT (§3(c)): the group-level `distinct_from`.** The auto-merger
 read only a direct correlation, so `a~b`, `reject(b, x)` and a shared name let
@@ -963,3 +964,54 @@ the README's MCP road item).
 `distinct_group`, and `refer(..., frame="knows:person:alice")` no longer
 falling back to canon aliases (oracle 2j pins it; construct always passes
 canon). It loses §7's canonical names and fused frames.
+
+**Checks.**
+- **Suite.** The full suite at r2's head: 779 collected, 775 passed, 4 skipped
+  (B r2: 730, 727 and 3). The fourth skip is the opt-in 2i corpus check; run
+  over copies of construct's 52 worlds, it passes (0 re-elections). Every
+  rebased commit passes the full suite on its own. Of r2's eight new or
+  changed oracle tests (1b, 1f, 1h, 1i, 2j, 3g, 3h, 6e), seven fail on the
+  rebased pre-r2 code; 2j passes there, since it pins §2 behaviour r1 already
+  had, for the notice.
+- **Construct.** Fresh copies of the 52 world files, read through the
+  pre-review's probe (each stored frame's roster and snapshot, NPC character
+  sheets, `knows_inspect`, the establishing and situation sets, `who_knows` on
+  every key a `knows:` frame touches, `by_alias` on every name and alias text,
+  proposals, `typing_conflicts`, `fidelity_audit`, `identity_conflicts`), base
+  `dddbb64` against r2:
+  - 0 snapshots flip between ok and error.
+  - "Minutes Before Bullets": `knows:person:tom_apprentice` serves its own 19
+    rows (base 19; r1 with §7: 58, 39 of them from merged frames).
+  - `emberroad2`'s frame-clearing loop for `person:caldus` retracts 0 partner
+    rows (above).
+  - `thedeep*` (5 files): `person:chen` and `person:elias_chen` unmerge (their
+    only `same_as` is the `knows:`-frame row §2 makes inert; canon holds a
+    proposal `confirm` promotes, "Migration and notice"). That accounts for all
+    5 closure changes, all 15 changed frame snapshots, all 10 `who_knows`
+    changes (`person:chen`'s alias and kind known by 2 frames instead of 5),
+    and those files' `by_alias`, proposal, establishing, situation and
+    collision changes. No other frame read changes anywhere.
+  - `by_alias`, outside `thedeep`: two texts stop resolving in canon because
+    only a `knows:` frame carries them (§2): "mara_thist"
+    (`emberroad.preset.play`, in `knows:person:mara_thist`) and "tom
+    apprentice" (`live_telegram_8786956263_2`, an alias of
+    `person:pavel_orra` in `knows:person:tom_apprentice`).
+  - `typing_conflicts` (26 files): the slip signature reads canon only (§2).
+    No pair is lost; 7 are gained, slips a non-canon row had masked ("saint
+    orven's step" twice, "san pedro" in the 5 `thedeep` files); 92 pairs'
+    `asymmetry` counts, and 6 `artifact_edges` lists, now count canon rows.
+  - `name_collisions`, outside `thedeep`: "the open ledger"
+    (`bodycase.critic_genreshift` ×2) was `hard_blocked` by a `held_by` row in
+    `proposed:main` and is now `unlinked` (live, 2g's rule); "saint orven's
+    step" (`emberroad.preset.play`) moves from `auto_declined`/`kind_conflict`
+    to `typing_slip`.
+  - `open_conflicts` in canon: 0 → 520, in 38 worlds (§5: computed on read;
+    construct never ran `scan()`). `identity_conflicts()` is `[]` in all 52.
+- **r2's code against the rebased pre-r2 code**, on the same copies:
+  `_is_known` gives identical answers on 101,422 (id, stored frame) pairs (all
+  2,542 ids that live only in non-canon frames × every stored frame, plus a
+  seeded sample), in 25 s against 98 s. `proposals()`,
+  `fidelity_audit()["name_collisions"]` and `reconcile()` give identical
+  results (no construct world holds an `aka` row, so the group check is
+  `distinct_block` again), in the same time (`reconcile` 200.0 s against
+  199.7 s summed over the 52; base 286 s).
