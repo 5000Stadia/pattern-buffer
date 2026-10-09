@@ -930,3 +930,73 @@ def test_s5_o5f_situation_lens_unchanged(world):
     assert [r.entity for r in one.assertions if r.entity.startswith("event:")] == [
         "event:repair"]
     assert one.truncated == 1
+
+
+# ===================================================== §6 neighborhood's event edges
+
+
+def _event_neighbours(w: World, entity: str, as_of: float | None) -> list[str]:
+    out = w.porcelain.neighborhood(entity, edge_kinds=["events"], as_of=as_of)
+    return sorted(n["entity"] for n in out["neighbors"])
+
+
+def test_s6_o6a_a_zero_duration_event_stays_reachable(world):
+    """§6 O6a (EV9): event:wave [5,5) with agent person:mara: an event
+    neighbour at as_of 5 and 9 (today none), and at None; none at 4."""
+    w = world
+    _ingest(w, [
+        {"entity": "person:mara", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "event:wave", "attribute": "kind", "value": "wave", "valid_from": 5.0,
+         "valid_to": 5.0},
+        {"entity": "event:wave", "attribute": "agent", "value": "person:mara",
+         "value_type": "entity", "valid_from": 5.0, "valid_to": 5.0},
+    ])
+    assert _event_neighbours(w, "person:mara", None) == ["event:wave"]
+    assert _event_neighbours(w, "person:mara", 5.0) == ["event:wave"]
+    assert _event_neighbours(w, "person:mara", 9.0) == ["event:wave"]
+    assert _event_neighbours(w, "person:mara", 4.0) == []
+
+
+def test_s6_o6b_a_cause_on_a_merged_events_stored_id_is_reached(world):
+    """§6 O6b: test_world_retrieval's event tests pass unchanged; a cause on a
+    merged event's stored id is still reached (run here as well)."""
+    w = world
+    _ingest(w, [
+        {"entity": "person:marn", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "event:gift", "attribute": "kind", "value": "gift", "valid_from": 1.0},
+        {"entity": "event:gift", "attribute": "agent", "value": "person:marn",
+         "value_type": "entity", "valid_from": 1.0},
+        {"entity": "event:rumor", "attribute": "kind", "value": "rumor", "valid_from": 0.5},
+        {"entity": "event:gift_alias", "attribute": "caused_by", "value": "event:rumor",
+         "value_type": "entity", "valid_from": 1.0},
+    ])
+    w.registry.merge("event:gift", "event:gift_alias", "same gift event")
+    out = w.neighborhood("person:marn", depth=2, edge_kinds=["events"])
+    assert {"event:gift", "event:rumor"} <= {n["entity"] for n in out["neighbors"]}
+
+
+def test_s6_an_agent_row_on_another_subject_is_not_an_event(world):
+    """§6: a non-event subject with an `agent` row is not an event neighbour;
+    the edges follow the records as of the read."""
+    w = world
+    _ingest(w, [
+        {"entity": "person:mara", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "obj:puppet", "attribute": "kind", "value": "puppet", "timeless": True},
+        {"entity": "obj:puppet", "attribute": "agent", "value": "person:mara",
+         "value_type": "entity", "valid_from": 2.0},
+        {"entity": "event:show", "attribute": "kind", "value": "show", "valid_from": 3.0},
+        {"entity": "event:show", "attribute": "agent", "value": "person:mara",
+         "value_type": "entity", "valid_from": 6.0},
+        {"entity": "event:show", "attribute": "caused_by", "value": "event:booking",
+         "value_type": "entity", "valid_from": 6.0},
+        {"entity": "event:booking", "attribute": "kind", "value": "booking", "valid_from": 1.0},
+    ])
+    assert w.indexes.event_participation("person:mara") == ["event:show"]
+    # as of 4 the show has occurred, but its agent row is stamped 6
+    assert w.indexes.event_participation("person:mara", valid_as_of=4.0) == []
+    assert w.indexes.event_participation("person:mara", valid_as_of=6.0) == ["event:show"]
+    assert w.indexes.caused_by_of(["event:show"], valid_as_of=4.0) == []
+    assert w.indexes.caused_by_of(["event:show"], valid_as_of=6.0) == ["event:booking"]
+    # the show is an event neighbour and so is its cause; the puppet is not
+    assert _event_neighbours(w, "person:mara", None) == ["event:booking", "event:show"]
+    assert _event_neighbours(w, "person:mara", 4.0) == []

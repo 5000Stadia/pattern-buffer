@@ -1630,24 +1630,34 @@ class Indexes:
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> list[str]:
-        """Events whose participant row points at this entity's closure.
+        """Events whose record, as of the read, has an `agent` or `patient`
+        row resolving into this entity's closure (EVENTS-ONE-READER-V1 §6).
 
-        EVENT rows are intentionally not folded, so this reads visible rows
-        directly through indexed participant/value filters.
+        Candidates come from the indexed participant/value lookup, kept only
+        when the row is an event row; their records then decide, under the
+        reader's valid-axis rule — so a closed or zero-duration event stays
+        reachable once it has occurred, and a non-event subject with an
+        `agent` row is no event.
         """
         entity = self._resolve(entity)
-        out: set[str] = set()
+        candidates: set[str] = set()
         for eid in sorted(self._closure_of(entity)):
             for row in self._buffer.visible(
                 attribute_in=["agent", "patient"],
                 value=eid,
                 frame=frame,
-                valid_as_of=valid_as_of,
                 asserted_as_of=asserted_as_of,
             ):
-                if not row.entity.startswith("a:") and not row.entity.startswith(ATTR_PREFIX):
-                    out.add(self._resolve(row.entity))
-        return sorted(out)
+                if is_event_row(row):
+                    candidates.add(self._resolve(row.entity))
+        if not candidates:
+            return []
+        records = self.event_records(frame, ids=sorted(candidates),
+                                     valid_as_of=valid_as_of, asserted_as_of=asserted_as_of)
+        return sorted(
+            event_id for event_id, record in records.items()
+            if any(r.attribute in ("agent", "patient") and isinstance(r.value, str)
+                   and self._resolve(r.value) == entity for r in record))
 
     def caused_by_of(
         self,
@@ -1656,25 +1666,20 @@ class Indexes:
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> list[str]:
-        # Identity-closure-scoped: a caused_by row may sit on any member of a
-        # merged event's closure, not only the canonical id (post-impl review).
-        events: set[str] = set()
-        for e in event_ids:
-            events |= self._closure_of(self._resolve(e))
-        events = sorted(events)
-        if not events:
+        """The resolved `caused_by` values of these events' records, as of the
+        read (EVENTS-ONE-READER-V1 §6). Each event is read through its
+        identity closure, so a cause on a merged event's stored id is reached
+        (post-impl review)."""
+        ids = sorted({self._resolve(e) for e in event_ids})
+        if not ids:
             return []
         out: set[str] = set()
-        for row in self._buffer.visible(
-            entity_in=events,
-            attribute="caused_by",
-            value_type="entity",
-            frame=frame,
-            valid_as_of=valid_as_of,
-            asserted_as_of=asserted_as_of,
-        ):
-            if isinstance(row.value, str):
-                out.add(self._resolve(row.value))
+        for record in self.event_records(frame, ids=ids, valid_as_of=valid_as_of,
+                                         asserted_as_of=asserted_as_of).values():
+            for row in record:
+                if (row.attribute == "caused_by" and row.value_type == "entity"
+                        and isinstance(row.value, str)):
+                    out.add(self._resolve(row.value))
         return sorted(out)
 
     def incoming_refs(
