@@ -524,6 +524,8 @@ class Indexes:
 
         if self._semantics.is_set_valued(attribute):
             return self._fold_set_valued(candidates)
+        if self._semantics.is_last_write(attribute):
+            return self._fold_last_write(candidates)
 
         constitutive: list[Assertion] = []
         standing: list[Assertion] = []   # STATE ∪ DISPOSITIONAL, in log order
@@ -886,6 +888,17 @@ class Indexes:
             quantity=total,
             _ledger_rows=ledger_rows,
         )
+
+    def _fold_last_write(self, rows: list[Assertion]) -> FoldResult:
+        """A declared `fold_policy: last_write` key (READ-SURFACE-V1 §2): the
+        row with the greatest recency key (`_recency_key`) among the rows of
+        the top evidence rank, whatever their durability. Never conflicted,
+        and source classes take no part (no §7.2 flag): last_write is about
+        time, not trust. Rank stays, so a later `inferred` or `assumed` row
+        never displaces a `stated` one (P5's assumption quarantine). The
+        pre-fold filters (EVENT, delta, spent and superseded thunks) have
+        already run."""
+        return FoldResult(winner=max(self._top_evidence(rows), key=self._recency_key))
 
     def _fold_set_valued(self, rows: list[Assertion]) -> FoldResult:
         """Set-valued keys accumulate current members instead of conflicting.
