@@ -1,10 +1,12 @@
 # READ-SURFACE-V1: the porcelain reads what the gate writes
 
-**Status:** DRAFT r1 (2026-10-08). Batch E of `docs/AUDIT-2026-10.md`: P1 #10–#12,
-the batch-E row, and the five places where construct rebuilds what the porcelain
-should give. Kabe approved the five batches and every "Decision for Kabe" as
-recommended; this spec relies on #3 (persist physics) and #4 (the durability pin).
-Not yet reviewed by pbr.
+**Status:** r1, built (2026-10-09). Spec pbr GREEN at 9cb2b92; built on batch D
+(d7ae0bb) on `impl/read-surface-v1`, with C §7's three references amended (C
+shipped without it); the code goes to pbr next. See "Build notes for pbr" at the
+end. Batch E of `docs/AUDIT-2026-10.md`: P1 #10–#12, the batch-E row, and the
+five places where construct rebuilds what the porcelain should give. Kabe
+approved the five batches and every "Decision for Kabe" as recommended; this
+spec relies on #3 (persist physics) and #4 (the durability pin).
 
 **Its three open decisions take their defaults.** Kabe's standing approval of
 2026-10-08 covers the audit's batches "as recommended". He is listed to
@@ -954,3 +956,152 @@ The proposed shape for that batch:
      keyed on `relation_family`.
    - The alternative gives a non-containment attribute the containment family's
      cross-source rule, a feature nobody has asked for.
+
+## Build notes for pbr
+
+Built 2026-10-09 on batch D (d7ae0bb, code-identical to main's merge of D) on
+`impl/read-surface-v1`, against the independent oracle tests
+(`tests/test_read_surface.py`, written from this spec alone). One commit per
+section, in order; §9 and §11 share one. Each section's commit passes the
+existing suite on its own, with its own and every earlier section's oracles
+green.
+
+**C §7 is held, so three places are amended** (commit 1297cd3). C shipped
+without §7 (`knows:` frames following merges; Kabe's gate g3bf5da). The
+"Founder decisions" bullet on C's #1 and #2, the §0 row for §8 ("C §6, C §7")
+and §8's bullet "With C, an observer frame reads through identity" now say §7
+is held and that §8's `frame=` reads the rows stored under the frame's own
+name. No E behaviour depends on C §7, and no oracle uses a merge.
+
+**Implementer's readings.**
+- §1, the coherence check, is `AttributeSemantics.conflict(attribute,
+  declaration)`. It judges a declaration against the attribute's effective
+  semantics (built-in defaults under the declarations already in the log) and
+  the other keys of the same declaration. Within one declaration the pin, or
+  the fold policy, is the key refused: `{"structural": true, "durability":
+  "STATE"}` reports `field: durability`, `conflicts_with: "structural=true"`
+  (O1e), and `{"arity": "set_valued", "fold_policy": "last_write"}` reports
+  `field: fold_policy`, `conflicts_with: "arity=set_valued"` (O2g). In the
+  other order the later key is refused, naming the earlier one
+  (`"durability=<class>"`, `"fold_policy=last_write"`). "Beside `arity:
+  set_valued`" includes a built-in set, so `last_write` on `alias` skips: it
+  could never take effect. The value is validated first (a bad value skips
+  without `conflicts_with`), then coherence; either way the
+  `attribute_default` callback stays unconsulted.
+- §2: `is_last_write()` carries the read-side rule (set-valued and
+  containment win over a stored `last_write`). `MOVE` is gone from
+  `semantics.py`; `BY_CLASS` is the internal label.
+- §3: `Ingestor.canonical_attribute` is `_canonicalize(name)[0]`. The
+  porcelain's one helper passes a non-string through unchanged, and the
+  `canonical_attribute` verb uses the same helper.
+- §4: `ask` applies the key rules to its location fold too (it is the `in`
+  key): a placeholder location is named in `unresolved`, not served with a
+  chain; a conflicted one is served and named. `unresolved`/`conflicted`
+  entries are de-duplicated and name the containment family `in`, as
+  snapshot does. `values` is left out of an `unresolved` key's payload, so a
+  set holding only placeholders never lists one as a member.
+- §6: "a finite real number, not a bool" is read strictly: an int or float,
+  finite, never a bool. A numeric-string plan `as_of` is ignored like any
+  other invalid value (the gate coerces numeric strings for stored
+  coordinates; a parse is not one). Rule B runs in every non-canon frame; a
+  `plot:` frame has no asker scope, so it binds by its own vocabulary over
+  its whole roster. `Refer.__call__(model=)` (§9's) landed in §6's commit
+  because rule B needs it.
+- §7: the buffer's validator also refuses a `retracts` row that targets the
+  physics row. "Immutable" has to cover a retraction replayed from a tampered
+  dump: a hidden physics row would leave the world unable to record its own
+  (a second one is refused). The gate's refusal sits at the head of B §0
+  step 2 (before the status grant) and matches the item's attribute after
+  canonicalization. `World.policy` stays a plain attribute holding the
+  effective policy. The policy vocabulary moved to `model.py`; `thunks`
+  re-exports it.
+- §8: `World.charter(asserted_as_of=)`; the porcelain threads the log
+  position into each Fact's source chain.
+- §9: `constraints` must be `[relation, anchor]` string pairs (ValueError
+  otherwise) and reach `Refer` as tuples.
+- §11: each new MCP piece landed with the section that introduced it, so
+  every commit stays green: `canonical_attribute` with §3 (41 tools), the
+  permissive allowlist with §5, `--policy` with §7, `refer` and
+  `FORCED_PARAMS` with §9 (42). A forced parameter's refusal message names
+  it.
+
+**Oracle tests.** 116 collected: 114 pass; the 2 O7h launcher tests skip here
+because the `mcp` SDK is not installed (both pass against a stand-in module
+that lets `main()` reach `World`).
+- Corrected, because the spec wins over the test: §3's confidence oracle
+  read `confidence(ann, "located_in")["value"]`, as the spec's own oracle
+  line does, but the confidence payload has no `value` key (CONFIDENCE-V1
+  keeps it distinct from state's served value) and §3 adds none. The test
+  now checks the rule itself: the alias spelling returns the `in` key's
+  payload (score set, status stated), where it scored an empty key before.
+- Strengthened: O4d also checks a served fact's `value_type` (resolve on a
+  key that already holds concrete state), not only the denied path's empty
+  list.
+- AMBIGUOUS readings, settled as the tests read them: O1h (a whole-world
+  rebuild still sends the charter's `stance`/`title`/`description` rows to
+  the model, as before E; the pin, its data and the physics row make no
+  call); O8b (neighbourhood salience is read at the head, a stated known
+  limit, so it is compared without salience); §11 (42 on this base, C
+  landed).
+
+**Existing tests changed.**
+- `tests/test_mcp_wrapper.py` (§3, §5, §11): the count (40 -> 42), the
+  zero-model smoke arguments for `canonical_attribute` and `refer`, the
+  permissive allowlist (exactly `who_knows.value`, `state.value`,
+  `state_union.value`), the `FORCED_PARAMS` table and refer's forced
+  parameters refused before dispatch.
+- `tests/test_gate_authority.py` and its two fixtures (§7). The spec said a
+  grep finds no absolute `a:<seq>` pins outside raw-buffer tests; batch B's
+  tests, merged since, pin them. `_ann_calm` (`a:3` -> `a:4`), the raw
+  `same_as` merge rows (`event:merge_6`/`a:7` -> `event:merge_7`/`a:8`), and
+  the corpus log and sidecar fixtures, re-baselined. The new fixtures equal
+  the old ones with each world's physics row inserted at seq 3 and every
+  later id shifted by one, checked mechanically, so B's byte-identity pin
+  still holds for everything else.
+- `tests/test_who_knows.py`: unchanged; no expectation there encodes a
+  winner-only match.
+
+**Byte-identical, measured** on fresh copies of construct's 52 live world
+files (snapshot of 04:30; no live file has changed since), base d7ae0bb
+against the built head, `attribute_default` wired, a plan-scripted stub model
+(refer tier 2 answers no-match), `PYTHONHASHSEED=0`. Every difference is one
+this spec names; none is unexplained.
+- Classifier guardrail verdicts: 72,583 rows, 0 differ. All 52 worlds open as
+  `invent_under_canon` with 0 writes; 0 stored attribute names change under
+  `canonical_attribute` (§3's measurement holds).
+- `snapshot` per stored frame, NPC character sheets, the arc scope's
+  establishing and situation lenses, `facts` per frame, `events` per frame,
+  `locate`/`contents` (15,064), `path` (2,867 pairs): identical apart from
+  `Fact.value_type`. The porcelain's `locate`/`contents(frame=)` equal
+  `World`'s (10,384).
+- `state` and `state_union`, 38,897 keys each: 32,834 identical apart from
+  `value_type`; 31 placeholder keys (17 worlds) answer `unresolved`; 5,197
+  set-valued keys gain `values` (49 worlds); 835 conflicted keys gain
+  `conflicting_facts` (40 worlds).
+- `who_knows`, 10,212 queries: 9,884 identical; 326 set-member queries now
+  match (35 worlds); 2 placeholder-only frames drop (1 world).
+- `world.refer`, 8,054 calls (every stored name and alias, canon and each
+  storing frame): identical, 0 writes.
+- `ask`, 8,054 scripted asks: 7,390 identical (1,130 of them now name a
+  conflicted key); 37 stop serving a placeholder as a fact (4 of those flip
+  to unanswered); 420 serve every member of a set; 207 non-canon asks bind
+  the asker's own word (rule B). Of the 207, 206 are references canon could
+  not bind; one overrides a canon binding. In
+  `live_telegram_8786956263_2`, Bee's frame aliases "the camp" to
+  `person:inez_calder` alone; canon carries that alias on four people, so
+  canon binds the one camp in Bee's scene, `place:drainage_camp`, by kind.
+  Rule B, as specified, puts Bee's alias first, and here that serves an
+  extraction-made alias over the likelier place (the root cause gate g3bf5da
+  also names). Default 1 is on Kabe's list to revisit; this is its one live
+  case of overriding canon.
+- Outside E: `snapshot(lens="establishing_set")` orders its facts and
+  defaults by a set's iteration order (`Projector._establishing_scope`), so
+  the order varies with `PYTHONHASHSEED` on base and new alike. Pre-existing;
+  the measurement fixes the seed.
+
+**For pbr's eye.** The readings above that go past the spec's letter: the
+buffer refusing a retraction of the physics row (§7), `ask`'s location fold
+under §4's rules, coherence judged against built-in arity (§1/§2), and the
+strict `as_of` predicate (§6). And rule B's one live override of a canon
+binding (above), which rests on default 1. `specs/STATUS.md` and the README's test count
+move at merge, as B, C and D did.
