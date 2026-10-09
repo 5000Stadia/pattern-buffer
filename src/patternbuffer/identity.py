@@ -1271,6 +1271,75 @@ class IdentityRegistry:
             })
         return out
 
+    def identity_conflicts(self, asserted_as_of: int | None = None) -> list[dict]:
+        """Canon `same_as` closures (two or more members) that hold a pair the
+        guarded merge would veto — a canon containment-family row
+        (entity-valued) or a canon `distinct_from` row with both endpoints in
+        the closure, at any valid time, the vetoes' own predicate
+        (FRAME-SCOPED-IDENTITY-V1 §4). A raw or legacy `same_as` could merge
+        such a pair before GATE-AUTHORITY-V1 routed raw rows through the
+        guarded merge, and a `distinct_from` written later inside a closure by
+        raw ingest lands the same way; nothing else says so.
+
+        One entry per closure, sorted by `canonical_id`:
+        `{canonical_id, members (sorted), containment_edges, distinct_edges,
+        same_as: [{assertion_id, edge, merge_event_id}]}` — edge lists in log
+        order, `same_as` listing every canon `same_as` row inside the closure,
+        `merge_event_id` from the row's `caused_by` (None for a raw row). The
+        host decides which `same_as` to retract; the engine chooses no cut.
+        Canon only (identity is canon's) and read-only."""
+        edges = self._same_as_edges(asserted_as_of)
+        component_of: dict[str, int] = {}
+        components: list[set[str]] = []
+        for start in edges:
+            if start in component_of:
+                continue
+            members = self._walk(edges, start)
+            for member in members:
+                component_of[member] = len(components)
+            components.append(members)
+        if not components:
+            return []
+        family = self._containment_family()
+        found: dict[int, dict[str, list]] = {}
+        for row in self._buffer.visible(frame=CANON, asserted_as_of=asserted_as_of):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            index = component_of.get(row.entity)
+            if index is None or component_of.get(row.value) != index:
+                continue
+            bucket = found.setdefault(
+                index, {"containment": [], "distinct": [], "same_as": []})
+            if row.attribute in family:
+                bucket["containment"].append(f"{row.entity}·{row.attribute}·{row.value}")
+            elif row.attribute == "distinct_from":
+                bucket["distinct"].append(f"{row.entity}·distinct_from·{row.value}")
+            elif row.attribute == "same_as":
+                bucket["same_as"].append(row)
+        out: list[dict] = []
+        for index, bucket in found.items():
+            if not bucket["containment"] and not bucket["distinct"]:
+                continue
+            members = components[index]
+            same_as = []
+            for row in bucket["same_as"]:
+                causes = self._buffer.visible(
+                    entity=row.id, attribute="caused_by", value_type="entity",
+                    frame=CANON, asserted_as_of=asserted_as_of)
+                same_as.append({
+                    "assertion_id": row.id,
+                    "edge": f"{row.entity}·same_as·{row.value}",
+                    "merge_event_id": causes[0].value if causes else None,
+                })
+            out.append({
+                "canonical_id": self.resolve(next(iter(members)), asserted_as_of),
+                "members": sorted(members),
+                "containment_edges": bucket["containment"],
+                "distinct_edges": bucket["distinct"],
+                "same_as": same_as,
+            })
+        return sorted(out, key=lambda entry: entry["canonical_id"])
+
     def by_alias(self, alias: str, asserted_as_of: int | None = None,
                  frame: str = CANON) -> set[str]:
         """Entities a `name` or `alias` row in `frame` names exactly,

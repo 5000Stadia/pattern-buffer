@@ -433,3 +433,73 @@ def test_3f_a_host_merge_stays_available(world):
     _masked_and_ilsa(world)
     assert world.porcelain.merge("person:masked", "person:ilsa",
                                  "the host judged")["outcome"] == "merged"
+
+
+# ------------------------- §4 identity_conflicts(): merged groups with a vetoed pair
+
+ANCHOR = Path(__file__).resolve().parent.parent / "examples" / "anchor" / "anchor.world"
+
+
+def _open_copy(source: Path, tmp_path: Path) -> World:
+    """A World over a copy of `source` (its world_id read from the file)."""
+    copy = tmp_path / source.name
+    shutil.copyfile(source, copy)
+    conn = sqlite3.connect(copy)
+    world_id = conn.execute(
+        "SELECT value FROM world_meta WHERE key = 'world_id'").fetchone()[0]
+    conn.close()
+    return World(copy, world_id=world_id)
+
+
+def _ring_fused_with_its_box(world: World):
+    """The probe world: the ring is in the box, the box is rejected as the
+    ring, then a raw canon `same_as` (appended past the gate) fuses them."""
+    world.ingest_structured([{"entity": "obj:ring", "attribute": "in", "value": "obj:box"}])
+    world.porcelain.reject("obj:box", "obj:ring")
+    return _legacy_row(world, "obj:ring", "same_as", "obj:box", "canon")
+
+
+def test_4a_a_fused_vetoed_pair_is_listed(world):
+    """4a: one entry, both edge lists populated, the raw `same_as` named with
+    no merge event; the call writes nothing."""
+    edge = _ring_fused_with_its_box(world)
+    head = world.buffer.head()
+    assert world.porcelain.identity_conflicts() == [{
+        "canonical_id": "obj:box",
+        "members": ["obj:box", "obj:ring"],
+        "containment_edges": ["obj:ring·in·obj:box"],
+        "distinct_edges": ["obj:box·distinct_from·obj:ring"],
+        "same_as": [{"assertion_id": edge.id, "edge": "obj:ring·same_as·obj:box",
+                     "merge_event_id": None}],
+    }]
+    assert world.buffer.head() == head
+
+
+def test_4b_retracting_the_same_as_clears_it(world):
+    """4b: retract that `same_as` and the closure, and the entry, are gone."""
+    edge = _ring_fused_with_its_box(world)
+    world.porcelain.retract(edge.id, "a ring is not its box")
+    assert world.porcelain.identity_conflicts() == []
+
+
+def test_4c_clean_worlds_list_nothing(world, tmp_path):
+    """4c: a clean world (one guarded merge, no vetoed pair inside) and the
+    anchor example world give []."""
+    _people(world, "dan", "daniel")
+    assert world.porcelain.merge("person:dan", "person:daniel", "one man")["outcome"] == "merged"
+    assert world.porcelain.identity_conflicts() == []
+    anchor = _open_copy(ANCHOR, tmp_path)
+    try:
+        assert anchor.porcelain.identity_conflicts() == []
+    finally:
+        anchor.close()
+
+
+def test_4d_the_read_writes_nothing(world):
+    """4d: the head, and every table's content, is unchanged by the call."""
+    _ring_fused_with_its_box(world)
+    conn = world.buffer.raw_connection()
+    head, changes = world.buffer.head(), conn.total_changes
+    world.porcelain.identity_conflicts()
+    world.identity_conflicts(asserted_as_of=head)
+    assert world.buffer.head() == head and conn.total_changes == changes

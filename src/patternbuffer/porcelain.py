@@ -664,6 +664,16 @@ class Porcelain:
         these; adjudicate each with `retype(...)` or leave it. Zero writes."""
         return self._w.registry.typing_conflicts()
 
+    def identity_conflicts(self) -> list[dict]:
+        """Read-only: merged canon closures that hold a pair the guarded merge
+        would veto (a containment-family or `distinct_from` row with both
+        endpoints inside) — what a raw or legacy `same_as` merged past the
+        vetoes (FRAME-SCOPED-IDENTITY-V1 §4). Each entry is `{canonical_id,
+        members, containment_edges, distinct_edges, same_as: [{assertion_id,
+        edge, merge_event_id}]}`; you decide which `same_as` to retract. Canon
+        only (identity is canon's). Zero writes."""
+        return encode_out(self._w.identity_conflicts())
+
     def retype(self, entity: str, to_kind: str, evidence: str,
                absorb: str | None = None) -> dict:
         """Typing correction, distinct from merge. absorb=None: correct one

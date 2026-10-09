@@ -31,7 +31,7 @@ from patternbuffer.codec import encode_out
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------- the registry
-# Explicit and exhaustive (Cx 521 #2): the 39 deterministic tools. A porcelain
+# Explicit and exhaustive (Cx 521 #2): the 40 deterministic tools. A porcelain
 # addition CANNOT appear here by reflection — it must be classified V1/V1.1 and
 # added deliberately (the registry-completeness test enforces this).
 
@@ -42,6 +42,7 @@ V1_READS = (
     "in_transit",                                        # MOVED-EVENT-V1 § E3
     "entities", "facts", "fidelity_audit", "axis_heads", "proposals",
     "correlations", "correlation_conflicts", "typing_conflicts",
+    "identity_conflicts",                                # FRAME-SCOPED-IDENTITY-V1 §4
 )
 V1_MUTATIONS = (
     "ingest_structured", "commit_set", "retract", "reconcile",

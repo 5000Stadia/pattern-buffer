@@ -248,6 +248,10 @@ class World:
     def correlation_conflicts(self, **kw) -> list[dict]:
         return self.registry.correlation_conflicts(**kw)
 
+    # FRAME-SCOPED-IDENTITY-V1 §4 — merged canon closures holding a vetoed pair.
+    def identity_conflicts(self, asserted_as_of: int | None = None) -> list[dict]:
+        return self.registry.identity_conflicts(asserted_as_of=asserted_as_of)
+
     def path(self, a: str, b: str, **kw) -> list[str] | None:
         return self.indexes.path(a, b, **kw)
 
