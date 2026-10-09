@@ -189,7 +189,7 @@ class Porcelain:
             value_type="literal",    # a derived total (READ-SURFACE-V1 §4)
         )
 
-    def _key_payload(self, fold) -> dict:
+    def _key_payload(self, fold, value: Any = None) -> dict:
         """The one payload `state` and `state_union` build from a fold
         (READ-SURFACE-V1 §4). `status` is decided in order: nothing served ->
         `unknown`; the fold flags -> `conflicted`; the served row is an
@@ -199,10 +199,12 @@ class Porcelain:
         follow in order: `status`, `fact`, `quantity`, `conflicting`, then
         `conflicting_facts` (one Fact per conflicting id, in that order) and
         `values` (a set-valued key's current members, in member order;
-        `fact` stays the most recent)."""
+        `fact` stays the most recent). Given a `value`, `matches` comes last:
+        `who_knows`'s test of this frame's fold (§5; False on `unknown`)."""
         winner = fold.winner
         if winner is None:
-            return {"status": "unknown"}
+            return {"status": "unknown"} if value is None else {
+                "status": "unknown", "matches": False}
         # Accrue: the host-facing value is the derived total, not the last
         # delta row — keep `fact.value` consistent with ask()/snapshot().
         fact = (self._quantity_fact(winner, fold.quantity)
@@ -222,6 +224,9 @@ class Porcelain:
                 self._fact(self._w.buffer.get(i)).to_dict() for i in fold.conflicting]
         if fold._value_rows and status != "unresolved":
             out["values"] = [self._fact(r).to_dict() for r in fold._value_rows]
+        if value is not None:
+            # decoded first, so the `$decimal` tag works over JSON and MCP
+            out["matches"] = self._w.indexes.fold_matches(fold, decode_value(value))
         return encode_out(out)
 
     @staticmethod
@@ -529,16 +534,19 @@ class Porcelain:
         })
 
     def state(self, entity: str, attribute: str, frame: str = CANON,
-              as_of: float | None = None) -> dict:
+              as_of: float | None = None, value: Any = None) -> dict:
         """The folded value of one (entity, attribute) key in a frame as of a valid
         time: {"status": "unknown"} when nothing is recorded, else "known",
         "conflicted" or "unresolved" (the served row is an unresolved
         placeholder) with the served fact; plus the conflicting assertion ids
         and their facts, a set-valued key's current members (`values`), or
         the derived quantity for an accrue attribute. A host treats a status
-        it does not recognize as not known."""
+        it does not recognize as not known. Given a `value` (any JSON; a
+        `$decimal` tag decodes), the payload gains `matches`: whether this
+        frame's fold holds it, `who_knows`'s test (READ-SURFACE-V1 §5)."""
         return self._key_payload(
-            self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of))
+            self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of),
+            value)
 
     def where(self, attribute: str, op: str, value, frame: str = CANON,
               as_of: float | None = None) -> list[str]:
@@ -784,13 +792,14 @@ class Porcelain:
         return self._w.registry.correlations(entity, valid_as_of=as_of, frame=frame)
 
     def state_union(self, entity: str, attribute: str, frame: str = CANON,
-                    as_of: float | None = None) -> dict:
+                    as_of: float | None = None, value: Any = None) -> dict:
         """The explicit correlated read: fold `attribute` over `entity` ∪ its
         correlated facets, as-of. Same shape as `state`. NOT a default read —
         `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
         uncorrelated view (no leak)."""
         return self._key_payload(
-            self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of))
+            self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of),
+            value)
 
     def correlation_conflicts(self, as_of: float | None = None,
                               frame: str = CANON) -> list[dict]:
@@ -929,9 +938,12 @@ class Porcelain:
                   as_of: float | None = None) -> list[str]:
         """The `knows:*` frames that KNOW `(entity, attribute)` — the computed
         inverse of `frame_diff` (WHO-KNOWS-INVERSE-V1). A frame qualifies iff its
-        folded winner is present and (when `value` given) value-matches,
-        identity-aware. No stored `known_by`; superseded/retracted beliefs drop."""
-        return self._w.who_knows(entity, self._attr(attribute), value, valid_as_of=as_of)
+        fold serves a concrete value and, when `value` is given, the folded value
+        matches it: identity-aware, any member of a set, an accrue key's total
+        (READ-SURFACE-V1 §5). A `$decimal` tag decodes first. No stored
+        `known_by`; superseded/retracted beliefs drop."""
+        return self._w.who_knows(entity, self._attr(attribute), decode_value(value),
+                                 valid_as_of=as_of)
 
     def frame_diff(self, a: str, b: str | list[str], scope,
                    as_of: float | None = None) -> list[dict]:

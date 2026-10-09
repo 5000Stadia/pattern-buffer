@@ -103,12 +103,14 @@ def test_schema_overrides_cover_exactly_the_unannotated_params():
 
 def test_no_annotated_param_degrades_to_permissive_schema():
     # Cx 533 #1 regression lock: postponed annotations must be RESOLVED, never
-    # string-compared into a silent {}. The only permissive schema on the whole
-    # surface is who_knows.value, annotated Any on the frozen signature.
+    # string-compared into a silent {}. The only permissive schemas on the
+    # whole surface are the deliberately-Any `value` parameters: who_knows's,
+    # and state's and state_union's (READ-SURFACE-V1 §5/§11).
     reg = build_registry()
-    empty = [(t, p) for t, spec in reg.items()
-             for p, s in spec["inputSchema"]["properties"].items() if s == {}]
-    assert empty == [("who_knows", "value")]
+    empty = {(t, p) for t, spec in reg.items()
+             for p, s in spec["inputSchema"]["properties"].items() if s == {}}
+    assert empty == {("who_knows", "value"), ("state", "value"),
+                     ("state_union", "value")}
     # spot-check resolved types (the exact params Cx proved permeable)
     assert reg["state"]["inputSchema"]["properties"]["entity"] == {"type": "string"}
     assert reg["ingest_structured"]["inputSchema"]["properties"]["items"] == {
