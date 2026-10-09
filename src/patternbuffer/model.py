@@ -102,6 +102,10 @@ ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
 # or `a drawer at home`. Matched from the start of the value.
 ID_SHAPED_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*:(?!\s)")
 
+# An assertion id, as the buffer mints them (`a:<seq>`) — GATE-AUTHORITY-V1 §8.
+# A host id merely shaped like the namespace (`a:artifact`) is not one.
+ASSERTION_ID_RE = re.compile(r"^a:[0-9]+$")
+
 # Model task keys. Every schema the engine hands the injected model callable
 # carries one of these as its JSON-Schema `title`, so a host can route a call
 # (to a cheaper tier, a stricter validator) by what the call is for. The

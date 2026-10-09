@@ -12,6 +12,7 @@ suite-level checks the spec's Tests section names:
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -1110,3 +1111,90 @@ def test_s6_atomic_abort_restores_the_cursor(world):
     assert ei.value.cause == "gate_skip"
     assert world.buffer.head() == head
     assert world.ingestor.cursor.position == 5.0
+
+
+# --------------------------------------- §8 bookkeeping never reaches the model
+
+def _tracked_world(tmp_path, stub: StubModel) -> World:
+    return World(tmp_path / "tracked.world", world_id="w:tracked", model=stub,
+                 policy="observe_or_unknown", clock=lambda: 1000.0)
+
+
+_TRACKED_WRITES = [{"entity": f"obj:o{i}", "attribute": "condition", "value": "ok",
+                    "valid_from": float(i)} for i in range(5)]
+
+
+def _verdict(world: World, assertion_id: str) -> tuple[str, float]:
+    c = world.classifier.get(assertion_id)
+    return c.durability, c.class_confidence
+
+
+def test_s8_a_tracking_sweep_judges_only_the_facts(tmp_path):
+    """§8: five tracked writes with classify="defer", then classify_all():
+    five per-row model calls (not ten), and every learned_at_wallclock row is
+    STATE 0.5."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = _tracked_world(tmp_path, stub)
+    w.ingest_structured(_TRACKED_WRITES, classify="defer")
+    calls = len(stub.calls)
+    assert w.classifier.classify_all() == 10
+    assert len(stub.calls) - calls == 5
+    stamps = [r for r in w.buffer.all_rows() if r.attribute == "learned_at_wallclock"]
+    assert len(stamps) == 5
+    assert {_verdict(w, r.id) for r in stamps} == {("STATE", 0.5)}
+    w.close()
+
+
+def test_s8_seal_build_batch_prompt_lists_no_assertion_rows(tmp_path):
+    """§8: `seal_build(model=True)` sends no `a:N` line to the batch prompt."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = _tracked_world(tmp_path, stub)
+    w.porcelain.begin_build(at=1.0)
+    w.porcelain.ingest_structured(_TRACKED_WRITES)
+    w.porcelain.seal_build(model=True)
+    prompts = [prompt for prompt, schema in stub.calls
+               if schema.get("title") == "patternbuffer_classify_batch"]
+    assert prompts
+    assert not any(re.search(r"^\d+\. a:\d+ ", prompt, re.M) for prompt in prompts)
+    w.close()
+
+
+def test_s8_a_proposals_evidence_row_makes_no_model_call(world):
+    """§8: the item-level same_as proposal's evidence row (subject `a:N`) is
+    classified with no model call."""
+    world.ingest_structured([{"entity": "person:bobby", "attribute": "name",
+                              "value": "Bobby", "timeless": True,
+                              "same_as": "person:bob"}], classify="defer")
+    evidence = next(r for r in world.buffer.all_rows() if r.attribute == "evidence")
+    calls = len(world.classifier._model.calls)
+    world.classifier.classify(evidence)
+    assert len(world.classifier._model.calls) == calls
+    assert _verdict(world, evidence.id) == ("STATE", 0.5)
+
+
+def test_s8_host_metadata_on_an_assertion_is_kept_without_a_model_call(world):
+    """§8: `(a:3 · last_confirmed · 12.0)` makes no model call and
+    `state("a:3", "last_confirmed")` still serves it; a META attribute on an
+    assertion stays EVENT, and a host id shaped like the namespace
+    (`a:artifact`) is still judged by the model."""
+    target = _ann_calm(world)
+    stub = world.classifier._model
+    calls = len(stub.calls)
+    rows = world.ingest_structured([
+        {"entity": target, "attribute": "last_confirmed", "value": 12.0,
+         "timeless": True},
+        {"entity": target, "attribute": "source", "value": "doc:log", "timeless": True},
+    ])
+    assert len(stub.calls) == calls
+    assert [_verdict(world, r.id) for r in rows] == [("STATE", 0.5), ("EVENT", 1.0)]
+    assert world.porcelain.state(target, "last_confirmed")["fact"]["value"] == 12.0
+    world.ingest_structured([{"entity": "a:artifact", "attribute": "glow",
+                              "value": "faint", "valid_from": 1.0}])
+    assert len(stub.calls) == calls + 1
+
+
+def test_s8_rules_mode_sidecar_is_byte_identical(tmp_path):
+    """§8: a rules-mode world's durability sidecar is byte-identical to the
+    one recorded before this spec."""
+    _, sidecar = build_corpus(tmp_path)
+    assert sidecar == CORPUS_SIDECAR.read_text()
