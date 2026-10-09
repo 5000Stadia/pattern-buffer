@@ -56,6 +56,12 @@ _EVIDENCE_RANK = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "as
 # once (EVENTS-ONE-READER-V1 §3): a move's closing coordinate is the `valid_to`
 # its payload rows carry, and `in_transit`'s anchor reads them.
 MOVEMENT_KEYS = ("kind", "agent", "origin", "destination", "manner")
+# A record's single-valued keys (EVENTS-ONE-READER-V1 §4 Rule B): the event
+# algebra (whitepaper §12, `event(kind, agents, patients, t, effects)`) and
+# MOVED-EVENT-V1 give each one value, so top-rank rows disagreeing at the
+# winner's stamp are a contradiction. Every other attribute is description,
+# which an occurrence may hold several values of, and is never conflicted.
+_EVENT_SINGLE_VALUED = frozenset({"kind", "origin", "destination", "manner"})
 CONFIDENCE_PARAMS = {
     # CONFIDENCE-V1: fixed, tunable read-layer weights. These scores are
     # derived on demand and are never stored in the assertion log or sidecar.
@@ -484,8 +490,12 @@ class Indexes:
             entity_in=closure, attribute_in=attrs,
             frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
         ):
-            if self._classifier.durability(row.id) == EVENT:
-                continue  # events never fold
+            # Events never fold (EVENTS-ONE-READER-V1 §4 Rule A): an event row
+            # is dropped by its structure, classified or not — an unclassified
+            # row reads STATE, so a test of the class alone let it fold until a
+            # sweep — and so is every other row the classifier made EVENT.
+            if is_event_row(row) or self._classifier.durability(row.id) == EVENT:
+                continue
             candidates.append(row)
         if not candidates:
             return FoldResult(winner=None)
@@ -493,7 +503,8 @@ class Indexes:
         # Accrue reads raw numeric literal/delta rows (it filters to numbers
         # internally and ignores unresolved/thunk machinery), so it branches
         # before the thunk filter. Deltas are STATE by guardrail, never EVENT,
-        # so the gather-loop EVENT drop above leaves the ledger intact.
+        # and never event rows, so the gather-loop drop above leaves the ledger
+        # intact — an accrue ledger on an event still folds.
         if self._semantics.is_accrue(attribute):
             return self._fold_accrue(candidates)
 
@@ -1557,6 +1568,60 @@ class Indexes:
             "destination_bound": (destination.value_type == "entity"
                                   if destination is not None else None),
         }
+
+    def event_attribute(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+        *,
+        correlated: bool = False,
+    ) -> FoldResult:
+        """A point read of an event's record (EVENTS-ONE-READER-V1 §4 Rule B):
+        one attribute from the record of `entity`'s closure, as of the read
+        (`event_records`' two axes). With `correlated=True` it reads the
+        records of the `aka` union, as `state_union` and
+        `current_state(correlated=)` do.
+
+        No row, or a machinery attribute (`META_ATTRIBUTES`): nothing served.
+        `winner` is the pick. `kind`, `origin`, `destination` and `manner` are
+        single-valued: when the top-rank rows at the winner's stamp disagree
+        (`_value_key`) the result is conflicted, `conflicting` holding their
+        ids in log order — the fold's own same-stamp contradiction test. Every
+        other attribute is description and never conflicted; with two or more
+        rows, `_value_rows` holds them all in `_recency_key` order (`state()`
+        serves them as `values`). The point reads (`state`, `state_union`,
+        `ask`'s keys, identity's kind lookup) call this only when the fold
+        serves nothing; `fold_key` itself stays standing-only."""
+        if attribute in META_ATTRIBUTES:
+            return FoldResult(winner=None)
+        entity = self._resolve(entity)
+        ids = (self._correlation_of(entity, valid_as_of=valid_as_of,
+                                    asserted_as_of=asserted_as_of, frame=frame)
+               if correlated else {entity})
+        rows = sorted(
+            (r for record in self.event_records(
+                frame, ids=sorted(ids), valid_as_of=valid_as_of,
+                asserted_as_of=asserted_as_of).values()
+             for r in record if r.attribute == attribute),
+            key=self._recency_key)
+        winner = self._event_pick(rows)
+        if winner is None:
+            return FoldResult(winner=None)
+        if attribute in _EVENT_SINGLE_VALUED:
+            tied = sorted((r for r in self._top_evidence(rows)
+                           if r.valid_from == winner.valid_from),
+                          key=lambda r: r.asserted_at)
+            if len({self._value_key(r) for r in tied}) > 1:
+                return FoldResult(winner=winner, conflicted=True,
+                                  conflicting=tuple(r.id for r in tied))
+            return FoldResult(winner=winner)
+        if len(rows) > 1:
+            return FoldResult(winner=winner, values=tuple(r.value for r in rows),
+                              _value_rows=tuple(rows))
+        return FoldResult(winner=winner)
 
     def event_participation(
         self,

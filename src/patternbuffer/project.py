@@ -17,7 +17,7 @@ from typing import Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, EVENT, STATE, Classifier
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, Assertion, is_event_row
 from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
@@ -105,6 +105,11 @@ class Projector:
                 row.attribute in self._semantics.containment_family()
                 and not row.entity.startswith("a:")
                 and not row.entity.startswith(ATTR_PREFIX)
+                # EVENTS-ONE-READER-V1 §4 Rule A: an event is never inside a
+                # container, here as in the fold behind contents() — an event
+                # row is skipped by structure, as is any row classified EVENT.
+                and not is_event_row(row)
+                and self._classifier.durability(row.id) != EVENT
             ):
                 by_entity.setdefault(self._indexes.resolve_entity(row.entity), []).append(row)
         parent: dict[str, str] = {}

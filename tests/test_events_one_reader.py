@@ -493,3 +493,283 @@ def test_s3_the_containment_comparison_runs_as_of_the_log(world):
     assert w.porcelain.in_transit() == []                       # arrived
     assert [m["last_known_containment"] for m in w.porcelain.in_transit(
         asserted_as_of=h)] == ["place:hall"]
+
+
+# ===================================================== §4 event rows never fold
+
+
+def _seed_meeting(w: World) -> None:
+    """O4a (EV6): a meeting in the study at 2, its rows ingested unclassified."""
+    _ingest(w, [{"entity": "place:study", "attribute": "kind", "value": "room",
+                 "timeless": True}])
+    _ingest(w, [
+        {"entity": "event:meeting", "attribute": "kind", "value": "meeting", "valid_from": 2.0},
+        {"entity": "event:meeting", "attribute": "in", "value": "place:study",
+         "value_type": "entity", "valid_from": 2.0},
+    ], classify="defer")
+
+
+def _meeting_reads(w: World) -> dict:
+    p = w.porcelain
+    kind, where = p.state("event:meeting", "kind"), p.state("event:meeting", "in")
+    return {
+        "kind": (kind["status"], kind.get("fact", {}).get("value")),
+        "in": (where["status"], where.get("fact", {}).get("value")),
+        "contents": p.contents("place:study"),
+        "locate": p.locate("event:meeting"),
+        "snapshot": p.snapshot("event:meeting")["facts"],
+        "study": [(f["entity"], f["attribute"]) for f in p.snapshot("place:study")["facts"]],
+        "events": _ids(p.events()),
+    }
+
+
+def test_s4_o4a_state_reads_the_record_before_and_after_a_sweep(world):
+    """§4 O4a (EV6): before and after the sweep alike, state(kind) is known
+    "meeting" and state(in) known "place:study"; contents is []; the snapshot
+    has no facts; events() lists the meeting."""
+    w = world
+    _seed_meeting(w)
+    expected = {
+        "kind": ("known", "meeting"),
+        "in": ("known", "place:study"),
+        "contents": [],
+        "locate": [],
+        "snapshot": [],
+        "study": [("place:study", "kind")],
+        "events": ["event:meeting"],
+    }
+    assert _meeting_reads(w) == expected
+    w.classifier.classify_all()
+    assert _meeting_reads(w) == expected
+
+
+def test_s4_o4b_an_event_not_yet_occurred_is_unknown(world):
+    """§4 O4b: a move stamped 5: state(kind, as_of=4) is unknown; at 5 it is
+    "moved", for a zero-duration move too."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, _walk("event:walk_1"))
+    _ingest(w, _walk("event:walk_2", valid_to=5.0))
+    p = w.porcelain
+    for eid in ("event:walk_1", "event:walk_2"):
+        assert p.state(eid, "kind", as_of=4.0) == {"status": "unknown"}
+        at5 = p.state(eid, "kind", as_of=5.0)
+        assert at5["status"] == "known" and at5["fact"]["value"] == "moved"
+        assert p.state(eid, "kind", as_of=9.0)["fact"]["value"] == "moved"
+        assert p.state(eid, "agent", as_of=4.0) == {"status": "unknown"}
+
+
+def test_s4_o4c_same_stamp_disagreement(world):
+    """§4 O4c: two stated kinds at one stamp (or both timeless) are conflicted,
+    serving the later with both ids in `conflicting`; a stated kind outranks a
+    later assumed one; two `participants` rows are known, the later as the
+    fact and both in `values`."""
+    w = world
+    rows = []
+    for eid, stamp in (("event:fog_hour", {"valid_from": 4.0}),
+                       ("event:mending", {"timeless": True})):
+        _ingest(w, [{"entity": eid, "attribute": "kind", "value": "custom", **stamp}])
+        _ingest(w, [{"entity": eid, "attribute": "kind", "value": "time period", **stamp}])
+        rows = [r for r in w.buffer.all_rows() if r.entity == eid and r.attribute == "kind"]
+        out = w.porcelain.state(eid, "kind")
+        assert out["status"] == "conflicted"
+        assert out["fact"]["value"] == "time period"
+        assert out["conflicting"] == [r.id for r in rows]       # log order
+        assert [f["value"] for f in out["conflicting_facts"]] == ["custom", "time period"]
+    _seed_meeting_pick(w)
+    pick = w.porcelain.state("event:gathering", "kind")
+    assert pick["status"] == "known" and pick["fact"]["value"] == "meeting"
+    _ingest(w, [
+        {"entity": "event:gathering", "attribute": "participants", "value": "the guild",
+         "valid_from": 2.0},
+        {"entity": "event:gathering", "attribute": "participants", "value": "the watch",
+         "valid_from": 3.0},
+    ])
+    many = w.porcelain.state("event:gathering", "participants")
+    assert many["status"] == "known" and many["fact"]["value"] == "the watch"
+    assert [f["value"] for f in many["values"]] == ["the guild", "the watch"]
+    assert w.porcelain.state("event:gathering", "participants", value="the guild")["matches"]
+    # one description row: known, served without `values`
+    _ingest(w, [{"entity": "event:gathering", "attribute": "weather", "value": "rain",
+                 "valid_from": 2.0}])
+    single = w.porcelain.state("event:gathering", "weather")
+    assert single["status"] == "known" and "values" not in single
+
+
+def test_s4_o4d_machinery_is_never_a_point_read(world):
+    """§4 O4d: state(event:x, "same_as") is unknown, as for any entity."""
+    w = world
+    _seed_wedding(w)
+    assert w.porcelain.state("event:wedding", "same_as") == {"status": "unknown"}
+    assert w.porcelain.state("event:the_wedding", "same_as") == {"status": "unknown"}
+    # the merged record still answers the event's own keys, under either id
+    assert w.porcelain.state("event:the_wedding", "kind")["fact"]["value"] == "wedding"
+    assert w.porcelain.state("event:wedding", "agent")["fact"]["value"] == "person:ines"
+
+
+def test_s4_o4e_ask_reads_an_event_key_from_its_record(world):
+    """§4 O4e: `ask` with a plan key on an event target serves the record's
+    fact (today: "no folded facts on the asked keys")."""
+    w = world
+    _ingest(w, [
+        {"entity": "person:rival", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "event:theft", "attribute": "kind", "value": "theft", "valid_from": 5.0,
+         "aliases": ["the theft"]},
+        {"entity": "event:theft", "attribute": "agent", "value": "person:rival",
+         "value_type": "entity", "valid_from": 5.0},
+    ])
+    w._stub.enqueue({"refer_targets": ["the theft"],
+                     "keys": [{"target_index": 0, "attribute": "agent"}],
+                     "wants_location": False, "wants_events": False})
+    a = w.porcelain.ask("who did the theft?")
+    assert a.answered and [f["value"] for f in a.facts] == ["person:rival"]
+    assert a.facts[0]["entity"] == "event:theft"
+
+
+def test_s4_o4f_a_delta_on_an_event_still_folds(world):
+    """§4 O4f: a `delta` on an event's accrue attribute: the total is served —
+    a delta is not an event row."""
+    w = world
+    _ingest(w, [
+        {"entity": "attr:takings", "attribute": "fold_policy", "value": "accrue",
+         "timeless": True},
+        {"entity": "event:fair", "attribute": "kind", "value": "fair", "valid_from": 1.0},
+        {"entity": "event:fair", "attribute": "takings", "value": 5, "value_type": "delta",
+         "valid_from": 2.0},
+        {"entity": "event:fair", "attribute": "takings", "value": 7, "value_type": "delta",
+         "valid_from": 3.0},
+    ], classify="defer")
+    for _ in range(2):
+        out = w.porcelain.state("event:fair", "takings")
+        assert out["status"] == "known" and out["quantity"] == 12
+        w.classifier.classify_all()
+
+
+def test_s4_o4g_cross_entity_reads_stay_standing_only(world):
+    """§4 O4g: where, who_knows and aggregate never return an event because
+    of its record."""
+    w = world
+    _seed_meeting(w)
+    _ingest(w, [
+        {"entity": "event:meeting", "attribute": "attendance", "value": 30, "valid_from": 2.0},
+        {"entity": "event:meeting", "attribute": "kind", "value": "meeting",
+         "valid_from": 2.0, "frame": "knows:person:ann"},
+    ], classify="defer")
+    p = w.porcelain
+    for _ in range(2):
+        assert p.state("event:meeting", "attendance")["fact"]["value"] == 30
+        assert p.where("attendance", ">=", 0) == []
+        assert p.who_knows("event:meeting", "kind") == []
+        assert p.aggregate("place:study", "attendance", "sum")["count"] == 0
+        w.classifier.classify_all()
+
+
+def _seed_wren(w: World, *, build: bool) -> None:
+    p = w.porcelain
+    if build:
+        p.begin_build(at=1.0)
+    _ingest(w, [
+        {"entity": "person:wren", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:wren", "attribute": "name", "value": "Wren Hollis",
+         "timeless": True},
+        {"entity": "event:wren", "attribute": "kind", "value": "storm", "valid_from": 3.0},
+        {"entity": "event:wren", "attribute": "name", "value": "Wren Hollis",
+         "timeless": True},
+    ], classify="defer" if build else "rules")
+
+
+@pytest.mark.parametrize("build", [True, False], ids=["build_session", "swept"])
+def test_s4_o4h_identity_sees_an_events_kind(tmp_path, build):
+    """§4 O4h (EV10): event:wren (kind storm, at 3) and person:wren (kind
+    person) share the name "Wren Hollis". In a build session (every row
+    unclassified) and in the same world swept alike, reconcile() makes a
+    proposal and no merge; the proposal names the event's kind."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "wren.world", world_id="w:wren", model=stub)
+    try:
+        _seed_wren(w, build=build)
+        event_rows = [r for r in w.buffer.all_rows() if r.entity == "event:wren"]
+        assert all((w.classifier.get(r.id) is None) == build for r in event_rows)
+        out = w.porcelain.reconcile()
+        assert out["merges"] == 0
+        assert w.registry.resolve("event:wren") != w.registry.resolve("person:wren")
+        [proposal] = [pr for pr in out["proposals"]
+                      if {pr["a"], pr["b"]} == {"event:wren", "person:wren"}]
+        assert "storm" in json.dumps(proposal)
+        assert w.registry._kind_state("event:wren", "person:wren") == "conflict"
+    finally:
+        w.close()
+
+
+def test_s4_o4i_classification_independence(world):
+    """§4 O4i: on O4a's world, state() and contents() give the same answers
+    before and after classify_all()."""
+    w = world
+    _seed_meeting(w)
+    p = w.porcelain
+
+    def reads():
+        return (p.state("event:meeting", "kind"), p.state("event:meeting", "in"),
+                p.state("event:meeting", "kind", as_of=1.0), p.contents("place:study"))
+
+    before = reads()
+    w.classifier.classify_all()
+    assert reads() == before
+
+
+def test_s4_state_union_reads_the_records_of_the_aka_union(world):
+    """§4 Rule B: state_union reads the records of the `aka` union, as
+    current_state(correlated=) does."""
+    w = world
+    _ingest(w, [
+        {"entity": "event:raid", "attribute": "kind", "value": "raid", "valid_from": 3.0},
+        {"entity": "event:night_attack", "attribute": "agent", "value": "person:k",
+         "value_type": "entity", "valid_from": 3.0},
+        {"entity": "person:k", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    assert w.porcelain.correlate("event:raid", "event:night_attack",
+                                 evidence="the raid was the night attack",
+                                 at=1.0)["outcome"] == "correlated"
+    p = w.porcelain
+    assert p.state("event:raid", "agent") == {"status": "unknown"}
+    union = p.state_union("event:raid", "agent")
+    assert union["status"] == "known" and union["fact"]["value"] == "person:k"
+    assert p.state_union("event:raid", "agent", as_of=0.5) == {"status": "unknown"}
+
+
+def test_s4_a_standing_entity_merged_with_an_event_keeps_its_fold(world):
+    """§4 Rule B: for a closure that merges an event with a standing entity,
+    standing keys keep their fold, and only the event's own attributes come
+    from the record."""
+    w = world
+    _ingest(w, [
+        {"entity": "person:tide", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:tide", "attribute": "mood", "value": "calm", "valid_from": 1.0},
+        {"entity": "event:tide", "attribute": "kind", "value": "flood", "valid_from": 2.0},
+        {"entity": "event:tide", "attribute": "agent", "value": "person:tide",
+         "value_type": "entity", "valid_from": 2.0},
+    ])
+    w.registry.merge("person:tide", "event:tide", evidence="a bad merge")
+    p = w.porcelain
+    assert p.state("event:tide", "kind")["fact"]["value"] == "person"     # the fold
+    assert p.state("event:tide", "mood")["fact"]["value"] == "calm"
+    assert p.state("person:tide", "agent")["fact"]["value"] == "person:tide"   # the record
+
+
+def test_s4_read_surface_last_write_meets_the_record(world):
+    """§4 meets READ-SURFACE-V1 §2 O2f: an event row on a declared last_write
+    attribute is still never served by the fold, and `state()` answers it from
+    the event's record (the pick: rank, then recency — never conflicted)."""
+    w = world
+    _ingest(w, [{"entity": "attr:arc_phase", "attribute": "fold_policy",
+                 "value": "last_write", "timeless": True}])
+    _ingest(w, [
+        {"entity": "event:bell", "attribute": "arc_phase", "value": "setup",
+         "valid_from": 3.0},
+        {"entity": "event:bell", "attribute": "arc_phase", "value": "climax",
+         "valid_from": 3.0},
+    ])
+    assert w.state("event:bell", "arc_phase").winner is None
+    out = w.porcelain.state("event:bell", "arc_phase")
+    assert out["status"] == "known" and out["fact"]["value"] == "climax"
+    assert [f["value"] for f in out["values"]] == ["setup", "climax"]

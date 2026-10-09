@@ -250,6 +250,23 @@ class Porcelain:
             out["matches"] = self._w.indexes.fold_matches(fold, decode_value(value))
         return encode_out(out)
 
+    def _point_read(self, entity: str, attribute: str, frame: str,
+                    as_of: float | None, asserted_as_of: int | None,
+                    *, correlated: bool = False):
+        """One key's point read (EVENTS-ONE-READER-V1 §4 Rule B): the fold
+        first (`state_union`'s when `correlated`), and the event record when
+        the fold serves nothing. An event's own rows never fold (Rule A), so
+        its attributes come from its record, under the same frame and both
+        as-ofs as `events()`; for any other entity the record is empty and
+        the answer is the fold's. Shared by `state`, `state_union` and `ask`'s
+        key reads."""
+        fold = (self._w.state_union if correlated else self._w.state)(
+            entity, attribute, frame, valid_as_of=as_of, asserted_as_of=asserted_as_of)
+        if fold.winner is None:
+            fold = self._w.indexes.event_attribute(
+                entity, attribute, frame, as_of, asserted_as_of, correlated=correlated)
+        return fold
+
     @staticmethod
     def _is_numeric(value: object) -> bool:
         return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
@@ -573,10 +590,15 @@ class Porcelain:
         it does not recognize as not known. Given a `value` (any JSON; a
         `$decimal` tag decodes), the payload gains `matches`: whether this
         frame's fold holds it, `who_knows`'s test (READ-SURFACE-V1 §5).
-        `asserted_as_of` reads the log as it stood at that position (§8)."""
+        `asserted_as_of` reads the log as it stood at that position (§8).
+
+        An event's own attributes are read from its record
+        (EVENTS-ONE-READER-V1 §4): `kind` and the movement keys answer exactly
+        what `events()` reports (conflicted when two top-rank rows disagree at
+        one stamp); a description key with several rows lists them in
+        `values`; an event that has not occurred by `as_of` is unknown."""
         return self._key_payload(
-            self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of,
-                          asserted_as_of=asserted_as_of),
+            self._point_read(entity, self._attr(attribute), frame, as_of, asserted_as_of),
             value, asserted_as_of)
 
     def where(self, attribute: str, op: str, value, frame: str = CANON,
@@ -854,10 +876,11 @@ class Porcelain:
         """The explicit correlated read: fold `attribute` over `entity` ∪ its
         correlated facets, as-of. Same shape as `state`. NOT a default read —
         `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
-        uncorrelated view (no leak)."""
+        uncorrelated view (no leak). An event's own attributes are read from
+        the records of the union (EVENTS-ONE-READER-V1 §4)."""
         return self._key_payload(
-            self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of,
-                                asserted_as_of=asserted_as_of),
+            self._point_read(entity, self._attr(attribute), frame, as_of, asserted_as_of,
+                             correlated=True),
             value, asserted_as_of)
 
     def correlation_conflicts(self, as_of: float | None = None,
@@ -1209,7 +1232,9 @@ class Porcelain:
             if not (0 <= idx < len(resolved)) or resolved[idx] is None:
                 continue
             attribute = self._attr(key["attribute"])
-            fold = self._w.state(resolved[idx], attribute, frame, valid_as_of=t)
+            # EVENTS-ONE-READER-V1 §4 Rule B: an event target's key is read
+            # from its record, as state() reads it.
+            fold = self._point_read(resolved[idx], attribute, frame, t, None)
             if fold.winner is None:
                 continue
             # READ-SURFACE-V1 §4: a placeholder is named, never served as a

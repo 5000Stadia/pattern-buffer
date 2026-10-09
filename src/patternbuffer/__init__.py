@@ -116,7 +116,7 @@ class World:
         # (never stance — the no-bias invariant); deny is a resolution policy,
         # not an epistemic mode, so it takes the non-tracking branch.
         self.indexes.set_time_physics(self.policy == OBSERVE_OR_UNKNOWN, clock)
-        self.registry.set_kind_provider(lambda e: self.indexes.fold_key(e, "kind"))
+        self.registry.set_kind_provider(self._kind_read)
         self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
         self.indexes.set_salience_provider(self.salience_index.salience)
         self.truth = TruthMaintenance(
@@ -270,6 +270,19 @@ class World:
 
     def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
+
+    def _kind_read(self, entity: str):
+        """Identity's kind lookup (EVENTS-ONE-READER-V1 §4 Rule C): the canon
+        fold of `kind`, falling back to the event record when the fold serves
+        nothing. An event's rows never fold (Rule A), so without the fallback
+        identity's merge gates would lose an event's kind in a build (where it
+        used to fold as unclassified STATE); with it they see the kind before a
+        sweep and after it alike, and an event never auto-merges with a
+        non-event over a shared proper name."""
+        fold = self.indexes.fold_key(entity, "kind")
+        if fold.winner is None:
+            fold = self.indexes.event_attribute(entity, "kind")
+        return fold
 
     # AKA-CORRELATION-V1 — the explicit, opt-in correlated identity surface.
     def state_union(self, entity: str, attribute: str, frame: str = CANON, **kw):
