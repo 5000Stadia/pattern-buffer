@@ -763,6 +763,11 @@ def test_s4_o4d_every_fact_carries_value_type(wm):
     # The oracle is checked on resolve's `facts` list for whatever it serves.
     for f in p.resolve("obj:locker", "contents")["facts"]:
         assert "value_type" in f
+    # Settled at build: resolve() on a key that already holds concrete state
+    # serves that fold's row, so the Fact shape is checked on a served fact too.
+    served = p.resolve("obj:lamp", "kind")
+    assert served["status"] == "resolved"
+    assert [f["value_type"] for f in served["facts"]] == ["literal"]
     total = p.state("person:ann", "gold")
     assert total["fact"]["value"] == 15 and total["fact"]["value_type"] == "literal"
 

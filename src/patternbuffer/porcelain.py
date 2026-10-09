@@ -1180,7 +1180,8 @@ class Porcelain:
         if _finite_time(plan.get("as_of")):
             t = plan["as_of"] if as_of is None else min(as_of, plan["as_of"])
         # HD 003: identity/existence is a CANON question; only the answer is
-        # knowledge-scoped. Resolve references against canon with a scene
+        # knowledge-scoped. Wherever the asked frame cannot bind a reference
+        # by itself (rule B below), resolve it against canon with a scene
         # scope mirroring the observe path — the asker (from a knows:<id>
         # frame) plus the asker's current container chain — so co-located
         # objects become candidates and the 018 escalation can fire. The
