@@ -773,3 +773,160 @@ def test_s4_read_surface_last_write_meets_the_record(world):
     out = w.porcelain.state("event:bell", "arc_phase")
     assert out["status"] == "known" and out["fact"]["value"] == "climax"
     assert [f["value"] for f in out["values"]] == ["setup", "climax"]
+
+
+# ===================================================== §5 the lenses read records
+
+
+def _facts(snapshot: dict) -> list[tuple[str, str, object]]:
+    return [(f["entity"], f["attribute"], f["value"]) for f in snapshot["facts"]]
+
+
+def test_s5_o5a_what_happened_serves_whole_events(world):
+    """§5 O5a (EV7): snapshot(person:rival, lens="what_happened") is the
+    theft's whole record — not the one row naming the rival plus the rival's
+    identity edges."""
+    w = world
+    _ingest(w, [
+        {"entity": "person:rival", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:other", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "obj:pipe", "attribute": "kind", "value": "pipe", "timeless": True},
+        {"entity": "event:theft", "attribute": "kind", "value": "theft", "valid_from": 5.0},
+        {"entity": "event:theft", "attribute": "agent", "value": "person:rival",
+         "value_type": "entity", "valid_from": 5.0},
+        {"entity": "event:theft", "attribute": "patient", "value": "obj:pipe",
+         "value_type": "entity", "valid_from": 5.0},
+    ])
+    assert w.porcelain.reject("person:rival", "person:other")["outcome"] == "rejected"
+    w.classifier.classify_all()
+    assert _facts(w.porcelain.snapshot("person:rival", lens="what_happened")) == [
+        ("event:theft", "kind", "theft"),
+        ("event:theft", "agent", "person:rival"),
+        ("event:theft", "patient", "obj:pipe"),
+    ]
+
+
+def test_s5_o5b_a_place_lists_what_happened_in_it(world):
+    """§5 O5b: snapshot(place:study, lens="what_happened") lists every event
+    that happened `in` the study, whole, in the listing order."""
+    w = world
+    _ingest(w, [
+        {"entity": "place:study", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "place:hall", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "person:ann", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "event:quarrel", "attribute": "kind", "value": "quarrel", "valid_from": 3.0},
+        {"entity": "event:quarrel", "attribute": "in", "value": "place:study",
+         "value_type": "entity", "valid_from": 3.0},
+        {"entity": "event:quarrel", "attribute": "agent", "value": "person:ann",
+         "value_type": "entity", "valid_from": 3.0},
+        {"entity": "event:toast", "attribute": "kind", "value": "toast", "valid_from": 1.0},
+        {"entity": "event:toast", "attribute": "in", "value": "place:study",
+         "value_type": "entity", "valid_from": 1.0},
+        {"entity": "event:dance", "attribute": "kind", "value": "dance", "valid_from": 2.0},
+        {"entity": "event:dance", "attribute": "in", "value": "place:hall",
+         "value_type": "entity", "valid_from": 2.0},
+    ])
+    assert _facts(w.porcelain.snapshot("place:study", lens="what_happened")) == [
+        ("event:toast", "kind", "toast"),
+        ("event:toast", "in", "place:study"),
+        ("event:quarrel", "kind", "quarrel"),
+        ("event:quarrel", "in", "place:study"),
+        ("event:quarrel", "agent", "person:ann"),
+    ]
+    # since keeps an event whose t is >= since; as_of reads records as of it
+    m = w.materialize(["place:study"], lens="what_happened", since=2.0)
+    assert {r.entity for r in m.assertions} == {"event:quarrel"}
+    m = w.materialize(["place:study"], lens="what_happened", as_of=2.0)
+    assert {r.entity for r in m.assertions} == {"event:toast"}
+
+
+def test_s5_o5c_what_happened_window_unchanged(world):
+    """§5 O5c: test_what_happened_window (tests/test_world.py) passes
+    unchanged; its window, run here as well."""
+    w = world
+    _ingest(w, [
+        {"entity": "event:theft", "attribute": "kind", "value": "theft", "valid_from": 5.0},
+        {"entity": "event:theft", "attribute": "agent", "value": "person:rival",
+         "value_type": "entity", "valid_from": 5.0},
+        {"entity": "event:return", "attribute": "kind", "value": "return", "valid_from": 9.0},
+        {"entity": "person:rival", "attribute": "kind", "value": "person", "timeless": True},
+    ])
+    m = w.materialize(["event:theft", "event:return", "person:rival"],
+                      lens="what_happened", since=4.0, as_of=6.0)
+    assert {r.value for r in m.assertions if r.attribute == "kind"} == {"theft"}
+    assert [r.value for r in m.assertions if r.attribute == "agent"] == ["person:rival"]
+
+
+def _seed_hall_door(w: World) -> None:
+    _ingest(w, [
+        {"entity": "place:hall", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "obj:door", "attribute": "kind", "value": "door", "timeless": True},
+        {"entity": "obj:door", "attribute": "in", "value": "place:hall", "timeless": True},
+    ])
+
+
+def _situation_events(w: World, scope: str = "place:hall") -> list[tuple]:
+    return [f for f in _facts(w.porcelain.snapshot(scope, lens="situation"))
+            if f[0].startswith("event:") or f[1] in {"distinct_from", "same_as"}]
+
+
+def test_s5_o5d_situation_emits_an_unclassified_live_event(world):
+    """§5 O5d (EV8): a door broken at 4, caused_by event:kick, whose rows are
+    unclassified: the situation bucket holds the kick's record."""
+    w = world
+    _seed_hall_door(w)
+    _ingest(w, [{"entity": "event:kick", "attribute": "kind", "value": "kick",
+                 "valid_from": 4.0}], classify="defer")
+    _ingest(w, [{"entity": "obj:door", "attribute": "state", "value": "broken",
+                 "valid_from": 4.0, "caused_by": "event:kick"}])
+    assert _situation_events(w) == [("event:kick", "kind", "kick")]
+    w.classifier.classify_all()
+    assert _situation_events(w) == [("event:kick", "kind", "kick")]
+
+
+def test_s5_o5e_a_non_event_cause_emits_nothing(world):
+    """§5 O5e: a served row caused_by person:lysa: the bucket emits nothing
+    (today: person:lysa's identity edges)."""
+    w = world
+    _seed_hall_door(w)
+    _ingest(w, [
+        {"entity": "person:lysa", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:mo", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "obj:door", "attribute": "state", "value": "broken",
+         "valid_from": 4.0, "caused_by": "person:lysa"},
+    ])
+    assert w.porcelain.reject("person:lysa", "person:mo")["outcome"] == "rejected"
+    w.classifier.classify_all()
+    floor = _facts(w.porcelain.snapshot("place:hall", lens="current_state"))
+    assert _facts(w.porcelain.snapshot("place:hall", lens="situation")) == floor
+    assert _situation_events(w) == []
+
+
+def test_s5_o5f_situation_lens_unchanged(world):
+    """§5 O5f: SITUATION-LENS-V1's tests (tests/test_situation_lens.py) pass
+    unchanged. Representative here: a live effect keeps its event, a
+    superseded one drops it, and the bucket yields to budget by recency."""
+    w = world
+    _ingest(w, [
+        {"entity": "place:tavern", "attribute": "kind", "value": "building", "timeless": True},
+        {"entity": "obj:bar", "attribute": "kind", "value": "fixture", "timeless": True},
+        {"entity": "obj:bar", "attribute": "in", "value": "place:tavern", "valid_from": 1.0},
+        {"entity": "event:brawl", "attribute": "kind", "value": "brawl", "valid_from": 2.0},
+        {"entity": "obj:bar", "attribute": "condition", "value": "dented",
+         "valid_from": 2.0, "caused_by": "event:brawl"},
+        {"entity": "event:repair", "attribute": "kind", "value": "repair", "valid_from": 4.0},
+        {"entity": "obj:bar", "attribute": "condition", "value": "fixed",
+         "valid_from": 4.0, "caused_by": "event:repair"},
+        {"entity": "event:stash", "attribute": "kind", "value": "stash", "valid_from": 3.0},
+        {"entity": "obj:chest", "attribute": "kind", "value": "chest", "timeless": True},
+        {"entity": "obj:chest", "attribute": "in", "value": "place:tavern",
+         "valid_from": 3.0, "caused_by": "event:stash"},
+    ])
+    m = w.materialize("place:tavern", lens="situation")
+    events = [(r.entity, r.value) for r in m.assertions if r.entity.startswith("event:")]
+    assert events == [("event:stash", "stash"), ("event:repair", "repair")]
+    floor = len(m.assertions) - len(events)
+    one = w.materialize("place:tavern", lens="situation", budget=floor + 1)
+    assert [r.entity for r in one.assertions if r.entity.startswith("event:")] == [
+        "event:repair"]
+    assert one.truncated == 1
