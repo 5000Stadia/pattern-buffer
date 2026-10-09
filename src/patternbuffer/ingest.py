@@ -27,6 +27,7 @@ from patternbuffer.identity import IdentityRegistry
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    MECHANISM_ATTRIBUTES,
     SEMANTICS_PREDICATES,
     TASK_EXTRACT,
     Assertion,
@@ -403,7 +404,14 @@ class Ingestor:
         in log order (each records the FIRST hop that was applied, so a later
         host override such as ``type->genre`` outranks the built-in and
         survives reopen), then the inverse relations are popped — an inverse
-        relation is never a plain alias, whatever an old receipt says."""
+        relation is never a plain alias, whatever an old receipt says.
+
+        Within that order a receipt is honored only with the gate's own mark
+        (GATE-AUTHORITY-V1 §1): status ``inferred``, on an existing assertion
+        whose attribute is the receipt's target — exactly the shape
+        `_ingest_item` writes. A forged ``canonicalized_from`` row installs
+        nothing on reopen, and an ``(inverse)`` receipt is a record of a swap,
+        never a map entry."""
         self._alias_map = dict(_BUILTIN_ALIASES)
         for row in self._buffer.visible(attribute="canonicalized_from"):
             if isinstance(row.value, str) and "->" in row.value:
@@ -411,6 +419,11 @@ class Ingestor:
                 if row.value.lstrip().startswith(_INVERSE_RECEIPT_PREFIX):
                     continue
                 src, dst = row.value.split("->", 1)
+                if row.status != "inferred":
+                    continue
+                subject = self._buffer.get(row.entity)
+                if subject is None or subject.attribute != dst.strip():
+                    continue
                 self._alias_map[src.strip()] = dst.strip()
         for inverse_attr in _BUILTIN_INVERSE_ALIASES:
             self._alias_map.pop(inverse_attr, None)
@@ -958,6 +971,15 @@ class Ingestor:
             if self._resolver_role is None:
                 raise ValueError("no resolver authority wired for generated rows")
             write_role = self._resolver_role
+
+        # GATE-AUTHORITY-V1 §1: a mechanism attribute (retracts / resolved_by /
+        # canonicalized_from) changes what OTHER rows mean and has exactly one
+        # owning component. The gate never accepts one as an item, on any path
+        # (ingest, ingest_structured, a commit_set assert op) — the real doors
+        # are retract, resolve and the gate's own canonicalization receipt.
+        if attribute in MECHANISM_ATTRIBUTES:
+            self._record_skip(entity, attribute, value, "mechanism_attribute")
+            return out
 
         # Malformed-id gate (SHAPE-FIX-V1 4a): AFTER the authority gate (an
         # authority violation must still raise, never be swallowed by a skip —

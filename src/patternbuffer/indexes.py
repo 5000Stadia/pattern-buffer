@@ -27,7 +27,13 @@ from patternbuffer.codec import (
     exact_sum,
 )
 from patternbuffer.decay import DecayPolicy
-from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, Assertion
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    MECHANISM_STATUS,
+    META_ATTRIBUTES,
+    Assertion,
+)
 from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
@@ -490,13 +496,20 @@ class Indexes:
         # Resolution IS the supersession (whitepaper §8 — forcing memoizes
         # into the log; the fold serves the memo): a spent thunk (one with a
         # resolved_by marker) never competes, and once concrete rows exist
-        # on a key, its unresolved placeholder no longer competes either.
+        # on a key, its unresolved placeholder no longer competes either. A
+        # marker spends the thunk only with the resolver's own mark, status
+        # `generated` (GATE-AUTHORITY-V1 §1).
+        spent = MECHANISM_STATUS["resolved_by"]
         candidates = [
             r
             for r in candidates
             if r.value_type != "unresolved"
-            or not self._buffer.visible(
-                entity=r.id, attribute="resolved_by", asserted_as_of=asserted_as_of
+            or not any(
+                m.status == spent
+                for m in self._buffer.visible(
+                    entity=r.id, attribute="resolved_by",
+                    asserted_as_of=asserted_as_of,
+                )
             )
         ]
         if any(r.value_type != "unresolved" for r in candidates):

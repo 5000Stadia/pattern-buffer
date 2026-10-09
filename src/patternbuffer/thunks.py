@@ -20,7 +20,13 @@ from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, Classifier
 from patternbuffer.codec import json_default
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import CANON, TASK_RESOLVE, Assertion, task_schema
+from patternbuffer.model import (
+    CANON,
+    MECHANISM_STATUS,
+    TASK_RESOLVE,
+    Assertion,
+    task_schema,
+)
 from patternbuffer.roles import WriterRole
 
 logger = logging.getLogger(__name__)
@@ -110,8 +116,13 @@ class Resolver:
         return out
 
     def _resolved_marker(self, thunk_row: Assertion) -> Assertion | None:
-        markers = self._buffer.visible(entity=thunk_row.id, attribute="resolved_by")
-        return markers[0] if markers else None
+        """The thunk's memo marker — honored only with the resolver's own
+        mark, status ``generated`` (GATE-AUTHORITY-V1 §1): a forged
+        ``resolved_by`` row neither spends the thunk nor names its memo."""
+        for marker in self._buffer.visible(entity=thunk_row.id, attribute="resolved_by"):
+            if marker.status == MECHANISM_STATUS["resolved_by"]:
+                return marker
+        return None
 
     # ------------------------------------------------------------- forcing
 

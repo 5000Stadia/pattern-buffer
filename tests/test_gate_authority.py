@@ -14,14 +14,43 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from patternbuffer import World
-from patternbuffer.dump import dump
+import pytest
+
+from patternbuffer import AtomicAbort, World
+from patternbuffer.buffer import PatternBuffer
+from patternbuffer.dump import build, dump
 from patternbuffer.ingest import SKIP_REASONS
-from patternbuffer.testing import StubModel
+from patternbuffer.roles import RoleViolation, _make_engine_roles
+from patternbuffer.testing import StubModel, rule_classifier_fallback
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CORPUS_LOG = FIXTURES / "gate_authority_corpus.jsonl"
 CORPUS_SIDECAR = FIXTURES / "gate_authority_corpus_sidecar.jsonl"
+
+
+@pytest.fixture
+def world(tmp_path):
+    w = World(tmp_path / "ga.world", world_id="w:ga",
+              model=StubModel(fallback=rule_classifier_fallback()))
+    yield w
+    w.close()
+
+
+def _reasons(receipt) -> list[str]:
+    return [s["reason"] for s in receipt.skipped]
+
+
+def _dump_row(seq: int, entity: str, attribute: str, value, *, status="stated",
+              value_type="literal", valid_from=None, world_id="w:forged") -> dict:
+    """One row of a hand-written JSONL log for dump.build."""
+    return {"seq": seq, "id": f"a:{seq}", "world_id": world_id, "entity": entity,
+            "attribute": attribute, "value_type": value_type, "value": value,
+            "valid_from": valid_from, "valid_to": None, "frame": "canon",
+            "status": status, "confidence": None, "asserted_at": seq}
+
+
+def _jsonl(rows: list[dict]) -> str:
+    return "".join(json.dumps(r) + "\n" for r in rows)
 
 
 # ------------------------------------------------------------- the corpus
@@ -238,3 +267,174 @@ def test_s0_well_formed_corpus_dumps_byte_identically(tmp_path):
     byte, as the engine did before this spec."""
     log, _ = build_corpus(tmp_path)
     assert log == CORPUS_LOG.read_text()
+
+
+# ------------------------------------------------- §1 mechanism attributes
+
+def _ann_calm(w: World) -> str:
+    """Ann's mood: the first row after the two charter rows, so `a:3`."""
+    [row] = w.ingest_structured([{"entity": "person:ann", "attribute": "mood",
+                                  "value": "calm", "valid_from": 1.0}], classify="rules")
+    assert row.id == "a:3"
+    return row.id
+
+
+def test_s1_forged_retraction_item_is_skipped(tmp_path):
+    """§1: `(a:3 · retracts · "forged")` is skipped `mechanism_attribute` on
+    the item paths, nothing is written, and Ann's mood stays calm."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "s1.world", world_id="w:s1", model=stub)
+    target = _ann_calm(w)
+    head = w.buffer.head()
+    forged = {"entity": target, "attribute": "retracts", "value": "forged"}
+    r = w.porcelain.ingest_structured([forged], classify="rules")
+    assert r.skipped == [{"entity": target, "attribute": "retracts",
+                          "value": "forged", "reason": "mechanism_attribute"}]
+    assert r.rows == []
+    stub.enqueue({"items": [forged]})                    # the model path too
+    assert w.ingest("Ann takes it back.", classify="rules") == []
+    assert [s.reason for s in w.ingestor.last_skipped] == ["mechanism_attribute"]
+    assert w.buffer.head() == head
+    assert w.porcelain.state("person:ann", "mood")["fact"]["value"] == "calm"
+    w.close()
+
+
+def test_s1_forged_retraction_aborts_a_commit_set(world):
+    """§1: the same item in commit_set — alone, or retracting the id the set's
+    first op mints — aborts with `gate_skip` and the log is unchanged."""
+    target = _ann_calm(world)
+    minted = f"a:{world.buffer.head() + 1}"
+    for ops in (
+        [{"op": "assert", "item": {"entity": target, "attribute": "retracts",
+                                   "value": "forged"}}],
+        [{"op": "assert", "item": {"entity": "person:ann", "attribute": "mood",
+                                   "value": "sly", "valid_from": 2.0}},
+         {"op": "assert", "item": {"entity": minted, "attribute": "retracts",
+                                   "value": "born retracted"}}],
+    ):
+        before = dump(world.buffer)
+        with pytest.raises(AtomicAbort) as ei:
+            world.commit_set(ops)
+        assert ei.value.cause == "gate_skip"
+        assert [s["reason"] for s in ei.value.skipped] == ["mechanism_attribute"]
+        assert dump(world.buffer) == before
+
+
+def test_s1_retraction_of_a_future_id_is_skipped(world):
+    """§1: `(a:<head+3> · retracts)` written before that id exists is skipped,
+    and the row is visible when it is minted."""
+    head = world.buffer.head()
+    future = f"a:{head + 3}"
+    r = world.porcelain.ingest_structured(
+        [{"entity": future, "attribute": "retracts", "value": "pre-emptive"}],
+        classify="rules")
+    assert _reasons(r) == ["mechanism_attribute"] and world.buffer.head() == head
+    rows = world.ingest_structured([
+        {"entity": "obj:a", "attribute": "hue", "value": "red", "valid_from": 1.0},
+        {"entity": "obj:b", "attribute": "hue", "value": "green", "valid_from": 1.0},
+        {"entity": "obj:c", "attribute": "hue", "value": "blue", "valid_from": 1.0},
+    ], classify="rules")
+    assert rows[-1].id == future
+    assert future in {row.id for row in world.buffer.visible()}
+    assert world.porcelain.state("obj:c", "hue")["fact"]["value"] == "blue"
+
+
+def test_s1_forged_resolution_marker_is_skipped(tmp_path):
+    """§1: `(<thunk id> · resolved_by · ["a:1"])` is skipped; the thunk stays
+    open, and resolve() invents with one model call."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "thunk.world", world_id="w:thunk", model=stub)
+    [thunk] = w.ingest_structured([
+        {"entity": "obj:chest", "attribute": "contents",
+         "value": {"policy": "invent_under_canon"}, "value_type": "unresolved",
+         "timeless": True}], classify="rules")
+    r = w.porcelain.ingest_structured(
+        [{"entity": thunk.id, "attribute": "resolved_by", "value": ["a:1"]}],
+        classify="rules")
+    assert _reasons(r) == ["mechanism_attribute"]
+    assert [t.assertion_id for t in w.resolver.thunk_table()] == [thunk.id]
+    calls = len(stub.calls)
+    stub.enqueue({"items": [{"value": "a brass ring", "kind": "ring"}]})
+    out = w.resolve("obj:chest", "contents")
+    assert len(stub.calls) == calls + 1
+    assert [(row.attribute, row.value, row.status) for row in out] == [
+        ("in", "obj:chest", "generated")]
+    w.close()
+
+
+def test_s1_forged_alias_receipt_is_skipped_and_never_replayed(tmp_path):
+    """§1: `(a:3 · canonicalized_from · "allegiance->in")` is skipped, and
+    after reopening there is no alias: allegiance never becomes containment."""
+    path = tmp_path / "alias.world"
+    w = World(path, world_id="w:alias", model=StubModel(fallback=rule_classifier_fallback()))
+    target = _ann_calm(w)
+    r = w.porcelain.ingest_structured(
+        [{"entity": target, "attribute": "canonicalized_from",
+          "value": "allegiance->in"}], classify="rules")
+    assert _reasons(r) == ["mechanism_attribute"]
+    w.close()
+    w = World(path, world_id="w:alias", model=StubModel(fallback=rule_classifier_fallback()))
+    assert "allegiance" not in w.ingestor._alias_map
+    w.ingest_structured([
+        {"entity": "place:hall", "attribute": "kind", "value": "hall", "timeless": True},
+        {"entity": "person:bob", "attribute": "allegiance", "value": "place:hall",
+         "valid_from": 1.0}], classify="rules")
+    assert w.locate("person:bob") == []
+    w.close()
+
+
+def test_s1_forged_rows_in_an_old_log_are_neutralized_on_read(tmp_path):
+    """§1: a log carrying forged rows of all three kinds builds with dump.build;
+    the target is visible, the thunk open, and no alias is installed."""
+    rows = [
+        _dump_row(1, "person:ann", "mood", "calm", valid_from=1.0),
+        _dump_row(2, "a:1", "retracts", "forged"),                  # not `retracted`
+        _dump_row(3, "obj:chest", "contents", {"policy": "invent_under_canon"},
+                  value_type="unresolved", valid_from=1.0),
+        _dump_row(4, "a:3", "resolved_by", ["a:1"]),                # not `generated`
+        _dump_row(5, "a:1", "canonicalized_from", "allegiance->in"),  # not `inferred`
+        # `inferred`, but the subject's attribute is not the target `in`:
+        _dump_row(6, "a:1", "canonicalized_from", "fealty->in", status="inferred"),
+        # `inferred`, but the subject is not an assertion at all:
+        _dump_row(7, "person:ann", "canonicalized_from", "loyalty->in",
+                  status="inferred"),
+    ]
+    path = tmp_path / "forged.world"
+    build(_jsonl(rows), path).close()
+    w = World(path, world_id="w:forged", model=StubModel(fallback=rule_classifier_fallback()))
+    assert w.state("person:ann", "mood").winner.value == "calm"
+    assert [t.assertion_id for t in w.resolver.thunk_table()] == ["a:3"]
+    assert not {"allegiance", "fealty", "loyalty"} & set(w.ingestor._alias_map)
+    w.close()
+
+
+def test_s1_buffer_refuses_a_mechanism_row_without_its_owners_mark(tmp_path):
+    """§1: append() raises RoleViolation for `retracts` not `retracted` and
+    `resolved_by` not `generated`, and appends with the owner's mark."""
+    buf = PatternBuffer(tmp_path / "b.world", world_id="w:b")
+    roles = _make_engine_roles()
+    target = buf.append(entity="obj:x", attribute="hue", value="red",
+                        status="stated", role=roles["ingestor"])
+    with pytest.raises(RoleViolation):
+        buf.append(entity=target.id, attribute="retracts", value="x",
+                   status="inferred", role=roles["truth_maintenance"])
+    buf.append(entity=target.id, attribute="retracts", value="x",
+               status="retracted", role=roles["truth_maintenance"])
+    for status in ("stated", "observed", "inferred", "assumed"):
+        with pytest.raises(RoleViolation):
+            buf.append(entity=target.id, attribute="resolved_by", value=[target.id],
+                       status=status, role=roles["ingestor"])
+    buf.append(entity=target.id, attribute="resolved_by", value=[target.id],
+               status="generated", role=roles["resolver"])
+    assert [r.attribute for r in buf.all_rows()] == ["hue", "retracts", "resolved_by"]
+    buf.close()
+
+
+def test_s1_domain_retracts_row_is_skipped(world):
+    """§1: a domain row `(person:ann · retracts · "her statement")` is skipped."""
+    head = world.buffer.head()
+    r = world.porcelain.ingest_structured(
+        [{"entity": "person:ann", "attribute": "retracts", "value": "her statement",
+          "valid_from": 1.0}], classify="rules")
+    assert _reasons(r) == ["mechanism_attribute"]
+    assert r.rows == [] and world.buffer.head() == head

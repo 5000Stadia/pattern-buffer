@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 # Provenance vocabulary (whitepaper §7). `default` appears only in
@@ -64,6 +65,19 @@ META_ATTRIBUTES = frozenset(
         "source_valid_from",  # INGEST-LATENCY-V2: demoted cursor-authoritative coord
     }
 ) | SEMANTICS_PREDICATES
+
+# Mechanism attributes (GATE-AUTHORITY-V1 §1): rows that change what OTHER rows
+# mean. Each has exactly one owning engine component and is recognized by that
+# owner's mark, never by its name alone — the buffer refuses the wrong mark on
+# append, readers honor only the owner's mark, and the gate never accepts one
+# as an item. `retracts` hides its target (truth maintenance, `retracted`);
+# `resolved_by` spends a thunk and names its memo (the resolver, `generated`);
+# `canonicalized_from` is replayed into the attribute-alias map on open (the
+# gate's own receipt: `inferred`, on an assertion whose attribute is the
+# receipt's target — a structural mark, so it has no single status here).
+# One read-only definition shared by the buffer, the readers and the gate.
+MECHANISM_STATUS = MappingProxyType({"retracts": "retracted", "resolved_by": "generated"})
+MECHANISM_ATTRIBUTES = frozenset(MECHANISM_STATUS) | {"canonicalized_from"}
 
 # Set-valued attributes: multiple coexisting values are data, never a
 # contradiction — a conflict requires a functional key (run-4 finding:
