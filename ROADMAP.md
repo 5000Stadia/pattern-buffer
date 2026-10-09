@@ -94,8 +94,9 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 
 The vision's next front: a whole book becomes a faithful world, fast. Prior art
 and the three most promising techniques are in
-`docs/research/book-to-world-extraction-2026-10.md`, on branch
-`research/book-to-world`.
+`docs/research/book-to-world-extraction-2026-10.md`. Its weighed-advice section
+adds a memorization control: a counterfeit edition plus a noise floor, so Alice
+measures reading, not recall.
 
 - [ ] R23 Grade pass-0 registry quality directly against gold (linking P/R/F1 plus a cluster fragmentation metric), so every change is measured (research note "Answer")
 - [ ] R24 A deterministic alias-index pass between pass-0 and pass-1: global name propagation, a kinship/address stoplist, `distinct_from` proposals from coordination and co-presence (research note, technique 1)
