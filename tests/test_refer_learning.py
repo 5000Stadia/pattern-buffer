@@ -18,6 +18,7 @@ from patternbuffer import World
 from patternbuffer.classify import EVENT
 from patternbuffer.model import TASK_REFER
 from patternbuffer.refer import RESOLVED, UNDERDETERMINED
+from patternbuffer.roles import _make_engine_roles
 from patternbuffer.testing import StubModel, rule_classifier_fallback
 
 ALICE = "knows:person:alice"
@@ -403,6 +404,101 @@ class TestOwnedBy:
         r = world.refer("the drawer with the watch", constraints=[("contains", "obj:watch")])
         assert r.status == RESOLVED and r.entity_id == "obj:desk_drawer"
         assert r.receipt["signals"] == ["constraint_inversion:contains(obj:watch)"]
+
+
+# ------------------------------------------------- §7 legacy learned aliases
+
+
+def _legacy_alias(w: World, entity: str, description: str) -> None:
+    """A learned alias seeded exactly as the retired `_accrue_alias` wrote
+    it: a canon, timeless, inferred `alias` item through the gate, then its
+    `source` row appended directly with the ingestor's authority."""
+    rows = w.ingest_structured([
+        {"entity": entity, "attribute": "alias", "value": description.strip().lower(),
+         "timeless": True, "status": "inferred"},
+    ])
+    w.buffer.append(
+        entity=rows[0].id, attribute="source",
+        value=f"refer:tier2:{json.dumps(['recency'])[:80]}",
+        status="inferred", role=_make_engine_roles()["ingestor"],
+    )
+
+
+def _legacy_world(w: World) -> None:
+    """Two rooms with a cabinet each, a study with two drawers, a kitchen
+    drawer, and two legacy learned aliases: the pick "the drawer" (learned
+    where the study held two drawers) and the word "the old cupboard"."""
+    _two_rooms(w)
+    w.ingest_structured([
+        {"entity": "place:study", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "obj:desk_drawer", "attribute": "kind", "value": "drawer",
+         "timeless": True},
+        {"entity": "obj:desk_drawer", "attribute": "in", "value": "place:study"},
+        {"entity": "obj:side_drawer", "attribute": "kind", "value": "drawer",
+         "timeless": True},
+        {"entity": "obj:side_drawer", "attribute": "in", "value": "place:study"},
+        {"entity": "obj:kitchen_drawer", "attribute": "kind", "value": "drawer",
+         "timeless": True},
+        {"entity": "obj:kitchen_drawer", "attribute": "in", "value": "place:kitchen"},
+    ])
+    _legacy_alias(w, "obj:desk_drawer", "the drawer")
+    _legacy_alias(w, "obj:kitchen_cabinet", WORD)
+
+
+class TestLegacyLearnedAliases:
+    """§7: refer-written `alias` rows already in host worlds are read as
+    learned words — skipped by tier 1a, honoured by tier 1d — and never
+    rewritten."""
+
+    def test_legacy_pick_in_the_kitchen_is_its_own_drawer(self, world):
+        _legacy_world(world)
+        r = world.refer("the drawer", scope="place:kitchen")
+        assert r.status == RESOLVED and r.entity_id == "obj:kitchen_drawer"
+        assert r.receipt["signals"] == ["unique_kind_in_scope"]
+
+    def test_legacy_pick_in_the_study_is_judged_unwritten(self, world):
+        _legacy_world(world)
+        _judge(world, "obj:side_drawer")
+        head = world.buffer.head()
+        r = world.refer("the drawer", scope="place:study")
+        assert r.receipt["tier"] == 2
+        assert r.receipt["candidates"] == ["obj:desk_drawer", "obj:side_drawer"]
+        assert r.status == RESOLVED and r.entity_id == "obj:side_drawer"
+        assert world.buffer.head() == head
+
+    def test_legacy_word_in_scope_is_tier1(self, world):
+        _legacy_world(world)
+        n = len(world._stub.calls)
+        r = world.refer(WORD, scope="place:kitchen")
+        assert r.status == RESOLVED and r.entity_id == "obj:kitchen_cabinet"
+        assert r.receipt == {"tier": 1, "signals": ["learned_alias"]}
+        assert len(world._stub.calls) == n
+
+    def test_legacy_word_out_of_scope_is_rejudged(self, world):
+        _legacy_world(world)
+        _judge(world, "obj:garage_cabinet")
+        r = world.refer(WORD, scope="place:garage")
+        assert r.status == RESOLVED and r.entity_id == "obj:garage_cabinet"
+        assert r.receipt["tier"] == 2
+        assert r.receipt["candidates"] == ["obj:garage_cabinet", "place:garage"]
+
+    def test_recipe_lists_exactly_the_legacy_rows(self, world):
+        _legacy_world(world)
+        world.ingest_structured([  # an authored alias the recipe must not list
+            {"entity": "obj:desk_drawer", "attribute": "alias", "value": "the top drawer",
+             "timeless": True},
+        ])
+        _judge(world, "obj:garage_cabinet")
+        world.refer(WORD, scope="place:garage")  # a word learned after the spec
+        p = world.porcelain
+        # The ADOPTION recipe, verbatim (REFER-LEARNING-V1 §7).
+        legacy = [f for f in p.facts("canon", attribute="alias")
+                  if any(str(s).startswith("refer:tier2:")
+                         for s in f["provenance"]["source_chain"])]
+        learned = p.facts("canon", attribute="learned_alias")
+        assert sorted((f["entity"], f["value"]) for f in legacy) == [
+            ("obj:desk_drawer", "the drawer"), ("obj:kitchen_cabinet", WORD)]
+        assert [(f["entity"], f["value"]) for f in learned] == [("obj:garage_cabinet", WORD)]
 
 
 # ------------------------------------------------- the no-growth invariant

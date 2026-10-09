@@ -1395,26 +1395,46 @@ class IdentityRegistry:
         as of a log position: refer's tier 1a (whitepaper §9). Names assert
         identity too. Aliases match like names (REFER-LEARNING-V1 §5): both
         sides under `ref_norm`, so an alias stored as "The Memory Core"
-        answers "the memory core". Description is perspectival
-        (FRAME-SCOPED-IDENTITY-V1 §2): the rows are read in `frame` only, with
-        no canon fallback for a non-canon frame — a name private to Alice
-        resolves in Alice's frame, never in canon's."""
-        return {
-            self.resolve(row.entity, asserted_as_of)
-            for row in self._vocabulary_matches(alias, ("name", "alias"), asserted_as_of,
-                                                frame=frame)
-        }
+        answers "the memory core". A legacy learned alias is not authored
+        vocabulary and is skipped here; tier 1d reads it (§7). Description is
+        perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows are read in
+        `frame` only, with no canon fallback for a non-canon frame — a name
+        private to Alice resolves in Alice's frame, never in canon's."""
+        rows = self._vocabulary_matches(alias, ("name", "alias"), asserted_as_of,
+                                        frame=frame)
+        legacy = self._legacy_learned(rows, asserted_as_of)
+        return {self.resolve(row.entity, asserted_as_of)
+                for row in rows if row.id not in legacy}
 
     def by_learned_alias(self, alias: str, asserted_as_of: int | None = None,
                          frame: str = CANON) -> set[str]:
         """Entities refer has learned `alias` as a word for (REFER-LEARNING-V1
-        §3), identity-resolved, as of a log position. Read only by refer's
-        tier 1d, after the world's own vocabulary found nothing. A learned
-        word is never identity: no anchor, merge or collision read sees it."""
+        §3), identity-resolved, as of a log position: `learned_alias` rows and
+        legacy learned aliases (§7). Read only by refer's tier 1d, after the
+        world's own vocabulary found nothing. A `learned_alias` is never
+        identity: no anchor, merge or collision read sees it."""
+        rows = self._vocabulary_matches(alias, ("alias", "learned_alias"), asserted_as_of,
+                                        frame=frame)
+        legacy = self._legacy_learned(rows, asserted_as_of)
+        return {self.resolve(row.entity, asserted_as_of)
+                for row in rows if row.attribute == "learned_alias" or row.id in legacy}
+
+    def _legacy_learned(self, rows: list[Assertion], asserted_as_of: int | None) -> set[str]:
+        """Ids of the `alias` rows among `rows` that refer's retired accrual
+        path wrote: those carrying a `source` row that starts
+        `refer:tier2:` (REFER-LEARNING-V1 §7). One query, over the matching
+        alias rows only. Never rewritten or hidden: every other read still
+        sees them as the `alias` rows they are, identity anchors included.
+        Reads every frame: the gate writes a row's `source` receipt in canon
+        whatever frame the row itself is in."""
+        ids = [row.id for row in rows if row.attribute == "alias"]
+        if not ids:
+            return set()
         return {
-            self.resolve(row.entity, asserted_as_of)
-            for row in self._vocabulary_matches(alias, ("learned_alias",), asserted_as_of,
-                                                frame=frame)
+            src.entity
+            for src in self._buffer.visible(
+                entity_in=ids, attribute="source", asserted_as_of=asserted_as_of)
+            if isinstance(src.value, str) and src.value.startswith(REFER_SOURCE_PREFIX)
         }
 
     def _vocabulary_matches(
@@ -1426,8 +1446,8 @@ class IdentityRegistry:
         refer's vocabulary, as of the caller's log position (§4).
 
         The frame half of this read is FRAME-SCOPED-IDENTITY-V1 §2's: rows
-        are read in `frame` only (an observer frame through its §7), with no
-        canon fallback, once, for names, aliases and learned words alike
+        are read in `frame` only, with no canon fallback for a non-canon frame,
+        once, for names, aliases and learned words alike
         (§4: one frame rule for all of refer's vocabulary)."""
         needle = ref_norm(text)
         return [
