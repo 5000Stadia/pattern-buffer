@@ -674,3 +674,24 @@ The full suite (577 tests on this branch, all green) stays green.
      for example `in: "null"` and `connects_to: "ops"`.
    - *Default:* refuse only id-shaped values now (§7), and revisit with
      construct, since some literals may be deliberate coarse places.
+
+
+## Build notes for pbr (gated implementation on `impl/gate-authority-v1`)
+
+- **One inconsistency to rule on.** §4 refuses a numeric-string `confidence`
+  (`"0.9"`, which SQLite used to coerce silently). FOLD-CORRECTNESS-V1 r3 §6
+  *coerces* numeric-string times for the same reason.
+  - pb recommends coercing here too: one rule at the gate, "an unambiguous
+    numeric string is a number", applied to times and to confidence.
+  - Pending your ruling, the build follows this spec literally.
+- **Implementer's readings.**
+  - §2 follows the oracle over the prose: the value must be a well-formed id
+    *given as an entity*.
+  - §2 side rows attach every main-row side row (including
+    `canonicalized_from`, `source_valid_from` and `learned_at_wallclock`) to
+    the `same_as` edge.
+  - §3 judges "carries aliases" on what the host sent.
+  - §5's declarability check (refused on core attributes, or once data exists)
+    also runs first for item hints and `attribute_default`.
+- **Lexicon.** "skip receipt" and "mechanism attribute" were added before their
+  second use.
