@@ -1,7 +1,9 @@
 # REFER-LEARNING-V1: refer learns words, never picks
 
-**Status:** DRAFT r1 (2026-10-08). Not yet reviewed by pbr. Rebased on C r2 (2026-10-09; see
-"Rebased onto batch C r2" at the end). Built from batch D of
+**Status:** r1 (2026-10-08). Spec pbr GREEN 2026-10-09 at ff8fc8a ("semantically
+ready, subject to rebasing on Batch C once its receipt-code inconsistency is
+corrected"). Built, then rebased on C r2 (2026-10-09; see "Rebased onto batch C
+r2" at the end); the code goes to pbr with this rebase. Built from batch D of
 `docs/AUDIT-2026-10.md`: P1 #4, identity P2-9, and the gate auditor's `owned_by`
 finding. A probe on `polish/audit-2026-10` (212754f) reproduced every defect
 below before it was specced; line numbers are at that commit. A throwaway
