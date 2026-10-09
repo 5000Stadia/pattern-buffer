@@ -65,6 +65,10 @@ class Fact:
     provenance: dict
     divergent: bool = False
     b_value: Any = None
+    # READ-SURFACE-V1 §4: the row's value type ("entity", "literal",
+    # "unresolved", "delta"); a derived accrue total is "literal". Appended
+    # after b_value, so the existing keys keep their order.
+    value_type: str = "literal"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -77,6 +81,11 @@ class Answer:
     prose: str | None = None
     unknown_reason: str | None = None
     asks: list[dict] = field(default_factory=list)
+    # READ-SURFACE-V1 §4: the asked keys that hold an unresolved placeholder
+    # (never served as a fact) and the keys served conflicted, each
+    # `[entity, attribute]` as in snapshot's `unresolved`/`conflicted`.
+    unresolved: list[list[str]] = field(default_factory=list)
+    conflicted: list[list[str]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -157,7 +166,7 @@ class Porcelain:
             valid=[row.valid_from, row.valid_to],
             provenance={"status": row.status, "source_chain": chain,
                         "assertion_id": row.id},
-            divergent=divergent, b_value=b_value,
+            divergent=divergent, b_value=b_value, value_type=row.value_type,
         )
 
     def _quantity_fact(
@@ -177,7 +186,43 @@ class Porcelain:
             provenance={"status": row.status, "source_chain": chain,
                         "assertion_id": row.id},
             divergent=divergent, b_value=b_value,
+            value_type="literal",    # a derived total (READ-SURFACE-V1 §4)
         )
+
+    def _key_payload(self, fold) -> dict:
+        """The one payload `state` and `state_union` build from a fold
+        (READ-SURFACE-V1 §4). `status` is decided in order: nothing served ->
+        `unknown`; the fold flags -> `conflicted`; the served row is an
+        unresolved placeholder -> `unresolved` (the doctrine's
+        established-deferred state, whitepaper A6: `fact` is the placeholder,
+        its value the thunk spec, never a known value); else `known`. Keys
+        follow in order: `status`, `fact`, `quantity`, `conflicting`, then
+        `conflicting_facts` (one Fact per conflicting id, in that order) and
+        `values` (a set-valued key's current members, in member order;
+        `fact` stays the most recent)."""
+        winner = fold.winner
+        if winner is None:
+            return {"status": "unknown"}
+        # Accrue: the host-facing value is the derived total, not the last
+        # delta row — keep `fact.value` consistent with ask()/snapshot().
+        fact = (self._quantity_fact(winner, fold.quantity)
+                if fold.quantity is not None else self._fact(winner))
+        if fold.conflicted:
+            status = "conflicted"
+        elif winner.value_type == "unresolved":
+            status = "unresolved"
+        else:
+            status = "known"
+        out = {"status": status, "fact": fact.to_dict()}
+        if fold.quantity is not None:
+            out["quantity"] = fold.quantity
+        if fold.conflicted:
+            out["conflicting"] = list(fold.conflicting)
+            out["conflicting_facts"] = [
+                self._fact(self._w.buffer.get(i)).to_dict() for i in fold.conflicting]
+        if fold._value_rows and status != "unresolved":
+            out["values"] = [self._fact(r).to_dict() for r in fold._value_rows]
+        return encode_out(out)
 
     @staticmethod
     def _is_numeric(value: object) -> bool:
@@ -486,23 +531,14 @@ class Porcelain:
     def state(self, entity: str, attribute: str, frame: str = CANON,
               as_of: float | None = None) -> dict:
         """The folded value of one (entity, attribute) key in a frame as of a valid
-        time: {"status": "unknown"} when nothing is recorded, else "known" or
-        "conflicted" with the served fact (and the conflicting assertion ids, or
-        the derived quantity for an accrue attribute)."""
-        fold = self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of)
-        if fold.winner is None:
-            return {"status": "unknown"}
-        # Accrue: the host-facing value is the derived total, not the last
-        # delta row — keep `fact.value` consistent with ask()/snapshot().
-        fact = (self._quantity_fact(fold.winner, fold.quantity)
-                if fold.quantity is not None else self._fact(fold.winner))
-        out = {"status": "conflicted" if fold.conflicted else "known",
-               "fact": fact.to_dict()}
-        if fold.quantity is not None:
-            out["quantity"] = fold.quantity
-        if fold.conflicted:
-            out["conflicting"] = list(fold.conflicting)
-        return encode_out(out)
+        time: {"status": "unknown"} when nothing is recorded, else "known",
+        "conflicted" or "unresolved" (the served row is an unresolved
+        placeholder) with the served fact; plus the conflicting assertion ids
+        and their facts, a set-valued key's current members (`values`), or
+        the derived quantity for an accrue attribute. A host treats a status
+        it does not recognize as not known."""
+        return self._key_payload(
+            self._w.state(entity, self._attr(attribute), frame, valid_as_of=as_of))
 
     def where(self, attribute: str, op: str, value, frame: str = CANON,
               as_of: float | None = None) -> list[str]:
@@ -753,18 +789,8 @@ class Porcelain:
         correlated facets, as-of. Same shape as `state`. NOT a default read —
         `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
         uncorrelated view (no leak)."""
-        fold = self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of)
-        if fold.winner is None:
-            return {"status": "unknown"}
-        fact = (self._quantity_fact(fold.winner, fold.quantity)
-                if fold.quantity is not None else self._fact(fold.winner))
-        out = {"status": "conflicted" if fold.conflicted else "known",
-               "fact": fact.to_dict()}
-        if fold.quantity is not None:
-            out["quantity"] = fold.quantity
-        if fold.conflicted:
-            out["conflicting"] = list(fold.conflicting)
-        return encode_out(out)
+        return self._key_payload(
+            self._w.state_union(entity, self._attr(attribute), frame, valid_as_of=as_of))
 
     def correlation_conflicts(self, as_of: float | None = None,
                               frame: str = CANON) -> list[dict]:
@@ -1048,25 +1074,48 @@ class Porcelain:
                 resolved.append(None)
                 asks.append({"reference": target, "candidates": list(r.candidates)})
         facts: list[dict] = []
+        unresolved: list[list[str]] = []
+        conflicted: list[list[str]] = []
+
+        def note(names: list[list[str]], entity: str, attribute: str) -> None:
+            # snapshot's naming: the containment family is `in`.
+            key = [entity, "in" if self._w.semantics.is_containment(attribute)
+                   else attribute]
+            if key not in names:
+                names.append(key)
+
         for key in plan.get("keys", []):
             idx = key.get("target_index", 0)
             if not (0 <= idx < len(resolved)) or resolved[idx] is None:
                 continue
-            fold = self._w.state(resolved[idx], self._attr(key["attribute"]), frame,
-                                 valid_as_of=as_of)
-            if fold.winner is not None:
-                if fold.quantity is not None:
-                    facts.append(
-                        self._quantity_fact(fold.winner, fold.quantity).to_dict()
-                    )
-                else:
-                    facts.append(self._fact(fold.winner).to_dict())
+            attribute = self._attr(key["attribute"])
+            fold = self._w.state(resolved[idx], attribute, frame, valid_as_of=as_of)
+            if fold.winner is None:
+                continue
+            # READ-SURFACE-V1 §4: a placeholder is named, never served as a
+            # fact; a set-valued key serves every current member; a
+            # conflicted key serves its winner, as before, and is named.
+            if fold.quantity is not None:
+                facts.append(self._quantity_fact(fold.winner, fold.quantity).to_dict())
+            elif fold.winner.value_type == "unresolved":
+                note(unresolved, resolved[idx], attribute)
+            elif fold._value_rows:
+                facts.extend(self._fact(r).to_dict() for r in fold._value_rows)
+            else:
+                facts.append(self._fact(fold.winner).to_dict())
+            if fold.conflicted:
+                note(conflicted, resolved[idx], attribute)
         effective_as_of = plan.get("as_of") if plan.get("as_of") is not None else as_of
         if plan.get("wants_location"):
             for eid in resolved:
                 if eid:
                     fold = self._w.state(eid, "in", frame, valid_as_of=effective_as_of)
-                    if fold.winner is not None:
+                    if fold.winner is None:
+                        continue
+                    # The location fold is the `in` key, under §4's rules.
+                    if fold.winner.value_type == "unresolved":
+                        note(unresolved, eid, "in")
+                    else:
                         f = self._fact(fold.winner).to_dict()
                         # Frame-scope the chain like the fold beside it — a
                         # canon-frame locate would leak containment into a
@@ -1074,6 +1123,8 @@ class Porcelain:
                         f["chain"] = self._w.locate(
                             eid, frame=frame, valid_as_of=effective_as_of)
                         facts.append(f)
+                    if fold.conflicted:
+                        note(conflicted, eid, "in")
         if plan.get("wants_events"):
             participants = [e for e in resolved if e]
             for ev in self.events(participants=participants or None,
@@ -1084,5 +1135,5 @@ class Porcelain:
             answered=answered, facts=encode_out(facts),
             unknown_reason=None if answered else
             ("unresolved references" if asks else "no folded facts on the asked keys"),
-            asks=asks,
+            asks=asks, unresolved=unresolved, conflicted=conflicted,
         )
