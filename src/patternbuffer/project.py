@@ -94,9 +94,12 @@ class Projector:
 
     def _establishing_scope(self, scope: str | list[str], frame: str,
                             valid_as_of: float | None, asserted_as_of: int | None) -> list[str]:
-        """Subtree membership by establishing containment edges."""
-        roots = {self._indexes.resolve_entity(r)
-                 for r in ([scope] if isinstance(scope, str) else scope)}
+        """Subtree membership by establishing containment edges. The roots
+        come first, in the order the scope names them (as `_scope_entities`
+        orders them), so the lens never depends on set iteration order."""
+        roots = list(dict.fromkeys(
+            self._indexes.resolve_entity(r)
+            for r in ([scope] if isinstance(scope, str) else scope)))
         by_entity: dict[str, list[Assertion]] = {}
         for row in self._buffer.visible(
             frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of
