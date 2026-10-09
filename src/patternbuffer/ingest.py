@@ -33,7 +33,7 @@ from patternbuffer.model import (
     Assertion,
     task_schema,
 )
-from patternbuffer.roles import WriterRole
+from patternbuffer.roles import RoleViolation, WriterRole
 from patternbuffer.semantics import AttributeSemantics
 from patternbuffer.tmaint import AtomicAbort
 
@@ -334,6 +334,14 @@ def _time_value(t: Any) -> tuple[bool, float | int | None]:
         except OverflowError:  # past float range: no coordinate
             return False, t
     return math.isfinite(t), t
+
+
+def _aliases_given(raw: Any) -> bool:
+    """Whether an item carries an `aliases` value (GATE-AUTHORITY-V1 §3): a
+    non-empty string or a non-empty list, whatever its members."""
+    if isinstance(raw, str):
+        return raw != ""
+    return isinstance(raw, (list, tuple)) and len(raw) > 0
 
 
 @dataclass
@@ -908,8 +916,55 @@ class Ingestor:
         if self._skipped is not None:
             self._skipped.append(SkipRecord(entity, attribute, value, reason, detail))
 
+    def _authorize(self, item: dict[str, Any]) -> WriterRole:
+        """Settle an item's write authority before its first write
+        (GATE-AUTHORITY-V1 §3). Raises, never writes, never skips: an
+        authority violation must raise even when the item is also malformed
+        or a structurally invalid edge (INGEST-HARDENING-V1 Cx final).
+
+        Reads only `status`, `frame` and side-field presence. A status in
+        the ingestor's grant writes under ingestor authority; `generated`
+        passes letter 029's checks, then writes under resolver authority;
+        anything else is refused by the ingestor role's own check(), so the
+        message is the one the buffer used to raise after the declarations."""
+        status = item.get("status", "stated")
+        if status != "generated":
+            self._role.check(status)
+            return self._role
+        # Letter 029: host-authored generated rows land only in host-owned
+        # named frames (plot:*), never canon or knows:*.
+        frame_target = item.get("frame", CANON)
+        if frame_target == CANON or frame_target.startswith("knows:"):
+            raise ValueError(
+                "generated provenance through the gate is permitted only "
+                "into host-owned named frames (e.g. plot:*) — never canon "
+                "or knows:* (letter 029 guard)"
+            )
+        if self._resolver_role is None:
+            raise ValueError("no resolver authority wired for generated rows")
+        # The `source` meta and `alias` rows carry no frame: on a generated
+        # item they would be generated rows in canon, which letter 029
+        # forbids. (The other side rows carry fixed engine statuses inside the
+        # ingestor's grant and need no check.)
+        carried = [field for field, given in (
+            ("source_doc", bool(item.get("source_doc"))),
+            ("aliases", _aliases_given(item.get("aliases"))),
+        ) if given]
+        if carried:
+            raise RoleViolation(
+                f"a generated item cannot carry {' or '.join(carried)}: those "
+                "rows carry no frame and would be generated rows in canon "
+                "(letter 029 guard)"
+            )
+        return self._resolver_role
+
     def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
         out: list[Assertion] = []
+        # Authority FIRST (GATE-AUTHORITY-V1 §3, step 2): settled before
+        # canonicalization, any declaration or the main row, so a violation
+        # raises with nothing of the item written.
+        write_role = self._authorize(item)
+        status = item.get("status", "stated")
         attribute, receipt = self._canonicalize(item["attribute"])
         # RAW ids first (Cx final): validation must see what the author wrote,
         # not what resolution mapped it to — resolve happens AFTER the
@@ -954,23 +1009,6 @@ class Ingestor:
             valid_from = self.cursor.position
         elif valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
-
-        # Authority gate FIRST (INGEST-HARDENING-V1 Cx final): an authority
-        # violation (generated-into-canon/knows:) must RAISE even if the row is
-        # also a structurally-invalid edge — the skip must never swallow it.
-        status = item.get("status", "stated")
-        write_role = self._role
-        if status == "generated":
-            frame_target = item.get("frame", CANON)
-            if frame_target == CANON or frame_target.startswith("knows:"):
-                raise ValueError(
-                    "generated provenance through the gate is permitted only "
-                    "into host-owned named frames (e.g. plot:*) — never canon "
-                    "or knows:* (letter 029 guard)"
-                )
-            if self._resolver_role is None:
-                raise ValueError("no resolver authority wired for generated rows")
-            write_role = self._resolver_role
 
         # GATE-AUTHORITY-V1 §1: a mechanism attribute (retracts / resolved_by /
         # canonicalized_from) changes what OTHER rows mean and has exactly one

@@ -438,3 +438,70 @@ def test_s1_domain_retracts_row_is_skipped(world):
           "valid_from": 1.0}], classify="rules")
     assert _reasons(r) == ["mechanism_attribute"]
     assert r.rows == [] and world.buffer.head() == head
+
+
+# --------------------------------------- §3 authority before the first write
+
+def test_s3_generated_side_fields_raise_before_any_write(world):
+    """§3: `generated` into plot:arc1 with `source_doc`, or with
+    `aliases: ["the shadow"]`, raises RoleViolation with the head unchanged."""
+    for carried in ({"source_doc": "doc:ledger"}, {"aliases": ["the shadow"]}):
+        head = world.buffer.head()
+        with pytest.raises(RoleViolation, match="letter 029"):
+            world.ingest_structured([
+                {"entity": "arc:main", "attribute": "beat", "value": "rising",
+                 "status": "generated", "frame": "plot:arc1", "valid_from": 1.0,
+                 **carried}], classify="rules")
+        assert world.buffer.head() == head
+
+
+@pytest.mark.parametrize("status", ["retracted", "default", "bogus"])
+def test_s3_status_outside_the_grant_raises_before_any_declaration(world, status):
+    """§3: a status outside the grant on a first-use attribute with an `arity`
+    hint raises RoleViolation, leaving no `attr:*` declaration behind."""
+    head = world.buffer.head()
+    with pytest.raises(RoleViolation, match="may not append status"):
+        world.ingest_structured([
+            {"entity": "person:ann", "attribute": "allies", "value": "person:bob",
+             "arity": "set_valued", "status": status, "valid_from": 1.0}],
+            classify="rules")
+    assert world.buffer.head() == head
+    assert not world.semantics.is_declared("allies")
+
+
+def test_s3_generated_rows_and_their_side_rows_are_unchanged(world):
+    """§3: plain `generated` into plot:, and `generated` with `caused_by` or
+    `correction`, write exactly the rows they wrote before."""
+    rows = world.ingest_structured([
+        {"entity": "arc:main", "attribute": "beat", "value": "rising",
+         "status": "generated", "frame": "plot:arc1", "valid_from": 1.0},
+        {"entity": "arc:main", "attribute": "turn", "value": "fall",
+         "status": "generated", "frame": "plot:arc1", "valid_from": 2.0,
+         "caused_by": "event:storm"},
+        {"entity": "arc:main", "attribute": "twist", "value": "betrayal",
+         "status": "generated", "frame": "plot:arc1", "valid_from": 3.0,
+         "correction": True},
+    ], classify="rules")
+    turn, twist = rows[1].id, rows[3].id
+    assert [(r.entity, r.attribute, r.value, r.status, r.frame) for r in rows] == [
+        ("arc:main", "beat", "rising", "generated", "plot:arc1"),
+        ("arc:main", "turn", "fall", "generated", "plot:arc1"),
+        (turn, "caused_by", "event:storm", "inferred", "plot:arc1"),
+        ("arc:main", "twist", "betrayal", "generated", "plot:arc1"),
+        (twist, "correction_proposal", True, "inferred", "canon"),
+    ]
+
+
+def test_s3_a_violation_mid_call_keeps_the_per_row_contract(world):
+    """§3: a non-atomic [ok, violating, ok] call keeps the first item, writes
+    nothing of the violating item, and raises."""
+    head = world.buffer.head()
+    with pytest.raises(RoleViolation):
+        world.ingest_structured([
+            {"entity": "obj:a", "attribute": "hue", "value": "red", "valid_from": 1.0},
+            {"entity": "obj:b", "attribute": "hue", "value": "grey",
+             "status": "generated", "frame": "plot:x", "source_doc": "doc:x"},
+            {"entity": "obj:c", "attribute": "hue", "value": "blue", "valid_from": 1.0},
+        ], classify="rules")
+    assert [(r.entity, r.attribute) for r in world.buffer.all_rows()[head:]] == [
+        ("obj:a", "hue")]
