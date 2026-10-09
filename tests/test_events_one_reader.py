@@ -775,6 +775,32 @@ def test_s4_read_surface_last_write_meets_the_record(world):
     assert [f["value"] for f in out["values"]] == ["setup", "climax"]
 
 
+def test_s4_a_set_valued_key_on_an_event_keeps_read_surface_members(world):
+    """§4 meets READ-SURFACE-V1 §4: an event's set-valued key (`alias`) keeps
+    the set-valued rule — its members, each value once, in member order,
+    whenever there are members — read the same before and after a sweep."""
+    w = world
+    _ingest(w, [
+        {"entity": "event:meeting", "attribute": "kind", "value": "meeting", "valid_from": 2.0,
+         "aliases": ["the meeting"]},
+        {"entity": "event:fair", "attribute": "kind", "value": "fair", "valid_from": 2.0,
+         "aliases": ["the fair"]},
+    ], classify="defer")
+    _ingest(w, [{"entity": "event:meeting", "attribute": "alias", "value": "the meeting",
+                 "timeless": True},
+                {"entity": "event:meeting", "attribute": "alias", "value": "the council",
+                 "timeless": True}], classify="defer")
+    p = w.porcelain
+    for _ in range(2):
+        one = p.state("event:fair", "alias")
+        assert one["status"] == "known" and one["fact"]["value"] == "the fair"
+        assert [f["value"] for f in one["values"]] == ["the fair"]
+        many = p.state("event:meeting", "alias")
+        assert [f["value"] for f in many["values"]] == ["the meeting", "the council"]
+        assert many["fact"]["value"] == "the council"
+        w.classifier.classify_all()
+
+
 # ===================================================== §5 the lenses read records
 
 

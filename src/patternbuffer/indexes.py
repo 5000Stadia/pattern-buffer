@@ -1590,11 +1590,15 @@ class Indexes:
         single-valued: when the top-rank rows at the winner's stamp disagree
         (`_value_key`) the result is conflicted, `conflicting` holding their
         ids in log order — the fold's own same-stamp contradiction test. Every
-        other attribute is description and never conflicted; with two or more
-        rows, `_value_rows` holds them all in `_recency_key` order (`state()`
-        serves them as `values`). The point reads (`state`, `state_union`,
-        `ask`'s keys, identity's kind lookup) call this only when the fold
-        serves nothing; `fold_key` itself stays standing-only."""
+        other attribute is description and never conflicted. A set-valued one
+        (`name`, `alias`, `connects_to`, a declared set) keeps READ-SURFACE-V1
+        §4's rule for a set-valued key: its members, each value once, in member
+        order, whenever there are members. Any other description attribute
+        with two or more rows holds them all in `_value_rows`, in
+        `_recency_key` order — §4's rule extended to a record's description.
+        `state()` serves `_value_rows` as `values`. The point reads (`state`,
+        `state_union`, `ask`'s keys, identity's kind lookup) call this only when
+        the fold serves nothing; `fold_key` itself stays standing-only."""
         if attribute in META_ATTRIBUTES:
             return FoldResult(winner=None)
         entity = self._resolve(entity)
@@ -1618,6 +1622,10 @@ class Indexes:
                 return FoldResult(winner=winner, conflicted=True,
                                   conflicting=tuple(r.id for r in tied))
             return FoldResult(winner=winner)
+        if self._semantics.is_set_valued(attribute):
+            members = self._fold_set_valued(rows)
+            return FoldResult(winner=winner, values=members.values,
+                              _value_rows=members._value_rows)
         if len(rows) > 1:
             return FoldResult(winner=winner, values=tuple(r.value for r in rows),
                               _value_rows=tuple(rows))
