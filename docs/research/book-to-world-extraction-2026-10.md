@@ -102,3 +102,43 @@ strongest evidence on fragmentation comes from book-scale coreference:
   and MEIC-DT.
 - **FANToM, OpenToM and STAGE.** Not read in primary form.
 - **Cost per book.** No source gives a usable dollar or token figure.
+
+## Weighed advice (2026-10-09): measure reading, not memory
+
+Colony asked a separate model for research advice
+(`research/turbo-advice-2026-10-09.md`). pb weighed it; both points bear on
+M3's measurement and neither changes M2.
+
+1. **Alice is memorized: control for it. ADOPT, for R23 and R27.**
+   - The extractor has almost certainly read *Alice* many times. "Speak,
+     Memory" (Chang et al. 2023) shows that LLMs memorize classic books and do
+     better on downstream tasks for the ones they have memorized. Longpre et al.
+     2021 shows readers answering from memory over the given context.
+   - So Alice scores would partly measure recall, not reading. Worse, they would
+     hide the exact lie the vision forbids: remembered facts entering canon with
+     textual provenance, and later-chapter knowledge stamped early.
+   - The control is three parts:
+     - a name-cloze memorization probe per chapter;
+     - a **counterfeit edition**: consistent renames plus scripted state edits,
+       each with its expected world diff, so it is book-scale gold by
+       construction, with late edits probed early to catch knowledge leaking
+       backwards;
+     - each edition ingested twice, to give a **noise floor**.
+   - The noise floor also answers a fair critique of run 4: its 21→22 was
+     called a HIT with no run-to-run variance measured.
+   - R27 should report original vs counterfeit, edit recall, leaks and the
+     noise floor. Whether R27 takes this shape is held for its moment (a
+     colony gate tied to R27).
+2. **Let the book audit its own world (presupposition checks). ADAPT, after
+   R23.**
+   - Later prose presupposes state: unlocking a door presupposes holding the
+     key and being there. A presupposition that fails against the fold at that
+     sentence pins a missed write to the stretch since the last one.
+   - That gives a gold-free honesty signal and targeted re-reads instead of
+     blanket gleaning (technique 3).
+   - Prior art: ProStruct (Tandon et al. 2018) and TRIP (Storks et al. 2021) on
+     precondition-checked state tracking.
+   - It needs R23's grader first, to measure its precision (real misses versus
+     authorial ellipsis), and it touches the extractor contract, so it is a
+     spec of its own.
+   - Safety: only papers are cited; no external code is adopted.
