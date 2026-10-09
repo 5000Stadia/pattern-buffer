@@ -80,8 +80,8 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 
 - [x] R12 Five-part audit, every P1 reproduced; ranked note (`docs/AUDIT-2026-10.md`)
 - [x] R13 Behaviour-preserving polish and read caches, byte-identical, on main (`docs/AUDIT-2026-10.md` "Done on polish/audit-2026-10")
-- [~] R14 holds/wearing stored backwards, live in construct's worlds (`specs/GATE-INVERSE-ALIAS-V1.md`; branch `impl/gate-inverse-alias-v1`; awaiting pbr)
-- [~] R15 Batch A, fold correctness (`specs/FOLD-CORRECTNESS-V1.md` r3; branch `impl/fold-correctness-v1`; awaiting pbr)
+- [x] R14 holds/wearing stored backwards, live in construct's worlds — pbr GREEN, merged 2026-10-09 (`specs/GATE-INVERSE-ALIAS-V1.md`; whitepaper A19)
+- [x] R15 Batch A, fold correctness — pbr GREEN, merged 2026-10-09 (`specs/FOLD-CORRECTNESS-V1.md` r3; whitepaper A18)
 - [~] R16 Batch B, gate authority (`specs/GATE-AUTHORITY-V1.md`; branch `impl/gate-authority-v1`; spec awaiting pbr)
 - [~] R17 Batch C, frame-scoped identity (`specs/FRAME-SCOPED-IDENTITY-V1.md`; branch `impl/frame-scoped-identity-v1`; spec awaiting pbr)
 - [~] R18 Batch D, refer learns words, not picks (`specs/REFER-LEARNING-V1.md`; branch `impl/refer-learning-v1`; spec awaiting pbr)
