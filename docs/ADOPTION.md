@@ -588,10 +588,12 @@ p.state(entity, attribute, frame=, as_of=, value=None, asserted_as_of=None)
    # on an EVENT (EVENTS-ONE-READER-V1 §4): an event's rows never fold, so its own
    #   attributes are read from its record, the same before a sweep as after it —
    #   kind/origin/destination/manner answer exactly what events() reports (top evidence
-   #   rank, then latest; conflicted when two disagree at one stamp); a description key
-   #   with several rows lists them all in values; every key is unknown until the event
-   #   has occurred (its first stamped row <= as_of). state_union reads the records of
-   #   the aka union. where/aggregate/who_knows/confidence/frame_diff stay standing-only.
+   #   rank, then latest; conflicted when two disagree at one stamp); a set-valued key
+   #   (alias, name, connects_to) lists its members in values, as for any entity, and any
+   #   other description key with several rows lists them all; every key is unknown until
+   #   the event has occurred (its first stamped row <= as_of). state_union reads the
+   #   records of the aka union. where/aggregate/who_knows/confidence/frame_diff stay
+   #   standing-only.
 p.canonical_attribute(name) -> str
    # READ-SURFACE-V1 §3: the gate's name for an attribute ("Located In" -> "in", "type" ->
    # "kind"; holds/wearing stay as they are). Every attribute argument already passes

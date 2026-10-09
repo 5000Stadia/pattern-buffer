@@ -60,9 +60,10 @@ answers "what exactly did you do to the log."
   `matches` (§5); every Fact gains `value_type`.)* *(Note 2026-10-09,
   EVENTS-ONE-READER-V1 §4: on an event, whose rows never fold, `state()` reads
   the event's record: `kind` and the movement keys answer what `events()`
-  reports — `conflicted` when two disagree at one stamp — a description key
-  with several rows lists them in `values`, and every key is `unknown` until
-  the event has occurred.)*
+  reports — `conflicted` when two disagree at one stamp — a set-valued key
+  lists its members in `values` as for any entity, any other description key
+  with several rows lists them all, and every key is `unknown` until the event
+  has occurred.)*
 - `locate / contents / path` — frozen as shipped, JSON-listified. *(Note
   2026-10-09, READ-SURFACE-V1 §8: additive `frame=` after `as_of`, and
   `asserted_as_of=` on these and every other read with a valid-time bound.)*
