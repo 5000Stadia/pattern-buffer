@@ -21,7 +21,7 @@ from patternbuffer.buffer import PatternBuffer
 from patternbuffer.dump import build, dump
 from patternbuffer.ingest import SKIP_REASONS
 from patternbuffer.roles import RoleViolation, _make_engine_roles
-from patternbuffer.testing import StubModel, rule_classifier_fallback
+from patternbuffer.testing import StubModel, StubModelExhausted, rule_classifier_fallback
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CORPUS_LOG = FIXTURES / "gate_authority_corpus.jsonl"
@@ -1025,3 +1025,88 @@ def test_s2_commit_set_carries_the_merge_or_aborts(world):
     assert [r.attribute for r in rows] == ["mood", "kind", "same_as", "caused_by",
                                            "evidence"]
     assert world.registry.resolve("person:y") == world.registry.resolve("person:x")
+
+
+# ------------------------ §6 p.ingest() receipts and the cursor on rejection
+
+_GENERATED_INTO_CANON = {"entity": "obj:x", "attribute": "hue", "value": "grey",
+                         "status": "generated", "frame": "canon"}
+
+
+def test_s6_p_ingest_receipts_its_skips(tmp_path):
+    """§6: an extraction yielding `person:/you` and a self-edge lists both in
+    `skipped` (malformed_id, then the cycle reason); the same with `source=`."""
+    extraction = {"items": [
+        {"entity": "person:/you", "attribute": "mood", "value": "tired"},
+        {"entity": "place:hall", "attribute": "in", "value": "place:hall",
+         "timeless": True},
+        {"entity": "person:ann", "attribute": "mood", "value": "calm"},
+    ]}
+    w = World(tmp_path / "pi.world", world_id="w:pi",
+              model=StubModel(responses=[extraction, extraction]))
+    for source in (None, "doc:diary"):
+        r = w.porcelain.ingest("Ann rests in the hall.", source=source,
+                               classify="rules")
+        assert [s["reason"] for s in r.skipped][:1] == ["malformed_id"]
+        assert r.skipped[0]["entity"] == "person:/you"
+        assert r.skipped[1]["reason"].startswith("cycle-forming containment edge: ")
+        assert len(r.skipped) == 2
+    assert [row["attribute"] for row in r.rows] == ["mood", "source"]
+    w.close()
+
+
+def test_s6_a_rejected_call_leaves_the_cursor_where_it_was(tmp_path):
+    """§6: from a cursor at 5, `classify="bogus"` with at=99, a generated-into-
+    canon raise with at=77, a failing model with at=42, and atomic with
+    `classify="inline"` at=60 each leave the cursor at 5."""
+    stub = StubModel()                      # an unscripted model call fails
+    w = World(tmp_path / "pose.world", world_id="w:pose", model=stub)
+    p = w.porcelain
+    w.ingestor.cursor.advance(5.0)
+
+    def bogus_after_extraction():
+        stub.enqueue({"items": [_BEFORE]})
+        p.ingest("text", classify="bogus", at=99)
+
+    for call, error in (
+        (lambda: p.ingest_structured([_BEFORE], classify="bogus", at=99), ValueError),
+        (bogus_after_extraction, ValueError),
+        (lambda: p.ingest_structured([_GENERATED_INTO_CANON], classify="rules", at=77),
+         ValueError),
+        (lambda: p.ingest("text", classify="rules", at=42), StubModelExhausted),
+        (lambda: p.ingest_structured([_BEFORE], classify="inline", atomic=True, at=60),
+         ValueError),
+    ):
+        head = w.buffer.head()
+        with pytest.raises(error):
+            call()
+        assert w.buffer.head() == head
+        assert w.ingestor.cursor.position == 5.0
+    w.close()
+
+
+def test_s6_a_partial_write_keeps_the_cursor_at_at(world):
+    """§6: `[ok item, generated-into-canon]` with at=70 leaves the cursor at
+    70, where the first row was stamped."""
+    world.ingestor.cursor.advance(5.0)
+    head = world.buffer.head()
+    with pytest.raises(ValueError, match="letter 029"):
+        world.porcelain.ingest_structured(
+            [{"entity": "obj:a", "attribute": "hue", "value": "red"},
+             _GENERATED_INTO_CANON], classify="rules", at=70)
+    assert world.ingestor.cursor.position == 70
+    [row] = world.buffer.all_rows()[head:]
+    assert (row.entity, row.valid_from) == ("obj:a", 70)
+
+
+def test_s6_atomic_abort_restores_the_cursor(world):
+    """§6: an AtomicAbort restores the cursor, unchanged."""
+    world.ingestor.cursor.advance(5.0)
+    head = world.buffer.head()
+    with pytest.raises(AtomicAbort) as ei:
+        world.porcelain.ingest_structured(
+            [_BEFORE, {"entity": "person:/you", "attribute": "mood", "value": "x"}],
+            classify="rules", atomic=True, at=60)
+    assert ei.value.cause == "gate_skip"
+    assert world.buffer.head() == head
+    assert world.ingestor.cursor.position == 5.0
