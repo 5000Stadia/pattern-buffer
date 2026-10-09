@@ -84,7 +84,7 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 - [x] R15 Batch A, fold correctness — pbr GREEN, merged 2026-10-09 (`specs/FOLD-CORRECTNESS-V1.md` r3; whitepaper A18)
 - [x] R16 Batch B, gate authority — pbr GREEN, merged 2026-10-09 (`specs/GATE-AUTHORITY-V1.md` r2; whitepaper A20)
 - [~] R17 Batch C, frame-scoped identity — pbr GREEN, merged 2026-10-09 without §7 (`specs/FRAME-SCOPED-IDENTITY-V1.md` r2; whitepaper A21). §7, frames following merges, waits on Kabe's gate g3bf5da; its r1 build is kept on `hold/frame-scoped-identity-v1-r1`
-- [~] R18 Batch D, refer learns words, not picks (`specs/REFER-LEARNING-V1.md`; branch `impl/refer-learning-v1`; spec pbr GREEN; built and rebased on C r2; code in pbr review)
+- [x] R18 Batch D, refer learns words, not picks — pbr GREEN, merged 2026-10-09 (`specs/REFER-LEARNING-V1.md`; whitepaper A22)
 - [~] R19 Batch E, the additive read surface: construct's three asks (`specs/READ-SURFACE-V1.md`; spec pbr GREEN; building on D as `impl/read-surface-v1`, against the oracle tests from `tests/read-surface-v1`)
 - [~] R20 Ship notices to construct as each batch lands; construct repairs its worlds with the holds/wearing recipe (live player worlds are Kabe's call; construct brings him the list) (`docs/ADOPTION.md` "Inverse predicates"). A and R14 noticed 2026-10-09; construct's 1,542 tests green on them, nothing to re-baseline. B noticed 2026-10-09; construct green on it (1,544 tests) after a one-line fix to its private-API test patch. C noticed 2026-10-09; construct green on it (1,544 tests); it confirms thedeep's chen/elias_chen with the g698a80 repairs
 - [ ] R21 P2 structure: one merge-veto gate table, one rows-between scan, `indexes.py` split behind its facade, the classifier rubric unified (`docs/AUDIT-2026-10.md` "P2")
