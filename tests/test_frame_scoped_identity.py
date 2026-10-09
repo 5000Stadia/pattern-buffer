@@ -729,7 +729,7 @@ def test_r2_1h_the_extraction_prompt_puts_same_as_in_canon():
     from patternbuffer.ingest import _EXTRACT_RULES_FULL
     line = next(l for l in _EXTRACT_RULES_FULL.splitlines() if l.startswith("- ALIASES:"))
     assert ("if you minted a duplicate id for the same individual, emit same_as "
-            "on the entity's frame 'canon' row (identity is canon-only).") in line
+            "on that entity's row in frame 'canon' (identity is canon-only).") in line
 
 
 def test_r2_1i_one_receipt_for_any_non_canon_same_as(world):

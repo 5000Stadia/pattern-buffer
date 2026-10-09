@@ -152,8 +152,8 @@ joins the skip vocabulary in ADOPTION.
 ALIASES bullet said "if you minted a duplicate id for the same individual, emit
 same_as." Under B and this section a `same_as` on a non-canon item is refused,
 so a duplicate the extractor recognized in a `knows:` item would stay split.
-The sentence now ends "emit same_as on the entity's frame 'canon' row (identity
-is canon-only)." The lean rules carry no `same_as` sentence and are unchanged.
+The sentence now ends "emit same_as on that entity's row in frame 'canon'
+(identity is canon-only)." The lean rules carry no `same_as` sentence and are unchanged.
 Oracle 1h: the full rules' ALIASES bullet carries the new sentence.
 
 **Hosts see.**
@@ -796,7 +796,18 @@ and write nothing. Today `to_kind` is silently ignored.
 - `correlate`/`reject` outcomes and the decline codes `correlated` and
   `distinct_group` (§3);
 - the new `identity_conflicts()` read (§4);
-- that `fidelity_audit` no longer needs a scan (§5);
+- that `fidelity_audit` no longer needs a scan (§5), and that `open_conflicts`
+  now lists what `state()` calls conflicted: 520 conflicts in 38 of the 52
+  world copies, where the stored table held 0 (r2). Construct's
+  `scripts/fidelity_audit.py` reads `summary.open_conflicts` into its score;
+  its play path reads only `name_collisions`;
+- (r2) that `name_collisions` statuses can move, and construct's build acts on
+  them (it rejects cross-kind homonyms and merges `alias_not_specific` pairs).
+  A pair whose correlation groups a canon `distinct_from` separates is
+  `hard_blocked` with reason `distinct_group` (§3(c)), and only canon rows
+  block a pair (§2). Measured on the copies: "the open ledger" (×2) is no
+  longer blocked, since its `held_by` row is in `proposed:main`, not canon;
+  "saint orven's step" moves to `typing_slip`;
 - the two snapshot paths without a fallback (§6);
 - the `thedeep` confirm.
 
