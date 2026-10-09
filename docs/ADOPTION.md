@@ -160,6 +160,14 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   untimed write (`at=`, e.g. from `axis_heads()["valid_head"]`): the cursor
   starts at 0.0 on every open, so an untimed row otherwise lands at t=0 and
   loses to every later-stamped row on its key.
+- **SHOULD** load bulk structured data with `ingest_structured(..., atomic=True)`:
+  one transaction instead of a commit per row. A 3.4k-row case loaded in ~1.2 s,
+  against ~43 s without it, and the world was byte-identical.
+- **MUST** give an instant a non-zero interval: valid time is half-open, so a
+  row with `valid_from == valid_to` is never visible. Write `[t, t+1)` (or omit
+  `valid_to`). A second value asserted over the same window is a same-time
+  contradiction (the key reads `conflicted`): to correct a value, `retract` the
+  old row first.
 - **NEVER** (until the gate fix lands) send the inverse predicates `holds` or
   `wearing` — the built-in aliases rename them to `held_by` / `worn_by`
   **without swapping subject and object**, so `person:ralph holds thing:key`
