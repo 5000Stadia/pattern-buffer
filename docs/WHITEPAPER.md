@@ -792,6 +792,19 @@ The gate (§10) gained the disciplines that lived testing demanded:
 - **`extract()`** — the read-only extraction seam: a host parallelizes N
   `extract()` calls in its own runtime, then `ingest_structured()`s the results
   serially (writes stay serial, append-only intact).
+- **Authority before the first write; every other refusal a typed receipt**
+  (GATE-AUTHORITY-V1, A20) — the gate settles an item's authority (status
+  grant, frame, letter 029) before anything of it is written, then refuses
+  what is malformed with a fixed `SKIP_REASONS` code instead of raising
+  mid-chunk or storing garbage. A **mechanism attribute** (a row the engine
+  writes about other rows: `retracts`, `resolved_by`, `canonicalized_from`,
+  the tracking stamp, the demoted coordinate, the correction proposal) is
+  never accepted as an item, and an engine read honors one only with its
+  owner's mark; a raw
+  `same_as` is the guarded merge (hard vetoes absolute, canon only); semantics
+  declarations are validated; an id-shaped typo on an entity-valued predicate
+  is a `malformed_id`; `p.ingest()` receipts its skips; bookkeeping rows on
+  assertions never reach the model.
 
 ### 25.7 The build lifecycle
 
@@ -845,3 +858,4 @@ exact number, the host owns what it denominates.
 | A16 | 2026-07 | The standing-property contract: **timeless = true across the world's whole history** (facts of origin only; acquired standing facts stamp at their earliest supported time; age is never timeless — §5's durability and §3's valid time kept orthogonal), the classifier's enduring-baseline preference, kinship-of-origin as one host `attribute_default` declaration (no engine kinship vocabulary), the `merged_self_edge` receipt reason; background-homonym coreference **parked forever with cause** (its reopening tripwire lives host-side — see ROADMAP-deferred's no-park-without-a-tripwire doctrine). Plus the full scoped deictic family in the `pov` instruction (§25.6 extension) | INGESTION-FIDELITY-V2, SHAPE-FIX-V1 4c |
 | A18 | 2026-10 | Fold correctness, the October self-audit's batch A: one recency key (valid time 0.0 is a time); one identity-aware value comparison for every tie test; a stale same-time tie in one source class never outvotes a later move (containment family); **evidence rank governs every durability class** — CONSTITUTIVE ranks before its earliest-wins rule, and STATE ∪ DISPOSITIONAL fold through one rank/source-class/recency machinery (§5's "overridable by stronger later evidence" made literal), with a STATE row outranking a habit stamped at the same instant and tied habits coexisting; the establishing view keeps the world at rest (§13) under later habits; time coordinates are finite numbers at the gate (numeric strings coerced). Answers change only where they were wrong | FOLD-CORRECTNESS-V1 r3 (pbr GREEN); `docs/AUDIT-2026-10.md` |
 | A19 | 2026-10 | Inverse predicates at the gate (§10 canonicalization): `holds`/`wearing` canonicalize to `held_by`/`worn_by` **with subject and object swapped** for entity values (receipted `(inverse) holds->held_by`), stay literal domain facts for text values, and can never be resurrected as plain renames by replayed receipts. Rows written before the fix were stored backwards (live in a host's worlds); they are found and repaired host-side by a porcelain-only recipe — the engine never rewrites | GATE-INVERSE-ALIAS-V1 r1.2 (pbr GREEN); audit P1 #0 |
+| A20 | 2026-10 | The gate decides by authority, and every refusal is a receipt (§10, §12; the October self-audit's batch B): authority (status grant, frame, letter 029) is settled before an item's first write; every other refusal is a typed skip from one frozen vocabulary (`SKIP_REASONS`), receipted on every write path including `p.ingest()`. **Mechanism attributes** — rows the engine writes about other rows (`retracts`, `resolved_by`, `canonicalized_from`, `learned_at_wallclock`, `source_valid_from`, `correction_proposal`) — are never accepted as items, and every engine read of one honors only its owner's mark (the buffer also refuses a retraction, a resolution marker or a tracking stamp without its owner's status), so a copied or forged row hides, spends, aliases or refreshes nothing. A raw `same_as` is the guarded merge (both hard vetoes, canon only: identity is not perspectival). Declarations are validated against their axis vocabulary; an id-shaped typo on an entity-valued predicate is a `malformed_id`; one numeric rule for times and `confidence`; a rejected call keeps the scene cursor; bookkeeping rows never reach the model. Well-formed items write byte-identical logs | GATE-AUTHORITY-V1 r2; audit P1 #6, #13 |
