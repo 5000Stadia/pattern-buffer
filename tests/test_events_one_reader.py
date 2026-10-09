@@ -1000,3 +1000,159 @@ def test_s6_an_agent_row_on_another_subject_is_not_an_event(world):
     # the show is an event neighbour and so is its cause; the puppet is not
     assert _event_neighbours(w, "person:mara", None) == ["event:booking", "event:show"]
     assert _event_neighbours(w, "person:mara", 4.0) == []
+
+
+# ===================================================== the cross-cutting tests
+
+_FRAMES = ("canon", "knows:person:p0", "session:main")
+_PEOPLE = tuple(f"person:p{i}" for i in range(4))
+_PLACES = tuple(f"place:r{i}" for i in range(3))
+_KINDS = ("moved", "meeting", "theft", "storm")
+_TIMES = (None, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0, 9.0)
+
+
+def _generated_world(w: World, seed: int) -> None:
+    """A generated world: standing rows classified, then event rows written
+    unclassified — with and without stamps, closed and zero-duration moves,
+    later rows, same-stamp and later corrections, a lower-rank kind, merges and
+    retractions, in three frames."""
+    import random
+    rng = random.Random(seed)
+    standing = []
+    for place in _PLACES:
+        standing.append({"entity": place, "attribute": "kind", "value": "room",
+                         "timeless": True})
+    for i, person in enumerate(_PEOPLE):
+        standing += [
+            {"entity": person, "attribute": "kind", "value": "person", "timeless": True},
+            {"entity": person, "attribute": "in", "value": _PLACES[i % len(_PLACES)],
+             "value_type": "entity", "valid_from": 0.0},
+        ]
+    _ingest(w, standing)
+    events = [f"event:e{i}" for i in range(rng.randint(4, 7))]
+    for eid in events:
+        frame = rng.choice(_FRAMES)
+        kind = rng.choice(_KINDS)
+        t = rng.choice([None, 1.0, 2.0, 3.5, 5.0])
+        stamp: dict = {"timeless": True} if t is None else {"valid_from": t}
+        if kind == "moved" and t is not None and rng.random() < 0.5:
+            stamp["valid_to"] = t + rng.choice([0.0, 2.0])
+        items = [{"entity": eid, "attribute": "kind", "value": kind, **stamp},
+                 {"entity": eid, "attribute": "agent", "value": rng.choice(_PEOPLE),
+                  "value_type": "entity", **stamp}]
+        if kind == "moved":
+            origin, destination = rng.sample(_PLACES, 2)
+            items += [{"entity": eid, "attribute": "origin", "value": origin,
+                       "value_type": "entity", **stamp},
+                      {"entity": eid, "attribute": "destination",
+                       "value": destination if rng.random() < 0.8 else "the far road",
+                       **stamp}]
+            if rng.random() < 0.5:
+                items.append({"entity": eid, "attribute": "manner", "value": "walk", **stamp})
+        if rng.random() < 0.5:
+            items.append({"entity": eid, "attribute": "patient", "value": rng.choice(_PEOPLE),
+                          "value_type": "entity", **stamp})
+        if rng.random() < 0.4:
+            items.append({"entity": eid, "attribute": "in", "value": rng.choice(_PLACES),
+                          "value_type": "entity", **stamp})
+        if rng.random() < 0.3:      # a row the event gains later
+            items.append({"entity": eid, "attribute": "patient",
+                          "value": rng.choice(_PEOPLE), "value_type": "entity",
+                          "valid_from": (t or 0.0) + 2.0})
+        if rng.random() < 0.3:      # a correction at the same stamp, or a later one
+            later = {"valid_from": t + 1.0} if t is not None and rng.random() < 0.5 else {
+                k: v for k, v in stamp.items() if k != "valid_to"}
+            items.append({"entity": eid, "attribute": "kind", "value": rng.choice(_KINDS),
+                          **later})
+        if rng.random() < 0.2:      # a lower-rank kind
+            items.append({"entity": eid, "attribute": "kind", "value": "rumor",
+                          "status": "assumed", **{k: v for k, v in stamp.items()
+                                                  if k != "valid_to"}})
+        _ingest(w, items, classify="defer", frame=frame)
+    for _ in range(rng.randint(0, 2)):
+        a, b = rng.sample(events, 2)
+        w.registry.merge(a, b, evidence="generated merge")
+    rows = [r for r in w.buffer.all_rows() if r.entity.startswith("event:e")]
+    for row in rng.sample(rows, min(len(rows), rng.randint(0, 2))):
+        w.porcelain.retract(row.id, "generated correction")
+
+
+def _event_reads(w: World) -> dict:
+    p = w.porcelain
+    out: dict = {}
+    for frame in _FRAMES:
+        listed = p.events(frame=frame)
+        ids = sorted({e["id"] for e in listed}
+                     | {e["id"] for t in _TIMES[1:] for e in p.events(frame=frame, until=t)})
+        out[(frame, "events")] = listed
+        for kind in _KINDS + ("rumor",):
+            out[(frame, "kind", kind)] = p.events(frame=frame, kind=kind)
+        for t in _TIMES[1:]:
+            out[(frame, "since", t)] = p.events(frame=frame, since=t)
+            out[(frame, "until", t)] = p.events(frame=frame, until=t)
+            out[(frame, "window", t)] = p.events(frame=frame, since=t - 1.0, until=t)
+        for person in _PEOPLE:
+            out[(frame, "participants", person)] = p.events(frame=frame, participants=person)
+            out[(frame, "what_happened", person)] = p.snapshot(
+                person, frame=frame, lens="what_happened")
+        for t in _TIMES:
+            out[(frame, "in_transit", t)] = p.in_transit(as_of=t, frame=frame)
+        for place in _PLACES:
+            out[(frame, "contents", place)] = p.contents(place, frame=frame)
+            out[(frame, "what_happened", place)] = p.snapshot(
+                place, frame=frame, lens="what_happened")
+        for eid in ids:
+            for key in ("kind", "agent", "patient", "origin", "destination", "manner",
+                        "in", "same_as"):
+                for t in (None, 3.5):
+                    out[(frame, "state", eid, key, t)] = p.state(eid, key, frame=frame,
+                                                                 as_of=t)
+    return out
+
+
+@pytest.mark.parametrize("seed", range(12))
+def test_classification_independence(tmp_path, seed):
+    """Tests: on generated worlds, events() under every call shape,
+    in_transit(), state() on every event key, contents() and the
+    what_happened lens give the same answers before and after classify_all()."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / f"gen{seed}.world", world_id=f"w:gen{seed}", model=stub)
+    try:
+        _generated_world(w, seed)
+        assert any(w.classifier.get(r.id) is None for r in w.buffer.all_rows())
+        before = _event_reads(w)
+        assert any(before[(f, "events")] for f in _FRAMES)
+        w.classifier.classify_all()
+        assert all(w.classifier.get(r.id) is not None for r in w.buffer.all_rows())
+        after = _event_reads(w)
+        assert after.keys() == before.keys()
+        for key in before:
+            assert after[key] == before[key], key
+    finally:
+        w.close()
+
+
+@pytest.mark.parametrize("seed", range(12))
+def test_parity_state_and_events(tmp_path, seed):
+    """Tests: for every event, and each of kind, origin, destination and
+    manner, state(event, key)'s fact value equals events()' field — under the
+    same frame and as of the same time."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / f"par{seed}.world", world_id=f"w:par{seed}", model=stub)
+    try:
+        _generated_world(w, seed)
+        if seed % 2:
+            w.classifier.classify_all()
+        p = w.porcelain
+        checked = 0
+        for frame in _FRAMES:
+            for t in _TIMES:
+                for ev in p.events(frame=frame, until=t):
+                    for key in ("kind", "origin", "destination", "manner"):
+                        st = p.state(ev["id"], key, frame=frame, as_of=t)
+                        served = None if st["status"] == "unknown" else st["fact"]["value"]
+                        assert served == ev[key], (frame, t, ev["id"], key, st)
+                        checked += 1
+        assert checked
+    finally:
+        w.close()
