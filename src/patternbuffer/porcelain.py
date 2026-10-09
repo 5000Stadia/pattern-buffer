@@ -1121,6 +1121,40 @@ class Porcelain:
                                       asserted_as_of=aao).to_dict())
         return encode_out(out)
 
+    # ------------------------------------------------------- reference
+
+    def refer(self, description: str, scope: str | list[str] | None = None,
+              frame: str = CANON, as_of: float | None = None,
+              constraints: list[list[str]] | None = None,
+              asserted_as_of: int | None = None,
+              learn: bool = True, model: bool = True) -> dict:
+        """Resolve a referring expression (whitepaper §9) to one entity, a
+        candidate set, or underdetermined: `{"status": "resolved" |
+        "candidates" | "underdetermined", "entity_id", "candidates",
+        "receipt"}` (READ-SURFACE-V1 §9). Tier 1 is deterministic: an authored
+        name or alias in `frame`, constraint inversion (`constraints` are
+        `[relation, anchor]` pairs: `contains`, `owned_by`, `held_by`), the one
+        entity of the named kind in `scope`, a word refer learned earlier.
+        `model=False` is tier 1 only: where tier 2 would judge, the result is
+        `candidates` with signal `no_model`, and nothing is learned. `learn`
+        (REFER-LEARNING-V1): a vocabulary miss that tier 2 maps onto one entity
+        in scope is remembered as a word; a pick never is. `asserted_as_of`
+        reads the log as it stood at that position and never learns."""
+        pairs: list[tuple[str, str]] | None = None
+        if constraints is not None:
+            pairs = []
+            for constraint in constraints:
+                if not (isinstance(constraint, (list, tuple)) and len(constraint) == 2
+                        and all(isinstance(part, str) for part in constraint)):
+                    raise ValueError(
+                        "a refer constraint is a [relation, anchor] pair of "
+                        f"strings, got {constraint!r}")
+                pairs.append((constraint[0], constraint[1]))
+        resolution = self._w.refer(
+            description, scope=scope, frame=frame, constraints=pairs, as_of=as_of,
+            asserted_as_of=asserted_as_of, learn=learn, model=model)
+        return encode_out(asdict(resolution))
+
     # ------------------------------------------------------------- ask
 
     def ask(self, question: str, frame: str = CANON,

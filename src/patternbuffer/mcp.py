@@ -4,8 +4,9 @@ Any MCP client drives a world with zero Python — the engine-independence claim
 (whitepaper §17.2) demonstrated beyond the Python host. Pure adapter: an
 explicit registry of the porcelain's deterministic verbs, a dispatch layer, and
 one mechanical wire envelope over `world.porcelain.*` — no engine surface, no
-reflection, no model callable (the server's World has none, and the exposed
-parameter domains are the genuinely model-free subset).
+reflection, no model callable (the server's World has none, the exposed
+parameter domains are the genuinely model-free subset, and the parameters that
+would reach the model or write are forced, `FORCED_PARAMS`).
 
 The engine core never imports this module; the `mcp` SDK is imported lazily and
 ships in the `pbuffer[mcp]` extra (distribution name; import stays patternbuffer). Trust boundary: a connected client is a
@@ -32,7 +33,7 @@ from patternbuffer.model import POLICIES
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------- the registry
-# Explicit and exhaustive (Cx 521 #2): the 40 deterministic tools. A porcelain
+# Explicit and exhaustive (Cx 521 #2): the 42 deterministic tools. A porcelain
 # addition CANNOT appear here by reflection — it must be classified V1/V1.1 and
 # added deliberately (the registry-completeness test enforces this).
 
@@ -45,6 +46,10 @@ V1_READS = (
     "correlations", "correlation_conflicts", "typing_conflicts",
     "identity_conflicts",                                # FRAME-SCOPED-IDENTITY-V1 §4
     "canonical_attribute",                               # READ-SURFACE-V1 §3
+    # READ-SURFACE-V1 §9/§11: refer, served deterministic — tier 1 is V1 and
+    # tier 2 stays V1.1 (MCP sampling). FORCED_PARAMS pins model=False and
+    # learn=False, so the tool makes no model call and no write.
+    "refer",
 )
 V1_MUTATIONS = (
     "ingest_structured", "commit_set", "retract", "reconcile",
@@ -105,9 +110,17 @@ SCHEMA_OVERRIDES: dict[tuple[str, str], dict] = {
         ]},
     },
 }
-# Parameters omitted from the tool surface entirely (the server always uses
-# the safe value): seal_build(model=) would reach the batch model path.
-OMITTED_PARAMS: frozenset[tuple[str, str]] = frozenset({("seal_build", "model")})
+# One table of forced parameters (READ-SURFACE-V1 §11): each is omitted from
+# its tool's schema, refused before dispatch if a client sends it, and filled
+# with the safe value by dispatch. seal_build(model=) would reach the batch
+# model path; refer(model=) would reach tier 2, and refer(learn=) could write.
+FORCED_PARAMS: dict[tuple[str, str], Any] = {
+    ("seal_build", "model"): False,
+    ("refer", "model"): False,
+    ("refer", "learn"): False,
+}
+# Parameters omitted from the tool surface entirely: exactly the forced ones.
+OMITTED_PARAMS: frozenset[tuple[str, str]] = frozenset(FORCED_PARAMS)
 
 _OUTPUT_SCHEMA = {
     "type": "object",
@@ -217,8 +230,10 @@ def dispatch(world: World, name: str, arguments: dict[str, Any],
     """Validate, call the porcelain verb, wrap in the wire envelope.
 
     Runtime validation (Cx 521 #1) rejects the model-reaching modes BEFORE
-    dispatch — enforcement, not description. Mutations serialize under `lock`
-    (build-session state is server/world state, not per-request state)."""
+    dispatch — enforcement, not description: a forced parameter
+    (`FORCED_PARAMS`) a client sends is refused, and dispatch fills its safe
+    value. Mutations serialize under `lock` (build-session state is
+    server/world state, not per-request state)."""
     if name not in V1_TOOLS:
         raise ValueError(f"unknown tool {name!r}")
     verb = getattr(world.porcelain, name)
@@ -234,13 +249,16 @@ def dispatch(world: World, name: str, arguments: dict[str, Any],
                 f"{name} over MCP accepts classify='rules'|'defer' "
                 "only — 'inline'/'batch' reach the model path, which this "
                 "no-model server does not carry (MCP-WRAPPER-V1)")
-    if name == "seal_build":
-        if "model" in args:
+    for (tool, param), forced in FORCED_PARAMS.items():
+        if tool != name:
+            continue
+        if param in args:
             raise ValueError(
-                "seal_build over MCP does not accept 'model' — the batch "
-                "model path is not carried by this no-model server; the seal "
-                "always runs rules-only (MCP-WRAPPER-V1)")
-        args["model"] = False
+                f"{name} over MCP does not accept {param!r} — the server forces "
+                f"{param}={forced!r}: this no-model server carries no model "
+                "path and its reads write nothing (MCP-WRAPPER-V1, "
+                "READ-SURFACE-V1 §11)")
+        args[param] = forced
     if name in V1_MUTATIONS and lock is not None:
         with lock:
             ret = verb(**args)

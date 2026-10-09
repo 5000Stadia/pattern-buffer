@@ -1,6 +1,6 @@
 """MCP-WRAPPER-V1: the porcelain over MCP — registry, dispatch, wire, membrane.
 
-The wrapper is a pure adapter over the frozen porcelain: an explicit 40-tool
+The wrapper is a pure adapter over the frozen porcelain: an explicit 42-tool
 registry (never reflective), the genuinely model-free parameter subset (spy-
 proven), one mechanical wire envelope, the exact annotations table, and the
 core/extra import membrane. The stdio smoke test runs against the real SDK.
@@ -16,6 +16,7 @@ import pytest
 from patternbuffer import World
 from patternbuffer.mcp import (
     DESTRUCTIVE,
+    FORCED_PARAMS,
     IDEMPOTENT_MUTATIONS,
     OMITTED_PARAMS,
     SCHEMA_OVERRIDES,
@@ -68,8 +69,8 @@ def _seed(world):
 def test_registry_is_exactly_the_declared_tools():
     reg = build_registry()
     # 39 -> 40: FRAME-SCOPED-IDENTITY-V1 §4 adds the identity_conflicts read.
-    # 40 -> 41: READ-SURFACE-V1 §3/§11 adds the canonical_attribute read.
-    assert len(reg) == 41 and set(reg) == set(V1_TOOLS)
+    # 40 -> 42: READ-SURFACE-V1 §11 adds the canonical_attribute and refer reads.
+    assert len(reg) == 42 and set(reg) == set(V1_TOOLS)
     assert "state_union" in reg                       # the Cx-caught omission
     for absent in ("extract", "ingest", "ask", "resolve"):   # V1.1, not V1
         assert absent not in reg
@@ -128,6 +129,13 @@ def test_schemas_shape():
     assert ing["properties"]["classify"]["enum"] == ["rules", "defer"]
     assert "model" not in reg["seal_build"]["inputSchema"]["properties"]
     assert ("seal_build", "model") in OMITTED_PARAMS
+    # READ-SURFACE-V1 §11: one table — every forced parameter is omitted from
+    # its schema, and every omitted parameter is forced.
+    assert OMITTED_PARAMS == frozenset(FORCED_PARAMS)
+    assert FORCED_PARAMS == {("seal_build", "model"): False,
+                             ("refer", "model"): False, ("refer", "learn"): False}
+    for tool, param in FORCED_PARAMS:
+        assert param not in reg[tool]["inputSchema"]["properties"], (tool, param)
     for spec in reg.values():
         assert spec["outputSchema"]["required"] == ["result"]
 
@@ -184,6 +192,7 @@ def test_every_v1_tool_makes_zero_model_calls(spy_world, tmp_path):
         "typing_conflicts": {},
         "identity_conflicts": {},                # FRAME-SCOPED-IDENTITY-V1 §4
         "canonical_attribute": {"name": "Located In"},   # READ-SURFACE-V1 §3/§11
+        "refer": {"description": "the coin", "scope": "place:room"},  # §9/§11
         "ingest_structured": {"items": [
             {"entity": "obj:coin", "attribute": "state", "value": "dusty",
              "valid_from": 2.0}]},
@@ -221,6 +230,11 @@ def test_rejected_modes_fail_before_dispatch(spy_world):
     with pytest.raises(ValueError, match="model"):
         dispatch(world, "seal_build", {"model": True})
     dispatch(world, "abort_build", {})
+    # READ-SURFACE-V1 §11: refer's forced parameters are refused the same way.
+    with pytest.raises(ValueError, match="model"):
+        dispatch(world, "refer", {"description": "x", "model": True})
+    with pytest.raises(ValueError, match="learn"):
+        dispatch(world, "refer", {"description": "x", "learn": False})
     with pytest.raises(ValueError, match="unknown tool"):
         dispatch(world, "ask", {"question": "?"})       # V1.1, not V1
     with pytest.raises(ValueError, match="unknown argument"):
@@ -393,8 +407,8 @@ async def test_stdio_initialize_list_call_shutdown(tmp_path):
             await session.initialize()
             tools = await session.list_tools()
             # FRAME-SCOPED-IDENTITY-V1 §4: +identity_conflicts;
-            # READ-SURFACE-V1 §3/§11: +canonical_attribute
-            assert len(tools.tools) == 41
+            # READ-SURFACE-V1 §11: +canonical_attribute, +refer
+            assert len(tools.tools) == 42
             by_name = {t.name: t for t in tools.tools}
             assert by_name["snapshot"].annotations.readOnlyHint is True
             assert by_name["retract"].annotations.destructiveHint is True
