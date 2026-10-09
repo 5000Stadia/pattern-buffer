@@ -1198,3 +1198,321 @@ def test_s8_rules_mode_sidecar_is_byte_identical(tmp_path):
     one recorded before this spec."""
     _, sidecar = build_corpus(tmp_path)
     assert sidecar == CORPUS_SIDECAR.read_text()
+
+
+# ------------------------------------------------ r2: review resolutions
+#
+# One test per r2 oracle (specs/GATE-AUTHORITY-V1.md, "r2: review
+# resolutions"): pbr's RED on §1's alias-map order, its ruling on numeric
+# strings, and the internal pre-review's findings F3-F6.
+
+def test_r2_alias_map_order_is_builtins_then_marked_receipts_then_inverse_pops(tmp_path):
+    """§1 (r2, pbr RED): the rebuild runs built-ins, then the replayed receipts
+    that carry the gate's mark, then pops the inverse keys. A host override
+    outranks its built-in after reopen; a receipt without the mark displaces
+    no built-in; an old forward receipt for an inverse relation is popped."""
+    path = tmp_path / "order.world"
+    w = World(path, world_id="w:order", model=StubModel(fallback=rule_classifier_fallback()))
+    w.ingestor.add_attribute_alias("type", "genre")
+    w.ingest_structured([{"entity": "doc:book", "attribute": "type", "value": "novel",
+                          "valid_from": 1.0}], classify="rules")
+    role = w.ingestor._role
+    # Rows no item can write any more, appended below the gate to stand for an
+    # old log: two receipts without the gate's mark, one old forward receipt.
+    sigil = w.buffer.append(entity="obj:cup", attribute="allegiance", value="crown",
+                            valid_from=1.0, status="stated", role=role)
+    w.buffer.append(entity=sigil.id, attribute="canonicalized_from",
+                    value="is_a->allegiance", status="stated", role=role)
+    w.buffer.append(entity=sigil.id, attribute="canonicalized_from",
+                    value="inside->fealty", status="inferred", role=role)
+    held = w.buffer.append(entity="person:ann", attribute="held_by", value="obj:ring",
+                           value_type="entity", valid_from=1.0, status="stated", role=role)
+    w.buffer.append(entity=held.id, attribute="canonicalized_from",
+                    value="holds->held_by", status="inferred", role=role)
+    w.close()
+    w = World(path, world_id="w:order", model=StubModel(fallback=rule_classifier_fallback()))
+    aliases = w.ingestor._alias_map
+    assert aliases["type"] == "genre"                       # receipts after built-ins
+    assert aliases["is_a"] == "kind" and aliases["inside"] == "in"   # unmarked: ignored
+    assert "holds" not in aliases and "wearing" not in aliases       # popped last
+    w.close()
+
+
+@pytest.mark.parametrize("given,stored", [
+    ("0.9", 0.9), (" 0.25 ", 0.25), ("1", 1.0), (2 ** 70, float(2 ** 70))])
+def test_r2_numeric_string_confidence_is_coerced(world, given, stored):
+    """§4 (r2, pbr ruling a): an unambiguous numeric-string `confidence` is
+    coerced before validation, exactly like a time coordinate, and so is an
+    int past SQLite's 64-bit range."""
+    r = _around(world, {"entity": "obj:x", "attribute": "hue", "value": "red",
+                        "valid_from": 1.0, "confidence": given})
+    assert r.skipped == []
+    [row] = world.buffer.visible(entity="obj:x")
+    assert row.confidence == stored and isinstance(row.confidence, float)
+
+
+@pytest.mark.parametrize("bad", ["high", "nan", "inf", "-inf", "", True, [0.5]])
+def test_r2_confidence_that_is_not_a_finite_number_is_invalid_field(world, bad):
+    """§4 (r2, pbr ruling a): text, a non-finite numeric string, a bool or any
+    other non-number is `invalid_field`, with the value as authored in
+    `detail`."""
+    r = _around(world, {"entity": "obj:x", "attribute": "hue", "value": "red",
+                        "valid_from": 1.0, "confidence": bad})
+    assert r.skipped == [{"entity": "obj:x", "attribute": "hue", "value": "red",
+                          "reason": "invalid_field",
+                          "detail": {"field": "confidence", "value": bad}}]
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+def test_r2_times_and_confidence_follow_one_number_rule(world):
+    """§4 (r2, pbr ruling a): one gate helper reads every number an item
+    carries. For each value in a battery, the time path and the confidence
+    path admit or refuse it together, store the same number, and receipt the
+    value as authored."""
+    battery = ["1660", " 7 ", "1e3", "-2.5", 3, 2.5, 2 ** 70, "spring", "inf", "nan",
+               "", True, False, [1], {"$decimal": "1.5"}]
+    for i, given in enumerate(battery):
+        timed, rated = f"obj:t{i}", f"obj:c{i}"
+        r = world.porcelain.ingest_structured([
+            {"entity": timed, "attribute": "hue", "value": "red", "valid_from": given},
+            {"entity": rated, "attribute": "hue", "value": "red", "valid_from": 1.0,
+             "confidence": given},
+        ], classify="rules")
+        skips = {s["entity"]: s for s in r.skipped}
+        assert (timed in skips) == (rated in skips), given
+        if timed in skips:
+            assert skips[timed]["reason"] == "invalid_valid_time"
+            assert skips[rated]["reason"] == "invalid_field"
+            assert skips[rated]["detail"] == {"field": "confidence",
+                                              "value": skips[timed]["detail"]}
+            assert skips[timed]["detail"] == ([1] if given == [1] else given)
+        else:
+            [t] = world.buffer.visible(entity=timed)
+            [c] = world.buffer.visible(entity=rated)
+            assert t.valid_from == c.confidence and type(t.valid_from) is type(c.confidence)
+
+
+def test_r2_bool_flags_read_the_ints_0_and_1(world):
+    """§4 (r2, pre-review F3): `timeless: 1` is timeless and `timeless: 0` is
+    stamped by the cursor; `correction: 1` writes the proposal and
+    `correction: 0` does not — as the base engine read them. Any other
+    non-bool (2, 1.0, "1") is still `invalid_field`."""
+    world.ingestor.cursor.advance(5.0)
+    rows = world.ingest_structured([
+        {"entity": "obj:a", "attribute": "hue", "value": "red", "timeless": 1},
+        {"entity": "obj:b", "attribute": "hue", "value": "red", "timeless": 0},
+        {"entity": "obj:c", "attribute": "hue", "value": "red", "valid_from": 1.0,
+         "correction": 1},
+        {"entity": "obj:d", "attribute": "hue", "value": "red", "valid_from": 1.0,
+         "correction": 0},
+    ], classify="rules")
+    assert world.ingestor.last_skipped == []
+    hue = {row.entity: row for row in rows if row.attribute == "hue"}
+    assert {e: row.valid_from for e, row in hue.items()} == {
+        "obj:a": None, "obj:b": 5.0, "obj:c": 1.0, "obj:d": 1.0}
+    assert [row.entity for row in rows if row.attribute == "correction_proposal"] == [
+        hue["obj:c"].id]
+    for flag in ("timeless", "correction"):
+        for bad in (2, 1.0, "1"):
+            r = _around(world, {"entity": "obj:x", "attribute": "hue", "value": "red",
+                                "valid_from": 1.0, flag: bad})
+            assert r.skipped == [{"entity": "obj:x", "attribute": "hue", "value": "red",
+                                  "reason": "invalid_field",
+                                  "detail": {"field": flag, "value": bad}}]
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+def test_r2_aliases_given_as_a_tuple_or_set_are_a_list(world):
+    """§4 (r2, pre-review F3): `aliases` given as a tuple is its members in
+    order; a set is its members in sorted order, so the log never depends on
+    hash order. A generated item carrying a non-empty set still raises (§3)."""
+    r = _around(world, {"entity": "obj:vault", "attribute": "kind", "value": "vault",
+                        "timeless": True, "aliases": ("the vault", "the strongroom")})
+    assert r.skipped == []
+    assert _aliases_of(world, "obj:vault") == ["the vault", "the strongroom"]
+    r = _around(world, {"entity": "obj:box", "attribute": "kind", "value": "box",
+                        "timeless": True,
+                        "aliases": {"the crate", "a box", "the old chest"}})
+    assert r.skipped == []
+    assert _aliases_of(world, "obj:box") == ["a box", "the crate", "the old chest"]
+    head = world.buffer.head()
+    with pytest.raises(RoleViolation, match="aliases"):
+        world.ingest_structured([
+            {"entity": "arc:main", "attribute": "beat", "value": "rising",
+             "status": "generated", "frame": "plot:arc1", "valid_from": 1.0,
+             "aliases": {"the shadow"}}], classify="rules")
+    assert world.buffer.head() == head
+
+
+def test_r2_the_status_grant_is_checked_before_the_frame(world):
+    """§3 (r2, pre-review F4): authority first — `{status: "bogus", frame: ""}`
+    raises RoleViolation, as on the base engine, before the frame's shape is
+    judged. With a granted status the same frame is `malformed_item`, and so
+    is a malformed frame on a generated item (letter 029 has no frame to
+    judge)."""
+    head = world.buffer.head()
+    item = {"entity": "obj:x", "attribute": "hue", "value": "red", "valid_from": 1.0}
+    for frame in ("", 5):
+        with pytest.raises(RoleViolation, match="bogus"):
+            world.ingest_structured([{**item, "status": "bogus", "frame": frame}],
+                                    classify="rules")
+    assert world.buffer.head() == head
+    for status, frame in (("stated", ""), ("generated", ""), ("generated", 5)):
+        r = _around(world, {**item, "status": status, "frame": frame})
+        assert r.skipped == [{**{k: item[k] for k in ("entity", "attribute", "value")},
+                              "reason": "malformed_item",
+                              "detail": {"field": "frame", "value": frame}}]
+    assert world.buffer.visible(entity="obj:x") == []
+
+
+@pytest.mark.parametrize("attribute,value", [
+    ("learned_at_wallclock", 9e9), ("source_valid_from", 612),
+    ("correction_proposal", True)])
+def test_r2_the_gates_own_side_rows_are_refused_as_items(tmp_path, attribute, value):
+    """§1 (r2, pre-review F5): the tracking stamp, the cursor-authoritative
+    demotion and the correction proposal are written only by the gate as side
+    rows; no host path writes them, and the extractor copies engine rows from
+    its context. An item carrying one is skipped `mechanism_attribute` on
+    every path — `ingest_structured`, the model path, `commit_set` — and
+    nothing is written."""
+    stub = StubModel(fallback=rule_classifier_fallback())
+    w = World(tmp_path / "side.world", world_id="w:side", model=stub)
+    target = _ann_calm(w)
+    head = w.buffer.head()
+    item = {"entity": target, "attribute": attribute, "value": value, "timeless": True}
+    r = w.porcelain.ingest_structured([item], classify="rules")
+    assert r.skipped == [{"entity": target, "attribute": attribute, "value": value,
+                          "reason": "mechanism_attribute"}]
+    stub.enqueue({"items": [item]})
+    assert w.ingest("Ann's row, copied from the context.", classify="rules") == []
+    assert [s.reason for s in w.ingestor.last_skipped] == ["mechanism_attribute"]
+    with pytest.raises(AtomicAbort) as ei:
+        w.commit_set([{"op": "assert", "item": item}])
+    assert ei.value.cause == "gate_skip"
+    assert w.buffer.head() == head
+    w.close()
+
+
+class _Clock:
+    """An injected wall clock the test advances by hand."""
+
+    def __init__(self, t: float = 0.0) -> None:
+        self.t = t
+
+    def __call__(self) -> float:
+        return self.t
+
+
+_DAY = 86400.0
+
+
+def test_r2_a_copied_tracking_stamp_never_refreshes_confidence(tmp_path):
+    """§1 (r2, pre-review F5): `learned_at_wallclock` is the stamp confidence()
+    recency reads. An item copying one is skipped, so a stale fact stays
+    stale; the buffer refuses a stamp without the gate's mark (`observed`);
+    and a stamp already in a log under any other status confirms nothing."""
+    clock = _Clock(0.0)
+    w = World(tmp_path / "stamp.world", world_id="w:stamp",
+              model=StubModel(fallback=rule_classifier_fallback()),
+              policy="observe_or_unknown", clock=clock)
+    rows = w.ingest_structured([
+        {"entity": "attr:__world__", "attribute": "decay_halflife_seconds",
+         "value": _DAY, "timeless": True},
+        {"entity": "obj:box", "attribute": "state", "value": "sealed",
+         "valid_from": 1.0, "status": "observed"},
+    ], classify="rules")
+    [state] = [row for row in rows if row.attribute == "state"]
+    stale = w.confidence("obj:box", "state", now=2 * _DAY)
+    assert stale["last_confirmed_at_wallclock"] == 0.0
+    assert abs(stale["recency"] - 0.25) < 1e-9
+    clock.t = 2 * _DAY
+    r = w.porcelain.ingest_structured([
+        {"entity": state.id, "attribute": "learned_at_wallclock", "value": 2 * _DAY,
+         "timeless": True, "status": "observed"}], classify="rules")
+    assert _reasons(r) == ["mechanism_attribute"]
+    assert w.confidence("obj:box", "state", now=2 * _DAY) == stale
+    with pytest.raises(RoleViolation):
+        w.buffer.append(entity=state.id, attribute="learned_at_wallclock",
+                        value=2 * _DAY, status="stated", role=w.ingestor._role)
+    w.close()
+    log = [
+        _dump_row(1, "attr:__world__", "decay_halflife_seconds", _DAY),
+        _dump_row(2, "obj:box", "state", "sealed", status="observed", valid_from=1.0),
+        _dump_row(3, "a:2", "learned_at_wallclock", 0.0, status="observed"),
+        _dump_row(4, "a:2", "learned_at_wallclock", 2 * _DAY),   # not `observed`
+    ]
+    path = tmp_path / "forged_stamp.world"
+    build(_jsonl(log), path).close()
+    w = World(path, world_id="w:forged", model=StubModel(fallback=rule_classifier_fallback()),
+              policy="observe_or_unknown", clock=_Clock(2 * _DAY))
+    c = w.confidence("obj:box", "state", now=2 * _DAY)
+    assert c["last_confirmed_at_wallclock"] == 0.0
+    assert abs(c["recency"] - 0.25) < 1e-9
+    w.close()
+
+
+def test_r2_an_item_declaring_a_family_is_judged_in_that_family(tmp_path):
+    """§7 (r2, pre-review F6): steps 8 and 9 judge a new attribute's relation
+    family as the item's own first-use declaration will leave it. An item
+    declaring `relation_family: containment` (or lateral) with an id-shaped
+    typo is `malformed_id`, and with a self-edge the per-edge skip, with
+    nothing written — no declaration either. The same holds when the host's
+    `attribute_default` supplies the family, and the callback still declares
+    the attribute for the next good item."""
+    def default(attribute: str):
+        return {"relation_family": "containment"} if attribute == "lodged_in" else None
+
+    w = World(tmp_path / "fam.world", world_id="w:fam", attribute_default=default,
+              model=StubModel(fallback=rule_classifier_fallback()))
+    head = w.buffer.head()
+    r = w.porcelain.ingest_structured([
+        {"entity": "obj:key", "attribute": "stowed_in", "value": "Place:Cellar",
+         "relation_family": "containment"},
+        {"entity": "obj:key", "attribute": "tucked_in", "value": "obj:key",
+         "relation_family": "containment"},
+        {"entity": "place:hall", "attribute": "links_to", "value": "Place:Yard",
+         "relation_family": "lateral"},
+        {"entity": "place:hall", "attribute": "opens_on", "value": "place:hall",
+         "relation_family": "lateral"},
+        {"entity": "obj:key", "attribute": "lodged_in", "value": "Place:Cellar"},
+        {"entity": "obj:key", "attribute": "lodged_in", "value": "obj:key"},
+    ], classify="rules")
+    reasons = _reasons(r)
+    assert reasons[0] == "malformed_id" and reasons[2] == "malformed_id"
+    assert reasons[4] == "malformed_id"
+    assert reasons[1].startswith("cycle-forming containment edge: ")
+    assert reasons[3].startswith("lateral self-loop: ")
+    assert reasons[5].startswith("cycle-forming containment edge: ")
+    assert r.rows == [] and w.buffer.head() == head
+    for attribute in ("stowed_in", "tucked_in", "links_to", "opens_on", "lodged_in"):
+        assert not w.semantics.is_declared(attribute)
+    w.ingest_structured([
+        {"entity": "place:cellar", "attribute": "kind", "value": "cellar",
+         "timeless": True},
+        {"entity": "obj:key", "attribute": "lodged_in", "value": "place:cellar",
+         "valid_from": 1.0}], classify="rules")
+    assert w.semantics.is_containment("lodged_in")
+    assert w.locate("obj:key") == ["place:cellar"]
+    w.close()
+
+
+@pytest.mark.parametrize("absent", ["", False])
+def test_r2_an_empty_or_false_value_type_is_inferred(world, absent):
+    """§4 (r2, pre-review F6): `value_type` given as `""` or `False` is absent
+    and the type is inferred, as the base engine read it — an id value is an
+    entity (so `in` locates), text a literal, and an id-shaped typo is still
+    caught by §7. `value_type: 0` is still `invalid_field`."""
+    r = _around(world, {"entity": "person:ann", "attribute": "in",
+                        "value": "place:hall", "valid_from": 1.0, "value_type": absent})
+    assert r.skipped == [] and world.locate("person:ann") == ["place:hall"]
+    r = _around(world, {"entity": "person:ann", "attribute": "mood", "value": "calm",
+                        "valid_from": 1.0, "value_type": absent})
+    [mood] = world.buffer.visible(entity="person:ann", attribute="mood")
+    assert r.skipped == [] and mood.value_type == "literal"
+    r = _around(world, {"entity": "person:ann", "attribute": "in",
+                        "value": "Place:Hall", "valid_from": 2.0, "value_type": absent})
+    assert _reasons(r) == ["malformed_id"]
+    r = _around(world, {"entity": "person:ann", "attribute": "hue", "value": "red",
+                        "valid_from": 1.0, "value_type": 0})
+    assert r.skipped[0]["detail"] == {"field": "value_type", "value": 0}
+    assert world.locate("person:ann") == ["place:hall"]

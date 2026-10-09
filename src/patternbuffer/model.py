@@ -67,18 +67,31 @@ META_ATTRIBUTES = frozenset(
     }
 ) | SEMANTICS_PREDICATES
 
-# Mechanism attributes (GATE-AUTHORITY-V1 §1): rows that change what OTHER rows
-# mean. Each has exactly one owning engine component and is recognized by that
-# owner's mark, never by its name alone — the buffer refuses the wrong mark on
-# append, readers honor only the owner's mark, and the gate never accepts one
-# as an item. `retracts` hides its target (truth maintenance, `retracted`);
-# `resolved_by` spends a thunk and names its memo (the resolver, `generated`);
-# `canonicalized_from` is replayed into the attribute-alias map on open (the
-# gate's own receipt: `inferred`, on an assertion whose attribute is the
-# receipt's target — a structural mark, so it has no single status here).
-# One read-only definition shared by the buffer, the readers and the gate.
-MECHANISM_STATUS = MappingProxyType({"retracts": "retracted", "resolved_by": "generated"})
-MECHANISM_ATTRIBUTES = frozenset(MECHANISM_STATUS) | {"canonicalized_from"}
+# Mechanism attributes (GATE-AUTHORITY-V1 §1): rows the engine writes about
+# OTHER rows. Each has exactly one owning engine component and is recognized by
+# that owner's mark, never by its name alone — the gate never accepts one as an
+# item, the buffer refuses the wrong status on append, and readers honor only
+# the owner's mark. One read-only definition shared by the buffer, the readers
+# and the gate.
+# - `retracts` hides its target (truth maintenance, `retracted`).
+# - `resolved_by` spends a thunk and names its memo (the resolver, `generated`).
+# - `learned_at_wallclock` is the tracking-mode confirmation stamp that
+#   confidence() recency reads (the gate's A1 rider, `observed`; r2).
+# - `canonicalized_from` is replayed into the attribute-alias map on open (the
+#   gate's own receipt: `inferred`, on an assertion whose attribute is the
+#   receipt's target — a structural mark, so it has no single status here).
+# - `source_valid_from` (the cursor-authoritative demotion) and
+#   `correction_proposal` (the `correction` field's proposal) are the gate's
+#   own records of what it did to an item; no engine read consumes them, so
+#   they carry no status mark here, but a copied row would misstate them and
+#   a host promoting corrections acts on the latter (r2).
+MECHANISM_STATUS = MappingProxyType({
+    "retracts": "retracted",
+    "resolved_by": "generated",
+    "learned_at_wallclock": "observed",
+})
+MECHANISM_ATTRIBUTES = frozenset(MECHANISM_STATUS) | {
+    "canonicalized_from", "source_valid_from", "correction_proposal"}
 
 # Set-valued attributes: multiple coexisting values are data, never a
 # contradiction — a conflict requires a functional key (run-4 finding:

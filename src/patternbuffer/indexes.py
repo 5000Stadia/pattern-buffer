@@ -367,7 +367,10 @@ class Indexes:
         the winner, frame- and asserted_as_of-respecting (TRACKING-MODE-V1 §B4).
         An assumed/inferred/conflicting/different-value row never refreshes it.
         Fail-closed: a tracking row missing its mandatory stamp contributes no
-        confirmation."""
+        confirmation. A stamp counts only with the gate's own mark, status
+        `observed` (GATE-AUTHORITY-V1 §1, r2): a `learned_at_wallclock` row
+        written under any other status confirms nothing."""
+        stamped = MECHANISM_STATUS["learned_at_wallclock"]
         best: float | None = None
         for f in frames:
             for row in self._visible_key_rows(
@@ -382,6 +385,8 @@ class Indexes:
                     entity=row.id, attribute="learned_at_wallclock",
                     asserted_as_of=asserted_as_of,
                 ):
+                    if meta.status != stamped:
+                        continue
                     v = meta.value
                     # FINITE only (Cx 604 #1): a NaN/inf stamp must fall to
                     # the honest `unconfirmed` branch, never qualify as a
