@@ -313,13 +313,7 @@ def test_2i_construct_worlds_reelect_no_closure(tmp_path):
     Each world is read through a copy; the originals are never opened."""
     reelected: list[tuple[str, str, str]] = []
     for source in _construct_worlds():
-        copy = tmp_path / source.name
-        shutil.copyfile(source, copy)
-        conn = sqlite3.connect(copy)
-        world_id = conn.execute(
-            "SELECT value FROM world_meta WHERE key = 'world_id'").fetchone()[0]
-        conn.close()
-        w = World(copy, world_id=world_id)
+        w = _open_copy(source, tmp_path)
         try:
             reg = w.registry
             closures = {frozenset(reg.closure(e)) for e in reg._components()}
