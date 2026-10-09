@@ -35,7 +35,7 @@ from patternbuffer.model import (
     task_schema,
 )
 from patternbuffer.roles import RoleViolation, WriterRole
-from patternbuffer.semantics import AttributeSemantics
+from patternbuffer.semantics import AttributeSemantics, valid_declaration
 from patternbuffer.tmaint import AtomicAbort
 
 logger = logging.getLogger(__name__)
@@ -487,20 +487,33 @@ class Ingestor:
     def _semantics_payload(source: dict[str, Any], keys) -> dict[str, Any]:
         return {k: source[k] for k in keys if k in source and source[k] is not None}
 
-    def _maybe_declare_attribute(self, attribute: str, item: dict[str, Any]) -> list[Assertion]:
-        """Emit first-use attr:* declarations before the triggering data row."""
+    def _declaration_plan(
+        self, attribute: str, item: dict[str, Any]
+    ) -> tuple[dict[str, Any], str] | None:
+        """The first-use attr:* declaration the gate would write before an
+        item's data row, with its source (GATE-AUTHORITY-V1 §5): the item's
+        own hints (`"item"`), else the host's `attribute_default` output,
+        asked once per attribute (`"attribute_default"`). None when there is
+        nothing to declare — hints on a core or already-declared attribute
+        are ignored, as before. Writes nothing."""
         if self._semantics.is_core(attribute) or self._semantics.is_declared(attribute):
-            return []
+            return None
         declaration = self._semantics_payload(item, _SEMANTICS_HINT_KEYS)
-        if not declaration and attribute not in self._attribute_default_checked:
-            self._attribute_default_checked.add(attribute)
-            if self._attribute_default is not None:
-                default = self._attribute_default(attribute)
-                if default:
-                    declaration = self._semantics_payload(default, _SEMANTICS_DECL_KEYS)
-        if not declaration:
-            return []
+        if declaration:
+            return declaration, "item"
+        if attribute in self._attribute_default_checked:
+            return None
+        self._attribute_default_checked.add(attribute)
+        if self._attribute_default is None:
+            return None
+        default = self._attribute_default(attribute)
+        if default:
+            declaration = self._semantics_payload(default, _SEMANTICS_DECL_KEYS)
+        return (declaration, "attribute_default") if declaration else None
 
+    def _declare(self, attribute: str, declaration: dict[str, Any]) -> list[Assertion]:
+        """Write a validated first-use declaration before the triggering data
+        row."""
         out: list[Assertion] = []
         for predicate, value in declaration.items():
             row = self._buffer.append(
@@ -1212,11 +1225,46 @@ class Ingestor:
                               detail=authored_detail)
             return out  # nothing appended
 
+        # 9. Declarations (GATE-AUTHORITY-V1 §5): a declaration the gate would
+        # write must be in its axis vocabulary, validated before anything is
+        # written. Authority first: the buffer's vocabulary-authority refusal
+        # (a core attribute, or data already present) still raises ValueError
+        # whatever the value, through the buffer's own check.
         is_manual_semantics_row = (
             entity.startswith(ATTR_PREFIX) and attribute in SEMANTICS_PREDICATES
         )
-        if not is_manual_semantics_row:
-            out.extend(self._maybe_declare_attribute(attribute, item))
+        if is_manual_semantics_row:
+            self._buffer.check_declaration_authority(entity, attribute)
+            if not valid_declaration(attribute, value):
+                self._record_skip(entity, attribute, value,
+                                  "invalid_semantics_declaration",
+                                  detail={"field": attribute, "value": value,
+                                          "source": "attr_row"})
+                return out
+        else:
+            plan = self._declaration_plan(attribute, item)
+            if plan is not None:
+                declaration, source = plan
+                self._buffer.check_declaration_authority(
+                    f"{ATTR_PREFIX}{attribute}", next(iter(declaration)))
+                invalid = [(predicate, declared) for predicate, declared
+                           in declaration.items()
+                           if not valid_declaration(predicate, declared)]
+                if invalid:
+                    # The whole item skips: writing its data row anyway would
+                    # lock the attribute, since the buffer refuses any
+                    # declaration once data exists. An invalid callback result
+                    # is not marked checked, so every item on the attribute
+                    # skips the same way until the host fixes the callback.
+                    if source == "attribute_default":
+                        self._attribute_default_checked.discard(attribute)
+                    predicate, declared = invalid[0]
+                    self._record_skip(entity, attribute, value,
+                                      "invalid_semantics_declaration",
+                                      detail={"field": predicate, "value": declared,
+                                              "source": source})
+                    return out
+                out.extend(self._declare(attribute, declaration))
 
         row = self._buffer.append(
             entity=entity,

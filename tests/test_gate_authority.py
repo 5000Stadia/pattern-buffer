@@ -707,3 +707,113 @@ def test_s4_atomic_null_aliases_commit_and_invalid_alias_aborts(world):
     assert ei.value.skipped == [{"entity": "obj:safe", "attribute": "alias",
                                  "value": 5, "reason": "invalid_alias"}]
     assert world.buffer.head() == head
+
+
+# ------------------------------------- §5 semantics declarations validated
+
+def _declaration_skip(entity, attribute, value, field, bad, source) -> dict:
+    return {"entity": entity, "attribute": attribute, "value": value,
+            "reason": "invalid_semantics_declaration",
+            "detail": {"field": field, "value": bad, "source": source}}
+
+
+def test_s5_invalid_hint_skips_the_item_and_leaves_the_attribute_open(world):
+    """§5: hint `arity: "many"` skips the item with nothing written; a later
+    `arity: "set_valued"` declares it, and two allies coexist."""
+    head = world.buffer.head()
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:ann", "attribute": "allies", "value": "person:bob",
+         "valid_from": 1.0, "arity": "many"}], classify="rules")
+    assert r.skipped == [_declaration_skip("person:ann", "allies", "person:bob",
+                                           "arity", "many", "item")]
+    assert world.buffer.head() == head
+    world.ingest_structured([
+        {"entity": "person:ann", "attribute": "allies", "value": "person:bob",
+         "valid_from": 1.0, "arity": "set_valued"},
+        {"entity": "person:ann", "attribute": "allies", "value": "person:cat",
+         "valid_from": 1.0}], classify="rules")
+    fold = world.state("person:ann", "allies")
+    assert set(fold.values) == {"person:bob", "person:cat"} and not fold.conflicted
+
+
+@pytest.mark.parametrize("field,bad", [
+    ("relation_family", "container"), ("fold_policy", "acrue")])
+def test_s5_invalid_family_and_fold_policy_hints_skip(world, field, bad):
+    """§5: `relation_family: "container"` and `fold_policy: "acrue"` skip
+    their item instead of being silently ignored."""
+    head = world.buffer.head()
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:ann", "attribute": "coins", "value": 5,
+         "value_type": "delta", "valid_from": 1.0, field: bad}], classify="rules")
+    assert r.skipped == [_declaration_skip("person:ann", "coins", 5, field, bad, "item")]
+    assert world.buffer.head() == head
+    assert not world.semantics.is_declared("coins")
+
+
+def test_s5_invalid_attribute_default_skips_every_item_on_it(tmp_path):
+    """§5: an `attribute_default` returning `{"arity": "multi"}` skips each
+    item on that attribute (source `attribute_default`) and declares nothing;
+    the callback is asked again until it is fixed."""
+    asked: list[str] = []
+
+    def default(attribute: str):
+        asked.append(attribute)
+        return {"arity": "multi"} if attribute == "allies" else None
+
+    w = World(tmp_path / "ad.world", world_id="w:ad", attribute_default=default,
+              model=StubModel(fallback=rule_classifier_fallback()))
+    for ally in ("person:bob", "person:cat"):
+        r = w.porcelain.ingest_structured([
+            {"entity": "person:ann", "attribute": "allies", "value": ally,
+             "valid_from": 1.0}], classify="rules")
+        assert r.skipped == [_declaration_skip("person:ann", "allies", ally, "arity",
+                                               "multi", "attribute_default")]
+    assert asked.count("allies") == 2
+    assert not w.semantics.is_declared("allies")
+    assert w.buffer.visible(entity="person:ann") == []
+    w.close()
+
+
+def test_s5_manual_structural_declaration_must_be_a_real_bool(world):
+    """§5: a manual `attr:mood2 · structural · "false"` row skips; with `True`
+    it is written and `mood2` is structural."""
+    r = world.porcelain.ingest_structured([
+        {"entity": "attr:mood2", "attribute": "structural", "value": "false",
+         "timeless": True}], classify="rules")
+    assert r.skipped == [_declaration_skip("attr:mood2", "structural", "false",
+                                           "structural", "false", "attr_row")]
+    assert not world.semantics.is_declared("mood2")
+    assert not world.semantics.is_structural("mood2")
+    r = world.porcelain.ingest_structured([
+        {"entity": "attr:mood2", "attribute": "structural", "value": True,
+         "timeless": True}], classify="rules")
+    assert r.skipped == [] and world.semantics.is_structural("mood2")
+
+
+def test_s5_vocabulary_authority_still_raises_first(world):
+    """§5: a manual declaration on `in`, or after data exists, raises
+    ValueError even when its value is also invalid."""
+    with pytest.raises(ValueError, match="inviolable core"):
+        world.ingest_structured([{"entity": "attr:in", "attribute": "arity",
+                                  "value": "many", "timeless": True}], classify="rules")
+    world.ingest_structured([{"entity": "obj:x", "attribute": "hue", "value": "red",
+                              "valid_from": 1.0}], classify="rules")
+    with pytest.raises(ValueError, match="after folded data"):
+        world.ingest_structured([{"entity": "attr:hue", "attribute": "arity",
+                                  "value": "many", "timeless": True}], classify="rules")
+
+
+def test_s5_read_side_ignores_invalid_declared_values(tmp_path):
+    """§5: a log carrying `structural: "false"` and `arity: "many"`, built from
+    JSONL, reads `is_structural` false and `arity == "functional"`."""
+    rows = [
+        _dump_row(1, "attr:mood2", "structural", "false", status="inferred"),
+        _dump_row(2, "attr:mood2", "arity", "many", status="inferred"),
+        _dump_row(3, "person:ann", "mood2", "calm", valid_from=1.0),
+    ]
+    path = tmp_path / "decl.world"
+    build(_jsonl(rows), path).close()
+    w = World(path, world_id="w:forged", model=StubModel(fallback=rule_classifier_fallback()))
+    assert w.semantics.is_structural("mood2") is False
+    assert w.semantics.semantics("mood2").arity == "functional"
+    w.close()

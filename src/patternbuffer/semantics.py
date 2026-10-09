@@ -50,6 +50,25 @@ ARITIES = frozenset({FUNCTIONAL, SET_VALUED})
 RELATION_FAMILIES = frozenset({CONTAINMENT, LATERAL, NONE})
 FOLD_POLICIES = frozenset({LAST_WRITE, MOVE, ACCRUE})
 
+# Each string axis's vocabulary, by reference (GATE-AUTHORITY-V1 §5).
+_AXIS_VOCABULARIES = {
+    "arity": ARITIES,
+    "relation_family": RELATION_FAMILIES,
+    "fold_policy": FOLD_POLICIES,
+}
+
+
+def valid_declaration(predicate: str, value: object) -> bool:
+    """Whether a declared ``value`` is in ``predicate``'s axis vocabulary
+    (GATE-AUTHORITY-V1 §5): ``arity`` ∈ ARITIES, ``relation_family`` ∈
+    RELATION_FAMILIES, ``fold_policy`` ∈ FOLD_POLICIES, ``structural`` a real
+    bool. The gate validates every declaration it would write through this,
+    and the read side ignores a declared value that fails it."""
+    if predicate == "structural":
+        return isinstance(value, bool)
+    vocabulary = _AXIS_VOCABULARIES.get(predicate)
+    return vocabulary is not None and isinstance(value, str) and value in vocabulary
+
 # Built-in lateral graph attributes; everything set-valued that is not a graph
 # edge is plain set data.
 _LATERAL = frozenset({"connects_to", "adjacent_to"})
@@ -142,16 +161,24 @@ class AttributeSemantics:
         return resolved
 
     def _overlay(self, attribute: str) -> Semantics:
-        """The declared axes laid over the built-in default (unmemoized)."""
+        """The declared axes laid over the built-in default (unmemoized). A
+        declared value outside its axis vocabulary is ignored and that axis
+        keeps its built-in default (GATE-AUTHORITY-V1 §5) — only a real
+        ``True`` is structural."""
         base = builtin_default(attribute)
         d = self._declared.get(attribute)
         if not d:
             return base
+
+        def axis(predicate: str, default):
+            value = d.get(predicate, default)
+            return value if valid_declaration(predicate, value) else default
+
         return Semantics(
-            arity=str(d.get("arity", base.arity)),
-            relation_family=str(d.get("relation_family", base.relation_family)),
-            fold_policy=str(d.get("fold_policy", base.fold_policy)),
-            structural=bool(d.get("structural", base.structural)),
+            arity=axis("arity", base.arity),
+            relation_family=axis("relation_family", base.relation_family),
+            fold_policy=axis("fold_policy", base.fold_policy),
+            structural=axis("structural", base.structural),
         )
 
     def is_set_valued(self, attribute: str) -> bool:

@@ -393,7 +393,7 @@ class PatternBuffer:
                 f"assertion stamped for world {row.world_id!r} cannot enter "
                 f"buffer of world {self.world_id!r}"
             )
-        self._validate_attr_semantics_insert(row)
+        self.check_declaration_authority(row.entity, row.attribute)
         self._live_conn().execute(
             "INSERT INTO assertions (seq, id, world_id, entity, attribute, value_type,"
             " value, valid_from, valid_to, frame, status, confidence, asserted_at)"
@@ -422,11 +422,16 @@ class PatternBuffer:
         self._commit_or_defer()
         logger.debug("append %s: (%s · %s)", row.id, row.entity, row.attribute)
 
-    def _validate_attr_semantics_insert(self, row: Assertion) -> None:
-        """Shared attr:* authority guard for append() and dump.build replay."""
-        if not row.entity.startswith(ATTR_PREFIX) or row.attribute not in SEMANTICS_PREDICATES:
+    def check_declaration_authority(self, entity: str, attribute: str) -> None:
+        """The vocabulary-authority refusal for an ``attr:<name> · <axis>``
+        declaration row: never on an inviolable core attribute, and never once
+        folded data exists for the attribute. Raises ValueError; a no-op for
+        any other row. The one check shared by every append, ``dump.build``
+        replay (through ``_insert``) and the ingest gate, which runs it before
+        validating a declared value (GATE-AUTHORITY-V1 §5)."""
+        if not entity.startswith(ATTR_PREFIX) or attribute not in SEMANTICS_PREDICATES:
             return
-        target = row.entity[len(ATTR_PREFIX):]
+        target = entity[len(ATTR_PREFIX):]
         if target in INVIOLABLE_CORE:
             raise ValueError(
                 f"cannot declare semantics for inviolable core attribute {target!r}"
