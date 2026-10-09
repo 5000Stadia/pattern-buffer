@@ -94,9 +94,9 @@ world.confidence(entity, attribute, frame="canon", as_of=None,
 #   multi-frame frame_diff. Derived; functional-only.
 world.refer(description, scope=None, frame="canon",
             constraints=None, as_of=None) -> Resolution
-#   tier 1a reads names/aliases in `frame` only (an observer frame through its
-#   stored names), never canon's for a non-canon frame; a tier-2 hit's learned
-#   alias lands in `frame` (FRAME-SCOPED-IDENTITY-V1 §1(e), §2).
+#   tier 1a reads names/aliases in `frame` only, never canon's for a non-canon
+#   frame (an alias only canon carries does not resolve in knows:X); a tier-2
+#   hit's learned alias lands in `frame` (FRAME-SCOPED-IDENTITY-V1 §1(e), §2).
 world.registry.by_alias(text, asserted_as_of=None, frame="canon") -> set[str]
 ```
 
@@ -159,20 +159,15 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   be an identity guess). **MUST** check `Receipt.skipped` after every write.
 - **MUST** name knowledge frames by the full entity id: `knows:person:daniel`,
   never `knows:daniel`. Nothing validates the suffix today, so a short form
-  silently becomes a different frame. A full-id frame is an **observer frame**
-  (FRAME-SCOPED-IDENTITY-V1 §7): it follows its id's canon identity. After
-  `merge(person:dan, person:daniel)`, what was written to
-  `knows:person:daniel` is read through either name, `who_knows` reports the
-  surviving (canonical) name `knows:person:dan`, and retracting the `same_as`
-  splits the frames again (rows keep the frame you wrote). A short form never
-  resolves. A bad canon merge therefore also fuses its observers' knowledge.
+  silently becomes a different frame.
 - **Identity is canon's** (FRAME-SCOPED-IDENTITY-V1). `same_as`,
-  `maybe_same_as` and `distinct_from` are written and read in canon only:
-  outside canon the gate skips them (`identity_edge_outside_canon`; a raw
-  `same_as` receipts `same_as_not_canon`), and the `same_as` key on a non-canon
-  item is skipped the same way while the item's row lands. A belief about
-  identity ("Alice thinks the masked man is Bob") is an `aka` row in the
-  believer's frame. Legacy non-canon identity edges are inert.
+  `maybe_same_as` and `distinct_from` are written and read in canon only.
+  Outside canon the gate skips them: a `same_as`, whether a raw item or an
+  item's `same_as` key, with `same_as_not_canon` (`detail: {field: "frame",
+  value: <frame>}`; for the key, the item's own row still lands), and a
+  `maybe_same_as` or `distinct_from` with `identity_edge_outside_canon`. A
+  belief about identity ("Alice thinks the masked man is Bob") is an `aka` row
+  in the believer's frame. Legacy non-canon identity edges are inert.
 - **Description is perspectival.** An item's `aliases` land in the item's
   frame, and `name`/`alias` rows are read only in their own frame:
   `registry.by_alias(text, frame=)` and `refer(..., frame=)` read the asked
@@ -213,7 +208,8 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   that is not an id `malformed_id`; a pair already merged writes nothing. When
   a refused one names a real duplicate, route the receipt to `p.confirm` (a
   canon proposal exists) or `p.merge`. (An item's `same_as` *field* still only
-  proposes, as `maybe_same_as`.)
+  proposes, as a canon `maybe_same_as`; on a non-canon item it is skipped
+  `same_as_not_canon` too — FRAME-SCOPED-IDENTITY-V1 §1.)
 - **MUST** read `Receipt.skipped` as the whole refusal record: every write
   path fills it, `p.ingest()` included, and a malformed item (a non-object, a
   missing field, a bad `frame`, a `confidence` or flag of the wrong type, an
@@ -404,8 +400,9 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    #   invalid_decay_halflife, moved_marker_invalid, moved_open_with_arrival,
    #   moved_complete_attribute_not_durable
    #   mechanism_attribute, same_as_not_canon, merge_vetoed (see MUST / NEVER)
-   #   identity_edge_outside_canon   a maybe_same_as / distinct_from row, or an item's
-   #                    same_as key, outside canon (FRAME-SCOPED-IDENTITY-V1 §1)
+   #   identity_edge_outside_canon   a maybe_same_as / distinct_from row outside canon
+   #                    (FRAME-SCOPED-IDENTITY-V1 §1; a same_as there, raw or an item's
+   #                    same_as key, is same_as_not_canon)
    #   invalid_semantics_declaration   an arity/relation_family/fold_policy/structural
    #                    value outside its vocabulary — the WHOLE item skips, nothing declared
    # `detail` appears only when set: the bad field and value, the merge veto and blocking
@@ -474,7 +471,9 @@ p.correlate(a, b, evidence, at=None) -> Receipt
    # NOT a merge: resolve()/closure() and every DEFAULT read ignore aka; each entity
    # keeps its own rows. A correlated pair is never AUTO-merged (reconcile/promotion/
    # adjudicate_deferred: a soft block, decline code "correlated" — a timeless same_as
-   # would leak the reveal backward); your merge()/confirm() still can.
+   # would leak the reveal backward), nor is a pair whose correlation groups a canon
+   # distinct_from separates (decline code "distinct_group": correlate would refuse to
+   # join them); your merge()/confirm() still can.
 p.correlations(entity, as_of=None, frame="canon") -> [entity_id]
    # the facets correlated with entity as-of (first-seen ordered). Empty before a
    # reveal's valid_from — the mystery is intact. Zero writes.
@@ -495,7 +494,8 @@ p.reconcile() -> {merges, proposals}                      # global finalize; hos
 p.proposals() -> [{a, b, evidence, auto_decline_reason, auto_decline}]
    # open maybe_same_as with a structured auto_decline (gate-failure code + evidence);
    # code "durable_contradiction" names contradictory standing facts (SHAPE-FIX-V1 Win 4);
-   # code "correlated" a proposal between aka facets (FRAME-SCOPED-IDENTITY-V1 §3)
+   # code "correlated" a proposal between aka facets, code "distinct_group" one whose
+   # correlation groups a canon distinct_from separates (FRAME-SCOPED-IDENTITY-V1 §3)
 p.confirm(a, b) / p.merge(a, b, evidence) / p.reject(a, b)
    -> {outcome, canonical_id, merge_event_id, reason, blocking_edges}   # an identity receipt
    # confirm = promote a proposal; merge = assert (guarded, hard vetoes absolute);
@@ -552,7 +552,8 @@ p.fidelity_audit(frame="canon", as_of=None) -> {name_collisions, unstamped_timed
    # key is listed iff state(key, frame, as_of) is conflicted. name_collisions groups = {anchor, entities,
    # kinds (FOLDED, parallel to entities — weight cross-kind person<->place highest; the id
    # namespace can lie), pairs:[{a,b,status,reason?}], live}. status = WHY the pair isn't
-   # merged (correlated | hard_blocked | typing_slip | auto_declined+reason | unlinked) — route
+   # merged (correlated | hard_blocked | typing_slip | auto_declined+reason | unlinked;
+   # hard_blocked's reason is containment, distinct_from or distinct_group) — route
    # repair by it: reject() genuine homonyms (harth person<->place), adjudicate_deferred/retype
    # true same-kind splits. summary.name_collisions counts LIVE groups only (the tracked number).
    # unstamped_timed = classified STATE/EVENT rows with no valid_from (off the time spine).
@@ -580,8 +581,6 @@ p.who_knows(entity, attribute, value=None, as_of=None) -> [frame_id]
    # frame_diff (no stored known_by). A frame qualifies iff its FOLDED winner is present and
    # (value given) value-matches, identity-aware; superseded/retracted beliefs drop. V1 is
    # own-knows:-frame membership (the hidden-secret case); knows:O ∪ public union is V1.1.
-   # Observer frames (FRAME-SCOPED-IDENTITY-V1 §7): returns CANONICAL frame names — after a
-   # merge, knows:person:daniel's knowledge is reported once, as knows:person:dan.
    # CAUTION (audit 2026-10, fix pending): V1 matches only the frame's single folded
    # winner. On a set-valued attribute (alias, name, connects_to, any declared set) a
    # member other than the winner reads as NOT known; on an accrue attribute it matches

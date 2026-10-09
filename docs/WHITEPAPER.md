@@ -152,7 +152,7 @@ The `frame` field scopes every assertion. Four needs, one mechanism:
 
 **The absence discipline:** when a consumer is served a frame, out-of-frame assertions are *absent* — not redacted, not marked, simply not present. Filtering happens at source. This is what makes the guarantee structural rather than behavioral.
 
-**An observer is an identity** *(FRAME-SCOPED-IDENTITY-V1, A19)*: a knowledge frame `knows:<id>` (the id in full, `knows:person:marn`) holds the knowledge of *whoever `<id>` is*. Every read of it covers each stored `knows:<m>` for `m` in `<id>`'s canon `same_as` closure — the **observer frame** — so after `dan` and `daniel` are merged, what was written to `knows:person:daniel` is read as `knows:person:dan`, and `who_knows` reports the surviving, canonical name. Rows keep the frame their author wrote: retracting the `same_as` splits the frames again. Any other frame name (`canon`, `plot:*`, a non-id suffix) names only itself. Identity is never a belief: which ids are one thing is canon's (§11), and every frame resolves ids through that one closure; what an entity is *called* (`name`, `alias`) stays in the frame that said it.
+**Identity is canon's in every frame** *(FRAME-SCOPED-IDENTITY-V1, A21)*: which ids are one thing is never a belief (§11), so every frame resolves ids through the one canon closure; what an entity is *called* (`name`, `alias`) stays in the frame that said it.
 
 **Dramatic irony is a computable quantity** *(added in design sessions)*: the canon-minus-player-frame delta is an ordinary query. What the player doesn't yet know is enumerable — which is the closest thing to a real instrument the unsolved pacing problem (§14) has.
 
@@ -269,7 +269,7 @@ Identity across non-adjacent references is the hardest problem in the system and
 - **Late binding.** "A man entered" in chapter 1 merges with the named character of chapter 3 by appending identity assertions, leaving every chapter-1 row intact and now reachable through the merged identity.
 - **Splits and underdetermined anchors** *(added in design sessions)*: the dual of merging. A coarsely-anchored entity ("the drawer," anchored only to the home) is **a spatial thunk** — not wrong, *underdetermined*, recorded at exactly the precision the language transmitted. When the world later grows finer entities (desk drawer, kitchen drawer), the coarse entity becomes a candidate-set holder (`MAYBE_SAME_AS` both) and collapses the way thunks always collapse — on forcing, exactly once: the player retrieves the pipe from the desk drawer, the identity event commits `drawer_1 SAME_AS desk_drawer`, and the kitchen drawer provably never held it. Until forced, the honest answer is available and natural: "your pipe's in a drawer at home — you never said which room." The system refuses to claim precision the language never transmitted.
 
-- **Identity is canon's; description is perspectival** *(FRAME-SCOPED-IDENTITY-V1, A19)*. Which ids are one thing is one fact about the world, not a belief. The **canon identity edges** — `same_as`, `maybe_same_as`, `distinct_from` — are written in canon only (the gate refuses them elsewhere, with a receipt), and the closure and every merge decision (the vetoes, the anchors, the proposals) read canon rows only. What an entity is called (`name`, `alias`) stays in the frame that said it: Alice may call Bob "the traitor" without canon learning it. A belief about identity ("Alice thinks the masked man is Bob") is a non-collapsing `aka` row in Alice's frame, never a merge.
+- **Identity is canon's; description is perspectival** *(FRAME-SCOPED-IDENTITY-V1, A21)*. Which ids are one thing is one fact about the world, not a belief. The **canon identity edges** — `same_as`, `maybe_same_as`, `distinct_from` — are written in canon only (the gate refuses them elsewhere, with a receipt), and the closure and every merge decision (the vetoes, the anchors, the proposals) read canon rows only. What an entity is called (`name`, `alias`) stays in the frame that said it: Alice may call Bob "the traitor" without canon learning it. A belief about identity ("Alice thinks the masked man is Bob") is a non-collapsing `aka` row in Alice's frame, never a merge.
 
 The registry's shipped surface has grown well past this founding sketch — a third **non-collapsing** identity relation (`aka` correlation, for reveals and dual personas), an explicit **anti-merge** primitive (`distinct_from`), a host-invoked reconciliation/adjudication/**retype** family, a **durable-contradiction veto** that keeps two entities with contradictory standing facts from auto-merging, and `identity_conflicts()`, which surfaces a merge that slipped past the vetoes. The full catalogue is §25.2.
 
@@ -672,17 +672,18 @@ relations, by collapsing behaviour:
   amalgamation) without merging their rows. As-of-scoped, so a reveal at t=10
   does not leak backward before it. `state_union`/`snapshot(correlated=True)`
   fold an entity over its correlation set for the whole reveal scene in one read.
-  `aka` is a **soft auto-merge block** (A19): the auto-merger never collapses a
+  `aka` is a **soft auto-merge block** (A21): the auto-merger never collapses a
   correlated pair, since a timeless `same_as` would swallow the valid-timed reveal
   and leak the masked figure's name backward; the host's `merge`/`confirm` still
   can. Its vetoes act on whole **correlation groups** (the connected component
   over `aka`, expanded through `same_as`): a `distinct_from` between two groups
-  vetoes `correlate`, `reject` of two facets of one group is a conflict, and
-  `correlation_conflicts` reports every `distinct_from` inside one group.
+  vetoes `correlate` and blocks the auto-merger, `reject` of two facets of one
+  group is a conflict, and `correlation_conflicts` reports every `distinct_from`
+  inside one group.
 
-**Identity is canon's** (A19, §11): the three collapsing-or-separating relations
+**Identity is canon's** (A21, §11): the three collapsing-or-separating relations
 are canon identity edges, written and read in canon only; every frame resolves
-ids through the one canon closure, and every knowledge frame follows it (§6).
+ids through the one canon closure (§6).
 
 The **host reconciliation surface** (all guarded; the hard vetoes —
 containment, `distinct_from` — are absolute):
@@ -703,11 +704,11 @@ containment, `distinct_from` — are absolute):
   case only the inter-closure *artifact* edges are retracted (real child
   containment is preserved), then a guarded merge. A non-slip invocation is
   refused (`vetoed_not_a_slip`) — retype is never a veto bypass — and so is an
-  absorb whose `to_kind` contradicts the target (`vetoed_kind_mismatch`, A19).
+  absorb whose `to_kind` contradicts the target (`vetoed_kind_mismatch`, A21).
 - **`typing_conflicts()`** — read-only surfacing of the slip candidates
   (`reconcile` never re-proposes hard-blocked pairs, so without this they are
   invisible).
-- **`identity_conflicts()`** (A19) — read-only surfacing of merged canon
+- **`identity_conflicts()`** (A21) — read-only surfacing of merged canon
   closures that hold a pair the guarded merge would veto (a containment or
   `distinct_from` edge with both ends inside) — what a raw or legacy `same_as`
   merged past the vetoes. It names every `same_as` inside; the host chooses
@@ -767,7 +768,7 @@ Reads that surface *the relevant neighbourhood* of a subject, not just one key:
   freshly-built log is structurally incomplete (coreference **`name_collisions`** —
   distinct ids sharing an anchor, each pair annotated with *why* it isn't merged;
   `unstamped_timed`; `orphan_entities`; `open_conflicts`) as a queryable checklist.
-  `open_conflicts` is **computed on read** (A19): the asked frame's conflicted
+  `open_conflicts` is **computed on read** (A21): the asked frame's conflicted
   folds as of the asked time — frame-scoped, honest about `as_of`, never stale;
   the stored conflict table it once read is retired.
   The unknown-as-computed-gap (A6) applied to ingestion quality: the engine
@@ -883,4 +884,4 @@ exact number, the host owns what it denominates.
 | A18 | 2026-10 | Fold correctness, the October self-audit's batch A: one recency key (valid time 0.0 is a time); one identity-aware value comparison for every tie test; a stale same-time tie in one source class never outvotes a later move (containment family); **evidence rank governs every durability class** — CONSTITUTIVE ranks before its earliest-wins rule, and STATE ∪ DISPOSITIONAL fold through one rank/source-class/recency machinery (§5's "overridable by stronger later evidence" made literal), with a STATE row outranking a habit stamped at the same instant and tied habits coexisting; the establishing view keeps the world at rest (§13) under later habits; time coordinates are finite numbers at the gate (numeric strings coerced). Answers change only where they were wrong | FOLD-CORRECTNESS-V1 r3 (pbr GREEN); `docs/AUDIT-2026-10.md` |
 | A19 | 2026-10 | Inverse predicates at the gate (§10 canonicalization): `holds`/`wearing` canonicalize to `held_by`/`worn_by` **with subject and object swapped** for entity values (receipted `(inverse) holds->held_by`), stay literal domain facts for text values, and can never be resurrected as plain renames by replayed receipts. Rows written before the fix were stored backwards (live in a host's worlds); they are found and repaired host-side by a porcelain-only recipe — the engine never rewrites | GATE-INVERSE-ALIAS-V1 r1.2 (pbr GREEN); audit P1 #0 |
 | A20 | 2026-10 | The gate decides by authority, and every refusal is a receipt (§10, §12; the October self-audit's batch B): authority (status grant, frame, letter 029) is settled before an item's first write; every other refusal is a typed skip from one frozen vocabulary (`SKIP_REASONS`), receipted on every write path including `p.ingest()`. **Mechanism attributes** — rows the engine writes about other rows (`retracts`, `resolved_by`, `canonicalized_from`, `learned_at_wallclock`, `source_valid_from`, `correction_proposal`) — are never accepted as items, and every engine read of one honors only its owner's mark (the buffer also refuses a retraction, a resolution marker or a tracking stamp without its owner's status), so a copied or forged row hides, spends, aliases or refreshes nothing. A raw `same_as` is the guarded merge (both hard vetoes, canon only: identity is not perspectival). Declarations are validated against their axis vocabulary; an id-shaped typo on an entity-valued predicate is a `malformed_id`; one numeric rule for times and `confidence`; a rejected call keeps the scene cursor; bookkeeping rows never reach the model. Well-formed items write byte-identical logs | GATE-AUTHORITY-V1 r2; audit P1 #6, #13 |
-| A19 | 2026-10 | **Identity is canon's, description is perspectival, an observer follows its identity.** The canon identity edges (`same_as`/`maybe_same_as`/`distinct_from`) are canon-only at the gate (`identity_edge_outside_canon`) and every identity decision reads canon rows; `name`/`alias` rows (an item's `aliases` included) are read in their own frame, and `by_alias`/`refer` take a frame; a `knows:<id>` frame reads through `<id>`'s canon closure (the **observer frame**, §6), `who_knows` reporting canonical names. `aka` becomes a **soft auto-merge block** acting on whole correlation groups (amends AKA-CORRELATION-V1 §1's neutrality; `conflict_already_correlated`); `identity_conflicts()` surfaces merges past the vetoes; `open_conflicts` is computed on read, frame-scoped and as-of; snapshot existence follows perspective (frame or canon); `retype(absorb=)` refuses a contradicting `to_kind` (§11, §25.2, §25.4). Founder decisions 1 (identity edges canon-only; names/aliases frame-scoped) and 2 (`knows:` frames follow merges) | FRAME-SCOPED-IDENTITY-V1 |
+| A21 | 2026-10 | **Identity is canon's, description is perspectival.** The canon identity edges (`same_as`/`maybe_same_as`/`distinct_from`) are canon-only at the gate (a `same_as`, raw or an item's `same_as` key, skips `same_as_not_canon`; the other two `identity_edge_outside_canon`) and every identity decision reads canon rows; `name`/`alias` rows (an item's `aliases` included) are read in their own frame, and `by_alias`/`refer` take a frame, with no canon fallback. `aka` becomes a **soft auto-merge block** acting on whole correlation groups (amends AKA-CORRELATION-V1 §1's neutrality; a `distinct_from` between two groups blocks the auto-merger as it vetoes `correlate`; `conflict_already_correlated`); `identity_conflicts()` surfaces merges past the vetoes; `open_conflicts` is computed on read, frame-scoped and as-of; snapshot existence follows perspective (frame or canon); `retype(absorb=)` refuses a contradicting `to_kind` (§6, §11, §25.2, §25.4). Founder decision 1 (identity edges canon-only; names/aliases frame-scoped). The spec's §7 (`knows:` frames follow merges, founder decision 2) is not part of this amendment: withdrawn from the build pending a founder decision | FRAME-SCOPED-IDENTITY-V1 r2 |
