@@ -726,3 +726,22 @@ and write nothing. Today `to_kind` is silently ignored.
 - **Q5.** `ask(frame=knows:X)` keeps resolving references against canon
   (HD 003), so X's private alias doesn't resolve there. Default: unchanged, and
   revisit with batch D/E.
+
+## Build notes for pbr (gated implementation on `impl/frame-scoped-identity-v1`, 739 green)
+
+- **One rule, two skip codes.** A raw `same_as` outside canon gets
+  GATE-AUTHORITY-V1's `same_as_not_canon`. The side-key form gets this spec's
+  `identity_edge_outside_canon`. pb recommends one code; please rule on which.
+- **Counts measured on this base are lower than the spec's.** The construct
+  counts in this spec predate FOLD-CORRECTNESS-V1 and construct's 21:51 and
+  22:15 rebuilds. Measured on this base:
+  - 520 canon / 199 `knows:` / 102 named-frame conflicts across 40 worlds;
+  - 17 `by_alias` texts;
+  - 13 merged observers.
+
+  Oracle 5e pins a one-id difference that batch A's evidence rank causes.
+- **Reconciling D on top of C** was simulated, with no commits (776 green):
+  - `by_alias`, `by_learned_alias` and `_vocabulary_matches` gain a
+    `frame=CANON` parameter;
+  - `refer` passes `frame` into tiers 1a and 1d;
+  - D's three strict xfails drop their marker.
