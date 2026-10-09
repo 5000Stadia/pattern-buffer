@@ -311,6 +311,45 @@ class TestFrameAndLogPosition:
         assert r.status == UNDERDETERMINED
 
 
+# ------------------------------------------------- §5 one normalization
+
+
+def _authored_alias(w: World, entity: str, text: str) -> None:
+    """An `alias` written directly as an attribute keeps its authored text
+    (the `aliases` side key normalizes; this does not)."""
+    w.ingest_structured([
+        {"entity": entity, "attribute": "kind", "value": "thing", "timeless": True},
+        {"entity": entity, "attribute": "alias", "value": text, "timeless": True},
+    ])
+    assert any(r.value == text for r in w.buffer.visible(entity=entity, attribute="alias"))
+
+
+class TestAliasesMatchLikeNames:
+    """§5: ref_norm (outer whitespace and case) on both sides, nothing more."""
+
+    def test_case_insensitive(self, world):
+        _authored_alias(world, "obj:core", "The Memory Core")
+        r = world.refer("the memory core")
+        assert r.status == RESOLVED and r.entity_id == "obj:core"
+        assert r.receipt["signals"] == ["alias_exact"]
+
+    def test_outer_whitespace_and_case(self, world):
+        _authored_alias(world, "obj:core", "The Memory Core")
+        r = world.refer("  THE MEMORY CORE ")
+        assert r.status == RESOLVED and r.entity_id == "obj:core"
+        assert r.receipt["signals"] == ["alias_exact"]
+
+    def test_interior_whitespace_is_kept(self, world):
+        _authored_alias(world, "obj:geyser", "  old  faithful ")
+        r = world.refer("old  faithful")
+        assert r.status == RESOLVED and r.entity_id == "obj:geyser"
+
+    def test_interior_whitespace_is_not_collapsed(self, world):
+        _authored_alias(world, "obj:geyser", "  old  faithful ")
+        r = world.refer("old faithful")
+        assert r.status == UNDERDETERMINED
+
+
 # ------------------------------------------------- the no-growth invariant
 
 

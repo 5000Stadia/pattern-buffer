@@ -1391,26 +1391,19 @@ class IdentityRegistry:
 
     def by_alias(self, alias: str, asserted_as_of: int | None = None,
                  frame: str = CANON) -> set[str]:
-        """Entities a `name` or `alias` row in `frame` names exactly,
-        identity-resolved: refer's tier 1a.
-
-        Description is perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows
-        are read in `frame` only, with no canon fallback for a non-canon frame
-        — frames never inherit canon in a read. A name private to Alice
-        resolves in Alice's frame, never in canon's, and a name only canon
-        knows does not resolve in Alice's frame."""
-        needle = alias.strip().lower()
-        hits = set()
-        for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of,
-                                        frame=frame):
-            if row.value == needle:
-                hits.add(self.resolve(row.entity, asserted_as_of))
-        # Names assert identity too: check 'name' rows.
-        for row in self._buffer.visible(attribute="name", asserted_as_of=asserted_as_of,
-                                        frame=frame):
-            if isinstance(row.value, str) and row.value.strip().lower() == needle:
-                hits.add(self.resolve(row.entity, asserted_as_of))
-        return hits
+        """Entities an authored name or alias names exactly, identity-resolved,
+        as of a log position: refer's tier 1a (whitepaper §9). Names assert
+        identity too. Aliases match like names (REFER-LEARNING-V1 §5): both
+        sides under `ref_norm`, so an alias stored as "The Memory Core"
+        answers "the memory core". Description is perspectival
+        (FRAME-SCOPED-IDENTITY-V1 §2): the rows are read in `frame` only, with
+        no canon fallback for a non-canon frame — a name private to Alice
+        resolves in Alice's frame, never in canon's."""
+        return {
+            self.resolve(row.entity, asserted_as_of)
+            for row in self._vocabulary_matches(alias, ("name", "alias"), asserted_as_of,
+                                                frame=frame)
+        }
 
     def by_learned_alias(self, alias: str, asserted_as_of: int | None = None,
                          frame: str = CANON) -> set[str]:
