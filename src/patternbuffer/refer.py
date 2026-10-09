@@ -239,7 +239,11 @@ class Refer:
                         receipt={"tier": 1, "signals": [f"constraint_inversion:contains({anchor})"]},
                     )
             elif relation == "owned_by" or relation == "held_by":
-                folded = self._indexes.fold_key(anchor, "in", frame, as_of, asserted_as_of)
+                # The owner by the possession is the anchor's own owned_by key
+                # (REFER-LEARNING-V1 §6), not its container; held_by folds the
+                # containment family (unchanged). No entity winner: no answer.
+                key = "owned_by" if relation == "owned_by" else "in"
+                folded = self._indexes.fold_key(anchor, key, frame, as_of, asserted_as_of)
                 if folded.winner is not None and folded.winner.value_type == "entity":
                     return Resolution(
                         RESOLVED, self._indexes.resolve_entity(folded.winner.value),

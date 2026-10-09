@@ -350,6 +350,61 @@ class TestAliasesMatchLikeNames:
         assert r.status == UNDERDETERMINED
 
 
+# ------------------------------------------------- §6 owned_by
+
+
+def _possessions(w: World) -> None:
+    """Marn's watch in the desk drawer; an unowned cup on the table; a
+    lantern Marn holds."""
+    w.ingestor.cursor.advance(1.0)
+    w.ingest_structured([
+        {"entity": "place:study", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "person:marn", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "obj:desk_drawer", "attribute": "kind", "value": "drawer",
+         "timeless": True},
+        {"entity": "obj:desk_drawer", "attribute": "in", "value": "place:study"},
+        {"entity": "obj:watch", "attribute": "kind", "value": "watch", "timeless": True},
+        {"entity": "obj:watch", "attribute": "in", "value": "obj:desk_drawer"},
+        {"entity": "obj:watch", "attribute": "owned_by", "value": "person:marn"},
+        {"entity": "obj:table", "attribute": "kind", "value": "table", "timeless": True},
+        {"entity": "obj:table", "attribute": "in", "value": "place:study"},
+        {"entity": "obj:cup", "attribute": "kind", "value": "cup", "timeless": True},
+        {"entity": "obj:cup", "attribute": "in", "value": "obj:table"},
+        {"entity": "obj:lantern", "attribute": "kind", "value": "lantern",
+         "timeless": True},
+        {"entity": "obj:lantern", "attribute": "held_by", "value": "person:marn"},
+    ])
+
+
+class TestOwnedBy:
+    """§6: the owner by the possession, not the possession's container."""
+
+    def test_owned_by_returns_the_owner(self, world):
+        _possessions(world)
+        r = world.refer("the watch's owner", constraints=[("owned_by", "obj:watch")])
+        assert r.status == RESOLVED and r.entity_id == "person:marn"
+        assert r.receipt["signals"] == ["constraint_inversion:owned_by(obj:watch)"]
+
+    def test_unowned_possession_does_not_resolve(self, world):
+        _possessions(world)
+        r = world.refer("the cup's owner", constraints=[("owned_by", "obj:cup")])
+        # The constraint gives no answer and the cascade finds none either:
+        # never the table the cup stands on.
+        assert r.status == UNDERDETERMINED and r.entity_id is None
+
+    def test_held_by_still_returns_the_holder(self, world):
+        _possessions(world)
+        r = world.refer("the lantern's holder", constraints=[("held_by", "obj:lantern")])
+        assert r.status == RESOLVED and r.entity_id == "person:marn"
+        assert r.receipt["signals"] == ["constraint_inversion:held_by(obj:lantern)"]
+
+    def test_contains_still_returns_the_container(self, world):
+        _possessions(world)
+        r = world.refer("the drawer with the watch", constraints=[("contains", "obj:watch")])
+        assert r.status == RESOLVED and r.entity_id == "obj:desk_drawer"
+        assert r.receipt["signals"] == ["constraint_inversion:contains(obj:watch)"]
+
+
 # ------------------------------------------------- the no-growth invariant
 
 
