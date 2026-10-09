@@ -5,6 +5,16 @@ deferred from batch E, together with the October audit's surfaces P2-5, folds
 P2-7 and probe addendum E8 (`docs/AUDIT-2026-10.md`). Spec only: nothing is
 built. Not yet reviewed by pbr.
 
+**Its four decisions take their defaults** (pb's call: reversible engine
+semantics, with pbr as the gate):
+1. Event rows stay out of every fold even before classification (Rules A and C
+   together).
+2. `until` hides an event before its first stamped row.
+3. `state()` answers from the event's own record, while `snapshot()`'s standing
+   lenses stay standing-only.
+4. Construct sees the host-impact section alongside this review, and its reply
+   is folded in before the build.
+
 - Every case below was reproduced on `main` (b03f427) with a probe on scratch
   worlds before it was specified (probes EV1–EV10, cited per oracle). Line
   numbers are at b03f427, where the suite is 634 passed, 3 skipped.
