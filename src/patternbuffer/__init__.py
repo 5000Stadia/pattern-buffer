@@ -439,10 +439,12 @@ class World:
             self._porcelain = Porcelain(self)
         return self._porcelain
 
-    def charter(self) -> dict[str, Any]:
-        """The world's self-description, read from world:self (letter 026)."""
+    def charter(self, asserted_as_of: int | None = None) -> dict[str, Any]:
+        """The world's self-description, read from world:self (letter 026), as
+        of a log position when one is given (READ-SURFACE-V1 §8)."""
         out: dict[str, Any] = {}
-        for attr, result in self.indexes.current_state("world:self").items():
+        for attr, result in self.indexes.current_state(
+                "world:self", asserted_as_of=asserted_as_of).items():
             if result.winner is not None:
                 out[attr] = result.winner.value
         return out
