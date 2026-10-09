@@ -9,7 +9,7 @@ import logging
 import math
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Callable
+from typing import Any, Callable, Iterable, Sequence
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import (
@@ -30,9 +30,11 @@ from patternbuffer.decay import DecayPolicy
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    EVENT_PREFIX,
     MECHANISM_STATUS,
     META_ATTRIBUTES,
     Assertion,
+    is_event_row,
 )
 from patternbuffer.semantics import AttributeSemantics
 
@@ -50,6 +52,10 @@ _NEIGHBORHOOD_DEPTH_CAP = 3
 # chapter-test run 3: a narrator's wrong `inferred` theory outheld later
 # `stated` canon.) Governs every durability class (FOLD-CORRECTNESS-V1 §4).
 _EVIDENCE_RANK = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
+# The movement-payload keys of a `kind=moved` event (MOVED-EVENT-V1 §E1), named
+# once (EVENTS-ONE-READER-V1 §3): a move's closing coordinate is the `valid_to`
+# its payload rows carry, and `in_transit`'s anchor reads them.
+MOVEMENT_KEYS = ("kind", "agent", "origin", "destination", "manner")
 CONFIDENCE_PARAMS = {
     # CONFIDENCE-V1: fixed, tunable read-layer weights. These scores are
     # derived on demand and are never stored in the assertion log or sidecar.
@@ -1409,6 +1415,148 @@ class Indexes:
                     out.add(self._resolve(row.entity))
         out.discard(entity)
         return sorted(out)
+
+    # ------------------------------------- event records (EVENTS-ONE-READER-V1)
+    # An event is an entity (whitepaper §3.1) whose rows are its RECORD: what
+    # kind of occurrence it was, who and what took part, when. A record is
+    # read, never folded — nothing supersedes an occurrence, and an occurrence
+    # is not a value of any other entity's key (§5). One reader returns
+    # records, and every event read uses it.
+
+    def event_records(
+        self,
+        frame: str = CANON,
+        *,
+        ids: Iterable[str] | None = None,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> dict[str, tuple[Assertion, ...]]:
+        """The event records visible in `frame` (EVENTS-ONE-READER-V1 §1):
+        resolved event id -> its record, events in the listing order
+        (`_event_order`) and each record's rows in `_recency_key` order.
+
+        - **Identity.** An event is a resolved id: the event rows
+          (`is_event_row`) visible in `frame` are grouped by the canonical id
+          of their stored subject. A row on any other subject never makes an
+          event — not a `caused_by` that names one, not an identity edge, not
+          a thing contained in one. An event merged into a closure whose
+          canonical id is not an `event:` id is keyed by that id, as
+          `entities()` reports it.
+        - **The record** is the event's rows minus the engine's machinery
+          (`META_ATTRIBUTES`: identity edges, provenance, semantics), which
+          rides beside a record as it does beside every entity.
+        - **Never the sidecar**: no classification lookup, so a record reads
+          the same before a sweep as after it.
+        - **The asserted axis** is `visible(asserted_as_of=)`, retractions
+          included, as for every read.
+        - **The valid axis**, one rule for every event read: an event has
+          occurred by `T` when `T` is None, when it has no stamped row (a
+          timeless event, such as a merge), or when its earliest stamped
+          `valid_from` is <= `T`; its record as of `T` is its timeless rows
+          plus its rows stamped <= `T`. `valid_to` never hides an event row:
+          a closed or zero-duration event stays history (MOVED-EVENT-V1 §D.6).
+        - **`ids`** limits the read to the named events, each through its
+          identity closure (the per-event callers: `event_attribute`, the
+          `situation` lens, `event_participation`, `caused_by_of`)."""
+        if ids is None:
+            rows = self._buffer.visible(frame=frame, entity_prefix=EVENT_PREFIX,
+                                        asserted_as_of=asserted_as_of)
+        else:
+            members: set[str] = set()
+            for eid in ids:
+                members |= self._closure_of(self._resolve(eid))
+            # Only a stored `event:` subject carries event rows: a closure
+            # without one has no record, and is read without a query.
+            stored = sorted(m for m in members if m.startswith(EVENT_PREFIX))
+            if not stored:
+                return {}
+            rows = self._buffer.visible(entity_in=stored, frame=frame,
+                                        asserted_as_of=asserted_as_of)
+        grouped: dict[str, list[Assertion]] = {}
+        for row in rows:
+            if not is_event_row(row) or row.attribute in META_ATTRIBUTES:
+                continue
+            grouped.setdefault(self._resolve(row.entity), []).append(row)
+        records: dict[str, tuple[Assertion, ...]] = {}
+        for event_id, record in grouped.items():
+            record.sort(key=self._recency_key)
+            if valid_as_of is not None:
+                stamped = [r.valid_from for r in record if r.valid_from is not None]
+                if stamped and min(stamped) > valid_as_of:
+                    continue  # has not occurred by T
+                record = [r for r in record
+                          if r.valid_from is None or r.valid_from <= valid_as_of]
+            records[event_id] = tuple(record)
+        return dict(sorted(records.items(), key=lambda item: self._event_order(item[1])))
+
+    @staticmethod
+    def _event_time(record: Sequence[Assertion]) -> float | None:
+        """An event's `t`: the greatest `valid_from` in its record, or None
+        when every row is timeless."""
+        stamps = [r.valid_from for r in record if r.valid_from is not None]
+        return max(stamps) if stamps else None
+
+    @classmethod
+    def _event_order(cls, record: Sequence[Assertion]) -> tuple:
+        """The one order wherever events are listed (EVENTS-ONE-READER-V1 §1):
+        by `t` (None first), then by the event's earliest row in
+        `_recency_key` order — today's `events()` order, reproduced."""
+        t = cls._event_time(record)
+        return (t if t is not None else float("-inf"),
+                min(cls._recency_key(r) for r in record))
+
+    @classmethod
+    def _event_pick(cls, rows: Sequence[Assertion]) -> Assertion | None:
+        """The pick, the one rule for every single value read from a record
+        (EVENTS-ONE-READER-V1 §1): among an attribute's rows, those at the top
+        evidence rank (`_top_evidence`), then the one with the greatest
+        `_recency_key`. Rank first, as batch A applies it to every fold: a
+        later `assumed` kind never displaces a `stated` one (P5)."""
+        if not rows:
+            return None
+        return max(cls._top_evidence(list(rows)), key=cls._recency_key)
+
+    @classmethod
+    def event_payload(cls, event_id: str, record: Sequence[Assertion]) -> dict[str, Any]:
+        """One event's dict, built from its record (a pure function;
+        EVENTS-ONE-READER-V1 §1): MOVED-EVENT-V1 §E1's twelve keys, in their
+        order.
+
+        `kind`, `origin`, `destination`, `manner`: the pick, and
+        `origin_bound`/`destination_bound` are the pick's `value_type ==
+        "entity"` (the stored discriminator, never grammar). `agents`,
+        `patients`, `caused_by`: every row's stored value, in `_recency_key`
+        order. `t`: the greatest `valid_from` in the record, or None. `valid_to`:
+        the `valid_to` of the latest movement-payload row (`MOVEMENT_KEYS`)
+        that carries one — None for an open event; a completed zero-duration
+        move carries `valid_from == valid_to`."""
+        ordered = sorted(record, key=cls._recency_key)
+
+        def pick(attribute: str) -> Assertion | None:
+            return cls._event_pick([r for r in ordered if r.attribute == attribute])
+
+        def values(attribute: str) -> list[Any]:
+            return [r.value for r in ordered if r.attribute == attribute]
+
+        kind, origin = pick("kind"), pick("origin")
+        destination, manner = pick("destination"), pick("manner")
+        closing = [r for r in ordered
+                   if r.attribute in MOVEMENT_KEYS and r.valid_to is not None]
+        return {
+            "id": event_id,
+            "kind": kind.value if kind is not None else None,
+            "agents": values("agent"),
+            "patients": values("patient"),
+            "t": cls._event_time(ordered),
+            "caused_by": values("caused_by"),
+            "origin": origin.value if origin is not None else None,
+            "destination": destination.value if destination is not None else None,
+            "manner": manner.value if manner is not None else None,
+            "valid_to": closing[-1].valid_to if closing else None,
+            "origin_bound": origin.value_type == "entity" if origin is not None else None,
+            "destination_bound": (destination.value_type == "entity"
+                                  if destination is not None else None),
+        }
 
     def event_participation(
         self,

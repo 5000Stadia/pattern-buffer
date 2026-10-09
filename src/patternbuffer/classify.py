@@ -26,6 +26,7 @@ from patternbuffer.model import (
     TASK_CLASSIFY_BATCH,
     WORLD_PHYSICS_SUBJECT,
     Assertion,
+    is_event_row,
     task_schema,
 )
 from patternbuffer.semantics import AttributeSemantics
@@ -140,7 +141,9 @@ class Classifier:
         """Deterministic short-circuits. Return None to defer to the model."""
         if row.value_type == "delta":
             return STATE, 1.0
-        if row.entity.startswith("event:") or row.attribute == "caused_by":
+        # An event row (EVENTS-ONE-READER-V1 §1): the predicate the fold and
+        # the event reader share; the delta test above is its own first half.
+        if is_event_row(row) or row.attribute == "caused_by":
             return EVENT, 1.0
         if row.attribute in {"name", "alias"}:
             return CONSTITUTIVE, 0.95  # identity anchors

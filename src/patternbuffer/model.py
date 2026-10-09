@@ -141,6 +141,10 @@ VALUE_TYPES = frozenset({"entity", "literal", "unresolved", "delta"})
 
 CANON = "canon"
 
+# Reified occurrences (whitepaper §3.1, §12 `event(...)`): an `event:` id is an
+# entity whose rows are its record (EVENTS-ONE-READER-V1).
+EVENT_PREFIX = "event:"
+
 # The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
 # A malformed id (person:/you) is SKIPPED at the gate with a typed receipt,
 # never normalized — guessing person:you would manufacture the phantom
@@ -201,3 +205,15 @@ class Assertion:
     status: str
     confidence: float | None
     asserted_at: int
+
+
+def is_event_row(row: Assertion) -> bool:
+    """Whether `row` is an event row (EVENTS-ONE-READER-V1 §1): its stored
+    subject is an `event:` id and its value type is not `delta`.
+
+    Exactly the rows the classifier's guardrail makes EVENT because of their
+    subject — a `delta` is decided first, and is STATE, so an accrue ledger
+    entry on an event still folds. The one predicate the guardrail, the fold
+    (which never folds an event row, classified or not) and the event reader
+    (`Indexes.event_records`) share."""
+    return row.entity.startswith(EVENT_PREFIX) and row.value_type != "delta"
