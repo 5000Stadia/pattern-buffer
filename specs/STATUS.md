@@ -6,7 +6,7 @@ the authoritative current state.** A spec marked *Shipped* has its feature live 
 `src/patternbuffer/` with tests; browse the spec for the design and the whitepaper
 §25 for the consolidated architecture.
 
-_Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A and B pbr-GREEN and merged; C–E in review — `docs/AUDIT-2026-10.md`, `docs/HANDOFF-2026-10-09.md`)._
+_Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A, B and C pbr-GREEN and merged, C without its §7; D and E in review — `docs/AUDIT-2026-10.md`, `docs/HANDOFF-2026-10-09.md`)._
 
 ## Shipped — feature live in the engine
 | Spec | What it shipped |
@@ -42,6 +42,7 @@ _Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A a
 | FOLD-CORRECTNESS-V1 | Audit batch A: one recency key (0.0 is a time), identity-aware tie tests, stale ties never outvote a later move, evidence rank across every durability class (STATE ∪ DISPOSITIONAL in one fold; same-stamp STATE outranks a habit; tied habits coexist), the establishing view stays at rest, numeric time values at the gate, the private containment key kept inside. Whitepaper A18 |
 | GATE-INVERSE-ALIAS-V1 | `holds`/`wearing` swap direction at the gate (entity values), stay literal for text, and never resurrect as plain renames; a porcelain-only recipe finds pre-fix inverted rows for host repair. Whitepaper A19 |
 | GATE-AUTHORITY-V1 | Audit batch B: the gate decides by authority, settled before an item's first write; every other refusal is a typed skip receipt from one vocabulary; mechanism rows (`retracts`, `resolved_by`, `canonicalized_from`, `learned_at_wallclock`, `source_valid_from`, `correction_proposal`) count only with their owner's mark and are refused as items; a raw `same_as` is the guarded merge, canon-only (`same_as_not_canon`); one normalizer; declarations validated; id-shaped typos on entity-valued predicates skip; `p.ingest()` receipts its skips; one number rule for times and `confidence`. Whitepaper A20 |
+| FRAME-SCOPED-IDENTITY-V1 | Audit batch C: identity is canon's (`same_as`/`maybe_same_as`/`distinct_from` canon-only at the gate; every identity decision reads canon), names and aliases are read in their own frame (`by_alias`/`refer` take a frame), `aka` vetoes act on whole correlation groups and block auto-merge, `identity_conflicts()` (MCP tool 40), `open_conflicts` computed on read, snapshot existence follows perspective, `retype(absorb=)` refuses a contradicting kind. §7 (`knows:` frames follow merges) is held for Kabe's gate g3bf5da; its r1 build is on `hold/frame-scoped-identity-v1-r1`. Whitepaper A21 |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs — decisions in effect
