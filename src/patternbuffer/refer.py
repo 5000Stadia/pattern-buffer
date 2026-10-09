@@ -159,13 +159,14 @@ class Refer:
 
         # ---- Tier 1a: exact name/alias hit through the identity registry.
         # Try the raw expression and its determiner-stripped core (HD 003):
-        # "my brass measuring spoon" misses the exact name otherwise. Names
-        # and aliases are read in the call's frame only, with no canon
-        # fallback (FRAME-SCOPED-IDENTITY-V1 §2): a name private to Alice
-        # resolves in Alice's frame and never in canon's.
+        # "my brass measuring spoon" misses the exact name otherwise. Read as
+        # of the caller's log position (REFER-LEARNING-V1 §4); the frame half
+        # of this read is FRAME-SCOPED-IDENTITY-V1 §2's, at the registry's one
+        # vocabulary read set, which tier 1d shares.
         core = self._strip_determiner(description)
         texts = (description,) if core == ref_norm(description) else (description, core)
-        hits = {e for text in texts for e in self._registry.by_alias(text, frame=frame)}
+        hits = {e for text in texts
+                for e in self._registry.by_alias(text, asserted_as_of, frame=frame)}
         if len(hits) == 1:
             return Resolution(RESOLVED, next(iter(hits)),
                               receipt={"tier": 1, "signals": ["alias_exact"]})

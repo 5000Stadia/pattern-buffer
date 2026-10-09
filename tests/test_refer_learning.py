@@ -17,7 +17,7 @@ import pytest
 from patternbuffer import World
 from patternbuffer.classify import EVENT
 from patternbuffer.model import TASK_REFER
-from patternbuffer.refer import RESOLVED
+from patternbuffer.refer import RESOLVED, UNDERDETERMINED
 from patternbuffer.testing import StubModel, rule_classifier_fallback
 
 ALICE = "knows:person:alice"
@@ -238,6 +238,77 @@ class TestReading:
         r = world.refer("the cupboard", scope="place:kitchen")
         assert r.status == RESOLVED and r.entity_id == "obj:pantry"
         assert r.receipt["signals"] == ["unique_kind_in_scope"]
+
+
+# ------------------------------------------- §4 frame and log position
+
+# The frame half of §4 is FRAME-SCOPED-IDENTITY-V1's (batch C, §2): by_alias
+# reads the caller's frame only, and refer passes its frame. The oracles below
+# restate C's 2c through refer.
+
+
+def _private_vocabulary(w: World) -> int:
+    """A canon study with a desk drawer; Alice privately calls the drawer
+    "the stash" and a horse "Old Grey". Returns the head before her words."""
+    w.ingestor.cursor.advance(1.0)
+    w.ingest_structured([
+        {"entity": "place:study", "attribute": "kind", "value": "room", "timeless": True},
+        {"entity": "obj:desk_drawer", "attribute": "kind", "value": "drawer",
+         "timeless": True},
+        {"entity": "obj:desk_drawer", "attribute": "in", "value": "place:study"},
+        {"entity": "obj:old_horse", "attribute": "kind", "value": "horse",
+         "timeless": True},
+    ])
+    before = w.buffer.head()
+    w.ingest_structured([
+        {"entity": "obj:desk_drawer", "attribute": "alias", "value": "the stash",
+         "timeless": True},
+        {"entity": "obj:old_horse", "attribute": "name", "value": "Old Grey",
+         "timeless": True},
+    ], frame=ALICE)
+    return before
+
+
+class TestFrameAndLogPosition:
+    """§4: tier 1 reads in the caller's frame, as of its log position."""
+
+    def test_private_alias_is_not_canons(self, world):
+        _private_vocabulary(world)
+        r = world.refer("the stash")
+        assert r.status == UNDERDETERMINED
+
+    def test_private_alias_resolves_in_its_frame(self, world):
+        _private_vocabulary(world)
+        r = world.refer("the stash", frame=ALICE)
+        assert r.status == RESOLVED and r.entity_id == "obj:desk_drawer"
+        assert r.receipt["signals"] == ["alias_exact"]
+
+    def test_private_name_is_not_canons(self, world):
+        _private_vocabulary(world)
+        r = world.refer("old grey")
+        assert r.status == UNDERDETERMINED
+
+    def test_private_name_resolves_in_its_frame(self, world):
+        _private_vocabulary(world)
+        r = world.refer("Old Grey", frame=ALICE)
+        assert r.status == RESOLVED and r.entity_id == "obj:old_horse"
+        assert r.receipt["signals"] == ["alias_exact"]
+
+    def test_alias_unseen_before_it_was_written(self, world):
+        before = _private_vocabulary(world)
+        r = world.refer("the stash", frame=ALICE, asserted_as_of=before)
+        assert r.status == UNDERDETERMINED
+
+    def test_word_learned_in_alices_frame_is_not_canons(self, world):
+        _two_rooms(world)
+        world.ingest_structured([
+            {"entity": "obj:kitchen_cabinet", "attribute": "in", "value": "place:kitchen"},
+        ], frame=ALICE)
+        _judge(world, "obj:kitchen_cabinet")
+        world.refer(WORD, scope="place:kitchen", frame=ALICE)
+        assert [w.frame for w in _learned_rows(world)] == [ALICE]
+        r = world.refer(WORD)
+        assert r.status == UNDERDETERMINED
 
 
 # ------------------------------------------------- the no-growth invariant
