@@ -82,7 +82,7 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 - [x] R13 Behaviour-preserving polish and read caches, byte-identical, on main (`docs/AUDIT-2026-10.md` "Done on polish/audit-2026-10")
 - [x] R14 holds/wearing stored backwards, live in construct's worlds — pbr GREEN, merged 2026-10-09 (`specs/GATE-INVERSE-ALIAS-V1.md`; whitepaper A19)
 - [x] R15 Batch A, fold correctness — pbr GREEN, merged 2026-10-09 (`specs/FOLD-CORRECTNESS-V1.md` r3; whitepaper A18)
-- [~] R16 Batch B, gate authority (`specs/GATE-AUTHORITY-V1.md`; branch `impl/gate-authority-v1`; r2, spec and code together, in pbr review)
+- [x] R16 Batch B, gate authority — pbr GREEN, merged 2026-10-09 (`specs/GATE-AUTHORITY-V1.md` r2; whitepaper A20)
 - [~] R17 Batch C, frame-scoped identity (`specs/FRAME-SCOPED-IDENTITY-V1.md`; branch `impl/frame-scoped-identity-v1`; r2 building on B r2, with §7, frames following merges, held for Kabe's gate g3bf5da)
 - [~] R18 Batch D, refer learns words, not picks (`specs/REFER-LEARNING-V1.md`; branch `impl/refer-learning-v1`; spec pbr GREEN; built, rebases onto C r2, then code to pbr)
 - [~] R19 Batch E, the additive read surface: construct's three asks (`specs/READ-SURFACE-V1.md`; branch `spec/read-surface-v1`; spec pbr GREEN; 116 oracle tests on `tests/read-surface-v1`; built after D)

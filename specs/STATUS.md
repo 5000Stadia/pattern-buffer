@@ -6,7 +6,7 @@ the authoritative current state.** A spec marked *Shipped* has its feature live 
 `src/patternbuffer/` with tests; browse the spec for the design and the whitepaper
 §25 for the consolidated architecture.
 
-_Last reconciled: 2026-10-09 (the October self-audit's first two fixes pbr-GREEN and merged; batches B–E in review — `docs/AUDIT-2026-10.md`, `docs/HANDOFF-2026-10-09.md`)._
+_Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A and B pbr-GREEN and merged; C–E in review — `docs/AUDIT-2026-10.md`, `docs/HANDOFF-2026-10-09.md`)._
 
 ## Shipped — feature live in the engine
 | Spec | What it shipped |
@@ -41,6 +41,7 @@ _Last reconciled: 2026-10-09 (the October self-audit's first two fixes pbr-GREEN
 | SOURCE-IDENTITY-V1 | A source class carries its source's *identity* — distinct documents corroborate when agreeing and raise §7.2 cross-source flags when disagreeing instead of silently last-write-wins. Ids canonicalize through the identity closure; the class is a canonical composite, never a spelling-selected member; conflict parties are computed against the served value |
 | FOLD-CORRECTNESS-V1 | Audit batch A: one recency key (0.0 is a time), identity-aware tie tests, stale ties never outvote a later move, evidence rank across every durability class (STATE ∪ DISPOSITIONAL in one fold; same-stamp STATE outranks a habit; tied habits coexist), the establishing view stays at rest, numeric time values at the gate, the private containment key kept inside. Whitepaper A18 |
 | GATE-INVERSE-ALIAS-V1 | `holds`/`wearing` swap direction at the gate (entity values), stay literal for text, and never resurrect as plain renames; a porcelain-only recipe finds pre-fix inverted rows for host repair. Whitepaper A19 |
+| GATE-AUTHORITY-V1 | Audit batch B: the gate decides by authority, settled before an item's first write; every other refusal is a typed skip receipt from one vocabulary; mechanism rows (`retracts`, `resolved_by`, `canonicalized_from`, `learned_at_wallclock`, `source_valid_from`, `correction_proposal`) count only with their owner's mark and are refused as items; a raw `same_as` is the guarded merge, canon-only (`same_as_not_canon`); one normalizer; declarations validated; id-shaped typos on entity-valued predicates skip; `p.ingest()` receipts its skips; one number rule for times and `confidence`. Whitepaper A20 |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs — decisions in effect
