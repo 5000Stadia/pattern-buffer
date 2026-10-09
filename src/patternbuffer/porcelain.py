@@ -45,9 +45,11 @@ class Receipt:
     frames: list[str] = field(default_factory=list)
     canonicalization_receipts: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    # INGEST-HARDENING-V1 Part B: edges skipped at the gate (cycle / self-edge /
-    # lateral self-loop) — the host audits exactly what was dropped (no silent cap).
-    # A record may carry `detail` (FOLD-CORRECTNESS-V1 §6: the bad time value).
+    # INGEST-HARDENING-V1 Part B: what the gate refused and receipted — the host
+    # audits exactly what was dropped (no silent cap). `reason` is a code from
+    # ingest.SKIP_REASONS or a legacy per-edge prose reason (GATE-AUTHORITY-V1
+    # §0); a record may carry `detail` (FOLD-CORRECTNESS-V1 §6: the bad time
+    # value; GATE-AUTHORITY-V1: the bad field, the merge veto, the source).
     skipped: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:

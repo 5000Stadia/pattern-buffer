@@ -3,7 +3,10 @@
 Pipeline per item: canonicalize the attribute (receipts in the log, map
 in a rebuildable sidecar) -> identity-resolve -> stamp valid_time from
 the scene cursor -> role-checked append -> classify. The scene cursor is
-the pose; anchoring never claims more precision than was observed.
+the pose; anchoring never claims more precision than was observed. The
+full check order is GATE-AUTHORITY-V1 §0's (see `_ingest_item`): authority
+is settled before an item's first write, and every refusal that is not an
+authority violation is a typed skip receipt (`SKIP_REASONS`).
 
 A2 rider (whitepaper amendment log): in observe_or_unknown worlds the
 gate stamps a wall-clock learned-at meta-assertion on every non-timeless
@@ -1107,6 +1110,8 @@ class Ingestor:
             return out
         status = item["status"]
         frame = item["frame"]
+        # 4. Canonicalize the attribute (existing). GATE-INVERSE-ALIAS-V1 §2's
+        # swap follows immediately, once value_type is decided.
         attribute, receipt = self._canonicalize(item["attribute"])
         # RAW ids first (Cx final): validation must see what the author wrote,
         # not what resolution mapped it to — resolve happens AFTER the
@@ -1152,7 +1157,7 @@ class Ingestor:
         elif valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
 
-        # GATE-AUTHORITY-V1 §1: a mechanism attribute (retracts / resolved_by /
+        # 5. GATE-AUTHORITY-V1 §1: a mechanism attribute (retracts / resolved_by /
         # canonicalized_from) changes what OTHER rows mean and has exactly one
         # owning component. The gate never accepts one as an item, on any path
         # (ingest, ingest_structured, a commit_set assert op) — the real doors
@@ -1161,7 +1166,7 @@ class Ingestor:
             self._record_skip(entity, attribute, value, "mechanism_attribute")
             return out
 
-        # Malformed-id gate (SHAPE-FIX-V1 4a): AFTER the authority gate (an
+        # 6. Malformed-id gate (SHAPE-FIX-V1 4a): AFTER the authority gate (an
         # authority violation must still raise, never be swallowed by a skip —
         # the INGEST-HARDENING ordering), BEFORE the edge guard — and on the
         # RAW ids, before resolution touches them (Cx final).
@@ -1173,7 +1178,7 @@ class Ingestor:
                               detail=authored_detail)
             return out
 
-        # GATE-AUTHORITY-V1 §7: on an entity-valued predicate, a value with no
+        # 7. GATE-AUTHORITY-V1 §7: on an entity-valued predicate, a value with no
         # declared value_type that LOOKS like an id but fails the grammar
         # (`in: "Place:Cellar"`) is a typo, not text — stored as a literal it
         # would win the location fold and silently relocate its subject. The
@@ -1184,6 +1189,9 @@ class Ingestor:
                 and self._entity_valued(attribute)):
             self._record_skip(entity, attribute, value, "malformed_id")
             return out
+
+        # 8. Identity resolution, the decay half-life, time values, interval
+        # invariants and the per-edge structural skips (existing).
         raw_entity, raw_value = entity, value
         entity = self._registry.resolve(entity)
         if value_type == "entity" and isinstance(value, str):
