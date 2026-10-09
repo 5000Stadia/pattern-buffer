@@ -6,6 +6,15 @@ should give. Kabe approved the five batches and every "Decision for Kabe" as
 recommended; this spec relies on #3 (persist physics) and #4 (the durability pin).
 Not yet reviewed by pbr.
 
+**Its three open decisions take their defaults.** Kabe's standing approval of
+2026-10-08 covers the audit's batches "as recommended". He is listed to
+revisit these:
+1. `ask` tries the asker's own words first, deterministically, learning
+   nothing.
+2. A world created before this change records its policy the first time it is
+   opened with an explicit `policy=`.
+3. `fold_policy: move` is removed.
+
 - Every case below was reproduced with a probe on `main` (dba01d7) before it was
   specified (probes E1–E10, cited per oracle). Line numbers are at dba01d7.
 - Blast radius was measured read-only on 168 world files: construct's 52 live,
