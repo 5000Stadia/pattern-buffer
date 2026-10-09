@@ -1011,6 +1011,10 @@ class Porcelain:
         # frame) plus the asker's current container chain — so co-located
         # objects become candidates and the 018 escalation can fire. The
         # answer keys below are still folded in the asked `frame`.
+        # ask never learns (REFER-LEARNING-V1 §8): only a knows: ask has a
+        # scope and so can reach the escalation, and the word it would learn
+        # is the asker's — written in canon it would leak it. It still reads
+        # the words direct refer calls learned.
         ask_scope: str | list[str] | None = None
         if frame.startswith("knows:"):
             asker = frame[len("knows:"):]
@@ -1018,7 +1022,8 @@ class Porcelain:
         resolved: list[str | None] = []
         asks: list[dict] = []
         for target in plan.get("refer_targets", []):
-            r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=as_of)
+            r = self._w.refer(target, scope=ask_scope, frame=CANON, as_of=as_of,
+                              learn=False)
             if r.status == "resolved":
                 resolved.append(r.entity_id)
             else:

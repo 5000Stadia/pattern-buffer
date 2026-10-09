@@ -78,8 +78,10 @@ answers "what exactly did you do to the log."
   that one parse call, PLUS refer's own cascade for each refer_target —
   which may add tier-2 calls and accrued-alias writes per 018's
   documented behavior (those writes are refer's, receipted as such, and
-  are the ONLY writes ask can cause). Fold and event execution after
-  resolution is fully deterministic. `Answer = {answered: bool, facts: [...], prose: str|None,
+  are the ONLY writes ask can cause). *(Note 2026-10-08,
+  REFER-LEARNING-V1 §8: ask now writes nothing. Its refer calls pass
+  `learn=False`; the model budget above stands.)* Fold and event
+  execution after resolution is fully deterministic. `Answer = {answered: bool, facts: [...], prose: str|None,
   unknown_reason, asks: [...]}` — provenance on every fact; an
   underdetermined reference returns candidates as `asks`, never a guess;
   every fact traces to a fold, never to the parser.

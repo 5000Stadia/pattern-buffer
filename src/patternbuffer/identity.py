@@ -40,6 +40,19 @@ _HONORIFICS = frozenset({
 })
 
 
+# REFER-LEARNING-V1 §2/§7: the `source` receipt prefix of every word refer
+# learns. On a `learned_alias` row it is the receipt; on an `alias` row it marks
+# a legacy learned alias, written by the retired pre-spec accrual path.
+REFER_SOURCE_PREFIX = "refer:tier2:"
+
+
+def ref_norm(text: str) -> str:
+    """The one normalization refer's vocabulary matches under
+    (REFER-LEARNING-V1 §5): outer whitespace and case. Interior whitespace
+    is kept, as for names — "old  faithful" is not "old faithful"."""
+    return text.strip().lower()
+
+
 def _content_tokens(text: str) -> list[str]:
     """Normalized informative tokens of a name/alias string."""
     t = text.strip().lower()
@@ -1378,26 +1391,71 @@ class IdentityRegistry:
 
     def by_alias(self, alias: str, asserted_as_of: int | None = None,
                  frame: str = CANON) -> set[str]:
-        """Entities a `name` or `alias` row in `frame` names exactly,
-        identity-resolved: refer's tier 1a.
+        """Entities an authored name or alias names exactly, identity-resolved,
+        as of a log position: refer's tier 1a (whitepaper §9). Names assert
+        identity too. Aliases match like names (REFER-LEARNING-V1 §5): both
+        sides under `ref_norm`, so an alias stored as "The Memory Core"
+        answers "the memory core". A legacy learned alias is not authored
+        vocabulary and is skipped here; tier 1d reads it (§7). Description is
+        perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows are read in
+        `frame` only, with no canon fallback for a non-canon frame — a name
+        private to Alice resolves in Alice's frame, never in canon's."""
+        rows = self._vocabulary_matches(alias, ("name", "alias"), asserted_as_of,
+                                        frame=frame)
+        legacy = self._legacy_learned(rows, asserted_as_of)
+        return {self.resolve(row.entity, asserted_as_of)
+                for row in rows if row.id not in legacy}
 
-        Description is perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows
-        are read in `frame` only, with no canon fallback for a non-canon frame
-        — frames never inherit canon in a read. A name private to Alice
-        resolves in Alice's frame, never in canon's, and a name only canon
-        knows does not resolve in Alice's frame."""
-        needle = alias.strip().lower()
-        hits = set()
-        for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of,
-                                        frame=frame):
-            if row.value == needle:
-                hits.add(self.resolve(row.entity, asserted_as_of))
-        # Names assert identity too: check 'name' rows.
-        for row in self._buffer.visible(attribute="name", asserted_as_of=asserted_as_of,
-                                        frame=frame):
-            if isinstance(row.value, str) and row.value.strip().lower() == needle:
-                hits.add(self.resolve(row.entity, asserted_as_of))
-        return hits
+    def by_learned_alias(self, alias: str, asserted_as_of: int | None = None,
+                         frame: str = CANON) -> set[str]:
+        """Entities refer has learned `alias` as a word for (REFER-LEARNING-V1
+        §3), identity-resolved, as of a log position: `learned_alias` rows and
+        legacy learned aliases (§7). Read only by refer's tier 1d, after the
+        world's own vocabulary found nothing. A `learned_alias` is never
+        identity: no anchor, merge or collision read sees it."""
+        rows = self._vocabulary_matches(alias, ("alias", "learned_alias"), asserted_as_of,
+                                        frame=frame)
+        legacy = self._legacy_learned(rows, asserted_as_of)
+        return {self.resolve(row.entity, asserted_as_of)
+                for row in rows if row.attribute == "learned_alias" or row.id in legacy}
+
+    def _legacy_learned(self, rows: list[Assertion], asserted_as_of: int | None) -> set[str]:
+        """Ids of the `alias` rows among `rows` that refer's retired accrual
+        path wrote: those carrying a `source` row that starts
+        `refer:tier2:` (REFER-LEARNING-V1 §7). One query, over the matching
+        alias rows only. Never rewritten or hidden: every other read still
+        sees them as the `alias` rows they are, identity anchors included.
+        Reads every frame: the gate writes a row's `source` receipt in canon
+        whatever frame the row itself is in."""
+        ids = [row.id for row in rows if row.attribute == "alias"]
+        if not ids:
+            return set()
+        return {
+            src.entity
+            for src in self._buffer.visible(
+                entity_in=ids, attribute="source", asserted_as_of=asserted_as_of)
+            if isinstance(src.value, str) and src.value.startswith(REFER_SOURCE_PREFIX)
+        }
+
+    def _vocabulary_matches(
+        self, text: str, attributes: tuple[str, ...], asserted_as_of: int | None,
+        frame: str = CANON,
+    ) -> list[Assertion]:
+        """The visible `attributes` rows whose string value equals `text`
+        under `ref_norm` (REFER-LEARNING-V1 §5): the one read set behind
+        refer's vocabulary, as of the caller's log position (§4).
+
+        The frame half of this read is FRAME-SCOPED-IDENTITY-V1 §2's: rows
+        are read in `frame` only, with no canon fallback for a non-canon frame,
+        once, for names, aliases and learned words alike
+        (§4: one frame rule for all of refer's vocabulary)."""
+        needle = ref_norm(text)
+        return [
+            row for row in self._buffer.visible(
+                attribute_in=list(attributes), asserted_as_of=asserted_as_of,
+                frame=frame)
+            if isinstance(row.value, str) and ref_norm(row.value) == needle
+        ]
 
     # ----------------------------------- AKA-CORRELATION-V1 (the third lane)
     # `aka` is the NON-collapsing identity relation — between `same_as`

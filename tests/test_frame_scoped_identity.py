@@ -130,7 +130,7 @@ def test_1f_atomic_set_aborts_on_the_skip(world):
 
 
 def test_1g_refer_accrues_in_the_calls_frame(world):
-    """1g: a tier-2 hit from `refer(frame=Alice)` writes its alias row in
+    """1g: a tier-2 hit from `refer(frame=Alice)` writes its learned_alias row in
     Alice's frame (today: canon). Alice's hall holds Bob and Carl; "the
     traitor" is a vocabulary miss tier 2 maps onto Bob."""
     world.ingest_structured([
@@ -141,7 +141,7 @@ def test_1g_refer_accrues_in_the_calls_frame(world):
                          "signals": ["synonym"]})
     r = world.refer("the traitor", scope="place:hall", frame=ALICE)
     assert r.status == RESOLVED and r.entity_id == "person:bob"
-    rows = world.buffer.visible(attribute="alias", value="the traitor")
+    rows = world.buffer.visible(attribute="learned_alias", value="the traitor")
     assert [(row.entity, row.frame) for row in rows] == [("person:bob", ALICE)]
 
 

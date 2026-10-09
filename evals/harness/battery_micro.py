@@ -104,29 +104,24 @@ def run_battery_micro(w: World) -> list[Verdict]:
                 None if ok else "extraction",
                 f"pre-week rows={len(arrived)} inside@-5.5={inside} outside@-8={not outside}"))
 
-    # R7 — synonym: accrued alias 'the cupboard' on the cabinet, sourced
-    # to a tier-2 receipt; second-use resolution via tier 1a.
-    accrued = [r for r in w.buffer.visible()
-               if r.attribute == "alias" and r.value == "the cupboard"
-               and w.registry.resolve(r.entity) == cabinet]
-    receipted = accrued and any(
-        "refer:tier2" in str(m.value)
-        for m in w.buffer.visible(entity=accrued[0].id, attribute="source"))
-    kitchen = next((c for c in ("place:kitchen",) 
+    # R7 — synonym: the learned word 'the cupboard' on the cabinet, sourced
+    # to a tier-2 receipt; second-use resolution at tier 1 via the learned
+    # word (REFER-LEARNING-V1: a learned_alias row, read at tier 1d).
+    kitchen = next((c for c in ("place:kitchen",)
                     if any(r.entity == c for r in w.buffer.all_rows())), None)
     r7_first = w.refer("the cupboard", scope=kitchen)  # 018: scope-bounded
-    accrued = [r for r in w.buffer.visible()
-               if r.attribute == "alias" and r.value == "the cupboard"
+    learned = [r for r in w.buffer.visible()
+               if r.attribute == "learned_alias" and r.value == "the cupboard"
                and w.registry.resolve(r.entity) == cabinet]
-    receipted = accrued and any(
+    receipted = learned and any(
         "refer:tier2" in str(m.value)
-        for m in w.buffer.visible(entity=accrued[0].id, attribute="source"))
-    r7 = w.refer("the cupboard")  # second use: tier 1a, no scope needed
-    ok = (r7_first.status == "resolved" and bool(accrued) and bool(receipted)
-          and r7.status == "resolved" and r7.receipt.get("signals") == ["alias_exact"])
+        for m in w.buffer.visible(entity=learned[0].id, attribute="source"))
+    r7 = w.refer("the cupboard")  # second use: tier 1d; unscoped = whole world
+    ok = (r7_first.status == "resolved" and bool(learned) and bool(receipted)
+          and r7.status == "resolved" and r7.receipt.get("signals") == ["learned_alias"])
     add(Verdict(7, "vocabulary drift learns (018)", "PASS" if ok else "FAIL",
                 None if ok else "extraction",
-                f"accrued={bool(accrued)} receipted={receipted} second_use={r7.status}"))
+                f"learned={bool(learned)} receipted={receipted} second_use={r7.status}"))
 
     # R8 — negation: drill confirmed in garage at day ~4; still no van rows.
     fold_d4 = w.state(drill, "in", valid_as_of=4.5)

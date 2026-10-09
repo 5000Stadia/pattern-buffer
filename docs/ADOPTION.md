@@ -93,11 +93,55 @@ world.confidence(entity, attribute, frame="canon", as_of=None,
 #   knowledge = the read-union of those frames (knows:O ∪ public), mirroring
 #   multi-frame frame_diff. Derived; functional-only.
 world.refer(description, scope=None, frame="canon",
-            constraints=None, as_of=None) -> Resolution
-#   tier 1a reads names/aliases in `frame` only, never canon's for a non-canon
-#   frame (an alias only canon carries does not resolve in knows:X); a tier-2
-#   hit's learned alias lands in `frame` (FRAME-SCOPED-IDENTITY-V1 §1(e), §2).
+            constraints=None, as_of=None, asserted_as_of=None,
+            learn=True) -> Resolution
+#   Tier 1 (no model call): a name/alias ("alias_exact"); a constraint
+#   (contains / owned_by -> the owner / held_by); the one entity of a kind in
+#   scope ("unique_kind_in_scope"); a word refer learned ("learned_alias").
+#   Tier 2 judges two or more candidates, or a vocabulary miss in `scope`.
+#   asserted_as_of: tier 1 reads as of that log position, and nothing is
+#   written. learn=False: nothing is written. See "refer learns words, never
+#   picks" below.
+#   Tier 1 reads names, aliases and learned words in `frame` only, never
+#   canon's for a non-canon frame (an alias only canon carries does not
+#   resolve in knows:X); a learned word lands in `frame`
+#   (FRAME-SCOPED-IDENTITY-V1 §1(e), §2).
 world.registry.by_alias(text, asserted_as_of=None, frame="canon") -> set[str]
+```
+
+### refer learns words, never picks
+
+`refer` writes exactly one thing, and only on a **vocabulary miss**
+(REFER-LEARNING-V1): tier 1 found no candidate in your `scope`, and tier 2
+mapped the expression onto one entity there. It then appends one
+`learned_alias` row — the expression, normalized, as a word for that entity:
+timeless, `inferred`, in the call's `frame`, with a `source` receipt
+`refer:tier2:…`. The next time, that word resolves at tier 1
+(`["learned_alias"]`, zero model calls), but only after every authored name,
+alias and unique kind in scope has found nothing, and only where its entity is
+in the caller's scope (with no scope, the whole world is the scene). So
+"the old cupboard" learned in the kitchen is re-judged in the garage.
+
+- **A pick is never written.** "The drawer" in a room with two drawers is
+  judged by tier 2 on every read and appends nothing. Reads don't grow the
+  log. If you want per-conversation memory of picks, cache `Resolution`s
+  under your own conversation key; the engine has no conversation.
+- **Never written:** with `learn=False`, from a pinned read
+  (`asserted_as_of`), or by `ask` (which writes nothing at all).
+- **Not identity.** A learned word never merges entities, never shows up in
+  `name_collisions`, and never stands as a fact in a snapshot (it is EVENT
+  bookkeeping, like `same_as`). To make a word a real name, author an
+  `alias`. To drop a wrong one, retract it.
+- **Legacy rows.** Before this rule, refer wrote a canon `alias` for every
+  confident tier-2 answer. Those rows are never rewritten. `refer` reads them
+  as learned words (tier 1d, scoped), and every other read still sees them
+  as the `alias` rows they are. To list them, and the words learned since:
+
+```python
+legacy = [f for f in p.facts("canon", attribute="alias")
+          if any(str(s).startswith("refer:tier2:")
+                 for s in f["provenance"]["source_chain"])]
+learned = p.facts(frame, attribute="learned_alias")   # words learned after this spec
 ```
 
 ### Typed outcomes, not exceptions
@@ -589,6 +633,8 @@ p.who_knows(entity, attribute, value=None, as_of=None) -> [frame_id]
    # as_of=h). (snapshot(person, frame=F) covers that ONE entity and its contents, not
    # what the person knows about others; facts(F) is raw rows, superseded ones included.)
 p.ask(question, frame=, as_of=) -> Answer      # 1 parse call + refer's cascade; facts from folds only
+   # REFER-LEARNING-V1 §8: ask writes NOTHING. Its refer calls pass learn=False: it
+   # reads words direct refer calls learned, and never learns its asker's.
 ```
 
 Every write returns a per-assertion Receipt; every fact carries

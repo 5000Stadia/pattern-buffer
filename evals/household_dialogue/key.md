@@ -33,8 +33,9 @@ obj:workbench, obj:wall_bikes? (NO — see R1 conditional: no bike/wall rows).
   interval within last week's Tuesday passes). As-of day -5.5 finds
   arrived; as-of day -8 does not.
 - R7 (synonym): 4.12/4.13 "the cupboard" -> resolves to
-  obj:kitchen_cabinet via tier-2 on first use (receipt), tier-1a on
-  second (accrued alias row, inferred, sourced refer:tier2). Key
+  obj:kitchen_cabinet via tier-2 on first use (receipt), tier 1 on
+  second (signal `learned_alias`; the learned_alias row, inferred,
+  sourced refer:tier2 — REFER-LEARNING-V1). Key
   location: obj:rental_key at day 4.2+: held_by person:dale (keyring).
 - R8 (negation): 4.11 closes the 0.17 intention (which emitted nothing,
   so: purely-positive confirmation) -> drill in garage/steel shelf
