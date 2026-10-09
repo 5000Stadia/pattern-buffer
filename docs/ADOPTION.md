@@ -168,10 +168,84 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   `valid_to`). A second value asserted over the same window is a same-time
   contradiction (the key reads `conflicted`): to correct a value, `retract` the
   old row first.
-- **NEVER** (until the gate fix lands) send the inverse predicates `holds` or
-  `wearing` — the built-in aliases rename them to `held_by` / `worn_by`
-  **without swapping subject and object**, so `person:ralph holds thing:key`
-  puts Ralph inside the key. Write `thing:key held_by person:ralph`.
+- **Inverse predicates (`holds`, `wearing`) — GATE-INVERSE-ALIAS-V1.** The gate
+  now swaps direction: `person:ralph holds thing:key` is stored as `thing:key
+  held_by person:ralph` (receipt `(inverse) holds->held_by`); `wearing` likewise
+  to `worn_by`. A text value (`ralph holds "a lantern"`) is NOT aliased — it
+  stays an ordinary `holds` domain fact. Prefer writing `<thing> held_by
+  <person>` directly. `add_attribute_alias("holds", ...)` raises `ValueError`.
+  A skip record for a swapped item carries `detail: "authored: person:ralph
+  holds thing:key"` (the field is present only when set).
+
+  **Rows written BEFORE the fix** were renamed without the swap (Ralph stored
+  inside the key) and keep their forward receipt `holds->held_by` /
+  `wearing->worn_by`; the engine never rewrites them. **Until you repair them,
+  the CORRECT write on the same pair is refused** (`thing:key held_by
+  person:ralph` is a containment cycle against the inverted row): it is skipped
+  with a `Receipt.skipped` cycle reason, and inside `atomic=True` / `commit_set`
+  it aborts the whole set. Two shapes the receipt alone does not find: a host
+  that re-ingests promoted values into `canon` leaves **receipt-less copies**
+  (the same `held_by`/`worn_by` triple with no receipt, possibly in another
+  frame), and a **text-valued** inverted row (`ralph held_by "a lantern"`) is
+  not an edge at all. The recipe reports both. Run it with the porcelain you
+  already have; repair is your call per group (some rows may have been nonsense
+  either way):
+
+  <!-- recipe:inverted-rows (executed verbatim by tests/test_ingest_hardening.py) -->
+  ```python
+  import re
+  ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")   # the gate's id grammar
+  FORWARD_OF = {"holds": "held_by", "wearing": "worn_by"}
+  INVERSE_OF = {v: k for k, v in FORWARD_OF.items()}
+  receipt_of = {f["entity"]: f["provenance"]["assertion_id"]
+                for f in p.facts("canon", attribute="canonicalized_from", include_meta=True)
+                if f["value"] in ("holds->held_by", "wearing->worn_by")}
+  scanned = [(frame, f) for frame in host_frames
+             for f in p.facts(frame, attribute="held_by") + p.facts(frame, attribute="worn_by")]
+  triple = lambda f: (f["entity"], f["attribute"], f["value"])
+  receipted = {triple(f) for _, f in scanned if f["provenance"]["assertion_id"] in receipt_of}
+  inverted = []            # one dict per already-inverted row
+  for frame, f in scanned:
+      aid = f["provenance"]["assertion_id"]
+      if aid in receipt_of or triple(f) in receipted:      # receipt-less copies included
+          inverted.append({"assertion_id": aid, "frame": frame,
+                           "entity": f["entity"], "attribute": f["attribute"],
+                           "value": f["value"], "valid": f["valid"],
+                           "value_type": ("entity" if isinstance(f["value"], str)
+                                          and ID_RE.fullmatch(f["value"]) else "literal"),
+                           "receipt_id": receipt_of.get(aid)})   # None = receipt-less copy
+
+  def repair_ops(group):
+      """One group = every copy of one (frame, entity, attribute, value). Retract
+      them ALL, assert ONCE (a second copy would be refused as a cycle). Returns
+      the `commit_set` ops; commit one group per call so one failure aborts only
+      that group."""
+      first = min(group, key=lambda d: (d["valid"][0] is None, d["valid"][0] or 0.0))
+      ops = [{"op": "retract", "assertion_id": d["assertion_id"],
+              "reason": "GATE-INVERSE-ALIAS-V1 repair: inverted row"} for d in group]
+      item = {"frame": first["frame"], "valid_to": first["valid"][1]}
+      if first["valid"][0] is None:
+          item["timeless"] = True              # keep the original interval
+      else:
+          item["valid_from"] = first["valid"][0]
+      if first["value_type"] == "entity":      # swap: the person is the value
+          item.update(entity=first["value"], attribute=first["attribute"],
+                      value=first["entity"], value_type="entity")
+      else:                                    # text: a literal holds/wearing, never a swap
+          item.update(entity=first["entity"], attribute=INVERSE_OF[first["attribute"]],
+                      value=first["value"], value_type="literal")
+      return ops + [{"op": "assert", "item": item}]
+
+  groups = {}
+  for d in inverted:
+      groups.setdefault((d["frame"], d["entity"], d["attribute"], d["value"]), []).append(d)
+  # for g in groups.values(): p.commit_set(repair_ops(g))   # host-judged
+  ```
+
+  Receipt rows live in `canon` whatever frame the row they describe is in;
+  post-fix swapped rows carry the `(inverse)` receipt and are not matched.
+  `valid` is the original `[valid_from, valid_to]`; the re-assert keeps the
+  earliest-starting copy's interval (first copy on a tie).
 - **NEVER** let your renderer/narrator append. The component that speaks must
   not decide what is true. Resolution-as-a-tool is fine — the tool's
   implementation is the resolver, which holds the append authority.
