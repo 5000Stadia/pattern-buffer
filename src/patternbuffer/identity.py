@@ -110,10 +110,15 @@ class IdentityRegistry:
 
     # --------------------------------------------------------------- write
 
-    def add_alias(self, entity: str, alias: str, status: str = "stated") -> None:
+    def add_alias(self, entity: str, alias: str, status: str = "stated",
+                  frame: str = CANON) -> None:
+        """Append one `alias` row, normalized, in `frame`. Description is
+        perspectival (FRAME-SCOPED-IDENTITY-V1 §1(c)): the gate passes the
+        item's effective frame, so a name private to Alice stays in Alice's
+        frame and only identity reads of that frame see it."""
         self._buffer.append(
             entity=entity, attribute="alias", value=alias.strip().lower(),
-            status=status, role=self._ingestor,
+            status=status, role=self._ingestor, frame=frame,
         )
 
     def _containment_family(self) -> set[str]:
@@ -132,7 +137,8 @@ class IdentityRegistry:
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
         out: list[str] = []
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+        # FRAME-SCOPED-IDENTITY-V1 §2: a canon merge veto reads canon only.
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=CANON):
             if row.attribute not in family or row.value_type != "entity":
                 continue
             if not isinstance(row.value, str):
@@ -142,15 +148,21 @@ class IdentityRegistry:
                 out.append(f"{e}·{row.attribute}·{v}")
         return out
 
-    def distinct_block(self, a: str, b: str, asserted_as_of: int | None = None) -> list[str]:
+    def distinct_block(self, a: str, b: str, asserted_as_of: int | None = None,
+                       frame: str = CANON) -> list[str]:
         """`distinct_from` edge descriptor(s) relating a's closure to b's — the
         explicit anti-merge primitive (V2 §1, the mirror of `same_as`). A
         non-empty list is a HARD veto: the author declared these definitively
-        not the same. Membrane-clean."""
+        not the same. Membrane-clean.
+
+        Read in canon (FRAME-SCOPED-IDENTITY-V1 §2: a canon merge veto reads
+        canon only). `frame` exists for `correlation_conflicts` alone (§3(b)):
+        a contradiction is two edges in ONE frame."""
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
         out: list[str] = []
-        for row in self._buffer.visible(attribute="distinct_from", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="distinct_from",
+                                        asserted_as_of=asserted_as_of, frame=frame):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             e, v = row.entity, row.value
@@ -169,7 +181,9 @@ class IdentityRegistry:
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
         out: list[str] = []
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+        # FRAME-SCOPED-IDENTITY-V1 §2: Alice's belief that two people are kin
+        # never blocks canon's merge of them — the signal reads canon only.
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=CANON):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             if row.attribute in family or row.attribute in _IDENTITY_ATTRS:
@@ -200,7 +214,9 @@ class IdentityRegistry:
 
         def authored_attrs(clos: set[str]) -> set[str]:
             out = set()
-            for row in self._buffer.visible():
+            # FRAME-SCOPED-IDENTITY-V1 §2: the folds below are canon already;
+            # the scan that picks their keys is scoped to match.
+            for row in self._buffer.visible(frame=CANON):
                 if row.entity not in clos:
                     continue
                 if row.attribute in ("name", "alias", "kind") \
@@ -376,9 +392,13 @@ class IdentityRegistry:
         return self._component_of
 
     def _same_as_edges(self, asserted_as_of: int | None) -> dict[str, set[str]]:
-        """Visible same_as rows as an undirected adjacency map."""
+        """Visible canon same_as rows as an undirected adjacency map. Identity
+        is canon's (FRAME-SCOPED-IDENTITY-V1 §2): a `same_as` outside canon is
+        inert, so a belief frame can never hold a merge of its own, and every
+        frame resolves ids through this one closure."""
         edges: dict[str, set[str]] = {}
-        for row in self._buffer.visible(attribute="same_as", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="same_as",
+                                        asserted_as_of=asserted_as_of, frame=CANON):
             if row.value_type == "entity":
                 edges.setdefault(row.entity, set()).add(row.value)
                 edges.setdefault(row.value, set()).add(row.entity)
@@ -397,10 +417,12 @@ class IdentityRegistry:
         return out
 
     def _first_seen_scan(self, members, asserted_as_of: int | None) -> dict[str, int]:
-        """The seq at which each of `members` first appears in a visible row,
-        as subject or as an entity value — the log order election reads."""
+        """The seq at which each of `members` first appears in a visible canon
+        row, as subject or as an entity value — the log order election reads.
+        The election is "first seen among canon rows" (FRAME-SCOPED-IDENTITY-V1
+        §2): a closure is canon's, and so is the name it is served under."""
         first_seen: dict[str, int] = {}
-        for row in self._buffer.visible(asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(asserted_as_of=asserted_as_of, frame=CANON):
             if row.entity in members and row.entity not in first_seen:
                 first_seen[row.entity] = row.seq
             if (
@@ -418,10 +440,11 @@ class IdentityRegistry:
         return min(closure, key=lambda e: (first_seen.get(e, 1 << 62), e))
 
     def candidates(self, entity: str) -> set[str]:
-        """Open maybe_same_as edges touching this entity's closure."""
+        """Open canon maybe_same_as edges touching this entity's closure
+        (FRAME-SCOPED-IDENTITY-V1 §2: proposals are canon's)."""
         closure = self.closure(entity)
         out = set()
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if row.entity in closure:
                 out.add(row.value)
             elif row.value in closure:
@@ -435,7 +458,9 @@ class IdentityRegistry:
         ``normalized_text`` is ``strip().lower()`` (the grouping key)."""
         closure = self.closure(entity)
         out: set[tuple[str, str]] = set()
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: a canon merge anchors on canon names
+        # only — a name known only to Alice never drives canon identity.
+        for row in self._buffer.visible(frame=CANON):
             if row.entity in closure and row.attribute in ("name", "alias") \
                     and isinstance(row.value, str):
                 out.add((row.attribute, row.value.strip().lower()))
@@ -479,6 +504,20 @@ class IdentityRegistry:
         if self.containment_related(a, b):     # hard: a thing is not its container
             return False
         if self.distinct_block(a, b):          # hard: explicitly marked distinct (§1)
+            return False
+        # FRAME-SCOPED-IDENTITY-V1 §3(c), amending AKA-CORRELATION-V1 §1: `aka`
+        # is a SOFT auto-merge block. A timeless same_as would swallow a
+        # valid-timed reveal and leak the masked figure's name to before it —
+        # the backward leak `aka` exists to prevent. Host-authoritative merges
+        # (merge, confirm, retype's absorb) stay available.
+        if self._aka_relates(a, b):            # soft: correlated facets are two things
+            return False
+        # FRAME-SCOPED-IDENTITY-V1 §3(c) (r2): correlate's group-level veto —
+        # a canon `distinct_from` between a's correlation group and b's. The
+        # merge would put it inside one group (a~b, b distinct_from x: merging
+        # a with x joins x to b's group). In `correlate`'s order: after the
+        # already-correlated test.
+        if self._group_distinct_block(a, b):   # the world says the groups differ
             return False
         if self.relating_edges_between(a, b):  # soft: related ⇒ probably distinct (§3a)
             return False
@@ -560,6 +599,11 @@ class IdentityRegistry:
             return "hard_blocked", "containment"
         if self.distinct_block(a, b):
             return "hard_blocked", "distinct_from"
+        if self._group_distinct_block(a, b):
+            # FRAME-SCOPED-IDENTITY-V1 §3(c) (r2): a canon distinct_from between
+            # their correlation groups — reconcile neither merges nor proposes
+            # the pair, so it is settled, not a gap for reconcile to close.
+            return "hard_blocked", "distinct_group"
         if self._kind_state(a, b) == "conflict" and (
                 self._slip_asymmetry(a, b) or self._slip_asymmetry(b, a)):
             return "typing_slip", None                   # host fixes with retype(absorb=)
@@ -570,9 +614,10 @@ class IdentityRegistry:
         return "unlinked", None                          # no edge yet — host runs reconcile
 
     def _has_proposal(self, a: str, b: str) -> bool:
-        """A visible maybe_same_as already relates a's closure to b's."""
+        """A visible canon maybe_same_as already relates a's closure to b's
+        (FRAME-SCOPED-IDENTITY-V1 §2)."""
         clos_a, clos_b = self.closure(a), self.closure(b)
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             if (row.entity in clos_a and row.value in clos_b) or \
@@ -587,12 +632,14 @@ class IdentityRegistry:
         never a containment pair). Otherwise it stays a proposal for explicit
         host confirmation (#31). Returns merges performed."""
         promoted = 0
-        for row in list(self._buffer.visible(attribute="maybe_same_as")):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals and their evidence are canon's.
+        for row in list(self._buffer.visible(attribute="maybe_same_as", frame=CANON)):
             a, b = row.entity, row.value
             if not isinstance(b, str):
                 continue
             if self._mergeable(a, b):
-                ev = self._buffer.visible(entity=row.id, attribute="evidence")
+                ev = self._buffer.visible(entity=row.id, attribute="evidence",
+                                          frame=CANON)
                 self.merge(a, b, evidence=(
                     f"promoted from {row.id}: gated coreference"
                     + (f"; proposal evidence: {ev[0].value}" if ev else "")))
@@ -611,7 +658,8 @@ class IdentityRegistry:
         pre-existing within-chunk proposals through the same gate. Idempotent.
         Returns merges performed."""
         text_to_closures: dict[str, set[str]] = {}
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: canon reconcile reads canon names only.
+        for row in self._buffer.visible(frame=CANON):
             if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
                 continue
             if row.entity.startswith("a:"):
@@ -634,10 +682,16 @@ class IdentityRegistry:
                         merged += 1
                     elif (not self.containment_related(a, b)
                           and not self.distinct_block(a, b)
+                          and not self._aka_relates(a, b)
+                          and not self._group_distinct_block(a, b)
                           and not self._has_proposal(a, b)):
                         # soft-declined (relating edge / non-distinctive anchor /
                         # kind) → adjudicable proposal; HARD-blocked (containment /
-                        # distinct_from) pairs are settled, never re-proposed.
+                        # distinct_from) pairs are settled, never re-proposed, and
+                        # so is a correlated pair (FRAME-SCOPED-IDENTITY-V1 §3(c)):
+                        # two facets of one identity are two things by design —
+                        # and so is a pair whose correlation groups a canon
+                        # `distinct_from` separates (§3(c), r2).
                         self.maybe_same_as(a, b, evidence="reconcile: shared anchor, gate declined (adjudicate)")
 
         merged += self.promote_identity_proposals()
@@ -682,7 +736,10 @@ class IdentityRegistry:
     def reject(self, a: str, b: str) -> dict:
         """Assert `distinct_from(a, b)` — the sticky "these are definitively
         different" call (V2 §2), complement of confirm/merge. `reconcile`/
-        `proposals` never re-surface the pair after this."""
+        `proposals` never re-surface the pair after this. Returns a Receipt:
+        `rejected | noop_already_distinct | conflict_already_merged |
+        conflict_already_correlated` (the last when b's closure is in a's
+        canon correlation group — FRAME-SCOPED-IDENTITY-V1 §3(d))."""
         ra = self.resolve(a)
         if ra == self.resolve(b):
             # contradiction: can't be distinct AND already merged — name the
@@ -690,6 +747,18 @@ class IdentityRegistry:
             return self._receipt(
                 "conflict_already_merged", ra, reason="already_merged",
                 blocking_edges=self._same_as_path_ids(a, b),
+            )
+        if self._aka_relates(a, b):
+            # FRAME-SCOPED-IDENTITY-V1 §3(d): b's closure is in a's canon
+            # correlation group — facets of one identity cannot be definitively
+            # different. Name every canon `aka` row inside the group (as
+            # conflict_already_merged names the same_as ids); write nothing.
+            # Ahead of noop_already_distinct: a pair both correlated and
+            # distinct is already a contradiction, and the receipt says so.
+            group = self.correlation_set(a, valid_as_of=None, frame=CANON)
+            return self._receipt(
+                "conflict_already_correlated", ra, reason="already_correlated",
+                blocking_edges=self._group_aka_ids(group),
             )
         if self.distinct_block(a, b):
             return self._receipt("noop_already_distinct", ra)
@@ -705,10 +774,13 @@ class IdentityRegistry:
         merge before asserting distinctness (V2 §2)."""
         clos = self.closure(a)
         out: list[str] = []
-        for row in self._buffer.visible(attribute="same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: the closure is canon's, and so are the
+        # rows that make it.
+        for row in self._buffer.visible(attribute="same_as", frame=CANON):
             if (row.entity in clos and isinstance(row.value, str) and row.value in clos):
                 out.append(row.id)
-                for m in self._buffer.visible(entity=row.id, attribute="caused_by", value_type="entity"):
+                for m in self._buffer.visible(entity=row.id, attribute="caused_by",
+                                              value_type="entity", frame=CANON):
                     if isinstance(m.value, str):
                         out.append(m.value)
         return out
@@ -724,13 +796,15 @@ class IdentityRegistry:
         if not self._has_proposal(a, b):
             return self._receipt("no_proposal", ra)
         ev = None
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals and their evidence are canon's.
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             clos_a, clos_b = self.closure(a), self.closure(b)
             if (row.entity in clos_a and row.value in clos_b) or \
                     (row.entity in clos_b and row.value in clos_a):
-                evr = self._buffer.visible(entity=row.id, attribute="evidence")
+                evr = self._buffer.visible(entity=row.id, attribute="evidence",
+                                           frame=CANON)
                 ev = evr[0].value if evr else None
                 break
         return self.guarded_merge(a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}")
@@ -768,7 +842,8 @@ class IdentityRegistry:
         zero model calls, idempotent."""
         merged: list[dict] = []
         seen: set[tuple[str, str]] = set()
-        for row in list(self._buffer.visible(attribute="maybe_same_as")):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals are canon's.
+        for row in list(self._buffer.visible(attribute="maybe_same_as", frame=CANON)):
             if not isinstance(row.value, str):
                 continue
             ra, rb = self.resolve(row.entity), self.resolve(row.value)
@@ -782,8 +857,11 @@ class IdentityRegistry:
                 continue
             if self.relating_edges_between(ra, rb):
                 continue
-            if set(self.closure(rb)) & self.correlation_set(ra):
-                continue  # correlated facets are two things by design (Cx #3)
+            if self._aka_relates(ra, rb):
+                continue  # correlated facets are two things by design (Cx #3);
+                          # the one predicate _mergeable reads too (FSI-V1 §3(c))
+            if self._group_distinct_block(ra, rb):
+                continue  # a distinct_from separates their groups (FSI-V1 §3(c), r2)
             if self._kind_state(ra, rb) == "conflict":
                 continue
             if self.durable_contradictions(ra, rb):
@@ -807,7 +885,8 @@ class IdentityRegistry:
         family = self._containment_family()
         clos_a, clos_b = self.closure(a), self.closure(b)
         out = []
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: the slip signature is a canon decision.
+        for row in self._buffer.visible(frame=CANON):
             if row.attribute not in family or row.value_type != "entity":
                 continue
             if not isinstance(row.value, str):
@@ -824,7 +903,8 @@ class IdentityRegistry:
         re-point correctly after the absorb)."""
         clos = self.closure(entity)
         out = []
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: the slip signature is a canon decision.
+        for row in self._buffer.visible(frame=CANON):
             if row.entity not in clos:
                 continue
             if row.attribute in ("name", "alias", "kind") \
@@ -838,8 +918,9 @@ class IdentityRegistry:
         """Visible containment rows valued INTO the entity's closure."""
         family = self._containment_family()
         clos = {self.resolve(c) for c in self.closure(entity)}
+        # FRAME-SCOPED-IDENTITY-V1 §2: the slip signature is a canon decision.
         return [
-            row for row in self._buffer.visible()
+            row for row in self._buffer.visible(frame=CANON)
             if row.attribute in family and row.value_type == "entity"
             and isinstance(row.value, str) and self.resolve(row.value) in clos
         ]
@@ -867,7 +948,9 @@ class IdentityRegistry:
         so without this read the slips are invisible. Zero writes, zero model
         calls; the host adjudicates each with `retype(...)` or leaves it."""
         text_to_reps: dict[str, set[str]] = {}
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: a slip is a canon question, anchored on
+        # canon names only — a name living in Marn's frame is not canon's.
+        for row in self._buffer.visible(frame=CANON):
             if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
                 continue
             if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
@@ -933,7 +1016,9 @@ class IdentityRegistry:
         the direct inter-closure containment artifacts (would-be self-edges;
         incoming child containment is preserved untouched), then merge through
         the guarded path. A non-slip invocation is `vetoed_not_a_slip` — retype
-        is never a veto bypass."""
+        is never a veto bypass — and a `to_kind` that is not among the
+        target's folded kinds is `vetoed_kind_mismatch` (FRAME-SCOPED-
+        IDENTITY-V1 §8); neither writes anything."""
         if self._retract is None:
             raise RuntimeError("no retraction authority wired for retype")
         re_ = self.resolve(entity)
@@ -941,7 +1026,9 @@ class IdentityRegistry:
 
         def _retract_kind_rows(target_entity: str) -> None:
             clos = self.closure(target_entity)
-            for row in self._buffer.visible(attribute="kind"):
+            # FRAME-SCOPED-IDENTITY-V1 §2: a canon retype retracts canon kind
+            # rows only — Marn's belief about what the thing is survives.
+            for row in self._buffer.visible(attribute="kind", frame=CANON):
                 if row.entity not in clos:
                     continue
                 v = row.value
@@ -990,6 +1077,15 @@ class IdentityRegistry:
         if (not shared or self._kind_state(re_, rt) != "conflict"
                 or not self._slip_asymmetry(re_, rt)):
             receipt = self._receipt("vetoed_not_a_slip", re_)
+            receipt["retracted"] = []
+            return receipt
+        if str(to_kind).strip().lower() not in self._kind_values(rt):
+            # FRAME-SCOPED-IDENTITY-V1 §8: absorbing into the target makes the
+            # entity the target's kind — a `to_kind` that contradicts it was
+            # silently ignored. Refused, after the slip check (a non-slip still
+            # receipts vetoed_not_a_slip), with nothing written.
+            receipt = self._receipt(
+                "vetoed_kind_mismatch", re_, reason="to_kind_not_target_kind")
             receipt["retracted"] = []
             return receipt
         _retract_kind_rows(re_)
@@ -1061,7 +1157,8 @@ class IdentityRegistry:
         Excludes identity/meta/kind/caused_by edges and a:/attr: subjects."""
         clos_a, clos_b = self.closure(a), self.closure(b)
         out: list[dict] = []
-        for row in self._buffer.visible():
+        # FRAME-SCOPED-IDENTITY-V1 §2: triage evidence for a canon merge is canon.
+        for row in self._buffer.visible(frame=CANON):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             if row.attribute in _IDENTITY_ATTRS or row.attribute in META_ATTRIBUTES:
@@ -1094,7 +1191,8 @@ class IdentityRegistry:
         (live bindings are not unique — plural, Codex r1)."""
         clos_a, clos_b = self.closure(a), self.closure(b)
         out: list[str] = []
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals are canon's.
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             if (row.entity in clos_a and row.value in clos_b) or \
@@ -1115,6 +1213,16 @@ class IdentityRegistry:
         contradictions = self.durable_contradictions(a, b)
         if containment:
             code = "containment"
+        elif self._aka_relates(a, b):
+            # FRAME-SCOPED-IDENTITY-V1 §3(c): right after containment, in
+            # _mergeable's order — a proposal between correlated facets is
+            # declined by the soft aka block (distinct pairs never list).
+            code = "correlated"
+        elif self._group_distinct_block(a, b):
+            # §3(c) (r2): a canon distinct_from between the two correlation
+            # groups, right after `correlated` (correlate's own order). A
+            # direct distinct pair never lists; this one does, declined.
+            code = "distinct_group"
         elif any(r["relation_family"] != "containment" for r in related):
             code = "relating_edge"
         elif contradictions:
@@ -1165,6 +1273,9 @@ class IdentityRegistry:
         if code == "durable_contradiction":
             cs = ctx.get("durable_contradictions") or []
             return f"durable_contradiction: {cs[0]}" if cs else code
+        if code == "distinct_group":
+            edges = self._group_distinct_block(a, b)
+            return f"distinct_group: {edges[0]}" if edges else code
         return code
 
     def enumerate_proposals(self) -> list[dict]:
@@ -1173,7 +1284,8 @@ class IdentityRegistry:
         pair; stale (already-merged) proposals are skipped."""
         out: list[dict] = []
         seen: set[tuple[str, str]] = set()
-        for row in self._buffer.visible(attribute="maybe_same_as"):
+        # FRAME-SCOPED-IDENTITY-V1 §2: proposals and their evidence are canon's.
+        for row in self._buffer.visible(attribute="maybe_same_as", frame=CANON):
             if not isinstance(row.value, str):
                 continue
             ra, rb = self.resolve(row.entity), self.resolve(row.value)
@@ -1185,7 +1297,7 @@ class IdentityRegistry:
             if key in seen:
                 continue
             seen.add(key)
-            evr = self._buffer.visible(entity=row.id, attribute="evidence")
+            evr = self._buffer.visible(entity=row.id, attribute="evidence", frame=CANON)
             ctx = self._decline_context(ra, rb)
             out.append({
                 "a": ra, "b": rb,
@@ -1195,14 +1307,94 @@ class IdentityRegistry:
             })
         return out
 
-    def by_alias(self, alias: str, asserted_as_of: int | None = None) -> set[str]:
+    def identity_conflicts(self, asserted_as_of: int | None = None) -> list[dict]:
+        """Canon `same_as` closures (two or more members) that hold a pair the
+        guarded merge would veto — a canon containment-family row
+        (entity-valued) or a canon `distinct_from` row with both endpoints in
+        the closure, at any valid time, the vetoes' own predicate
+        (FRAME-SCOPED-IDENTITY-V1 §4). A raw or legacy `same_as` could merge
+        such a pair before GATE-AUTHORITY-V1 routed raw rows through the
+        guarded merge, and a `distinct_from` written later inside a closure by
+        raw ingest lands the same way; nothing else says so.
+
+        One entry per closure, sorted by `canonical_id`:
+        `{canonical_id, members (sorted), containment_edges, distinct_edges,
+        same_as: [{assertion_id, edge, merge_event_id}]}` — edge lists in log
+        order, `same_as` listing every canon `same_as` row inside the closure,
+        `merge_event_id` from the row's `caused_by` (None for a raw row). The
+        host decides which `same_as` to retract; the engine chooses no cut.
+        Canon only (identity is canon's) and read-only."""
+        edges = self._same_as_edges(asserted_as_of)
+        component_of: dict[str, int] = {}
+        components: list[set[str]] = []
+        for start in edges:
+            if start in component_of:
+                continue
+            members = self._walk(edges, start)
+            for member in members:
+                component_of[member] = len(components)
+            components.append(members)
+        if not components:
+            return []
+        family = self._containment_family()
+        found: dict[int, dict[str, list]] = {}
+        for row in self._buffer.visible(frame=CANON, asserted_as_of=asserted_as_of):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            index = component_of.get(row.entity)
+            if index is None or component_of.get(row.value) != index:
+                continue
+            bucket = found.setdefault(
+                index, {"containment": [], "distinct": [], "same_as": []})
+            if row.attribute in family:
+                bucket["containment"].append(f"{row.entity}·{row.attribute}·{row.value}")
+            elif row.attribute == "distinct_from":
+                bucket["distinct"].append(f"{row.entity}·distinct_from·{row.value}")
+            elif row.attribute == "same_as":
+                bucket["same_as"].append(row)
+        out: list[dict] = []
+        for index, bucket in found.items():
+            if not bucket["containment"] and not bucket["distinct"]:
+                continue
+            members = components[index]
+            same_as = []
+            for row in bucket["same_as"]:
+                causes = self._buffer.visible(
+                    entity=row.id, attribute="caused_by", value_type="entity",
+                    frame=CANON, asserted_as_of=asserted_as_of)
+                same_as.append({
+                    "assertion_id": row.id,
+                    "edge": f"{row.entity}·same_as·{row.value}",
+                    "merge_event_id": causes[0].value if causes else None,
+                })
+            out.append({
+                "canonical_id": self.resolve(next(iter(members)), asserted_as_of),
+                "members": sorted(members),
+                "containment_edges": bucket["containment"],
+                "distinct_edges": bucket["distinct"],
+                "same_as": same_as,
+            })
+        return sorted(out, key=lambda entry: entry["canonical_id"])
+
+    def by_alias(self, alias: str, asserted_as_of: int | None = None,
+                 frame: str = CANON) -> set[str]:
+        """Entities a `name` or `alias` row in `frame` names exactly,
+        identity-resolved: refer's tier 1a.
+
+        Description is perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows
+        are read in `frame` only, with no canon fallback for a non-canon frame
+        — frames never inherit canon in a read. A name private to Alice
+        resolves in Alice's frame, never in canon's, and a name only canon
+        knows does not resolve in Alice's frame."""
         needle = alias.strip().lower()
         hits = set()
-        for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="alias", asserted_as_of=asserted_as_of,
+                                        frame=frame):
             if row.value == needle:
                 hits.add(self.resolve(row.entity, asserted_as_of))
         # Names assert identity too: check 'name' rows.
-        for row in self._buffer.visible(attribute="name", asserted_as_of=asserted_as_of):
+        for row in self._buffer.visible(attribute="name", asserted_as_of=asserted_as_of,
+                                        frame=frame):
             if isinstance(row.value, str) and row.value.strip().lower() == needle:
                 hits.add(self.resolve(row.entity, asserted_as_of))
         return hits
@@ -1283,6 +1475,50 @@ class IdentityRegistry:
         comp = self.correlation_set(a, valid_as_of=None, asserted_as_of=asserted_as_of)
         return bool(self.closure(b, asserted_as_of) & comp)
 
+    # A correlation group (FRAME-SCOPED-IDENTITY-V1 §3) is the connected
+    # component `correlation_set` computes: `aka` edges, each expanded through
+    # the canon closure. The verbs that write or decide canon identity
+    # (correlate, the auto-merger, reject) take it over canon `aka` edges at
+    # every valid time — a merge or a `distinct_from` is timeless, so it
+    # contradicts a reveal whenever the reveal lands. `correlation_conflicts`
+    # takes it over its frame's edges, as-of.
+
+    def _group_distinct_edges(self, group_a: set[str], group_b: set[str]) -> list[str]:
+        """Descriptors of the canon `distinct_from` rows with one endpoint in
+        `group_a` and the other in `group_b`, in log order
+        (FRAME-SCOPED-IDENTITY-V1 §3(a))."""
+        out: list[str] = []
+        for row in self._buffer.visible(attribute="distinct_from", frame=CANON):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            e, v = row.entity, row.value
+            if (e in group_a and v in group_b) or (e in group_b and v in group_a):
+                out.append(f"{e}·distinct_from·{v}")
+        return out
+
+    def _group_distinct_block(self, a: str, b: str) -> list[str]:
+        """Descriptors of the canon `distinct_from` rows between a's correlation
+        group and b's, at every valid time — `correlate`'s group-level veto
+        (FRAME-SCOPED-IDENTITY-V1 §3(a)). The auto-merger reads the same
+        predicate (§3(c), r2): merging a with b would put a `distinct_from`
+        inside one group, a contradiction `correlate` refuses to make. With no
+        `aka` edge on either side the groups are the two closures, so this is
+        `distinct_block` again."""
+        return self._group_distinct_edges(
+            self.correlation_set(a, valid_as_of=None, frame=CANON),
+            self.correlation_set(b, valid_as_of=None, frame=CANON),
+        )
+
+    def _group_aka_ids(self, group: set[str]) -> list[str]:
+        """Assertion ids of every canon `aka` row inside `group` (both
+        endpoints in it), at every valid time, in log order — what a host
+        retracts to undo a correlation (FRAME-SCOPED-IDENTITY-V1 §3(d))."""
+        return [
+            row.id for row in self._buffer.visible(attribute="aka", frame=CANON)
+            if row.value_type == "entity" and isinstance(row.value, str)
+            and row.entity in group and row.value in group
+        ]
+
     def correlate(
         self, a: str, b: str, evidence: str, valid_from: float | None = None
     ) -> dict:
@@ -1290,7 +1526,13 @@ class IdentityRegistry:
         non-collapsing `aka` edge unless the pair is marked `distinct_from`
         (hard veto — a contradiction the host must adjudicate). `valid_from` is
         the reveal time. Returns a Receipt:
-        `correlated | noop_already_correlated | vetoed_distinct`."""
+        `correlated | noop_already_correlated | vetoed_distinct`.
+
+        The veto acts on whole correlation groups (FRAME-SCOPED-IDENTITY-V1
+        §3(a)): after the direct check and the already-correlated noop (both in
+        their old order), a canon `distinct_from` with one endpoint in a's
+        group and the other in b's vetoes too — appending the edge would join
+        two ids the world says are different. `blocking_edges` names them."""
         ra = self.resolve(a)
         dblocks = self.distinct_block(a, b)
         if dblocks:
@@ -1299,6 +1541,12 @@ class IdentityRegistry:
             )
         if self._aka_relates(a, b):
             return self._receipt("noop_already_correlated", ra)
+        group_blocks = self._group_distinct_block(a, b)
+        if group_blocks:
+            return self._receipt(
+                "vetoed_distinct", ra, reason="distinct_from",
+                blocking_edges=group_blocks,
+            )
         edge = self._buffer.append(
             entity=a, attribute="aka", value=b, value_type="entity",
             status="stated", role=self._ingestor, valid_from=valid_from,
@@ -1318,26 +1566,38 @@ class IdentityRegistry:
         asserted_as_of: int | None = None,
         frame: str = CANON,
     ) -> list[dict]:
-        """Pairs carrying BOTH an `aka` and a `distinct_from` between their
-        closures (closure-aware, bidirectional) — a contradiction surfaced for
-        host adjudication (a raw `aka` authored over a `distinct_from`). The
-        guarded `correlate()` prevents this at the source; this read catches the
-        raw-ingest path. Deduped by resolved pair.
+        """Every `distinct_from` in `frame` whose endpoints lie in one
+        correlation group of `frame` as-of — a contradiction surfaced for host
+        adjudication (a raw `aka` authored over a `distinct_from`). The guarded
+        `correlate()` prevents this at the source; this read catches the
+        raw-ingest path. One entry per resolved pair (FRAME-SCOPED-IDENTITY-V1
+        §3(b)).
 
-        The `aka` rows are filtered by `valid_as_of`/`frame`/`asserted_as_of`
-        (Cx 057 #3) — an as-of-before-reveal view shows no conflict. NOTE:
-        `distinct_from` is global by current engine convention (asserted-axis
-        only), so the distinctness side is not valid-time scoped."""
+        A contradiction is two edges in ONE frame: the group is built from the
+        frame's `aka` rows, each filtered on both time axes (Cx 057 #3 — an
+        as-of-before-reveal view shows no conflict), and the `distinct_from`
+        rows are the frame's own, valid-time-blind as before (asserted axis
+        only). Alice's `aka` beside canon's `distinct_from` is contested truth,
+        not a contradiction to retract.
+
+        Direct entries come first, in log order of their `aka` row: a pair
+        joined by one `aka` row, `{a, b, aka_edge, distinct_edges, aka_path:
+        [aka_edge]}`. Group entries follow, in `distinct_from` log order:
+        `{a, b, aka_edge: None, aka_path, distinct_edges}`, where `aka_path`
+        is the shortest group path from a to b (neighbours visited in sorted
+        order). A direct entry wins its pair."""
         out: list[dict] = []
         seen: set[tuple[str, str]] = set()
-        for row in self._buffer.visible(
-            attribute="aka", frame=frame,
-            valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
-        ):
-            if row.value_type != "entity" or not isinstance(row.value, str):
-                continue
+        aka_rows = [
+            row for row in self._buffer.visible(
+                attribute="aka", frame=frame,
+                valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+            )
+            if row.value_type == "entity" and isinstance(row.value, str)
+        ]
+        for row in aka_rows:
             a, b = row.entity, row.value
-            dblocks = self.distinct_block(a, b, asserted_as_of)
+            dblocks = self.distinct_block(a, b, asserted_as_of, frame=frame)
             if not dblocks:
                 continue
             key = tuple(sorted([self.resolve(a, asserted_as_of),
@@ -1345,9 +1605,72 @@ class IdentityRegistry:
             if key in seen:
                 continue
             seen.add(key)
+            edge = f"{a}·aka·{b}"
             out.append({
                 "a": a, "b": b,
-                "aka_edge": f"{a}·aka·{b}",
+                "aka_edge": edge,
                 "distinct_edges": dblocks,
+                "aka_path": [edge],
+            })
+        # The frame's correlation groups over closure representatives: an
+        # `aka` edge on any closure member joins the whole closure (the
+        # `correlation_set` expansion). Between two representatives, the first
+        # edge in log order names the hop.
+        hops: dict[str, dict[str, str]] = {}
+        for row in aka_rows:
+            ra = self.resolve(row.entity, asserted_as_of)
+            rb = self.resolve(row.value, asserted_as_of)
+            if ra == rb:
+                continue
+            edge = f"{row.entity}·aka·{row.value}"
+            hops.setdefault(ra, {}).setdefault(rb, edge)
+            hops.setdefault(rb, {}).setdefault(ra, edge)
+        for row in self._buffer.visible(attribute="distinct_from", frame=frame,
+                                        asserted_as_of=asserted_as_of):
+            if row.value_type != "entity" or not isinstance(row.value, str):
+                continue
+            a, b = row.entity, row.value
+            ra, rb = self.resolve(a, asserted_as_of), self.resolve(b, asserted_as_of)
+            key = tuple(sorted([ra, rb]))
+            if key in seen:
+                continue
+            path = self._aka_path(hops, ra, rb)
+            if path is None:
+                continue
+            seen.add(key)
+            out.append({
+                "a": a, "b": b,
+                "aka_edge": None,
+                "aka_path": path,
+                "distinct_edges": self.distinct_block(a, b, asserted_as_of, frame=frame),
             })
         return out
+
+    @staticmethod
+    def _aka_path(hops: dict[str, dict[str, str]], start: str, target: str) -> list[str] | None:
+        """The `aka` descriptors along the shortest path from `start` to
+        `target` over `hops` (representative -> neighbour -> descriptor), a
+        breadth-first walk visiting neighbours in sorted order; None when the
+        two are not in one group, or are one closure (no `aka` joins them)."""
+        if start == target:
+            return None
+        parent: dict[str, str | None] = {start: None}
+        frontier = [start]
+        while frontier:
+            following: list[str] = []
+            for node in frontier:
+                for neighbour in sorted(hops.get(node, {})):
+                    if neighbour in parent:
+                        continue
+                    parent[neighbour] = node
+                    if neighbour == target:
+                        path: list[str] = []
+                        current = neighbour
+                        while parent[current] is not None:
+                            previous = parent[current]
+                            path.append(hops[previous][current])
+                            current = previous
+                        return path[::-1]
+                    following.append(neighbour)
+            frontier = following
+        return None

@@ -74,18 +74,24 @@ class Refer:
         # world does not learn its users' words.
         self._ingestor = ingestor
 
-    def _accrue_alias(self, description: str, entity_id: str, receipt: dict) -> None:
+    def _accrue_alias(self, description: str, entity_id: str, receipt: dict,
+                      frame: str = CANON) -> None:
         """Memoize a tier-2 resolution as an alias assertion carrying the
         resolution receipt — each synonym costs one tier-2 call once, then
         is tier-1a forever. A learned alias never outranks an exact name
         (by_alias hits both; exact-name uniqueness still wins tier 1a, and
-        a later collision is ordinary ambiguity -> tier 2)."""
+        a later collision is ordinary ambiguity -> tier 2).
+
+        The alias row lands in `frame`, the frame `refer` was called with
+        (FRAME-SCOPED-IDENTITY-V1 §1(e)): a word learned in Alice's frame is
+        Alice's, and canon never reads it. REFER-LEARNING-V1 decides *when*
+        this writes; this rule fixes only *where* it lands."""
         if self._ingestor is None:
             return
         rows = self._ingestor.ingest_structured([
             {"entity": entity_id, "attribute": "alias",
              "value": description.strip().lower(), "timeless": True,
-             "status": "inferred"},
+             "status": "inferred", "frame": frame},
         ])
         self._buffer.append(
             entity=rows[0].id, attribute="source",
@@ -105,11 +111,14 @@ class Refer:
     ) -> Resolution:
         # ---- Tier 1a: exact name/alias hit through the identity registry.
         # Try the raw expression and its determiner-stripped core (HD 003):
-        # "my brass measuring spoon" misses the exact name otherwise.
+        # "my brass measuring spoon" misses the exact name otherwise. Names
+        # and aliases are read in the call's frame only, with no canon
+        # fallback (FRAME-SCOPED-IDENTITY-V1 §2): a name private to Alice
+        # resolves in Alice's frame and never in canon's.
         core = self._strip_determiner(description)
-        hits = self._registry.by_alias(description)
+        hits = self._registry.by_alias(description, frame=frame)
         if core != description.strip().lower():
-            hits = hits | self._registry.by_alias(core)
+            hits = hits | self._registry.by_alias(core, frame=frame)
         if len(hits) == 1:
             return Resolution(RESOLVED, next(iter(hits)),
                               receipt={"tier": 1, "signals": ["alias_exact"]})
@@ -135,9 +144,9 @@ class Refer:
                 return Resolution(RESOLVED, of_kind[0],
                                   receipt={"tier": 1, "signals": ["unique_kind_in_scope"]})
             if len(of_kind) > 1:
-                return self._resolve_tier2(description, tuple(sorted(of_kind)))
+                return self._resolve_tier2(description, tuple(sorted(of_kind)), frame)
         if len(hits) > 1:
-            return self._resolve_tier2(description, tuple(sorted(hits)))
+            return self._resolve_tier2(description, tuple(sorted(hits)), frame)
 
         # ---- Zero-candidate escalation (letter 018, mechanic 1): a synonym
         # yields zero tier-1 matches; with a scope provided, that is exactly
@@ -146,7 +155,7 @@ class Refer:
         if scope is not None:
             members = self._scope_members(scope, frame, as_of, asserted_as_of)
             if members:
-                return self._resolve_tier2(description, tuple(sorted(members)))
+                return self._resolve_tier2(description, tuple(sorted(members)), frame)
 
         # Nothing deterministic and no candidates: underdetermined.
         return Resolution(UNDERDETERMINED, receipt={"tier": 3, "signals": []})
@@ -222,9 +231,12 @@ class Refer:
 
     # ------------------------------------------------------------- tier 2
 
-    def _resolve_tier2(self, description: str, candidates: tuple[str, ...]) -> Resolution:
+    def _resolve_tier2(self, description: str, candidates: tuple[str, ...],
+                       frame: str = CANON) -> Resolution:
         """Strict-contract cheap call judging candidates; returns a
-        resolution receipt. Below the floor -> tier 3: never guess."""
+        resolution receipt. Below the floor -> tier 3: never guess. `frame`
+        is the call's frame, where an accrued alias lands
+        (FRAME-SCOPED-IDENTITY-V1 §1(e))."""
         if self._model is None:
             return Resolution(CANDIDATES, candidates=candidates,
                               receipt={"tier": 2, "signals": ["no_model"]})
@@ -251,7 +263,7 @@ class Refer:
         }
         if out.get("entity_id") in candidates and out.get("confidence", 0.0) >= _TIER2_FLOOR:
             resolution = Resolution(RESOLVED, out["entity_id"], receipt=receipt)
-            self._accrue_alias(description, out["entity_id"], receipt)
+            self._accrue_alias(description, out["entity_id"], receipt, frame)
             return resolution
         # Tier 3 contract: the ask is the host's to deliver.
         return Resolution(UNDERDETERMINED, candidates=candidates, receipt=receipt)

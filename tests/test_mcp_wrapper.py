@@ -1,6 +1,6 @@
 """MCP-WRAPPER-V1: the porcelain over MCP — registry, dispatch, wire, membrane.
 
-The wrapper is a pure adapter over the frozen porcelain: an explicit 39-tool
+The wrapper is a pure adapter over the frozen porcelain: an explicit 40-tool
 registry (never reflective), the genuinely model-free parameter subset (spy-
 proven), one mechanical wire envelope, the exact annotations table, and the
 core/extra import membrane. The stdio smoke test runs against the real SDK.
@@ -65,9 +65,10 @@ def _seed(world):
 
 # ------------------------------------------------------------- registry
 
-def test_registry_is_exactly_the_declared_39():
+def test_registry_is_exactly_the_declared_40():
     reg = build_registry()
-    assert len(reg) == 39 and set(reg) == set(V1_TOOLS)
+    # 39 -> 40: FRAME-SCOPED-IDENTITY-V1 §4 adds the identity_conflicts read.
+    assert len(reg) == 40 and set(reg) == set(V1_TOOLS)
     assert "state_union" in reg                       # the Cx-caught omission
     for absent in ("extract", "ingest", "ask", "resolve"):   # V1.1, not V1
         assert absent not in reg
@@ -178,6 +179,7 @@ def test_every_v1_tool_makes_zero_model_calls(spy_world, tmp_path):
         "correlations": {"entity": "person:ana"},
         "correlation_conflicts": {},
         "typing_conflicts": {},
+        "identity_conflicts": {},                # FRAME-SCOPED-IDENTITY-V1 §4
         "ingest_structured": {"items": [
             {"entity": "obj:coin", "attribute": "state", "value": "dusty",
              "valid_from": 2.0}]},
@@ -386,7 +388,7 @@ async def test_stdio_initialize_list_call_shutdown(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            assert len(tools.tools) == 39
+            assert len(tools.tools) == 40    # FRAME-SCOPED-IDENTITY-V1 §4: +identity_conflicts
             by_name = {t.name: t for t in tools.tools}
             assert by_name["snapshot"].annotations.readOnlyHint is True
             assert by_name["retract"].annotations.destructiveHint is True

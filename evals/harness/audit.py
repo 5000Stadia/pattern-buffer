@@ -77,7 +77,7 @@ def build_digest(world: World, registry: WorldRegistry, cap: int = 200) -> dict:
     conflicts = [
         {"key": f"{c.entity}·{c.attribute}·{c.frame}", "kind": c.kind,
          "assertion_ids": list(c.assertion_ids)}
-        for c in world.truth.open_conflicts()
+        for c in world.truth.scan()   # all frames, computed (FRAME-SCOPED-IDENTITY-V1 §5)
     ]
     unstamped, drift, frame_anoms = [], [], []
     known_attrs = set(registry.attributes.values()) | set(registry.attributes)

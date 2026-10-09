@@ -252,6 +252,8 @@ def test_s0_skip_vocabulary(skip_reason_is_code):
         "moved_complete_attribute_not_durable", "invalid_valid_time",
         "malformed_item", "invalid_field", "invalid_alias", "mechanism_attribute",
         "same_as_not_canon", "merge_vetoed", "invalid_semantics_declaration",
+        # FRAME-SCOPED-IDENTITY-V1 §1: a canon identity edge outside canon.
+        "identity_edge_outside_canon",
     })
     for code in SKIP_REASONS:
         assert skip_reason_is_code(code)

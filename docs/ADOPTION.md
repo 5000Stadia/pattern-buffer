@@ -94,6 +94,10 @@ world.confidence(entity, attribute, frame="canon", as_of=None,
 #   multi-frame frame_diff. Derived; functional-only.
 world.refer(description, scope=None, frame="canon",
             constraints=None, as_of=None) -> Resolution
+#   tier 1a reads names/aliases in `frame` only, never canon's for a non-canon
+#   frame (an alias only canon carries does not resolve in knows:X); a tier-2
+#   hit's learned alias lands in `frame` (FRAME-SCOPED-IDENTITY-V1 §1(e), §2).
+world.registry.by_alias(text, asserted_as_of=None, frame="canon") -> set[str]
 ```
 
 ### Typed outcomes, not exceptions
@@ -156,6 +160,21 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
 - **MUST** name knowledge frames by the full entity id: `knows:person:daniel`,
   never `knows:daniel`. Nothing validates the suffix today, so a short form
   silently becomes a different frame.
+- **Identity is canon's** (FRAME-SCOPED-IDENTITY-V1). `same_as`,
+  `maybe_same_as` and `distinct_from` are written and read in canon only.
+  Outside canon the gate skips them: a `same_as`, whether a raw item or an
+  item's `same_as` key, with `same_as_not_canon` (`detail: {field: "frame",
+  value: <frame>}`; for the key, the item's own row still lands), and a
+  `maybe_same_as` or `distinct_from` with `identity_edge_outside_canon`. A
+  belief about identity ("Alice thinks the masked man is Bob") is an `aka` row
+  in the believer's frame. Legacy non-canon identity edges are inert.
+- **Description is perspectival.** An item's `aliases` land in the item's
+  frame, and `name`/`alias` rows are read only in their own frame:
+  `registry.by_alias(text, frame=)` and `refer(..., frame=)` read the asked
+  frame only, with no canon fallback, so Alice's private alias for Bob
+  resolves in `knows:person:alice` and never in canon. `ask()` still resolves
+  references against canon (HD 003). Canon `reconcile`, `proposals`,
+  `typing_conflicts`, `retype` and every merge veto read canon rows only.
 - **MUST**, after reopening a world, place the scene cursor before the first
   untimed write (`at=`, e.g. from `axis_heads()["valid_head"]`): the cursor
   starts at 0.0 on every open, so an untimed row otherwise lands at t=0 and
@@ -189,7 +208,8 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   that is not an id `malformed_id`; a pair already merged writes nothing. When
   a refused one names a real duplicate, route the receipt to `p.confirm` (a
   canon proposal exists) or `p.merge`. (An item's `same_as` *field* still only
-  proposes, as `maybe_same_as`.)
+  proposes, as a canon `maybe_same_as`; on a non-canon item it is skipped
+  `same_as_not_canon` too — FRAME-SCOPED-IDENTITY-V1 §1.)
 - **MUST** read `Receipt.skipped` as the whole refusal record: every write
   path fills it, `p.ingest()` included, and a malformed item (a non-object, a
   missing field, a bad `frame`, a `confidence` or flag of the wrong type, an
@@ -380,6 +400,9 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    #   invalid_decay_halflife, moved_marker_invalid, moved_open_with_arrival,
    #   moved_complete_attribute_not_durable
    #   mechanism_attribute, same_as_not_canon, merge_vetoed (see MUST / NEVER)
+   #   identity_edge_outside_canon   a maybe_same_as / distinct_from row outside canon
+   #                    (FRAME-SCOPED-IDENTITY-V1 §1; a same_as there, raw or an item's
+   #                    same_as key, is same_as_not_canon)
    #   invalid_semantics_declaration   an arity/relation_family/fold_policy/structural
    #                    value outside its vocabulary — the WHOLE item skips, nothing declared
    # `detail` appears only when set: the bad field and value, the merge veto and blocking
@@ -391,6 +414,10 @@ p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, fa
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False) -> dict
    # contractually ZERO model calls and ZERO writes; id-only scopes; includes quantities
+   # existence follows perspective (FRAME-SCOPED-IDENTITY-V1 §6): an id is KNOWN in `frame`
+   #   iff some row about it lives in `frame` or in canon (canon is the existence authority;
+   #   a frame may add entities canon lacks). An id only another frame carries (a plot:-only
+   #   object) returns {"error", "bad"} exactly like an unknown id — recover per id.
    # lens="situation": re-entry view — standing truth ∪ live threads, closed history dropped
    # correlated=True (AWARENESS-READS-V1.1): fold each entity over its `aka` correlation
    #   union — the whole reveal scene (masked-figure ∪ revealed identity) in one snapshot;
@@ -439,8 +466,14 @@ p.correlate(a, b, evidence, at=None) -> Receipt
    # AKA-CORRELATION-V1: link two entities as facets of one identity (non-collapsing
    # `aka`) WITHOUT merging — reveals, dual personas, amalgamation. `at` = the reveal's
    # valid_from. Outcomes: correlated | noop_already_correlated | vetoed_distinct
-   # (the hard distinct_from veto is absolute). NOT a merge: resolve()/closure() and
-   # every DEFAULT read ignore aka; each entity keeps its own rows.
+   # (the hard distinct_from veto is absolute, and acts on whole correlation groups: a
+   # distinct_from between a's group and b's vetoes too — FRAME-SCOPED-IDENTITY-V1 §3).
+   # NOT a merge: resolve()/closure() and every DEFAULT read ignore aka; each entity
+   # keeps its own rows. A correlated pair is never AUTO-merged (reconcile/promotion/
+   # adjudicate_deferred: a soft block, decline code "correlated" — a timeless same_as
+   # would leak the reveal backward), nor is a pair whose correlation groups a canon
+   # distinct_from separates (decline code "distinct_group": correlate would refuse to
+   # join them); your merge()/confirm() still can.
 p.correlations(entity, as_of=None, frame="canon") -> [entity_id]
    # the facets correlated with entity as-of (first-seen ordered). Empty before a
    # reveal's valid_from — the mystery is intact. Zero writes.
@@ -450,17 +483,32 @@ p.state_union(entity, attribute, frame="canon", as_of=None) -> {status, fact, qu
    # split across correlated facets (retrieval-invariance). NOT a default read —
    # state/snapshot/ask never union; as-of-before a reveal returns the uncorrelated view.
    # Divergent facets use existing fold conflict semantics (no new blanket rule).
-p.correlation_conflicts(as_of=None, frame="canon") -> [{a, b, aka_edge, distinct_edges}]
+p.correlation_conflicts(as_of=None, frame="canon") -> [{a, b, aka_edge, aka_path, distinct_edges}]
    # raw aka authored over a distinct_from (a contradiction) surfaced for adjudication;
-   # the guarded correlate() prevents it at the source.
+   # the guarded correlate() prevents it at the source. FRAME-SCOPED-IDENTITY-V1 §3: every
+   # distinct_from in `frame` whose endpoints lie in one correlation group of `frame`
+   # as-of (both edges the frame's own). Direct entries (one aka row joins the pair) come
+   # first, aka_path = [aka_edge]; group entries follow with aka_edge None and the
+   # shortest aka_path joining them.
 p.reconcile() -> {merges, proposals}                      # global finalize; host-invoked
 p.proposals() -> [{a, b, evidence, auto_decline_reason, auto_decline}]
    # open maybe_same_as with a structured auto_decline (gate-failure code + evidence);
-   # code "durable_contradiction" names contradictory standing facts (SHAPE-FIX-V1 Win 4)
+   # code "durable_contradiction" names contradictory standing facts (SHAPE-FIX-V1 Win 4);
+   # code "correlated" a proposal between aka facets, code "distinct_group" one whose
+   # correlation groups a canon distinct_from separates (FRAME-SCOPED-IDENTITY-V1 §3)
 p.confirm(a, b) / p.merge(a, b, evidence) / p.reject(a, b)
    -> {outcome, canonical_id, merge_event_id, reason, blocking_edges}   # an identity receipt
    # confirm = promote a proposal; merge = assert (guarded, hard vetoes absolute);
-   # reject = distinct_from (sticky anti-merge)
+   # reject = distinct_from (sticky anti-merge). reject of two facets of one canon
+   # correlation group returns conflict_already_correlated (reason already_correlated,
+   # blocking_edges = the group's aka assertion ids) and writes nothing — retract the
+   # aka first (FRAME-SCOPED-IDENTITY-V1 §3).
+p.identity_conflicts() -> [{canonical_id, members, containment_edges, distinct_edges, same_as}]
+   # FRAME-SCOPED-IDENTITY-V1 §4: merged canon closures that hold a pair the guarded merge
+   # would veto (a containment-family or distinct_from row with both endpoints inside) —
+   # what a raw or legacy same_as merged past the vetoes. same_as = every canon same_as
+   # row inside: [{assertion_id, edge, merge_event_id (None for a raw row)}]. YOU pick
+   # which same_as to retract; the engine chooses no cut. Canon only; zero writes.
 p.adjudicate_deferred() -> {merged: [Receipt], residue: [proposal]}
    # SHAPE-FIX-V1: merge only the structurally-DECISIVE open proposals (anchor subsumption:
    # a pure fragment whose whole distinctive anchor set ⊆ the other's — tovin ⊆ tovin beck).
@@ -477,7 +525,10 @@ p.retype(entity, to_kind, evidence, absorb=None) -> Receipt
    # rows retracted, correct kind appended + classified). absorb=<target>: absorb a spurious
    # duplicate — slip signature verified, ONLY inter-closure artifact edges retracted (child
    # containment preserved), then guarded merge. Non-slip => vetoed_not_a_slip; distinct_from
-   # absolute. Outcomes: retyped | merged | vetoed_not_a_slip | vetoed | noop_*.
+   # absolute; with absorb=, a to_kind that is not the target's kind => vetoed_kind_mismatch
+   # (reason to_kind_not_target_kind, nothing written — FRAME-SCOPED-IDENTITY-V1 §8).
+   # Retracts CANON kind rows only: a knows: belief about the kind survives (§2).
+   # Outcomes: retyped | merged | vetoed_not_a_slip | vetoed_kind_mismatch | vetoed | noop_*.
 p.entities(frame, prefix=None, as_of=None) -> [entity_id]
    # BOUNDED-READS-V1: the roster read — entity ids carried by ONE frame's rows, resolved +
    # sorted. frame REQUIRED (a prefix-only enumeration leaks cross-frame existence; every
@@ -496,13 +547,13 @@ p.begin_build(at=None) / p.seal_build(model=False, scope="session"|"all") / p.ab
    # / cursor.advance reach — use it for scenario/source builds.
 p.fidelity_audit(frame="canon", as_of=None) -> {name_collisions, unstamped_timed, orphan_entities, open_conflicts, summary}
    # INGESTION-FIDELITY-V1: structural ingestion gaps as a queryable checklist, DERIVED
-   # (zero writes; run AFTER seal). CAUTION (audit 2026-10, fix pending): open_conflicts
-   # is read from a stored table that only world.truth.scan() refreshes — below the
-   # porcelain, unreachable over MCP — and it is not yet frame-scoped. Until the fix,
-   # treat open_conflicts as advisory; state() reports a conflicted key reliably. name_collisions groups = {anchor, entities,
+   # (zero writes; run AFTER seal). open_conflicts is COMPUTED on read for `frame` as of
+   # `as_of` (FRAME-SCOPED-IDENTITY-V1 §5): no truth.scan() needed, never stale, and a
+   # key is listed iff state(key, frame, as_of) is conflicted. name_collisions groups = {anchor, entities,
    # kinds (FOLDED, parallel to entities — weight cross-kind person<->place highest; the id
    # namespace can lie), pairs:[{a,b,status,reason?}], live}. status = WHY the pair isn't
-   # merged (correlated | hard_blocked | typing_slip | auto_declined+reason | unlinked) — route
+   # merged (correlated | hard_blocked | typing_slip | auto_declined+reason | unlinked;
+   # hard_blocked's reason is containment, distinct_from or distinct_group) — route
    # repair by it: reject() genuine homonyms (harth person<->place), adjudicate_deferred/retype
    # true same-kind splits. summary.name_collisions counts LIVE groups only (the tracked number).
    # unstamped_timed = classified STATE/EVENT rows with no valid_from (off the time spine).
@@ -548,7 +599,7 @@ Every write returns a per-assertion Receipt; every fact carries
 `pip install pbuffer[mcp]` →
 `patternbuffer-mcp --world w.world --world-id w:id` (env:
 `PATTERNBUFFER_WORLD`, `PATTERNBUFFER_WORLD_ID`) serves ONE world over stdio
-(the 1:1 invariant; multi-world = multiple servers). The 39 deterministic
+(the 1:1 invariant; multi-world = multiple servers). The 40 deterministic
 porcelain verbs are MCP tools; results arrive as
 `structuredContent = {"result": <the porcelain return>}` (Receipts as dicts;
 exact-decimals as `{"$decimal": …}` tags) with the same object serialized in

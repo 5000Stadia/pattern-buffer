@@ -1,10 +1,16 @@
 """Truth maintenance: conflict detection (derived) and retraction (log).
 
-A fired flag is a sidecar row pointing at the assertions in tension —
-both rows coexist in the log untouched (whitepaper §5.1/§7.2). The flag
-stands until an explicit retraction/supersession resolves it; resolution
-is never required for the flag to exist, and a silent merge is the
-failure the chapter test's feature 8 exists to catch.
+A conflict is a folded key whose served rows disagree — both rows coexist
+in the log untouched (whitepaper §5.1/§7.2). The flag stands until an
+explicit retraction/supersession resolves it; resolution is never required
+for the flag to exist, and a silent merge is the failure the chapter test's
+feature 8 exists to catch.
+
+Conflicts are computed on read, never stored (FRAME-SCOPED-IDENTITY-V1 §5):
+`open_conflicts(frame, as_of)` derives them from the rows visible in one
+frame, so a flag is scoped to the asked perspective, honest about time, and
+never stale. The retired `sidecar_conflicts` table is neither created, filled
+nor read; a file that has one keeps an inert copy.
 """
 
 from __future__ import annotations
@@ -15,22 +21,11 @@ from dataclasses import dataclass
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import Classifier
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import ATTR_PREFIX, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
 from patternbuffer.roles import WriterRole
 from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
-
-_SCHEMA = """
-CREATE TABLE IF NOT EXISTS sidecar_conflicts (
-  key_entity    TEXT NOT NULL,
-  key_attribute TEXT NOT NULL,
-  key_frame     TEXT NOT NULL,
-  kind          TEXT NOT NULL,
-  assertion_ids TEXT NOT NULL,
-  PRIMARY KEY (key_entity, key_attribute, key_frame, kind)
-);
-"""
 
 
 class AtomicAbort(Exception):
@@ -84,30 +79,47 @@ class TruthMaintenance:
         self._indexes = indexes
         self._role = role
         self._semantics = semantics or AttributeSemantics(buffer)
-        buffer.raw_connection().executescript(_SCHEMA)
 
-    def scan(self) -> list[Conflict]:
-        """Re-derive the conflict table from the log. Rebuildable: the
-        table is dropped and refilled on every scan."""
-        keys: set[tuple[str, str, str]] = set()
-        for row in self._buffer.visible():
+    def open_conflicts(
+        self,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> list[Conflict]:
+        """The conflicted folds of one frame, as of both axes — computed on
+        read, never stored (FRAME-SCOPED-IDENTITY-V1 §5).
+
+        Keys come from the rows visible in `frame`: `(resolve(entity), fold
+        key)`, the containment family reported as `in`, skipping `a:`/`attr:`
+        subjects and set-valued attributes. Only a key with two or more visible rows is folded (a
+        conflict needs two). Each conflicted fold is one `Conflict`, `kind`
+        `constitutive_contradiction` when its winner is CONSTITUTIVE, else
+        `cross_source`; `frame` echoes the requested string. Sorted by
+        `(entity, attribute)`; writes nothing.
+
+        Invariant: a key is listed iff `state(entity, attribute, frame,
+        as_of)` is `conflicted`."""
+        family_key = self._indexes.fold_attribute("in")
+        counts: dict[tuple[str, str], int] = {}
+        for row in self._buffer.visible(
+            frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
+        ):
             if (
                 row.entity.startswith("a:")
                 or row.entity.startswith(ATTR_PREFIX)
                 or self._semantics.is_set_valued(row.attribute)
             ):
                 continue
-            fold_attr = self._indexes.fold_attribute(row.attribute)
-            keys.add(
-                (
-                    self._indexes._resolve(row.entity),
-                    "in" if fold_attr == self._indexes.fold_attribute("in") else row.attribute,
-                    row.frame,
-                )
-            )
+            attribute = ("in" if self._indexes.fold_attribute(row.attribute) == family_key
+                         else row.attribute)
+            key = (self._indexes.resolve_entity(row.entity), attribute)
+            counts[key] = counts.get(key, 0) + 1
         conflicts: list[Conflict] = []
-        for entity, attribute, frame in sorted(keys):
-            result = self._indexes.fold_key(entity, attribute, frame)
+        for (entity, attribute), rows in sorted(counts.items()):
+            if rows < 2:
+                continue
+            result = self._indexes.fold_key(
+                entity, attribute, frame, valid_as_of, asserted_as_of)
             if result.conflicted:
                 kind = (
                     "constitutive_contradiction"
@@ -118,24 +130,22 @@ class TruthMaintenance:
                 conflicts.append(
                     Conflict(entity, attribute, frame, kind, result.conflicting)
                 )
-        conn = self._buffer.raw_connection()
-        conn.execute("DELETE FROM sidecar_conflicts")
-        for c in conflicts:
-            conn.execute(
-                "INSERT OR REPLACE INTO sidecar_conflicts VALUES (?, ?, ?, ?, ?)",
-                (c.entity, c.attribute, c.frame, c.kind, ",".join(c.assertion_ids)),
-            )
-        conn.commit()
+        return conflicts
+
+    def scan(self) -> list[Conflict]:
+        """Every open conflict in every frame, at head: the union of
+        `open_conflicts` over each frame with a visible row, sorted by
+        `(entity, attribute, frame)`. A below-porcelain all-frames read
+        (FRAME-SCOPED-IDENTITY-V1 §5) — it writes nothing and stores
+        nothing; it returns the list."""
+        frames = sorted({row.frame for row in self._buffer.visible()})
+        conflicts: list[Conflict] = []
+        for frame in frames:
+            conflicts.extend(self.open_conflicts(frame))
+        conflicts.sort(key=lambda c: (c.entity, c.attribute, c.frame))
         if conflicts:
             logger.info("truth maintenance: %d open conflict(s)", len(conflicts))
         return conflicts
-
-    def open_conflicts(self) -> list[Conflict]:
-        rows = self._buffer.raw_connection().execute(
-            "SELECT key_entity, key_attribute, key_frame, kind, assertion_ids"
-            " FROM sidecar_conflicts ORDER BY key_entity"
-        ).fetchall()
-        return [Conflict(r[0], r[1], r[2], r[3], tuple(r[4].split(","))) for r in rows]
 
     def retract(self, target: Assertion | str, reason: str) -> Assertion:
         """Append a retraction meta-assertion. The target survives in the

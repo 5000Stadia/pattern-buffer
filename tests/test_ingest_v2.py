@@ -234,8 +234,9 @@ class TestAudit:
         w.classifier.set(
             next(r.id for r in w.buffer.all_rows()
                  if r.attribute == "working_reactors" and r.value == 3), "CONSTITUTIVE")
-        w.truth.scan()
-        conflicted_ids = {a for c in w.truth.open_conflicts() for a in c.assertion_ids}
+        # FRAME-SCOPED-IDENTITY-V1 §5: conflicts are computed on read — scan()
+        # returns the all-frames list the retired sidecar table used to hold.
+        conflicted_ids = {a for c in w.truth.scan() for a in c.assertion_ids}
         assert conflicted_ids
         victim = next(iter(conflicted_ids))
         # Plant an exact duplicate (the only retractable condition) and a
@@ -262,7 +263,7 @@ class TestAudit:
         assert len(report.dropped_ops) == 3
         assert w.buffer.visible(entity=non_dup) != [] or w.buffer.get(non_dup)  # survived
         # The conflict survives pass-2 with both rows alive.
-        assert {a for c in w.truth.open_conflicts() for a in c.assertion_ids} == conflicted_ids
+        assert {a for c in w.truth.scan() for a in c.assertion_ids} == conflicted_ids  # §5
         assert w.buffer.get(victim) is not None
         w.close()
 

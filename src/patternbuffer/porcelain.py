@@ -258,8 +258,9 @@ class Porcelain:
         anchor, each pair annotated with WHY it isn't merged — the coreference-
         fragmentation metric), `unstamped_timed` (classified STATE/EVENT rows off
         the time spine), `orphan_entities` (unanchored obj:/person:),
-        `open_conflicts`, and a `summary` with the headline live-fragmentation
-        count. Read-only; run after seal + `truth.scan()`. The host joins
+        `open_conflicts` (the frame's conflicted folds as of `as_of`, computed
+        on read — FRAME-SCOPED-IDENTITY-V1 §5), and a `summary` with the
+        headline live-fragmentation count. Read-only; run after seal. The host joins
         arc/cast severity and drives targeted re-extraction of the flagged
         spans; the engine surfaces, never repairs (membrane)."""
         return encode_out(self._w.fidelity_audit(frame=frame, as_of=as_of))
@@ -401,13 +402,27 @@ class Porcelain:
 
     # --------------------------------------------------- reads (LLM-free)
 
-    def _is_known(self, entity: str) -> bool:
-        """Some visible row (any frame) is about a member of `entity`'s
-        identity closure — an indexed check over the requested id only,
-        never a whole-log scan per call."""
+    def _is_known(self, entity: str, frame: str = CANON) -> bool:
+        """Whether `entity` exists from `frame`'s perspective: some visible row
+        about a member of its identity closure lives in `frame` or in canon —
+        an indexed check over the requested id only, never a whole-log scan
+        per call.
+
+        Existence follows perspective (FRAME-SCOPED-IDENTITY-V1 §6). Canon is
+        the existence authority (HD 003: identity/existence is a canon
+        question; only the answer is knowledge-scoped), and a frame may add
+        entities canon lacks — a belief, a plot arc. An id that lives only in
+        another frame is unknown here, exactly like an id nobody wrote.
+
+        One `visible(entity_in=)` call, filtered to the two frames here (r2):
+        adding `frame=` to the query lets SQLite pick the frame index over the
+        entity index (measured on a 100k-row log: 8.8 ms per id against
+        0.35)."""
         members = sorted(self._w.registry.closure(entity))
+        frames = {CANON, frame}
         return any(
-            not r.entity.startswith("a:") and not r.entity.startswith(ATTR_PREFIX)
+            r.frame in frames
+            and not r.entity.startswith("a:") and not r.entity.startswith(ATTR_PREFIX)
             for r in self._w.buffer.visible(entity_in=members)
         )
 
@@ -419,12 +434,17 @@ class Porcelain:
         folded facts, accrue quantities, unresolved aspects, conflicted keys and
         render-time defaults, under a lens (current_state, establishing_set,
         what_happened, character_sheet, situation) as of a valid time, shaped to
-        an optional budget. Unknown or malformed ids return {"error", "bad"}."""
+        an optional budget. Unknown or malformed ids return {"error", "bad"};
+        an id is known when some row about it lives in `frame` or in canon, so
+        an id that only another frame carries is unknown here
+        (FRAME-SCOPED-IDENTITY-V1 §6)."""
         # correlated/features (AWARENESS-READS-V1.1, opt-in): fold each entity over
         # its aka correlation union (the whole reveal scene) and/or inline each
         # place's part_of-feature children. Default off = unchanged.
         roots = [scope] if isinstance(scope, str) else list(scope)
-        bad = [s for s in roots if not ID_RE.fullmatch(s) or not self._is_known(s)]
+        # Known in the snapshot's frame or in canon (FRAME-SCOPED-IDENTITY-V1 §6).
+        bad = [s for s in roots
+               if not ID_RE.fullmatch(s) or not self._is_known(s, frame)]
         if bad:
             return {"error": "snapshot scope must be KNOWN entity ids "
                              "(use ask for references)", "bad": bad}
@@ -640,7 +660,10 @@ class Porcelain:
         """Assert these are definitively different (`distinct_from`) — the
         sticky separation that keeps two same-named entities (two Clays) apart
         on every future reconcile. Returns a Receipt
-        (rejected | noop_already_distinct | conflict_already_merged)."""
+        (rejected | noop_already_distinct | conflict_already_merged |
+        conflict_already_correlated — the pair are facets of one canon
+        correlation group; `blocking_edges` names its `aka` rows, and nothing
+        is written: FRAME-SCOPED-IDENTITY-V1 §3(d))."""
         return self._w.registry.reject(a, b)
 
     # -------------------------------------------- SHAPE-FIX-V1 (identity shape)
@@ -661,6 +684,16 @@ class Porcelain:
         these; adjudicate each with `retype(...)` or leave it. Zero writes."""
         return self._w.registry.typing_conflicts()
 
+    def identity_conflicts(self) -> list[dict]:
+        """Read-only: merged canon closures that hold a pair the guarded merge
+        would veto (a containment-family or `distinct_from` row with both
+        endpoints inside) — what a raw or legacy `same_as` merged past the
+        vetoes (FRAME-SCOPED-IDENTITY-V1 §4). Each entry is `{canonical_id,
+        members, containment_edges, distinct_edges, same_as: [{assertion_id,
+        edge, merge_event_id}]}`; you decide which `same_as` to retract. Canon
+        only (identity is canon's). Zero writes."""
+        return encode_out(self._w.identity_conflicts())
+
     def retype(self, entity: str, to_kind: str, evidence: str,
                absorb: str | None = None) -> dict:
         """Typing correction, distinct from merge. absorb=None: correct one
@@ -669,7 +702,11 @@ class Porcelain:
         duplicate at the wrong kind — verified against the slip signature,
         artifact edges retracted, then merged through the guarded path.
         Never a veto bypass: a non-slip invocation returns
-        `vetoed_not_a_slip`; `distinct_from` stays absolute."""
+        `vetoed_not_a_slip`; `distinct_from` stays absolute. With absorb=, a
+        `to_kind` that contradicts the target's kind returns
+        `vetoed_kind_mismatch` and writes nothing (FRAME-SCOPED-IDENTITY-V1
+        §8). Kind rows are canon's: a `knows:` belief about the kind survives
+        (§2)."""
         return self._w.registry.retype(entity, to_kind, evidence, absorb=absorb)
 
     # ------------------------------------ AKA-CORRELATION-V1 (opt-in identity)
@@ -679,7 +716,10 @@ class Porcelain:
         `aka`), without merging them — the reveal/dual-persona/amalgamation call.
         `at` is the reveal's valid_from. Returns a Receipt
         (correlated | noop_already_correlated | vetoed_distinct). The hard
-        `distinct_from` veto is absolute."""
+        `distinct_from` veto is absolute, and acts on whole correlation groups:
+        a `distinct_from` between a's group and b's vetoes too
+        (FRAME-SCOPED-IDENTITY-V1 §3(a)). A correlated pair is never
+        auto-merged (`reconcile`, promotion); `merge`/`confirm` still can."""
         return self._w.registry.correlate(a, b, evidence, valid_from=at)
 
     def correlations(self, entity: str, as_of: float | None = None,
@@ -710,10 +750,14 @@ class Porcelain:
 
     def correlation_conflicts(self, as_of: float | None = None,
                               frame: str = CANON) -> list[dict]:
-        """Pairs carrying both an `aka` and a `distinct_from` (a raw-authored
-        contradiction) for host adjudication. The guarded `correlate()` prevents
-        these at the source; this surfaces any that slipped in via raw ingest.
-        `aka` rows are filtered by `as_of`/`frame`; `distinct_from` is global."""
+        """Every `distinct_from` whose endpoints lie in one correlation group (a
+        raw-authored contradiction) for host adjudication. The guarded
+        `correlate()` prevents these at the source; this surfaces any that
+        slipped in via raw ingest. Both edges are the frame's own: `aka` rows
+        filtered by `as_of`, `distinct_from` valid-time-blind. Direct entries
+        (one `aka` row joins the pair) come first; group entries carry
+        `aka_edge: None` and the `aka_path` that joins them
+        (FRAME-SCOPED-IDENTITY-V1 §3(b))."""
         return self._w.registry.correlation_conflicts(valid_as_of=as_of, frame=frame)
 
     def salience(

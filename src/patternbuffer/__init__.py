@@ -248,6 +248,10 @@ class World:
     def correlation_conflicts(self, **kw) -> list[dict]:
         return self.registry.correlation_conflicts(**kw)
 
+    # FRAME-SCOPED-IDENTITY-V1 §4 — merged canon closures holding a vetoed pair.
+    def identity_conflicts(self, asserted_as_of: int | None = None) -> list[dict]:
+        return self.registry.identity_conflicts(asserted_as_of=asserted_as_of)
+
     def path(self, a: str, b: str, **kw) -> list[str] | None:
         return self.indexes.path(a, b, **kw)
 
@@ -284,9 +288,11 @@ class World:
 
     def fidelity_audit(self, frame: str = CANON, as_of: float | None = None) -> dict:
         """Structural ingestion-fidelity gaps, derived (INGESTION-FIDELITY-V1).
-        Read-only; run after a build's classification + `truth.scan()` (it never
-        classifies or scans). The engine surfaces gaps; the host joins arc/cast
-        severity and drives targeted re-extraction."""
+        Read-only; run after a build's classification (it never classifies).
+        `open_conflicts` is computed on read for `frame` as of `as_of`
+        (FRAME-SCOPED-IDENTITY-V1 §5) — no `truth.scan()` is needed first. The
+        engine surfaces gaps; the host joins arc/cast severity and drives
+        targeted re-extraction."""
         from patternbuffer.classify import EVENT, STATE
 
         collisions = self.registry.name_collisions(frame=frame, valid_as_of=as_of)
@@ -317,7 +323,7 @@ class World:
         conflicts = [
             {"entity": c.entity, "attribute": c.attribute, "frame": c.frame,
              "kind": c.kind, "assertion_ids": list(c.assertion_ids)}
-            for c in self.truth.open_conflicts()
+            for c in self.truth.open_conflicts(frame=frame, valid_as_of=as_of)
         ]
 
         live = sum(1 for g in collisions if g["live"])

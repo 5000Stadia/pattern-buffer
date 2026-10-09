@@ -78,7 +78,7 @@ def main() -> int:
 
     print("\n4. THE CONTRADICTION THAT SURVIVED")
     print("   Ch.1 says two reactors; Ch.3 says three. Nobody 'fixed' it.")
-    flagged = w.truth.open_conflicts()
+    flagged = w.truth.scan()  # every frame, computed on read (FRAME-SCOPED-IDENTITY-V1 §5)
     for c in flagged[:4]:
         values = [w.buffer.get(a).value for a in c.assertion_ids if w.buffer.get(a)]
         print(f"   OPEN FLAG {c.kind}: {c.entity} · {c.attribute} = {values}")

@@ -29,6 +29,7 @@ from patternbuffer.identity import IdentityRegistry
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    CANON_IDENTITY_EDGES,
     COMPOSITION_FAMILY,
     ID_RE,
     ID_SHAPED_RE,
@@ -197,7 +198,8 @@ _EXTRACT_RULES_FULL = (
     "- ALIASES: attach every referring expression used for an entity as "
     "aliases (e.g. 'the clerk with the tin ear', 'the vault'). When a "
     "previously-seen entity gains a name, keep its id and add the name; if "
-    "you minted a duplicate id for the same individual, emit same_as.\n"
+    "you minted a duplicate id for the same individual, emit same_as on that "
+    "entity's row in frame 'canon' (identity is canon-only).\n"
     "- SPACE: emit connects_to edges for every passage/route the text "
     "describes (stairs, gates, corridors); never invent an edge the text "
     "does not support — vertical proximity is not connectivity.\n"
@@ -293,6 +295,8 @@ SKIP_REASONS = frozenset({
     "same_as_not_canon",                     # GATE-AUTHORITY-V1 §2
     "merge_vetoed",                          # GATE-AUTHORITY-V1 §2
     "invalid_semantics_declaration",         # GATE-AUTHORITY-V1 §5
+    "identity_edge_outside_canon",           # FRAME-SCOPED-IDENTITY-V1 §1 (maybe_same_as,
+                                             # distinct_from; same_as is same_as_not_canon)
 })
 
 
@@ -1158,6 +1162,7 @@ class Ingestor:
         """One item through the gate, in GATE-AUTHORITY-V1 §0's thirteen
         steps: normalize, authority, content checks, canonicalize, the
         inverse swap, mechanism attribute, malformed ids, id-shaped values,
+        canon identity edges outside canon (FRAME-SCOPED-IDENTITY-V1 §1),
         identity / half-life / time / interval / per-edge checks,
         declarations, the main row, its side rows, classification.
         Everything that can refuse the item runs before its first write.
@@ -1274,6 +1279,19 @@ class Ingestor:
                 and ID_SHAPED_RE.match(value) and not ID_RE.fullmatch(value)
                 and self._entity_valued(attribute, family)):
             self._record_skip(entity, attribute, value, "malformed_id")
+            return out
+
+        # FRAME-SCOPED-IDENTITY-V1 §1(a), at the head of step 9: the canon
+        # identity edges are canon-only (identity is canon's; founder decision
+        # 1). On the raw ids, after the authority and malformed-id gates (steps
+        # 2, 7 and 8), before identity resolution; nothing is appended. A raw
+        # `same_as` keeps GATE-AUTHORITY-V1 §2's own refusal at step 11
+        # (`same_as_not_canon`, after its value check) — one refusal path for
+        # it, never two — so this check covers the other two edges. A
+        # perspectival identity belief is an `aka` row in its frame (§1(d)).
+        if (attribute in CANON_IDENTITY_EDGES and attribute != "same_as"
+                and frame != CANON):
+            self._record_skip(entity, attribute, value, "identity_edge_outside_canon")
             return out
 
         # 9. Identity resolution, the decay half-life, time values, interval
@@ -1474,7 +1492,11 @@ class Ingestor:
             # GATE-AUTHORITY-V1 §4: a member that is not a non-empty string is
             # dropped with a receipt; the item's other rows still land.
             if isinstance(alias, str) and alias.strip():
-                self._registry.add_alias(identity_subject, alias, status=status)
+                # FRAME-SCOPED-IDENTITY-V1 §1(c): description is perspectival —
+                # the alias row lands in the item's effective frame, so Alice
+                # may call Bob "the traitor" without canon learning it.
+                self._registry.add_alias(identity_subject, alias, status=status,
+                                         frame=frame)
             else:
                 self._record_skip(identity_subject, "alias", alias, "invalid_alias")
         if row is not None and item.get("correction"):
@@ -1494,6 +1516,16 @@ class Ingestor:
             same_as = str(item["same_as"])
             if not ID_RE.fullmatch(same_as):
                 self._record_skip(identity_subject, "same_as", same_as, "malformed_id")
+            elif frame != CANON:
+                # FRAME-SCOPED-IDENTITY-V1 §1(b): a proposal is a canon identity
+                # edge, and identity is canon's — a non-canon item's key is
+                # receipted, never turned into a canon `maybe_same_as`. The
+                # item's main row is admitted as usual. The receipt is
+                # GATE-AUTHORITY-V1 §2's public contract for any non-canon
+                # `same_as`, raw or side key (pbr's ruling, r2), detail and all.
+                self._record_skip(identity_subject, "same_as", same_as,
+                                  "same_as_not_canon",
+                                  detail={"field": "frame", "value": frame})
             else:
                 self._registry.maybe_same_as(identity_subject, same_as,
                                              evidence="extractor late binding")
