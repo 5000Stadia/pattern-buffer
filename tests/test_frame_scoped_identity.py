@@ -503,3 +503,138 @@ def test_4d_the_read_writes_nothing(world):
     world.porcelain.identity_conflicts()
     world.identity_conflicts(asserted_as_of=head)
     assert world.buffer.head() == head and conn.total_changes == changes
+
+
+# ------------------------- §5 open_conflicts is computed on read, frame-scoped, as-of
+
+
+def _marn_doubts_the_crown(world: World) -> list:
+    """Two kind rows (CONSTITUTIVE by guardrail) in Marn's frame only."""
+    return world.ingest_structured([
+        {"entity": "obj:crown", "attribute": "kind", "value": "crown", "timeless": True},
+        {"entity": "obj:crown", "attribute": "kind", "value": "forgery", "timeless": True},
+    ], frame=MARN)
+
+
+def test_5a_no_scan_needed(world):
+    """5a: without any `truth.scan()`, a `knows:` frame's audit lists its
+    conflict."""
+    _marn_doubts_the_crown(world)
+    conflicts = world.porcelain.fidelity_audit(frame=MARN)["open_conflicts"]
+    assert [(c["entity"], c["attribute"], c["frame"]) for c in conflicts] == [
+        ("obj:crown", "kind", MARN)]
+
+
+def test_5b_a_frame_audit_lists_only_that_frame(world):
+    """5b: after a scan, the canon audit does not list a conflict that exists
+    only in `knows:person:marn`."""
+    _marn_doubts_the_crown(world)
+    world.truth.scan()
+    assert world.porcelain.fidelity_audit(frame="canon")["open_conflicts"] == []
+
+
+def test_5c_never_stale(world):
+    """5c: retract one side and the entry is gone."""
+    rows = _marn_doubts_the_crown(world)
+    world.truth.scan()
+    world.porcelain.retract(rows[1].id, "Marn learned better")
+    assert world.porcelain.fidelity_audit(frame=MARN)["open_conflicts"] == []
+
+
+def test_5d_honest_about_as_of(world):
+    """5d: `kind book @1`, `kind forgery @10`: a conflict at 15, none at 5."""
+    world.ingest_structured([
+        {"entity": "obj:ledger", "attribute": "kind", "value": "book", "valid_from": 1.0},
+        {"entity": "obj:ledger", "attribute": "kind", "value": "forgery", "valid_from": 10.0},
+    ])
+    world.truth.scan()
+    assert world.porcelain.fidelity_audit(as_of=5.0)["open_conflicts"] == []
+    late = world.porcelain.fidelity_audit(as_of=15.0)["open_conflicts"]
+    assert [(c["entity"], c["attribute"]) for c in late] == [("obj:ledger", "kind")]
+
+
+def test_5e_anchor_matches_its_stored_flags(tmp_path):
+    """5e: on the anchor example world, `open_conflicts(frame="canon")` equals
+    the 8 rows its retired `sidecar_conflicts` table stores, field for field —
+    under the fold rules of this build's base.
+
+    The stored flags predate FOLD-CORRECTNESS-V1 (batch A, in this base; the
+    spec verified 5e at 212754f, before it). Its §4 puts evidence rank first
+    in every durability class, so `a:457` — an `inferred` row beside four
+    `stated` ones on place:anchor · discrepancy_origin_era — is out-ranked and
+    no longer party to that conflict. Every other field is the stored one."""
+    world = _open_copy(ANCHOR, tmp_path)
+    try:
+        stored = world.buffer.raw_connection().execute(
+            "SELECT key_entity, key_attribute, key_frame, kind, assertion_ids"
+            " FROM sidecar_conflicts ORDER BY key_entity").fetchall()
+        assert len(stored) == 8
+        outranked = {"a:457"}
+        assert world.buffer.get("a:457").status == "inferred"
+        expected = [(e, a, f, k, ",".join(i for i in ids.split(",") if i not in outranked))
+                    for e, a, f, k, ids in stored]
+        computed = [(c.entity, c.attribute, c.frame, c.kind, ",".join(c.assertion_ids))
+                    for c in world.truth.open_conflicts(frame="canon")]
+        assert computed == expected
+    finally:
+        world.close()
+
+
+def test_5f_scan_and_audit_write_nothing(world):
+    """5f: `scan()` and `fidelity_audit()` leave the head and every table
+    (log and sidecars) unchanged."""
+    _marn_doubts_the_crown(world)
+    conn = world.buffer.raw_connection()
+    head, changes = world.buffer.head(), conn.total_changes
+    assert len(world.truth.scan()) == 1
+    world.porcelain.fidelity_audit(frame=MARN)
+    world.porcelain.fidelity_audit()
+    assert world.buffer.head() == head and conn.total_changes == changes
+    tables = {r[0] for r in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()}
+    assert "sidecar_conflicts" not in tables                # retired: never created
+
+
+_FRAMES = ("canon", "knows:person:x", "plot:p")
+_KEYS = (("mood", ("calm", "grim")), ("kind", ("box", "urn")),
+         ("in", ("place:a", "place:b")), ("held_by", ("person:x", "person:y")))
+
+
+def test_5_property_open_conflicts_lists_exactly_the_conflicted_keys(tmp_path):
+    """Property (Tests): over small generated worlds, `open_conflicts(F,
+    as_of)` lists exactly the keys whose `state(...)` is `conflicted`."""
+    import random
+
+    # Few entities, three valid times and two documents make ties and
+    # cross-source disagreements common: the 20 worlds hold ~25 conflicts.
+    for seed in range(20):
+        rng = random.Random(seed)
+        w = World(tmp_path / f"p{seed}.world", world_id="w:prop",
+                  model=StubModel(fallback=rule_classifier_fallback()))
+        try:
+            entities = ["obj:o1", "obj:o2", "person:p1"]
+            items = []
+            for _ in range(rng.randint(8, 20)):
+                attribute, values = rng.choice(_KEYS)
+                item = {"entity": rng.choice(entities), "attribute": attribute,
+                        "value": rng.choice(values), "frame": rng.choice(_FRAMES),
+                        "status": rng.choice(["stated", "stated", "observed", "inferred"]),
+                        "valid_from": rng.choice([1.0, 2.0, 5.0])}
+                if rng.random() < 0.5:
+                    item["source_doc"] = rng.choice(["doc:a", "doc:b"])
+                items.append(item)
+            w.ingest_structured(items)
+            if rng.random() < 0.5:
+                w.porcelain.merge("obj:o1", "obj:o2", "one thing")
+            keys = {(w.registry.resolve(e), "in" if a == "held_by" else a)
+                    for e in entities for a, _ in _KEYS}
+            for frame in _FRAMES:
+                for as_of in (None, 1.5, 3.0):
+                    listed = {(c.entity, c.attribute)
+                              for c in w.truth.open_conflicts(frame, valid_as_of=as_of)}
+                    conflicted = {k for k in keys
+                                  if w.porcelain.state(k[0], k[1], frame=frame,
+                                                       as_of=as_of)["status"] == "conflicted"}
+                    assert listed == conflicted, (seed, frame, as_of)
+        finally:
+            w.close()

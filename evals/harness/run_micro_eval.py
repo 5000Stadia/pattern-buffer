@@ -203,7 +203,8 @@ def main() -> int:
         "registry_escapes": escapes, "corrections_promoted": promoted,
         "audit": {"adds": audit_report.applied_adds,
                   "retracts": audit_report.applied_retracts},
-        "open_conflicts": len(world.truth.open_conflicts()),
+        # all frames, computed on read (FRAME-SCOPED-IDENTITY-V1 §5)
+        "open_conflicts": len(world.truth.scan()),
         "timings": timings,
     }
     card = scoring.write(verdicts, meta, run_dir)

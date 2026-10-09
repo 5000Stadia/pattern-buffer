@@ -258,8 +258,9 @@ class Porcelain:
         anchor, each pair annotated with WHY it isn't merged — the coreference-
         fragmentation metric), `unstamped_timed` (classified STATE/EVENT rows off
         the time spine), `orphan_entities` (unanchored obj:/person:),
-        `open_conflicts`, and a `summary` with the headline live-fragmentation
-        count. Read-only; run after seal + `truth.scan()`. The host joins
+        `open_conflicts` (the frame's conflicted folds as of `as_of`, computed
+        on read — FRAME-SCOPED-IDENTITY-V1 §5), and a `summary` with the
+        headline live-fragmentation count. Read-only; run after seal. The host joins
         arc/cast severity and drives targeted re-extraction of the flagged
         spans; the engine surfaces, never repairs (membrane)."""
         return encode_out(self._w.fidelity_audit(frame=frame, as_of=as_of))
