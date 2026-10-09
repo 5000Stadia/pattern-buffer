@@ -1,6 +1,6 @@
 # READ-SURFACE-V1: the porcelain reads what the gate writes
 
-**Status:** r1, built (2026-10-09). Spec pbr GREEN at 9cb2b92; built on batch D
+**Status:** r1.1, built (2026-10-09; r1.1 answers pbr's RED on the build, see the last section). Spec pbr GREEN at 9cb2b92; built on batch D
 (d7ae0bb) on `impl/read-surface-v1`, with C §7's three references amended (C
 shipped without it); the code goes to pbr next. See "Build notes for pbr" at the
 end. Batch E of `docs/AUDIT-2026-10.md`: P1 #10–#12, the batch-E row, and the
@@ -1105,3 +1105,17 @@ under §4's rules, coherence judged against built-in arity (§1/§2), and the
 strict `as_of` predicate (§6). And rule B's one live override of a canon
 binding (above), which rests on default 1. `specs/STATUS.md` and the README's test count
 move at merge, as B, C and D did.
+
+## r1.1: pbr's RED on the build (2026-10-09)
+
+pbr returned the build RED on one point of §7: the physics-row replay check
+validated only the row's frame and value. A dump whose one physics row carried
+`status="retracted"` built; on reopen the row was hidden from every read, so
+the world ran as fiction, while `physics_row_id()` still found it, so the file
+could never record the physics it runs under. The insert validator that
+`append` and `dump.build` share now checks the row's whole shape, the one
+World writes: `stated`, `literal`, timeless (no `valid_from`/`valid_to`), no
+`confidence`, in canon, with a value in `POLICIES`, at most once. One
+parametrized test builds a dump with the row in each wrong shape (two
+statuses, an entity value type, either time, a confidence); each fails to
+build and leaves no file. Nothing else changed.

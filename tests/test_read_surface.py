@@ -1356,6 +1356,31 @@ def test_s7_o7g_dump_build_keeps_physics_and_rejects_two_rows(tmp_path):
     assert not target.exists()
 
 
+@pytest.mark.parametrize("field,bad", [
+    ("status", "retracted"), ("status", "inferred"), ("value_type", "entity"),
+    ("valid_from", 1.0), ("valid_to", 2.0), ("confidence", 0.5),
+])
+def test_s7_dump_build_checks_the_physics_rows_whole_shape(tmp_path, field, bad):
+    """READ-SURFACE-V1 §7, pbr RED on the build: replay checked only the physics
+    row's frame and value, so a dump whose one physics row was `retracted` built,
+    hid the row from every read (the world reopened as fiction) while
+    physics_row_id() still found it, and the file could never record its physics
+    again. The row has one shape (stated, literal, timeless, no confidence); a
+    dump carrying it in any other fails to build, and its file is removed."""
+    w = _tracking_world(tmp_path / "t.world", policy=OBSERVE)
+    text = dump(w.buffer)
+    w.close()
+    lines = [json.loads(line) for line in text.splitlines() if line.strip()]
+    phys = [r for r in lines if r.get("entity") == "attr:__world__"
+            and r.get("attribute") == "resolution_policy"]
+    assert len(phys) == 1 and field in phys[0]
+    phys[0][field] = bad
+    target = tmp_path / "bad.world"
+    with pytest.raises(ValueError, match="physics row"):
+        build("\n".join(json.dumps(r) for r in lines) + "\n", target)
+    assert not target.exists()
+
+
 class _Captured(Exception):
     pass
 

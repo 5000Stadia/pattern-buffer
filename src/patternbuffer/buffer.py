@@ -472,13 +472,26 @@ class PatternBuffer:
         """The physics row is immutable (READ-SURFACE-V1 §7), checked in the
         insert validator `append` and `dump.build` share, so a tampered dump
         fails to build: at most one physics row per log, only in canon, only
-        with a value in POLICIES — and no `retracts` row may target it (a
+        in the shape World writes (stated, literal, timeless, no confidence),
+        only with a value in POLICIES — and no `retracts` row may target it (a
         hidden physics row would leave the world unable to record its own).
         Raises ValueError; a no-op for any other row."""
         if row.entity == WORLD_PHYSICS_SUBJECT and row.attribute == RESOLUTION_POLICY:
             if row.frame != CANON:
                 raise ValueError(
                     f"the world's physics row lives in canon only (got frame {row.frame!r})")
+            # The whole shape World writes, not just its frame and value (pbr,
+            # on the build): a row replayed with another status — `retracted`
+            # hides it from every read while physics_row_id() still finds it —
+            # or with a time or a confidence is not the world's physics.
+            if (row.status != "stated" or row.value_type != "literal"
+                    or row.valid_from is not None or row.valid_to is not None
+                    or row.confidence is not None):
+                raise ValueError(
+                    "the world's physics row is stated, literal and timeless, "
+                    f"with no confidence (got status={row.status!r}, "
+                    f"value_type={row.value_type!r}, valid_from={row.valid_from!r}, "
+                    f"valid_to={row.valid_to!r}, confidence={row.confidence!r})")
             if not isinstance(row.value, str) or row.value not in POLICIES:
                 raise ValueError(
                     f"the world's physics row must name a policy in "
