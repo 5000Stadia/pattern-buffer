@@ -414,3 +414,82 @@ def test_s2_byte_identical_classified_single_id_event(world):
     assert p.events(until=4.5) == [bell]
     assert p.events(since=5.0, until=5.0) == [walk]
     assert p.events(kind="moved", participants=["person:mara"]) == [walk]
+
+
+# ===================================================== §3 in_transit() reads records
+
+
+def test_s3_o3a_one_parse(world):
+    """§3 O3a (EV5): a move whose origin is asserted twice at one stamp (hall,
+    then barn): events() and in_transit() both say barn."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, [{"entity": "place:barn", "attribute": "kind", "value": "barn",
+                 "timeless": True}])
+    _ingest(w, _walk())
+    _ingest(w, [{"entity": "event:walk_1", "attribute": "origin", "value": "place:barn",
+                 "value_type": "entity", "valid_from": 5.0}])
+    p = w.porcelain
+    assert [e["origin"] for e in p.events()] == ["place:barn"]
+    assert [m["origin"] for m in p.in_transit()] == ["place:barn"]
+    assert [m["origin"] for m in w.in_transit(as_of=6.0)] == ["place:barn"]
+
+
+def test_s3_o3b_moved_event_oracles_unchanged(world):
+    """§3 O3b: MOVED-EVENT-V1's oracles 5e, 6a-6c, 11 and 11a pass unchanged
+    (tests/test_moved_event.py). Representative here: 6b's boundary — a closed
+    move [10,20] is in transit strictly inside and stops at valid_to — and the
+    fixed five-key shape."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, [
+        *_walk("event:i1", t=10.0, valid_to=20.0),
+        {"entity": "person:mara", "attribute": "in", "value": "place:yard",
+         "value_type": "entity", "valid_from": 20.0},
+    ])
+    assert w.in_transit(agent="person:mara", as_of=9.0) == []
+    [rec] = w.in_transit(agent="person:mara", as_of=15.0)
+    assert rec == {"agent": "person:mara", "origin": "place:hall",
+                   "destination": "place:yard", "manner": None,
+                   "last_known_containment": "place:hall"}
+    assert w.in_transit(agent="person:mara", as_of=20.0) == []
+    assert w.in_transit() == []                    # closed: never open at as_of=None
+
+
+def test_s3_o3c_in_transit_as_of_a_log_position(world):
+    """§3 O3c: in_transit(asserted_as_of=H) with H before the move's rows gives
+    []; at the head, the move. World and porcelain signatures stay identical,
+    `asserted_as_of` appended last."""
+    import inspect
+    w = world
+    _seed_rooms(w)
+    h = w.buffer.head()
+    _ingest(w, _walk())
+    p = w.porcelain
+    assert p.in_transit(asserted_as_of=h) == []
+    assert p.in_transit(as_of=6.0, asserted_as_of=h) == []
+    assert [m["agent"] for m in p.in_transit(asserted_as_of=w.buffer.head())] == [
+        "person:mara"]
+    assert [m["agent"] for m in p.in_transit(as_of=6.0)] == ["person:mara"]
+    world_sig = inspect.signature(w.in_transit)
+    porcelain_sig = inspect.signature(p.in_transit)
+    assert list(world_sig.parameters) == list(porcelain_sig.parameters) == [
+        "agent", "as_of", "frame", "asserted_as_of"]
+    assert porcelain_sig.parameters["asserted_as_of"].default is None
+    from patternbuffer.mcp import build_registry
+    schema = build_registry()["in_transit"]["inputSchema"]["properties"]
+    assert schema["asserted_as_of"] == {"type": ["integer", "null"]}
+
+
+def test_s3_the_containment_comparison_runs_as_of_the_log(world):
+    """§3: the containment comparison also runs at `asserted_as_of` — an
+    arrival written after H does not end the move in a read as of H."""
+    w = world
+    _seed_rooms(w)
+    _ingest(w, _walk())
+    h = w.buffer.head()
+    _ingest(w, [{"entity": "person:mara", "attribute": "in", "value": "place:yard",
+                 "value_type": "entity", "valid_from": 5.0}])
+    assert w.porcelain.in_transit() == []                       # arrived
+    assert [m["last_known_containment"] for m in w.porcelain.in_transit(
+        asserted_as_of=h)] == ["place:hall"]

@@ -965,13 +965,18 @@ class Porcelain:
         return encode_out(out)
 
     def in_transit(self, agent: str | None = None, as_of: float | None = None,
-                   frame: str = CANON) -> list[dict]:
+                   frame: str = CANON, asserted_as_of: int | None = None) -> list[dict]:
         """Open moved events whose agent has not yet arrived (MOVED-EVENT-V1 § E2).
         Each result is `{agent, origin, destination, manner,
         last_known_containment}`; `last_known_containment` is the resolved
         containment value (place id) or `None`. Identical signature to
-        `World.in_transit`; the porcelain result is `encode_out`-encoded."""
-        return encode_out(self._w.in_transit(agent=agent, as_of=as_of, frame=frame))
+        `World.in_transit`; the porcelain result is `encode_out`-encoded.
+
+        It reads `events()`'s records and parse (EVENTS-ONE-READER-V1 §3), so
+        the two agree on a move's endpoints; `asserted_as_of` reads the log as
+        it stood at that position."""
+        return encode_out(self._w.in_transit(agent=agent, as_of=as_of, frame=frame,
+                                             asserted_as_of=asserted_as_of))
 
     def who_knows(self, entity: str, attribute: str, value: Any = None,
                   as_of: float | None = None,
