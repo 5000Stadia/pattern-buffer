@@ -88,7 +88,7 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 - [~] R19 Batch E, the additive read surface: construct's three asks (`specs/READ-SURFACE-V1.md`; spec pbr GREEN; built on D as `impl/read-surface-v1`; code in pbr review)
 - [~] R20 Ship notices to construct as each batch lands; construct repairs its worlds with the holds/wearing recipe (live player worlds are Kabe's call; construct brings him the list) (`docs/ADOPTION.md` "Inverse predicates"). A and R14 noticed 2026-10-09; construct's 1,542 tests green on them, nothing to re-baseline. B noticed 2026-10-09; construct green on it (1,544 tests) after a one-line fix to its private-API test patch. C noticed 2026-10-09; construct green on it (1,544 tests); it confirms thedeep's chen/elias_chen with the g698a80 repairs. D noticed 2026-10-09; construct green on it (1,544 tests), watching the cost of re-judging ambiguous references in its latency work
 - [ ] R21 P2 structure: one merge-veto gate table, one rows-between scan, `indexes.py` split behind its facade, the classifier rubric unified (`docs/AUDIT-2026-10.md` "P2")
-- [~] R22 `events()` from one reader, shared with `in_transit`; `state()` on event entities (`specs/EVENTS-ONE-READER-V1.md` on `spec/events-one-reader-v1`; spec pbr GREEN, construct's consult folded in; built after B–E land)
+- [~] R22 `events()` from one reader, shared with `in_transit`; `state()` on event entities (`specs/EVENTS-ONE-READER-V1.md`; spec pbr GREEN, construct's consult folded in; building on E as `impl/events-one-reader-v1`)
 
 ## M3 — Book in, world out
 
