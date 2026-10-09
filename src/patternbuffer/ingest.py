@@ -34,9 +34,11 @@ from patternbuffer.model import (
     ID_RE,
     ID_SHAPED_RE,
     MECHANISM_ATTRIBUTES,
+    RESOLUTION_POLICY,
     SEMANTICS_PREDICATES,
     TASK_EXTRACT,
     VALUE_TYPES,
+    WORLD_PHYSICS_SUBJECT,
     Assertion,
     task_schema,
 )
@@ -1135,7 +1137,18 @@ class Ingestor:
         3. **Letter 029, for `generated`.** Never canon or `knows:*`, a
            resolver must be wired, and no side field whose row would carry
            no frame (`aliases_given` is judged on the value the host sent,
-           before normalization); then resolver authority."""
+           before normalization); then resolver authority.
+
+        Before all three, an item addressing the world's physics row
+        (READ-SURFACE-V1 §7) raises ValueError: only World writes it, once,
+        and it is immutable."""
+        entity, attribute = item.get("entity"), item.get("attribute")
+        if (entity == WORLD_PHYSICS_SUBJECT and isinstance(attribute, str)
+                and self._canonicalize(attribute)[0] == RESOLUTION_POLICY):
+            raise ValueError(
+                "the world's physics row (attr:__world__ · resolution_policy) "
+                "is written once by World and is immutable; a world that needs "
+                "other physics is a new world")
         status = item["status"]
         if status != "generated":
             self._role.check(status)

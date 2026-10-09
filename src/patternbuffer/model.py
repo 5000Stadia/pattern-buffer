@@ -49,6 +49,22 @@ SEMANTICS_PREDICATES = frozenset(
 )
 INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from", "aka"}
 
+# The resolution policies — the world's one switch (whitepaper §8). Defined
+# here so the buffer can validate the physics row without importing the
+# resolver; `thunks` re-exports them.
+INVENT_UNDER_CANON = "invent_under_canon"
+OBSERVE_OR_UNKNOWN = "observe_or_unknown"
+DENY = "deny"
+POLICIES = frozenset({INVENT_UNDER_CANON, OBSERVE_OR_UNKNOWN, DENY})
+
+# The world's physics row (READ-SURFACE-V1 §7): `attr:__world__ ·
+# resolution_policy · <policy>`, canon, timeless, stated, CONSTITUTIVE, written
+# once by World and immutable after. `attr:__world__` already carries the
+# world's decay default (TRACKING-MODE-V1), so a world's physics live together,
+# outside every world-fact read (`attr:` subjects are excluded everywhere).
+WORLD_PHYSICS_SUBJECT = "attr:__world__"
+RESOLUTION_POLICY = "resolution_policy"
+
 # The canon identity edges (FRAME-SCOPED-IDENTITY-V1): the rows that make,
 # propose or forbid a merge. Identity is canon's — which ids are one thing is
 # one fact about the world, not a belief — so these are written and read in

@@ -27,6 +27,7 @@ from typing import Any
 
 from patternbuffer import AtomicAbort, World
 from patternbuffer.codec import encode_out
+from patternbuffer.model import POLICIES
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +310,13 @@ def main(argv: list[str] | None = None) -> int:
                         help="the world's id (env PATTERNBUFFER_WORLD_ID); "
                              "required — a mismatch against an existing file "
                              "fails loudly (WorldMismatch)")
+    parser.add_argument("--policy", choices=sorted(POLICIES),
+                        default=os.environ.get("PATTERNBUFFER_POLICY"),
+                        help="the world's resolution policy (env "
+                             "PATTERNBUFFER_POLICY). Absent, the physics the "
+                             "world stores apply; a fresh world records it, and "
+                             "a mismatch against an existing world fails loudly "
+                             "(WorldPhysicsMismatch, READ-SURFACE-V1 §7)")
     args = parser.parse_args(argv)
     if not args.world or not args.world_id:
         parser.error("--world and --world-id are both required "
@@ -318,7 +326,8 @@ def main(argv: list[str] | None = None) -> int:
     except ImportError:
         parser.error("the MCP SDK is not installed — pip install 'pbuffer[mcp]'")
 
-    world = World(args.world, world_id=args.world_id)   # no model callable
+    world = World(args.world, world_id=args.world_id,   # no model callable
+                  policy=args.policy)
     server = build_server(world)
 
     import anyio

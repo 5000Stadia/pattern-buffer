@@ -20,9 +20,11 @@ from patternbuffer.model import (
     ASSERTION_ID_RE,
     ATTR_PREFIX,
     META_ATTRIBUTES,
+    RESOLUTION_POLICY,
     SEMANTICS_PREDICATES,
     TASK_CLASSIFY,
     TASK_CLASSIFY_BATCH,
+    WORLD_PHYSICS_SUBJECT,
     Assertion,
     task_schema,
 )
@@ -152,6 +154,8 @@ class Classifier:
             # stop above; this catches the durability pin's own row, whose
             # predicate is also an ordinary domain word (not META).
             return EVENT, 1.0
+        if row.entity == WORLD_PHYSICS_SUBJECT and row.attribute == RESOLUTION_POLICY:
+            return CONSTITUTIVE, 1.0  # READ-SURFACE-V1 §7 step 6: the world's physics
         if row.value_type == "unresolved":
             return STATE, 1.0  # a thunk occupies its key like mutable state
         pin = self._semantics.durability_pin(row.attribute)
