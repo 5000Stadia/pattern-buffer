@@ -44,6 +44,7 @@ class Receipt:
     warnings: list[str] = field(default_factory=list)
     # INGEST-HARDENING-V1 Part B: edges skipped at the gate (cycle / self-edge /
     # lateral self-loop) — the host audits exactly what was dropped (no silent cap).
+    # A record may carry `detail` (FOLD-CORRECTNESS-V1 §6: the bad time value).
     skipped: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -329,11 +330,7 @@ class Porcelain:
                 f"frame={frame!r} filled only unframed items; {kept_own} item(s) "
                 "kept their own frame key (frame= is a default, not an override "
                 "— strip item frames to re-target wholesale)")
-        receipt.skipped = [
-            {"entity": s.entity, "attribute": s.attribute,
-             "value": encode_out(s.value), "reason": s.reason}
-            for s in self._w.ingestor.last_skipped
-        ]
+        receipt.skipped = [s.to_dict() for s in self._w.ingestor.last_skipped]
         return receipt
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON) -> dict:
@@ -368,11 +365,7 @@ class Porcelain:
         rows = self._w.commit_set(ops, classify=classify, frame=frame,
                                   cursor_authoritative=cursor_authoritative)
         receipt = self._receipt(rows)
-        receipt.skipped = [
-            {"entity": s.entity, "attribute": s.attribute,
-             "value": encode_out(s.value), "reason": s.reason}
-            for s in self._w.ingestor.last_skipped
-        ]
+        receipt.skipped = [s.to_dict() for s in self._w.ingestor.last_skipped]
         return receipt
 
     # --------------------------------------------------- reads (LLM-free)

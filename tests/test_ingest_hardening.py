@@ -6,9 +6,11 @@ classify_inline=False + classify_all recipe). Part B — a single structurally-
 invalid edge is skipped with a typed receipt, not aborting the chunk.
 """
 
+import math
+
 import pytest
 
-from patternbuffer import World
+from patternbuffer import AtomicAbort, World
 from patternbuffer.testing import StubModel, rule_classifier_fallback
 
 
@@ -280,3 +282,91 @@ def test_last_skipped_resets_each_call(world):
     ])
     assert r.skipped == []                               # reset; no stale carryover
     assert world.ingestor.last_skipped == []
+
+
+# ------------------------- FOLD-CORRECTNESS-V1 §6: time values are numbers
+
+@pytest.mark.parametrize("field", ["valid_from", "valid_to"])
+@pytest.mark.parametrize("bad", ["spring 1660", float("nan"), float("inf"), True],
+                         ids=["text", "nan", "inf", "bool"])
+def test_invalid_time_value_is_skipped_with_a_receipt(world, bad, field):
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:anne", "attribute": "in", "value": "place:hall",
+         "valid_from": 1.0},
+        {"entity": "person:anne", "attribute": "in", "value": "place:garden",
+         "valid_from": 2.0, field: bad},
+    ])
+    assert len(r.skipped) == 1
+    s = r.skipped[0]
+    assert s["reason"] == "invalid_valid_time"
+    assert (s["entity"], s["attribute"], s["value"]) == ("person:anne", "in", "place:garden")
+    if isinstance(bad, float) and math.isnan(bad):
+        assert math.isnan(s["detail"])
+    else:
+        assert s["detail"] == bad and type(s["detail"]) is type(bad)
+    assert not [row for row in world.buffer.all_rows() if row.value == "place:garden"]
+    # reads on the key keep working (today: a text valid_from was admitted
+    # and crashed state/locate/snapshot; NaN was stored as NULL — timeless)
+    assert world.state("person:anne", "in").winner.value == "place:hall"
+    assert world.locate("person:anne") == ["place:hall"]
+    assert world.porcelain.snapshot("person:anne")["facts"]
+
+
+def test_integer_year_is_admitted(world):
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:anne", "attribute": "in", "value": "place:hall",
+         "valid_from": 1660},
+    ])
+    assert r.skipped == []
+    assert world.state("person:anne", "in").winner.valid_from == 1660
+    assert world.locate("person:anne", valid_as_of=1661) == ["place:hall"]
+
+
+def test_invalid_time_value_aborts_an_atomic_set(world):
+    head = world.buffer.head()
+    with pytest.raises(AtomicAbort) as exc:
+        world.porcelain.ingest_structured([
+            {"entity": "person:anne", "attribute": "in", "value": "place:hall",
+             "valid_from": 1.0},
+            {"entity": "person:anne", "attribute": "in", "value": "place:garden",
+             "valid_from": "spring 1660"},
+        ], classify="rules", atomic=True)
+    assert exc.value.cause == "gate_skip"
+    assert exc.value.skipped == [{
+        "entity": "person:anne", "attribute": "in", "value": "place:garden",
+        "reason": "invalid_valid_time", "detail": "spring 1660"}]
+    assert world.buffer.head() == head               # nothing committed
+
+
+def test_cursor_authoritative_text_time_is_demoted_not_skipped(world):
+    # The check runs AFTER cursor stamping: a cursor-authoritative build keeps
+    # its dated text losslessly in source_valid_from, as before.
+    world.ingestor.cursor.advance(3.0)
+    r = world.porcelain.ingest_structured([
+        {"entity": "person:anne", "attribute": "in", "value": "place:hall",
+         "valid_from": "spring 1660"},
+    ], cursor_authoritative=True)
+    assert r.skipped == []
+    assert world.state("person:anne", "in").winner.valid_from == 3.0
+    assert [row.value for row in world.buffer.all_rows()
+            if row.attribute == "source_valid_from"] == ["spring 1660"]
+
+
+def test_numeric_string_and_oversize_int_times_are_coerced(tmp_path) -> None:
+    """FOLD-CORRECTNESS-V1 pre-review finding 3/nit: "1660" (SQLite used to
+    coerce it silently) and an int past 64 bits are coordinates, not skips."""
+    from patternbuffer import World
+
+    w = World(tmp_path / "t.world", world_id="w:t")
+    try:
+        r = w.porcelain.ingest_structured([
+            {"entity": "person:a", "attribute": "in", "value": "room:x",
+             "valid_from": "1660"},
+            {"entity": "person:b", "attribute": "in", "value": "room:x",
+             "valid_from": 2 ** 70},
+        ], classify="rules")
+        assert r.skipped == []
+        assert w.state("person:a", "in").winner.valid_from == 1660.0
+        assert w.state("person:b", "in").winner.valid_from == float(2 ** 70)
+    finally:
+        w.close()

@@ -33,8 +33,17 @@ from patternbuffer.semantics import AttributeSemantics
 logger = logging.getLogger(__name__)
 
 _FAMILY_KEY = "__containment__"
+_FAMILY_NAME = "in"  # the family's only name outside the engine (FOLD-CORRECTNESS-V1 §7)
 _NEIGHBORHOOD_EDGES = frozenset({"containment", "lateral", "relations", "events"})
 _NEIGHBORHOOD_DEPTH_CAP = 3
+# Evidence rank (the assumption quarantine, generalized): provisional classes
+# never hold incumbency against authoritative ones — an authored/observed fact
+# arriving over a character's inference or a working assumption is
+# confirmation or correction, never a conflict to ask about. Peers ({stated,
+# observed}) keep the full corroborate-vs-flag machinery. (Found by
+# chapter-test run 3: a narrator's wrong `inferred` theory outheld later
+# `stated` canon.) Governs every durability class (FOLD-CORRECTNESS-V1 §4).
+_EVIDENCE_RANK = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
 CONFIDENCE_PARAMS = {
     # CONFIDENCE-V1: fixed, tunable read-layer weights. These scores are
     # derived on demand and are never stored in the assertion log or sidecar.
@@ -204,7 +213,47 @@ class Indexes:
         return "direct"
 
     @staticmethod
-    def _values_agree(old: object, new: object) -> bool:
+    def _recency_key(row: Assertion) -> tuple[float, int]:
+        """The one recency order every fold and pick uses (FOLD-CORRECTNESS-V1
+        §1): valid time, then log order; a timeless row sorts before every
+        timed one. `0.0` IS a time — the scene cursor starts there — so the
+        old `valid_from or -inf` spelling read the commonest stamp as "no
+        time" and let a flashback at −10 outrank the present."""
+        return (
+            row.valid_from if row.valid_from is not None else float("-inf"),
+            row.asserted_at,
+        )
+
+    @staticmethod
+    def _top_evidence(rows: list[Assertion]) -> list[Assertion]:
+        """The rows at the best evidence rank present (`_EVIDENCE_RANK`), in
+        their given order — the first filter of every durability class's fold
+        (FOLD-CORRECTNESS-V1 §4)."""
+        top = max(_EVIDENCE_RANK.get(r.status, 0) for r in rows)
+        return [r for r in rows if _EVIDENCE_RANK.get(r.status, 0) == top]
+
+    def _value_key(self, row: Assertion) -> tuple[str, object]:
+        """The one value identity every tie test compares (FOLD-CORRECTNESS-V1
+        §2) — the CONSTITUTIVE comparator (Cx 065), lifted: an entity value
+        is its resolved identity, so two rows naming one later-merged thing
+        are one value; anything else compares by its exact repr."""
+        if row.value_type == "entity" and isinstance(row.value, str):
+            return ("entity", self._resolve(row.value))
+        return ("literal", repr(row.value))
+
+    def _values_agree(self, old: Assertion, new: Assertion) -> bool:
+        """Does `new` agree with `old` — the cross-source corroboration test.
+        Two entity-valued rows agree iff they name one identity
+        (FOLD-CORRECTNESS-V1 §2: once merged, `obj:purse` and `obj:pouch` are
+        one value, not a disagreement); otherwise it stays directional on the
+        literal values (`_refines`)."""
+        if (old.value_type == "entity" and new.value_type == "entity"
+                and isinstance(old.value, str) and isinstance(new.value, str)):
+            return self._resolve(old.value) == self._resolve(new.value)
+        return self._refines(old.value, new.value)
+
+    @staticmethod
+    def _refines(old: object, new: object) -> bool:
         """Equal, or `new` refines an explicitly approximate `old`
         ({'gte': x} / {'lte': x} / {'approx': x}) — spec §7. When `new` is
         an exact Decimal, bounds coerce via Decimal(str(...)) for the
@@ -458,22 +507,27 @@ class Indexes:
         if self._semantics.is_set_valued(attribute):
             return self._fold_set_valued(candidates)
 
-        by_class = {STATE: [], DISPOSITIONAL: [], CONSTITUTIVE: []}
+        constitutive: list[Assertion] = []
+        standing: list[Assertion] = []   # STATE ∪ DISPOSITIONAL, in log order
         for row in candidates:
-            by_class.setdefault(self._classifier.durability(row.id), []).append(row)
+            durability = self._classifier.durability(row.id)
+            if durability == CONSTITUTIVE:
+                constitutive.append(row)
+            elif durability in (STATE, DISPOSITIONAL):
+                standing.append(row)
 
         # CONSTITUTIVE outranks: structure is never superseded by recency.
-        if by_class[CONSTITUTIVE]:
-            rows = by_class[CONSTITUTIVE]
+        if constitutive:
+            # FOLD-CORRECTNESS-V1 §4: evidence rank first, as in every class —
+            # a later stated `kind` overrides an earlier inferred one (the
+            # earliest row used to serve whatever its evidence). Within the top
+            # rank, structure still outranks recency: the earliest serves.
+            rows = self._top_evidence(constitutive)
             # Identity-aware value identity (Cx 065): entity-valued CONSTITUTIVE
             # rows that point to a later-MERGED whole are NOT a conflict — resolve
             # before comparing, so a `part_of` (or place containment) edge to
             # h1/h1_alias collapses once they are same_as. Literals compare raw.
-            def _value_key(r: Assertion):
-                if r.value_type == "entity" and isinstance(r.value, str):
-                    return ("entity", self._resolve(r.value))
-                return ("literal", repr(r.value))
-            values = {_value_key(r) for r in rows}
+            values = {self._value_key(r) for r in rows}
             earliest = min(rows, key=lambda r: r.asserted_at)
             if len(values) > 1:
                 return FoldResult(
@@ -483,15 +537,17 @@ class Indexes:
                 )
             return FoldResult(winner=earliest)
 
-        if by_class[STATE]:
+        if standing:
+            # FOLD-CORRECTNESS-V1 §4: STATE and DISPOSITIONAL fold together
+            # through one rank, source-class and recency machinery. The old
+            # DISPOSITIONAL branch skipped rank and §7.2 (a later inferred habit
+            # replaced a stated one; two sources disagreeing never flagged), and
+            # any STATE row on the key hid every DISPOSITIONAL one whatever the
+            # times. A timeless habit still yields to a timed STATE row of its
+            # class (None sorts first); a timed one now competes on recency.
             return self._fold_state(
-                by_class[STATE], asserted_as_of, is_containment=(fa == _FAMILY_KEY)
+                standing, asserted_as_of, is_containment=(fa == _FAMILY_KEY)
             )
-
-        if by_class[DISPOSITIONAL]:
-            rows = by_class[DISPOSITIONAL]
-            winner = max(rows, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
-            return FoldResult(winner=winner)
         return FoldResult(winner=None)
 
     def state_union(
@@ -677,11 +733,7 @@ class Indexes:
         if not folds:
             return self._empty_confidence()
 
-        def recency_key(fold: FoldResult) -> tuple[float, int]:
-            w = fold.winner
-            return (w.valid_from if w.valid_from is not None else float("-inf"), w.asserted_at)
-
-        winner = max(folds, key=lambda ff: recency_key(ff[1]))[1].winner
+        winner = max(folds, key=lambda ff: self._recency_key(ff[1].winner))[1].winner
 
         # Conflict: any per-frame conflict, or two frames' winners disagree
         # (strict, entity-resolved — the effective belief is contested).
@@ -777,12 +829,7 @@ class Indexes:
         """Accrue quantities: latest absolute numeric baseline plus later
         signed numeric deltas. The ledger is provenance-only; the derived
         quantity is surfaced separately from stored facts."""
-        def recency(row: Assertion) -> tuple[float, int]:
-            return (
-                row.valid_from if row.valid_from is not None else float("-inf"),
-                row.asserted_at,
-            )
-
+        recency = self._recency_key
         literals = [
             r for r in rows
             if r.value_type == "literal" and self._is_numeric(r.value)
@@ -829,8 +876,7 @@ class Indexes:
         member's own (entity, attribute, value-identity) key. The served
         winner remains the most-recent current member for compatibility.
         """
-        def recency(row: Assertion) -> tuple[float, int]:
-            return (row.valid_from if row.valid_from is not None else float("-inf"), row.asserted_at)
+        recency = self._recency_key
 
         def value_identity(row: Assertion) -> tuple[str, object]:
             if row.value_type == "entity" and isinstance(row.value, str):
@@ -855,7 +901,8 @@ class Indexes:
         self, rows: list[Assertion], asserted_as_of: int | None,
         is_containment: bool = False,
     ) -> FoldResult:
-        """STATE: recency wins within a source class; across classes,
+        """STATE ∪ DISPOSITIONAL (FOLD-CORRECTNESS-V1 §4): the top evidence
+        rank only; recency wins within a source class; across classes,
         agreement corroborates (serve the more precise value), disagreement
         flags and keeps serving the prior in-class winner (spec §7).
 
@@ -863,30 +910,71 @@ class Indexes:
         family, relocation is inherently time-sequential — a later move
         supersedes an earlier placement across source classes, instead of
         raising the §7.2 cross-source flag. A genuine same-valid-time
-        cross-source disagreement still flags."""
-        # Evidence rank (the assumption quarantine, generalized): provisional
-        # classes never hold incumbency against authoritative ones — an
-        # authored/observed fact arriving over a character's inference or a
-        # working assumption is confirmation or correction, never a conflict
-        # to ask about. Peers ({stated, observed}) keep the full
-        # corroborate-vs-flag machinery below. (Found by chapter-test run 3:
-        # a narrator's wrong `inferred` theory outheld later `stated` canon.)
-        rank = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
-        top = max(rank.get(r.status, 0) for r in rows)
-        rows = [r for r in rows if rank.get(r.status, 0) == top]
+        cross-source disagreement still flags. A class's same-time tie is a
+        contradiction only while it is the latest word: a later move from
+        any class supersedes it (FOLD-CORRECTNESS-V1 §3)."""
+        rows = self._top_evidence(rows)
 
         by_source: dict[str, list[Assertion]] = {}
         for r in rows:
             by_source.setdefault(self._source_class(r, asserted_as_of), []).append(r)
+
+        if is_containment:
+            # Movement is time-sequential: the latest-valid move supersedes
+            # earlier placements across source classes (HD 002 finding 2).
+            # FOLD-CORRECTNESS-V1 §3: every class contributes the rows at its
+            # OWN latest valid_from (one row, or a tied set) and only rows at
+            # the overall latest one are current. A class's same-time tie used
+            # to return before the other classes were heard, so one gossip
+            # line placing p in two rooms at t=1 outvoted every later narrated
+            # move. Only a disagreement AMONG the current rows contradicts —
+            # serve earliest-asserted, flag them all. With one class this is
+            # exactly the in-class tie rule below.
+            contributed: list[Assertion] = []
+            for rs in by_source.values():
+                latest = max(rs, key=self._recency_key)
+                contributed += [r for r in rs if r.valid_from == latest.valid_from]
+            top = max(contributed, key=self._recency_key)
+            current = sorted(
+                (r for r in contributed if r.valid_from == top.valid_from),
+                key=lambda r: r.asserted_at,
+            )
+            # At one instant a STATE row is "right now" and a habit stamped
+            # with it is "tends to" — not a contradiction (whitepaper §5/§14):
+            # STATE outranks, and only STATE rows can contradict each other
+            # (pre-review finding 2).
+            state_now = [r for r in current
+                         if self._classifier.durability(r.id) == STATE]
+            if state_now:
+                current = state_now
+                if len({self._value_key(r) for r in current}) > 1:
+                    return FoldResult(
+                        winner=current[0],
+                        conflicted=True,
+                        conflicting=tuple(r.id for r in current),
+                    )
+            return FoldResult(winner=current[-1])
+
         winners: dict[str, Assertion] = {}
         for sc, rs in by_source.items():
-            top = max(rs, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+            top = max(rs, key=self._recency_key)
             # Supersession requires world-time progression: rows tied at the
             # winner's valid_from with a DIFFERENT value are a simultaneous
             # contradiction, not an update — flag, serve earliest-asserted
-            # (run-4 finding: log order alone must never pick a truth).
+            # (run-4 finding: log order alone must never pick a truth). Values
+            # compare by identity (FOLD-CORRECTNESS-V1 §2), never raw text.
+            # Outside the containment family this still ends the fold: across
+            # classes such a key flags under §7.2 anyway (§3's non-goal).
             tied = [r for r in rs if r.valid_from == top.valid_from]
-            if len({repr(r.value) for r in tied}) > 1:
+            # A STATE row outranks a habit stamped with it, and habits tied at
+            # one instant coexist (an NPC's drives) — only STATE rows tied
+            # with different values contradict (pre-review finding 2).
+            state_tied = [r for r in tied
+                          if self._classifier.durability(r.id) == STATE]
+            if state_tied:
+                tied = state_tied
+                top = max(tied, key=self._recency_key)
+            if state_tied and len({self._value_key(r) for r in tied}) > 1:
                 earliest = min(tied, key=lambda r: r.asserted_at)
                 return FoldResult(
                     winner=earliest,
@@ -897,28 +985,6 @@ class Indexes:
         if len(winners) == 1:
             return FoldResult(winner=next(iter(winners.values())))
 
-        if is_containment:
-            # Movement is time-sequential: the latest-valid move supersedes
-            # earlier placements across source classes (HD 002 finding 2).
-            # Only a same-latest-valid_from disagreement is a true
-            # contradiction — serve earliest-asserted, flag those rows.
-            top_vf = max(
-                (w.valid_from if w.valid_from is not None else float("-inf"))
-                for w in winners.values()
-            )
-            current = [
-                w for w in winners.values()
-                if (w.valid_from if w.valid_from is not None else float("-inf")) == top_vf
-            ]
-            if len({repr(w.value) for w in current}) > 1:
-                earliest = min(current, key=lambda r: r.asserted_at)
-                return FoldResult(
-                    winner=earliest,
-                    conflicted=True,
-                    conflicting=tuple(sorted(r.id for r in current)),
-                )
-            return FoldResult(winner=max(current, key=lambda r: r.asserted_at))
-
         # Multiple source classes on one key: order in-class winners by
         # arrival; the earliest-arrived class is the incumbent.
         ordered = sorted(winners.values(), key=lambda r: r.asserted_at)
@@ -926,7 +992,7 @@ class Indexes:
         serving = incumbent
         corroborations: list[str] = []
         for challenger in rest:
-            if self._values_agree(serving.value, challenger.value):
+            if self._values_agree(serving, challenger):
                 corroborations.append(challenger.id)
                 serving = challenger  # the refinement is the more precise value
         # SOURCE-IDENTITY-V1 r2 (pbr): the parties are recomputed against the
@@ -944,7 +1010,7 @@ class Indexes:
         # `_values_agree({gte:10}, 12)` holds while `_values_agree(12, {gte:10})`
         # does not. Asking it one way round here would report an approximate
         # row that the served exact value satisfies as a conflicting party.
-        def compatible(a: object, b: object) -> bool:
+        def compatible(a: Assertion, b: Assertion) -> bool:
             return self._values_agree(a, b) or self._values_agree(b, a)
 
         # `corroborated_by` keeps its existing meaning EXACTLY — the challengers
@@ -955,7 +1021,7 @@ class Indexes:
         # conflict parties are recomputed here.
         disagreeing = [
             w.id for w in ordered
-            if w.id != serving.id and not compatible(serving.value, w.value)
+            if w.id != serving.id and not compatible(serving, w)
         ]
         if disagreeing:
             return FoldResult(
@@ -975,7 +1041,8 @@ class Indexes:
         asserted_as_of: int | None = None,
         correlated: bool = False,
     ) -> dict[str, FoldResult]:
-        """All folded keys for one entity (attribute -> result).
+        """All folded keys for one entity (attribute -> result). The
+        containment family is ONE key, named `in` (FOLD-CORRECTNESS-V1 §7).
 
         ``correlated=True`` (AWARENESS-READS-V1.1): discover keys over the
         entity's `aka` correlation union and fold each via `state_union` instead
@@ -1009,7 +1076,11 @@ class Indexes:
                       if correlated
                       else self.fold_key(entity, attr, frame, valid_as_of, asserted_as_of))
             if result.winner is not None:
-                out[self.fold_attribute(attr)] = result
+                # FOLD-CORRECTNESS-V1 §7: `__containment__` is an internal fold
+                # key; at the read boundary the family is named `in` (its
+                # public subject, as decay's `attr:in` already reads it).
+                fa = self.fold_attribute(attr)
+                out[_FAMILY_NAME if fa == _FAMILY_KEY else fa] = result
         return out
 
     # ---------------------------------------------------------------- walks
@@ -1433,6 +1504,9 @@ class Indexes:
         for attr, result in self.current_state(
             entity, frame, valid_as_of, asserted_as_of
         ).items():
+            # The family's key is `in` (FOLD-CORRECTNESS-V1 §7), so it is caught
+            # here; the old `__containment__` key slipped past this skip and
+            # served the containment parent as a "relations" neighbor.
             if attr in skip:
                 continue
             for row in result._value_rows or (

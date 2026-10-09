@@ -249,6 +249,44 @@ class SkipRecord:
     attribute: str
     value: Any
     reason: str
+    # FOLD-CORRECTNESS-V1 §6: the offending input when it is not the row's
+    # value — an `invalid_valid_time` skip carries the bad time coordinate.
+    detail: Any = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """The JSON-ready record a host reads (Receipt.skipped and
+        AtomicAbort.skipped share it). `detail` appears only when set, so
+        every record without one keeps its exact prior shape."""
+        out = {"entity": self.entity, "attribute": self.attribute,
+               "value": encode_out(self.value), "reason": self.reason}
+        if self.detail is not None:
+            out["detail"] = encode_out(self.detail)
+        return out
+
+
+def _time_value(t: Any) -> tuple[bool, float | int | None]:
+    """Validate one stored time coordinate (FOLD-CORRECTNESS-V1 §6): None or a
+    finite real number, never a bool. Text ("spring 1660") was admitted and
+    then crashed every read of its key; NaN was stored as NULL, turning a
+    timed fact silently timeless. Returns (ok, coordinate) — the coordinate is
+    coerced where the value is unambiguous: a numeric string ("1660", which
+    SQLite used to coerce silently) becomes a float, and an int past SQLite's
+    64-bit range becomes a float instead of crashing the insert."""
+    if t is None:
+        return True, None
+    if isinstance(t, str):
+        try:
+            t = float(t.strip())
+        except ValueError:
+            return False, t
+    if isinstance(t, bool) or not isinstance(t, (int, float)):
+        return False, t
+    if isinstance(t, int) and not -(2 ** 63) <= t < 2 ** 63:
+        try:
+            t = float(t)
+        except OverflowError:  # past float range: no coordinate
+            return False, t
+    return math.isfinite(t), t
 
 
 @dataclass
@@ -617,10 +655,7 @@ class Ingestor:
             self._restore_views(snap)
             # §B6: skipped is the non-atomic path's record shape, JSON-ready
             # (encoded value), so it rides the exception AND the MCP wire cleanly.
-            raise AtomicAbort("gate_skip", [
-                {"entity": s.entity, "attribute": s.attribute,
-                 "value": encode_out(s.value), "reason": s.reason}
-                for s in sig.skipped], None)
+            raise AtomicAbort("gate_skip", [s.to_dict() for s in sig.skipped], None)
         except AtomicAbort:
             raise
         except BaseException as exc:
@@ -780,11 +815,13 @@ class Ingestor:
             return f"lateral self-loop: {entity!r} cannot {attribute} itself"
         return None
 
-    def _record_skip(self, entity: str, attribute: str, value: Any, reason: str) -> None:
-        logger.warning("ingest skipped edge: %s · %s · %r — %s",
-                       entity, attribute, value, reason)
+    def _record_skip(self, entity: str, attribute: str, value: Any, reason: str,
+                     detail: Any = None) -> None:
+        logger.warning("ingest skipped edge: %s · %s · %r — %s%s",
+                       entity, attribute, value, reason,
+                       "" if detail is None else f" ({detail!r})")
         if self._skipped is not None:
-            self._skipped.append(SkipRecord(entity, attribute, value, reason))
+            self._skipped.append(SkipRecord(entity, attribute, value, reason, detail))
 
     def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
         out: list[Assertion] = []
@@ -862,12 +899,23 @@ class Ingestor:
             self._record_skip(entity, attribute, value, "invalid_decay_halflife")
             return out
 
+        # FOLD-CORRECTNESS-V1 §6: after cursor stamping, each time coordinate
+        # is None or a finite real number — checked before the interval
+        # invariants, which compare them. Skip-receipted with the offending
+        # value in `detail`; under atomic=True the skip aborts the whole set.
+        ok_from, valid_from = _time_value(None if timeless else valid_from)
+        ok_to, row_valid_to = _time_value(item.get("valid_to"))
+        for ok, coordinate in ((ok_from, valid_from), (ok_to, row_valid_to)):
+            if not ok:
+                self._record_skip(entity, attribute, value, "invalid_valid_time",
+                                  detail=coordinate)
+                return out
+        eff_valid_from = valid_from
+
         # MOVED-EVENT-V1 §B.2: two general interval invariants the log lacked
         # (buffer accepted both shapes). A closing coordinate requires a numeric
         # opening one, and cannot precede it. Skip-receipted, never silently
         # stored; under atomic=True this skip aborts the whole set.
-        eff_valid_from = None if timeless else valid_from
-        row_valid_to = item.get("valid_to")
         if row_valid_to is not None:
             if eff_valid_from is None:
                 self._record_skip(entity, attribute, value, "valid_to_without_valid_from")
@@ -882,7 +930,7 @@ class Ingestor:
         # the chunk still ingests. (Authority failures already raised above.)
         skip = self._edge_skip_reason(
             entity, attribute, value, value_type,
-            item.get("frame", CANON), None if timeless else valid_from,
+            item.get("frame", CANON), eff_valid_from,
         )
         if skip is not None:
             # INGESTION-FIDELITY-V2 §D: two raw ids that resolve to one
@@ -909,8 +957,8 @@ class Ingestor:
             attribute=attribute,
             value=value,
             value_type=value_type,
-            valid_from=None if timeless else valid_from,
-            valid_to=item.get("valid_to"),
+            valid_from=eff_valid_from,
+            valid_to=row_valid_to,
             frame=item.get("frame", CANON),
             status=status,
             confidence=item.get("confidence"),

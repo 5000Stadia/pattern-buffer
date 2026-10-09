@@ -661,3 +661,332 @@ class TestNumericQuantities:
             } == {"master meter", "the master meter"}
         finally:
             w.close()
+
+
+# ------------------------------------------------------- FOLD-CORRECTNESS-V1
+# One set of fold rules across classes, ties and time. Each test is one of
+# the spec's oracles; "today" in a comment names the pre-fix wrong answer.
+
+
+def _fc_world(tmp_path, name="fc"):
+    from patternbuffer import World
+
+    return World(
+        tmp_path / f"{name}.world",
+        world_id=f"w:{name}",
+        model=StubModel(fallback=rule_classifier_fallback()),
+    )
+
+
+class TestOneRecencyKey:
+    """§1: valid time 0.0 is a time, not "no time" (the cursor starts there)."""
+
+    @pytest.mark.parametrize("now_first", [True, False])
+    def test_zero_outranks_a_negative_flashback(self, tmp_path, now_first):
+        w = _fc_world(tmp_path)
+        try:
+            now = {"entity": "person:p", "attribute": "in", "value": "room:now",
+                   "valid_from": 0.0}
+            back = {"entity": "person:p", "attribute": "in", "value": "room:flashback",
+                    "valid_from": -10.0}
+            w.ingest_structured([now, back] if now_first else [back, now])
+            fold = w.state("person:p", "in")
+            # today: room:flashback (0.0 read as -inf, so -10 was "later")
+            assert fold.winner.value == "room:now" and not fold.conflicted
+            assert w.locate("person:p") == ["room:now"]
+        finally:
+            w.close()
+
+    def test_zero_is_a_time_for_establishing_set_and_its_scope_walk(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "room:now", "attribute": "kind", "value": "room",
+                 "timeless": True},
+                {"entity": "room:flashback", "attribute": "kind", "value": "room",
+                 "timeless": True},
+                {"entity": "person:p", "attribute": "in", "value": "room:now",
+                 "valid_from": 0.0},
+                {"entity": "person:p", "attribute": "in", "value": "room:flashback",
+                 "valid_from": -10.0},
+            ])
+            # The world at rest is the FIRST state in valid time: -10 precedes
+            # 0.0. Today both the establishing state and the establishing
+            # containment walk read 0.0 as -inf and picked room:now.
+            m = w.materialize("room:flashback", lens="establishing_set")
+            assert "person:p" in m.scope
+            assert [r.value for r in m.assertions
+                    if r.entity == "person:p" and r.attribute == "in"] == ["room:flashback"]
+            later = w.materialize("room:now", lens="establishing_set")
+            assert "person:p" not in later.scope
+        finally:
+            w.close()
+
+
+class TestOneValueIdentity:
+    """§2: every tie test compares entity values by resolved identity."""
+
+    def test_merged_containers_collapse_a_same_time_tie(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "obj:coin", "attribute": "in", "value": "obj:purse",
+                 "valid_from": 1.0},
+                {"entity": "obj:coin", "attribute": "in", "value": "obj:pouch",
+                 "valid_from": 1.0},
+            ])
+            before = w.state("obj:coin", "in")
+            assert before.conflicted and len(before.conflicting) == 2
+            assert w.registry.merge("obj:purse", "obj:pouch", "one bag, two names")
+            after = w.state("obj:coin", "in")
+            # today: still conflicted — the tie compared raw value text
+            assert not after.conflicted
+            assert w.locate("obj:coin") == [w.registry.resolve("obj:pouch")]
+        finally:
+            w.close()
+
+    def test_entity_values_agree_by_identity_in_and_across_classes(self, tmp_path):
+        """The spec's other two §2 bullets on a non-containment key: the
+        per-class tie, and `_values_agree` across source classes."""
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                # one class, same time: a tie
+                {"entity": "obj:letter", "attribute": "addressed_to",
+                 "value": "person:dan", "valid_from": 1.0},
+                {"entity": "obj:letter", "attribute": "addressed_to",
+                 "value": "person:daniel", "valid_from": 1.0},
+                # two classes: a document and the narration
+                {"entity": "obj:ring", "attribute": "owner", "value": "person:dan",
+                 "valid_from": 1.0, "source_doc": "doc:will"},
+                {"entity": "obj:ring", "attribute": "owner", "value": "person:daniel",
+                 "valid_from": 2.0},
+            ])
+            assert w.state("obj:letter", "addressed_to").conflicted
+            assert w.state("obj:ring", "owner").conflicted
+            assert w.registry.merge("person:dan", "person:daniel", "one man")
+            assert not w.state("obj:letter", "addressed_to").conflicted
+            ring = w.state("obj:ring", "owner")
+            assert not ring.conflicted and ring.corroborated_by == (ring.winner.id,)
+        finally:
+            w.close()
+
+
+class TestStaleTieNeverOutvotesAMove:
+    """§3: in the containment family a source class's stale same-time tie no
+    longer ends the fold before a later move from another class is heard."""
+
+    _GOSSIP = [
+        {"entity": "person:p", "attribute": "in", "value": "room:a", "valid_from": 1.0,
+         "source_doc": "person:gossip"},
+        {"entity": "person:p", "attribute": "in", "value": "room:b", "valid_from": 1.0,
+         "source_doc": "person:gossip"},
+    ]
+    _MOVE = {"entity": "person:p", "attribute": "in", "value": "room:c",
+             "valid_from": 10.0}
+
+    @pytest.mark.parametrize("move_first", [False, True])
+    def test_later_narrated_move_beats_a_stale_gossip_tie(self, tmp_path, move_first):
+        w = _fc_world(tmp_path)
+        try:
+            items = [self._MOVE, *self._GOSSIP] if move_first else [*self._GOSSIP, self._MOVE]
+            w.ingest_structured(items)
+            fold = w.state("person:p", "in")
+            # today: [room:a], conflicted, forever — the gossip tie returned
+            # before the narrator's class was compared
+            assert not fold.conflicted
+            assert w.locate("person:p") == ["room:c"]
+            # the stale tie is still a conflict where it IS the latest word
+            early = w.state("person:p", "in", valid_as_of=5.0)
+            assert early.conflicted and early.winner.value == "room:a"
+        finally:
+            w.close()
+
+    def test_same_time_cross_class_disagreement_at_the_top_still_flags(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                *self._GOSSIP,
+                self._MOVE,
+                {"entity": "person:p", "attribute": "in", "value": "room:d",
+                 "valid_from": 10.0, "source_doc": "doc:ledger"},
+            ])
+            top = {r.id for r in rows if r.attribute == "in" and r.valid_from == 10.0}
+            fold = w.state("person:p", "in")
+            assert fold.conflicted and set(fold.conflicting) == top
+            assert fold.winner.value == "room:c"  # earliest-asserted current row
+        finally:
+            w.close()
+
+
+class TestEvidenceRankEveryClass:
+    """§4: evidence rank governs CONSTITUTIVE and DISPOSITIONAL as it did
+    STATE; STATE ∪ DISPOSITIONAL fold through one machinery."""
+
+    @staticmethod
+    def _dispositional(w, rows, attribute):
+        for row in rows:
+            if row.attribute == attribute:
+                w.classifier.set(row.id, "DISPOSITIONAL")
+
+    def test_later_inferred_disposition_never_replaces_a_stated_one(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:holmes", "attribute": "plays", "value": "violin",
+                 "timeless": True},
+                {"entity": "person:holmes", "attribute": "plays", "value": "cello",
+                 "timeless": True, "status": "inferred"},
+            ])
+            self._dispositional(w, rows, "plays")
+            fold = w.state("person:holmes", "plays")
+            # today: cello — the DISPOSITIONAL branch skipped evidence rank
+            assert fold.winner.value == "violin" and not fold.conflicted
+        finally:
+            w.close()
+
+    def test_promoted_habit_competes_with_state_on_recency(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                *({"entity": "person:dale", "attribute": "mood", "value": "cheerful",
+                   "valid_from": t} for t in (1.0, 2.0, 3.0)),
+                {"entity": "person:dale", "attribute": "mood", "value": "grumpy",
+                 "valid_from": 0.5},
+            ])
+            assert w.classifier.promote_accruals(threshold=3) == 3
+            fold = w.state("person:dale", "mood")
+            # today: grumpy@0.5 — any STATE row hid every DISPOSITIONAL one
+            assert fold.winner.value == "cheerful" and fold.winner.valid_from == 3.0
+            assert not fold.conflicted
+        finally:
+            w.close()
+
+    def test_later_stated_kind_overrides_an_earlier_inferred_one(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "thing:x", "attribute": "kind", "value": "person",
+                 "timeless": True, "status": "inferred"},
+                {"entity": "thing:x", "attribute": "kind", "value": "place",
+                 "timeless": True},
+            ])
+            fold = w.state("thing:x", "kind")
+            # today: person, conflicted — the earliest CONSTITUTIVE row served
+            # whatever its evidence
+            assert fold.winner.value == "place" and not fold.conflicted
+        finally:
+            w.close()
+
+    def test_stated_dispositions_from_two_sources_flag(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:dale", "attribute": "restocks_on", "value": "monday",
+                 "timeless": True, "source_doc": "doc:schedule"},
+                {"entity": "person:dale", "attribute": "restocks_on", "value": "tuesday",
+                 "timeless": True, "source_doc": "person:ann"},
+            ])
+            self._dispositional(w, rows, "restocks_on")
+            fold = w.state("person:dale", "restocks_on")
+            # today: tuesday, silently — the DISPOSITIONAL branch skipped §7.2
+            assert fold.conflicted and len(fold.conflicting) == 2
+            assert fold.winner.value == "monday"  # the incumbent keeps serving
+        finally:
+            w.close()
+
+
+class TestPreReviewRegressions:
+    """FOLD-CORRECTNESS-V1 pre-review (2026-10-08): the two r2 consequences the
+    internal review measured as regressions on real host worlds."""
+
+    @staticmethod
+    def _set(w, rows, attribute, value, durability):
+        for row in rows:
+            if row.attribute == attribute and row.value == value:
+                w.classifier.set(row.id, durability)
+
+    def test_a_state_and_a_habit_at_one_stamp_do_not_conflict(self, tmp_path):
+        # construct writes two drives per character at one stamp, the second a
+        # habit: STATE ("right now") outranks, and it is not a contradiction.
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:nell", "attribute": "drive",
+                 "value": "tell enough truth", "valid_from": 1.0},
+                {"entity": "person:nell", "attribute": "drive",
+                 "value": "save money", "valid_from": 1.0},
+            ])
+            self._set(w, rows, "drive", "tell enough truth", "DISPOSITIONAL")
+            fold = w.state("person:nell", "drive")
+            assert fold.winner.value == "save money" and not fold.conflicted
+        finally:
+            w.close()
+
+    def test_habits_tied_at_one_stamp_coexist(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:mara", "attribute": "ability",
+                 "value": "tracking", "valid_from": 1.0},
+                {"entity": "person:mara", "attribute": "ability",
+                 "value": "herbcraft", "valid_from": 1.0},
+            ])
+            for row in rows:
+                if row.attribute == "ability":
+                    w.classifier.set(row.id, "DISPOSITIONAL")
+            assert not w.state("person:mara", "ability").conflicted
+        finally:
+            w.close()
+
+    def test_two_states_tied_at_one_stamp_still_conflict(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            w.ingest_structured([
+                {"entity": "person:mara", "attribute": "mood", "value": "calm",
+                 "valid_from": 1.0},
+                {"entity": "person:mara", "attribute": "mood", "value": "angry",
+                 "valid_from": 1.0},
+            ])
+            assert w.state("person:mara", "mood").conflicted
+        finally:
+            w.close()
+
+    def test_establishing_view_keeps_the_world_at_rest_under_a_later_habit(self, tmp_path):
+        # anchor's Pell key: off_shift@3 (STATE) then deputy_warden@14 (habit).
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "person:pell", "attribute": "duty", "value": "off_shift",
+                 "valid_from": 3.0},
+                {"entity": "person:pell", "attribute": "duty", "value": "deputy_warden",
+                 "valid_from": 14.0},
+            ])
+            self._set(w, rows, "duty", "deputy_warden", "DISPOSITIONAL")
+            assert w.state("person:pell", "duty").winner.value == "deputy_warden"
+            m = w.materialize("person:pell", lens="establishing_set")
+            duty = [r.value for r in m.assertions if r.attribute == "duty"]
+            assert duty == ["off_shift"]
+        finally:
+            w.close()
+
+    def test_establishing_view_honours_a_pin_over_a_promoted_habit(self, tmp_path):
+        w = _fc_world(tmp_path)
+        try:
+            rows = w.ingest_structured([
+                {"entity": "place:city", "attribute": "condition",
+                 "value": "under_siege", "valid_from": 0.0},
+                *({"entity": "place:city", "attribute": "condition",
+                   "value": "rationing", "valid_from": t} for t in (1.0, 2.0, 3.0)),
+            ])
+            siege = next(r for r in rows if r.value == "under_siege")
+            for r in rows:
+                w.classifier.set(r.id, "STATE")  # the pin, not structure, holds it
+            w.ingest_structured([{"entity": siege.id, "attribute": "world_defining",
+                                  "value": True, "timeless": True}])
+            assert w.classifier.promote_accruals(threshold=3) == 3
+            m = w.materialize("place:city", lens="establishing_set")
+            cond = [r.value for r in m.assertions if r.attribute == "condition"]
+            assert cond == ["under_siege"]
+        finally:
+            w.close()

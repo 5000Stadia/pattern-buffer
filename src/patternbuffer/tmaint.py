@@ -44,7 +44,9 @@ class AtomicAbort(Exception):
       the non-atomic path — authority, semantics, unknown retract target, or an
       unexpected error).
     - `skipped`: the skip-receipt records `{entity, attribute, value, reason}`
-      (the non-atomic path's shape); `[]` when `cause="exception"`.
+      (the non-atomic path's shape), plus `detail` on a record whose reason
+      carries one (`invalid_valid_time`, FOLD-CORRECTNESS-V1 §6); `[]` when
+      `cause="exception"`.
     - `error`: `None` when `cause="gate_skip"`; `{type, message}` otherwise.
     """
 

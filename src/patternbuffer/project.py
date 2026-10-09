@@ -118,7 +118,8 @@ class Projector:
                 )
             ]
             if qualifying:
-                first = min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+                # FOLD-CORRECTNESS-V1 §1: the fold's own recency key (0.0 is a time).
+                first = min(qualifying, key=self._indexes._recency_key)
                 parent[entity] = self._indexes.resolve_entity(first.value)
         out, ordering = set(roots), list(roots)
         changed = True
@@ -249,9 +250,17 @@ class Projector:
                             served[row.id] = "open"
                         continue  # the frontier is named, never painted (§10)
                     durability = self._classifier.durability(row.id)
-                    if establishing and durability == STATE and not result._value_rows:
-                        row = self._establishing_state(entity, attr, m) or None
-                        if row is None:
+                    # The at-rest view is the first non-event-effect value
+                    # (§13) for a habit winner too: a later-promoted habit must
+                    # not replace the world at rest, and a world_defining pin
+                    # still holds (FOLD-CORRECTNESS-V1 pre-review finding 1).
+                    # A habit is served as-is only with no establishing STATE.
+                    if (establishing and not result._value_rows
+                            and durability in (STATE, DISPOSITIONAL)):
+                        est = self._establishing_state(entity, attr, m)
+                        if est is not None:
+                            row = est
+                        elif durability == STATE:
                             continue
                     if served is not None:
                         served[row.id] = "concrete"
@@ -270,20 +279,27 @@ class Projector:
             )
             if not r.entity.startswith("a:")
             and not r.entity.startswith(ATTR_PREFIX)
-            and self._indexes.fold_attribute(r.attribute) == attr  # already fold-keyed
+            # `attr` is a current_state key: the family arrives named `in`
+            # (FOLD-CORRECTNESS-V1 §7), so compare fold keys on both sides.
+            and self._indexes.fold_attribute(r.attribute) == self._indexes.fold_attribute(attr)
             and r.value_type != "unresolved"
             and self._classifier.durability(r.id) == STATE
         ]
         qualifying = []
         for r in rows:
-            pinned = bool(self._buffer.visible(entity=r.id, attribute="world_defining"))
+            # FOLD-CORRECTNESS-V1 §5: the pin is read as-of too — a pin
+            # appended after H must not reach back into a read as of H.
+            pinned = bool(self._buffer.visible(
+                entity=r.id, attribute="world_defining",
+                asserted_as_of=m.asserted_as_of,
+            ))
             if pinned:
                 return r
             if not self._indexes._is_event_effect(r, m.asserted_as_of):
                 qualifying.append(r)
         if not qualifying:
             return None
-        return min(qualifying, key=lambda r: (r.valid_from or float("-inf"), r.asserted_at))
+        return min(qualifying, key=self._indexes._recency_key)  # FOLD-CORRECTNESS-V1 §1
 
     def _lens_situation(
         self, m: Materialization, entities: list[str], budget: int | None,
