@@ -697,7 +697,11 @@ class Porcelain:
         duplicate at the wrong kind — verified against the slip signature,
         artifact edges retracted, then merged through the guarded path.
         Never a veto bypass: a non-slip invocation returns
-        `vetoed_not_a_slip`; `distinct_from` stays absolute."""
+        `vetoed_not_a_slip`; `distinct_from` stays absolute. With absorb=, a
+        `to_kind` that contradicts the target's kind returns
+        `vetoed_kind_mismatch` and writes nothing (FRAME-SCOPED-IDENTITY-V1
+        §8). Kind rows are canon's: a `knows:` belief about the kind survives
+        (§2)."""
         return self._w.registry.retype(entity, to_kind, evidence, absorb=absorb)
 
     # ------------------------------------ AKA-CORRELATION-V1 (opt-in identity)

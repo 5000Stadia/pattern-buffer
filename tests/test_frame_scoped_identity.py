@@ -686,3 +686,40 @@ def test_6d_a_canon_entity_snapshots_in_a_sparse_frame(world):
     snap = world.porcelain.snapshot("place:hall", frame=MARN)
     assert "error" not in snap
     assert snap["frame"] == MARN and snap["facts"] == []
+
+
+# ------------------------- §8 rider: retype(absorb=) refuses a contradicting to_kind
+
+
+def _harth_slip(world: World) -> None:
+    """The slip signature: a bare `person:harth` beside a real `place:harth`
+    (a child inside it), sharing the canon name "Harth"."""
+    world.ingest_structured([
+        {"entity": "place:harth", "attribute": "kind", "value": "place", "timeless": True},
+        {"entity": "place:harth", "attribute": "name", "value": "Harth", "timeless": True},
+        {"entity": "obj:well", "attribute": "in", "value": "place:harth"},
+        {"entity": "person:harth", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:harth", "attribute": "name", "value": "Harth", "timeless": True},
+    ])
+
+
+def test_8_absorb_refuses_a_to_kind_that_contradicts_the_target(world):
+    """§8: `to_kind` "teapot" into a place is refused with nothing written
+    (today: silently ignored, and merged)."""
+    _harth_slip(world)
+    head = world.buffer.head()
+    receipt = world.porcelain.retype("person:harth", "teapot", "slip",
+                                     absorb="place:harth")
+    assert receipt["outcome"] == "vetoed_kind_mismatch"
+    assert receipt["reason"] == "to_kind_not_target_kind"
+    assert receipt["retracted"] == []
+    assert world.buffer.head() == head
+
+
+def test_8_absorb_with_the_targets_kind_still_merges(world):
+    """§8: the target's own kind absorbs as before."""
+    _harth_slip(world)
+    receipt = world.porcelain.retype("person:harth", "place", "slip",
+                                     absorb="place:harth")
+    assert receipt["outcome"] == "merged"
+    assert world.registry.resolve("person:harth") == world.registry.resolve("place:harth")

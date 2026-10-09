@@ -999,7 +999,9 @@ class IdentityRegistry:
         the direct inter-closure containment artifacts (would-be self-edges;
         incoming child containment is preserved untouched), then merge through
         the guarded path. A non-slip invocation is `vetoed_not_a_slip` — retype
-        is never a veto bypass."""
+        is never a veto bypass — and a `to_kind` that is not among the
+        target's folded kinds is `vetoed_kind_mismatch` (FRAME-SCOPED-
+        IDENTITY-V1 §8); neither writes anything."""
         if self._retract is None:
             raise RuntimeError("no retraction authority wired for retype")
         re_ = self.resolve(entity)
@@ -1058,6 +1060,15 @@ class IdentityRegistry:
         if (not shared or self._kind_state(re_, rt) != "conflict"
                 or not self._slip_asymmetry(re_, rt)):
             receipt = self._receipt("vetoed_not_a_slip", re_)
+            receipt["retracted"] = []
+            return receipt
+        if str(to_kind).strip().lower() not in self._kind_values(rt):
+            # FRAME-SCOPED-IDENTITY-V1 §8: absorbing into the target makes the
+            # entity the target's kind — a `to_kind` that contradicts it was
+            # silently ignored. Refused, after the slip check (a non-slip still
+            # receipts vetoed_not_a_slip), with nothing written.
+            receipt = self._receipt(
+                "vetoed_kind_mismatch", re_, reason="to_kind_not_target_kind")
             receipt["retracted"] = []
             return receipt
         _retract_kind_rows(re_)
