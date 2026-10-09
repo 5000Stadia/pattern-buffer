@@ -12,23 +12,26 @@ circularity.
 from __future__ import annotations
 
 import logging
-import re
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 from patternbuffer.codec import decode_value, encode_out
-from patternbuffer.model import ATTR_PREFIX, CANON, META_ATTRIBUTES, TASK_ASK_PLAN, task_schema
+from patternbuffer.model import (
+    ATTR_PREFIX,
+    CANON,
+    ID_RE,
+    META_ATTRIBUTES,
+    TASK_ASK_PLAN,
+    task_schema,
+)
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
-from patternbuffer.tmaint import AtomicAbort
 
 if TYPE_CHECKING:  # pragma: no cover
     from patternbuffer import World
 
 logger = logging.getLogger(__name__)
-
-_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
 
 
 # ---------------------------------------------------------------- payloads
@@ -42,9 +45,11 @@ class Receipt:
     frames: list[str] = field(default_factory=list)
     canonicalization_receipts: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    # INGEST-HARDENING-V1 Part B: edges skipped at the gate (cycle / self-edge /
-    # lateral self-loop) — the host audits exactly what was dropped (no silent cap).
-    # A record may carry `detail` (FOLD-CORRECTNESS-V1 §6: the bad time value).
+    # INGEST-HARDENING-V1 Part B: what the gate refused and receipted — the host
+    # audits exactly what was dropped (no silent cap). `reason` is a code from
+    # ingest.SKIP_REASONS or a legacy per-edge prose reason (GATE-AUTHORITY-V1
+    # §0); a record may carry `detail` (FOLD-CORRECTNESS-V1 §6: the bad time
+    # value; GATE-AUTHORITY-V1: the bad field, the merge veto, the source).
     skipped: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -120,6 +125,30 @@ class Porcelain:
             canonicalization_receipts=[
                 r.value for r in rows if r.attribute == "canonicalized_from"],
         )
+
+    @contextmanager
+    def _posed(self, at: float | None):
+        """Apply a write call's `at=` to the scene cursor (GATE-AUTHORITY-V1
+        §6). The cursor and the log head are snapshotted before `at` applies;
+        if the call raises with the head unmoved and the buffer not poisoned,
+        the cursor is restored — a rejected call leaves the pose where it was
+        (this subsumes ATOMIC-ACTIVATION-V1 §B4 pin (a): an AtomicAbort rolls
+        the head back). After a partial non-atomic write the cursor stays at
+        `at`: the rows already written were stamped there."""
+        cursor, buffer = self._w.ingestor.cursor, self._w.buffer
+        prior_position, prior_head = cursor.position, buffer.head()
+        if at is not None:
+            cursor.advance(at)
+        try:
+            yield
+        except BaseException:
+            try:
+                unmoved = not buffer.poisoned and buffer.head() == prior_head
+            except Exception:       # never mask the call's own error
+                unmoved = False
+            if unmoved:
+                cursor.position = prior_position
+            raise
 
     def _fact(self, row, divergent=False, b_value=None) -> Fact:
         chain = [m.value for m in self._w.buffer.visible(entity=row.id, attribute="source")]
@@ -265,26 +294,34 @@ class Porcelain:
         # calls into one; "rules" (HD 083) does it with zero LM calls; "defer"
         # skips. extract (HD 082): "lean" trims the prompt. cursor_authoritative
         # (HD 084): the cursor governs valid_from (bible source-ingest).
-        if at is not None:
-            self._w.ingestor.cursor.advance(at)
-        context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
-        rows = self._w.ingest(text, context=context, frame=frame, classify=classify,
-                              extract=extract, cursor_authoritative=cursor_authoritative,
-                              pov=pov)
-        if source is not None:
-            fact_rows = [
-                r for r in rows
-                if not r.entity.startswith("a:")
-                and not r.entity.startswith(ATTR_PREFIX)
-                and r.attribute not in META_ATTRIBUTES
-            ]
-            rows += self._w.ingest_structured([
-                {"entity": r.id, "attribute": "source", "value": source,
-                 "status": r.status if r.status in ("stated", "observed") else "stated",
-                 "timeless": True}
-                for r in fact_rows
-            ], classify=classify)
-        return self._receipt(rows)
+        ingestor = self._w.ingestor
+        with self._posed(at):
+            context = f"\nSCENE HINT (context only, never a spatial anchor): {scene}" if scene else ""
+            rows = self._w.ingest(text, context=context, frame=frame, classify=classify,
+                                  extract=extract, cursor_authoritative=cursor_authoritative,
+                                  pov=pov)
+            # GATE-AUTHORITY-V1 §6: the Receipt lists the call's skips — the
+            # extraction call's, then the `source=` stamping call's, each
+            # captured right after its own gate call (the second call
+            # replaces `last_skipped`).
+            skipped = [s.to_dict() for s in ingestor.last_skipped]
+            if source is not None:
+                fact_rows = [
+                    r for r in rows
+                    if not r.entity.startswith("a:")
+                    and not r.entity.startswith(ATTR_PREFIX)
+                    and r.attribute not in META_ATTRIBUTES
+                ]
+                rows += self._w.ingest_structured([
+                    {"entity": r.id, "attribute": "source", "value": source,
+                     "status": r.status if r.status in ("stated", "observed") else "stated",
+                     "timeless": True}
+                    for r in fact_rows
+                ], classify=classify)
+                skipped += [s.to_dict() for s in ingestor.last_skipped]
+        receipt = self._receipt(rows)
+        receipt.skipped = skipped
+        return receipt
 
     def ingest_structured(self, items: list[dict], frame: str | None = None,
                           classify: str = "inline",
@@ -304,11 +341,8 @@ class Porcelain:
         # `at` places the scene cursor before the commit (AXIS-HEAD-V1 Win 2)
         # — the per-chunk pose for parallel-extract/serial-commit paths,
         # mirroring ingest(at=). The porcelain owns the pose; the gate reads it.
-        # ATOMIC §B4 pin (a): snapshot the prior cursor BEFORE applying `at=`, so
-        # an aborted atomic call restores the genuinely pre-call pose.
-        prior_cursor = self._w.ingestor.cursor.position
-        if at is not None:
-            self._w.ingestor.cursor.advance(at)
+        # A rejected call leaves the pose where it was (GATE-AUTHORITY-V1 §6,
+        # which subsumes ATOMIC §B4 pin (a)).
         # frame= is a DEFAULT for unframed items (letter 028) — per-item frames
         # win, which mixed batches (knows:B rows beside canon) require. Make the
         # non-obvious case LOUD, never silent (HD 121: a staging frame silently
@@ -316,14 +350,11 @@ class Porcelain:
         kept_own = (sum(1 for i in items
                         if isinstance(i, dict) and i.get("frame") not in (None, frame))
                     if frame is not None else 0)
-        try:
+        with self._posed(at):
             rows = self._w.ingest_structured(
                 items, frame=frame, classify=classify,
                 cursor_authoritative=cursor_authoritative, extracted=extracted,
                 atomic=atomic)
-        except AtomicAbort:
-            self._w.ingestor.cursor.position = prior_cursor  # §B4 pin (a)
-            raise
         receipt = self._receipt(rows)
         if kept_own:
             receipt.warnings.append(
@@ -393,7 +424,7 @@ class Porcelain:
         # its aka correlation union (the whole reveal scene) and/or inline each
         # place's part_of-feature children. Default off = unchanged.
         roots = [scope] if isinstance(scope, str) else list(scope)
-        bad = [s for s in roots if not _ID_RE.fullmatch(s) or not self._is_known(s)]
+        bad = [s for s in roots if not ID_RE.fullmatch(s) or not self._is_known(s)]
         if bad:
             return {"error": "snapshot scope must be KNOWN entity ids "
                              "(use ask for references)", "bad": bad}

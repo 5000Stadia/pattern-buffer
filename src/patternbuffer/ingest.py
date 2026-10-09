@@ -3,7 +3,10 @@
 Pipeline per item: canonicalize the attribute (receipts in the log, map
 in a rebuildable sidecar) -> identity-resolve -> stamp valid_time from
 the scene cursor -> role-checked append -> classify. The scene cursor is
-the pose; anchoring never claims more precision than was observed.
+the pose; anchoring never claims more precision than was observed. The
+full check order is GATE-AUTHORITY-V1 §0's (see `_ingest_item`): authority
+is settled before an item's first write, and every refusal that is not an
+authority violation is a typed skip receipt (`SKIP_REASONS`).
 
 A2 rider (whitepaper amendment log): in observe_or_unknown worlds the
 gate stamps a wall-clock learned-at meta-assertion on every non-timeless
@@ -15,7 +18,6 @@ from __future__ import annotations
 
 import logging
 import math
-import re
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -27,13 +29,23 @@ from patternbuffer.identity import IdentityRegistry
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    COMPOSITION_FAMILY,
+    ID_RE,
+    ID_SHAPED_RE,
+    MECHANISM_ATTRIBUTES,
     SEMANTICS_PREDICATES,
     TASK_EXTRACT,
+    VALUE_TYPES,
     Assertion,
     task_schema,
 )
-from patternbuffer.roles import WriterRole
-from patternbuffer.semantics import AttributeSemantics
+from patternbuffer.roles import RoleViolation, WriterRole
+from patternbuffer.semantics import (
+    CONTAINMENT,
+    LATERAL,
+    AttributeSemantics,
+    valid_declaration,
+)
 from patternbuffer.tmaint import AtomicAbort
 
 logger = logging.getLogger(__name__)
@@ -49,15 +61,18 @@ class _GateSkip(Exception):
         self.skipped = skipped
         super().__init__(f"{len(skipped)} gate skip(s) aborted the atomic set")
 
-# The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
-# A malformed id (person:/you) is SKIPPED with a typed receipt, never
-# normalized — guessing person:you would manufacture the phantom well-formed.
+# The id grammar (SHAPE-FIX-V1 4a) is `model.ID_RE`, shared with the porcelain.
+
 # GATE-INVERSE-ALIAS-V1 §2/§4: an inverse-swap receipt is "(inverse) holds->held_by".
 # The marker comes FIRST so an engine that predates the swap (which replays every
 # `src->dst` receipt as an alias, splitting on the first "->") reads the source as
 # "(inverse) holds" — an attribute that never occurs — and installs nothing.
 _INVERSE_RECEIPT_PREFIX = "(inverse)"
-_ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
+
+# Entity-valued predicates beyond the containment and lateral families
+# (GATE-AUTHORITY-V1 §7): their engine readers only ever see entity values.
+# `same_as` is not here — a raw same_as is a guarded merge (§2).
+_ENTITY_VALUED = COMPOSITION_FAMILY | {"caused_by", "maybe_same_as", "distinct_from", "aka"}
 
 # Built-in attribute aliases: the fold key must never fragment. Domain
 # vocabulary emerges freely; these structural repairs are fixed.
@@ -258,21 +273,49 @@ _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
 _SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural")
 
 
+# GATE-AUTHORITY-V1 §0: the fixed codes a skip receipt's `reason` is drawn
+# from. The three per-edge structural reasons ("cycle-forming containment
+# edge: …", "lateral self-loop: …", "merged_self_edge: …") stay prose and
+# byte-identical outside it — tests and hosts match substrings of them.
+SKIP_REASONS = frozenset({
+    "malformed_id",                          # SHAPE-FIX-V1; widened by §2, §4, §7
+    "invalid_decay_halflife",                # TRACKING-MODE-V1
+    "valid_to_without_valid_from",           # MOVED-EVENT-V1 §B.2
+    "valid_to_before_valid_from",            # MOVED-EVENT-V1 §B.2
+    "moved_marker_invalid",                  # MOVED-EVENT-V1
+    "moved_open_with_arrival",               # MOVED-EVENT-V1
+    "moved_complete_attribute_not_durable",  # MOVED-EVENT-V1
+    "invalid_valid_time",                    # FOLD-CORRECTNESS-V1 §6
+    "malformed_item",                        # GATE-AUTHORITY-V1 §4
+    "invalid_field",                         # GATE-AUTHORITY-V1 §4
+    "invalid_alias",                         # GATE-AUTHORITY-V1 §4
+    "mechanism_attribute",                   # GATE-AUTHORITY-V1 §1
+    "same_as_not_canon",                     # GATE-AUTHORITY-V1 §2
+    "merge_vetoed",                          # GATE-AUTHORITY-V1 §2
+    "invalid_semantics_declaration",         # GATE-AUTHORITY-V1 §5
+})
+
+
 @dataclass(frozen=True)
 class SkipRecord:
-    """An edge skipped at the gate (INGEST-HARDENING-V1 Part B): a single
-    structurally-invalid edge (cycle / self-edge / lateral self-loop) dropped
-    with a reason, while the rest of the chunk ingests. No silent caps — the
-    host reads these off the porcelain Receipt's `skipped`."""
+    """A refusal at the gate, receipted while the rest of the chunk ingests
+    (INGEST-HARDENING-V1 Part B; GATE-AUTHORITY-V1 §0): an item, or one of
+    its side rows, dropped with a `reason` from `SKIP_REASONS` (or a legacy
+    per-edge prose reason). Fields the item lacks are None. No silent caps —
+    the host reads these off the porcelain Receipt's `skipped`."""
 
-    entity: str
-    attribute: str
+    # The item's own fields; None where it lacks one, and whatever it sent
+    # where a field is malformed (GATE-AUTHORITY-V1 §0/§4).
+    entity: Any
+    attribute: Any
     value: Any
     reason: str
     # Optional, set only when a skip needs more than the row to explain it:
     # the offending time coordinate of an `invalid_valid_time` skip
-    # (FOLD-CORRECTNESS-V1 §6), or the AUTHORED form of a swapped inverse
-    # item, e.g. "authored: person:ralph holds obj:bag" (GATE-INVERSE-ALIAS-V1).
+    # (FOLD-CORRECTNESS-V1 §6); the AUTHORED form of a swapped inverse item,
+    # e.g. "authored: person:ralph holds obj:bag" (GATE-INVERSE-ALIAS-V1); or
+    # the bad field, the merge veto or the declaration source that a
+    # GATE-AUTHORITY-V1 §0 code names.
     detail: Any = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -286,29 +329,74 @@ class SkipRecord:
         return out
 
 
-def _time_value(t: Any) -> tuple[bool, float | int | None]:
-    """Validate one stored time coordinate (FOLD-CORRECTNESS-V1 §6): None or a
-    finite real number, never a bool. Text ("spring 1660") was admitted and
-    then crashed every read of its key; NaN was stored as NULL, turning a
-    timed fact silently timeless. Returns (ok, coordinate) — the coordinate is
-    coerced where the value is unambiguous: a numeric string ("1660", which
-    SQLite used to coerce silently) becomes a float, and an int past SQLite's
-    64-bit range becomes a float instead of crashing the insert."""
-    if t is None:
+def _gate_number(x: Any) -> tuple[bool, Any]:
+    """The gate's one rule for a number an item carries: its time coordinates
+    (FOLD-CORRECTNESS-V1 §6) and its `confidence` (GATE-AUTHORITY-V1 §4, r2),
+    one helper so the two can never drift. None is no value; otherwise a
+    finite real number, never a bool. Text ("spring 1660", "high") was admitted
+    and then crashed every read of its key; NaN was stored as NULL, turning a
+    timed fact silently timeless.
+
+    Returns (ok, number). The number is coerced where the value is
+    unambiguous: a numeric string ("1660", "0.9", which SQLite used to coerce
+    silently) becomes a float, and an int past SQLite's 64-bit range becomes a
+    float instead of crashing the insert. When the value fails, the second
+    element is the value exactly as authored, for the skip receipt's
+    `detail` (a non-finite numeric string such as "inf" stays the string)."""
+    if x is None:
         return True, None
-    if isinstance(t, str):
+    n = x
+    if isinstance(n, str):
         try:
-            t = float(t.strip())
+            n = float(n.strip())
         except ValueError:
-            return False, t
-    if isinstance(t, bool) or not isinstance(t, (int, float)):
-        return False, t
-    if isinstance(t, int) and not -(2 ** 63) <= t < 2 ** 63:
+            return False, x
+    if isinstance(n, bool) or not isinstance(n, (int, float)):
+        return False, x
+    if isinstance(n, int) and not -(2 ** 63) <= n < 2 ** 63:
         try:
-            t = float(t)
-        except OverflowError:  # past float range: no coordinate
-            return False, t
-    return math.isfinite(t), t
+            n = float(n)
+        except OverflowError:  # past float range: not a number the log can hold
+            return False, x
+    if not math.isfinite(n):
+        return False, x
+    return True, n
+
+
+# The fields an item must carry (GATE-AUTHORITY-V1 §4): `value` may be null,
+# the other two may not. Every other field is optional, and null means absent.
+_REQUIRED_FIELDS = ("entity", "attribute", "value")
+
+# The item's boolean flags (GATE-AUTHORITY-V1 §4): a real bool, or exactly the
+# int 0 or 1, which the gate reads as false or true, as the base engine did (r2).
+_BOOL_FLAGS = ("timeless", "correction")
+
+# The collections an `aliases` value may be given as (GATE-AUTHORITY-V1 §4, r2).
+_ALIAS_COLLECTIONS = (list, tuple, set, frozenset)
+
+
+def _alias_members(raw: Any) -> list[Any]:
+    """An item's `aliases` as the list of its members (GATE-AUTHORITY-V1 §4): a
+    string is one member, never one alias per character; a list or tuple, its
+    members in order; a set or frozenset, its members in sorted order, so the
+    log never depends on hash order (r2); any other value is one member,
+    dropped as a whole at the alias step."""
+    if isinstance(raw, str):
+        return [raw]
+    if isinstance(raw, (list, tuple)):
+        return list(raw)
+    if isinstance(raw, (set, frozenset)):
+        return sorted(raw, key=str)
+    return [raw]
+
+
+def _aliases_given(raw: Any) -> bool:
+    """Whether an item carries an `aliases` value (GATE-AUTHORITY-V1 §3): a
+    non-empty string, or a non-empty list, tuple or set, whatever its
+    members."""
+    if isinstance(raw, str):
+        return raw != ""
+    return isinstance(raw, _ALIAS_COLLECTIONS) and len(raw) > 0
 
 
 @dataclass
@@ -379,15 +467,27 @@ class Ingestor:
         in log order (each records the FIRST hop that was applied, so a later
         host override such as ``type->genre`` outranks the built-in and
         survives reopen), then the inverse relations are popped — an inverse
-        relation is never a plain alias, whatever an old receipt says."""
+        relation is never a plain alias, whatever an old receipt says.
+
+        Within that order a receipt is honored only with the gate's own mark
+        (GATE-AUTHORITY-V1 §1): status ``inferred``, on an existing assertion
+        whose attribute is the receipt's target — exactly the shape
+        `_ingest_item` writes. A forged ``canonicalized_from`` row installs
+        nothing on reopen, and an ``(inverse)`` receipt is a record of a swap,
+        never a map entry."""
         self._alias_map = dict(_BUILTIN_ALIASES)
         for row in self._buffer.visible(attribute="canonicalized_from"):
-            if isinstance(row.value, str) and "->" in row.value:
-                # an "(inverse)" receipt records a swap — it is not a map entry.
-                if row.value.lstrip().startswith(_INVERSE_RECEIPT_PREFIX):
-                    continue
-                src, dst = row.value.split("->", 1)
-                self._alias_map[src.strip()] = dst.strip()
+            if not (isinstance(row.value, str) and "->" in row.value):
+                continue
+            # an "(inverse)" receipt records a swap — it is not a map entry.
+            if row.value.lstrip().startswith(_INVERSE_RECEIPT_PREFIX):
+                continue
+            src, dst = row.value.split("->", 1)
+            # Only the gate's own receipt installs an alias (§1's mark).
+            subject = self._buffer.get(row.entity) if row.status == "inferred" else None
+            if subject is None or subject.attribute != dst.strip():
+                continue
+            self._alias_map[src.strip()] = dst.strip()
         for inverse_attr in _BUILTIN_INVERSE_ALIASES:
             self._alias_map.pop(inverse_attr, None)
 
@@ -423,20 +523,36 @@ class Ingestor:
     def _semantics_payload(source: dict[str, Any], keys) -> dict[str, Any]:
         return {k: source[k] for k in keys if k in source and source[k] is not None}
 
-    def _maybe_declare_attribute(self, attribute: str, item: dict[str, Any]) -> list[Assertion]:
-        """Emit first-use attr:* declarations before the triggering data row."""
-        if self._semantics.is_core(attribute) or self._semantics.is_declared(attribute):
-            return []
-        declaration = self._semantics_payload(item, _SEMANTICS_HINT_KEYS)
-        if not declaration and attribute not in self._attribute_default_checked:
-            self._attribute_default_checked.add(attribute)
-            if self._attribute_default is not None:
-                default = self._attribute_default(attribute)
-                if default:
-                    declaration = self._semantics_payload(default, _SEMANTICS_DECL_KEYS)
-        if not declaration:
-            return []
+    def _declaration_plan(
+        self, attribute: str, item: dict[str, Any]
+    ) -> tuple[dict[str, Any], str] | None:
+        """The first-use attr:* declaration the gate would write before an
+        item's data row, with its source (GATE-AUTHORITY-V1 §5): the item's
+        own hints (`"item"`), else the host's `attribute_default` output
+        (`"attribute_default"`; an empty declaration when the callback has
+        nothing to declare). None when nothing is planned: hints on a core or
+        already-declared attribute are ignored, as before, and a callback
+        already consulted for the attribute is not asked again.
 
+        Writes nothing and marks nothing (r2): the plan is made before the
+        checks that read the attribute's family (steps 8-9), and the callback
+        counts as consulted only once an item on the attribute reaches the
+        declaration step (step 10), so an item refused in between never
+        costs a later item its declaration."""
+        if self._semantics.is_core(attribute) or self._semantics.is_declared(attribute):
+            return None
+        declaration = self._semantics_payload(item, _SEMANTICS_HINT_KEYS)
+        if declaration:
+            return declaration, "item"
+        if self._attribute_default is None or attribute in self._attribute_default_checked:
+            return None
+        default = self._attribute_default(attribute)
+        declaration = self._semantics_payload(default, _SEMANTICS_DECL_KEYS) if default else {}
+        return declaration, "attribute_default"
+
+    def _declare(self, attribute: str, declaration: dict[str, Any]) -> list[Assertion]:
+        """Write a validated first-use declaration before the triggering data
+        row."""
         out: list[Assertion] = []
         for predicate, value in declaration.items():
             row = self._buffer.append(
@@ -472,7 +588,11 @@ class Ingestor:
         items = list(items)  # stamp a copy: the caller's extract() output stays raw
         cursor = self.cursor.position
 
-        def ev_id(it: dict[str, Any]) -> str | None:
+        def ev_id(it: Any) -> str | None:
+            # A non-object item passes through untouched, so it reaches the
+            # gate's `malformed_item` receipt (GATE-AUTHORITY-V1 §4).
+            if not isinstance(it, dict):
+                return None
             e = it.get("entity")
             return e if isinstance(e, str) and e.startswith("event:") else None
 
@@ -538,7 +658,7 @@ class Ingestor:
                 dest[eid] = it.get("value")
                 vt = it.get("value_type") or (
                     "entity" if isinstance(it.get("value"), str)
-                    and _ID_RE.fullmatch(str(it.get("value"))) else "literal")
+                    and ID_RE.fullmatch(str(it.get("value"))) else "literal")
                 dest_is_entity[eid] = vt == "entity"
 
         for eid in moved_ids:
@@ -556,7 +676,8 @@ class Ingestor:
             if agent.get(eid) is not None and dest.get(eid) is not None \
                     and dest_is_entity.get(eid):
                 for idx, it in enumerate(items):
-                    if (it.get("entity") == agent[eid] and cattr(it) == "in"
+                    if (isinstance(it, dict)
+                            and it.get("entity") == agent[eid] and cattr(it) == "in"
                             and it.get("value") == dest[eid]
                             and eff_frame(it) == frame_of[eid]):
                         arrival_idxs.append(idx)
@@ -665,9 +786,9 @@ class Ingestor:
                 items = self._apply_moved_coordinate_pass(items, frame)
             appended: list[Assertion] = []
             for item in items:
-                if frame is not None and "frame" not in item:
-                    item = {**item, "frame": frame}
-                appended.extend(self._ingest_item(item))
+                # `frame` fills unframed items inside the gate's normalization
+                # (GATE-AUTHORITY-V1 §4).
+                appended.extend(self._ingest_item(item, frame))
             if collect:
                 self._classifier.classify_rows(collect, model=(classify == "batch"))
             return appended
@@ -807,10 +928,9 @@ class Ingestor:
             appended: list[Assertion] = []
             for op in ops:
                 if op["op"] == "assert":
-                    item = op["item"]
-                    if frame is not None and "frame" not in item:
-                        item = {**item, "frame": frame}
-                    appended.extend(self._ingest_item(item))
+                    # `frame` fills an unframed item inside the gate's
+                    # normalization (GATE-AUTHORITY-V1 §4).
+                    appended.extend(self._ingest_item(op["item"], frame))
                 else:
                     appended.append(truth.retract(op["assertion_id"], op["reason"]))
             if collect:
@@ -847,23 +967,49 @@ class Ingestor:
 
     def _edge_skip_reason(
         self, entity: str, attribute: str, value: Any, value_type: str,
-        frame: str, valid_from: float | None,
+        frame: str, valid_from: float | None, family: str | None = None,
     ) -> str | None:
         """The reason a single structural edge is invalid (containment cycle /
         self-edge / lateral self-loop), or None (INGEST-HARDENING-V1 Part B).
         Only structurally-invalid SINGLE edges are skippable; every other gate
-        failure still raises."""
+        failure still raises. ``family`` is the attribute's relation family
+        as the item's own first-use declaration leaves it (GATE-AUTHORITY-V1
+        r2, `_family_after`); omitted, the declared semantics decide."""
         if value_type != "entity" or not isinstance(value, str):
             return None
-        if self._semantics.is_containment(attribute):
+        if family is None:
+            family = self._semantics.semantics(attribute).relation_family
+        if family == CONTAINMENT:
             return self._cycle_reason(entity, value, frame, valid_from)
-        if self._semantics.is_lateral(attribute) and entity == value:
+        if family == LATERAL and entity == value:
             # A lateral self-loop (X connects_to X) is extraction noise — it
             # adds no edge any walk can use (#19).
             return f"lateral self-loop: {entity!r} cannot {attribute} itself"
         return None
 
-    def _record_skip(self, entity: str, attribute: str, value: Any, reason: str,
+    def _family_after(
+        self, attribute: str, plan: tuple[dict[str, Any], str] | None
+    ) -> str:
+        """The relation family `attribute` will have once this item's own
+        first-use declaration lands (GATE-AUTHORITY-V1 §7, r2): a valid
+        `relation_family` in the planned declaration, else the attribute's
+        semantics as they stand. A plan exists only for an undeclared,
+        non-core attribute, so the two never disagree about a declared one."""
+        if plan is not None:
+            planned = plan[0].get("relation_family")
+            if valid_declaration("relation_family", planned):
+                return planned
+        return self._semantics.semantics(attribute).relation_family
+
+    def _entity_valued(self, attribute: str, family: str) -> bool:
+        """An entity-valued predicate (GATE-AUTHORITY-V1 §7): one whose engine
+        readers only ever see entity values — the containment and lateral
+        families (declared members included, and an attribute this item
+        declares into either, via ``family``), `part_of`, `caused_by`, and
+        the identity predicates other than `same_as`."""
+        return attribute in _ENTITY_VALUED or family in (CONTAINMENT, LATERAL)
+
+    def _record_skip(self, entity: Any, attribute: Any, value: Any, reason: str,
                      detail: Any = None) -> None:
         logger.warning("ingest skipped edge: %s · %s · %r — %s%s",
                        entity, attribute, value, reason,
@@ -871,8 +1017,171 @@ class Ingestor:
         if self._skipped is not None:
             self._skipped.append(SkipRecord(entity, attribute, value, reason, detail))
 
-    def _ingest_item(self, item: dict[str, Any]) -> list[Assertion]:
+    def _normalize_item(self, item: Any, call_frame: str | None) -> dict[str, Any] | None:
+        """Step 1 of the gate (GATE-AUTHORITY-V1 §4): the item's shape only,
+        on a copy — the caller's dict is never mutated and nothing is
+        written. Returns the normalized item, or None once a
+        `malformed_item` skip is receipted (only for an item that is not an
+        object: every other refusal comes after authority).
+
+        - Not an object: skipped, with the item itself as the record's value.
+        - Null means absent for every optional field: a null `frame` takes the
+          call's default frame (else canon), a null `status` is `stated`, and
+          null `aliases` means none. `value` is required but may be null (a
+          null literal); a null `entity`/`attribute` counts as missing at
+          step 3. A `value_type` of `""` or `False` is absent too, and the
+          type is inferred, as the base engine read it (r2).
+        - The boolean flags (`timeless`, `correction`) read exactly the ints
+          0 and 1 as false and true, as the base engine did (r2); any other
+          non-bool fails at step 3.
+        - `aliases` becomes the list of its members (`_alias_members`).
+          Members that are not non-empty strings are dropped with an
+          `invalid_alias` receipt where the alias rows are written (step 12),
+          so an item skipped for another reason yields exactly one record.
+
+        The frame's shape is checked at step 2, after the status grant (r2).
+        """
+        if not isinstance(item, dict):
+            self._record_skip(None, None, item, "malformed_item")
+            return None
+        norm = {k: v for k, v in item.items() if v is not None or k == "value"}
+        if norm.get("value_type") == "" or norm.get("value_type") is False:
+            del norm["value_type"]
+        for flag in _BOOL_FLAGS:
+            if type(norm.get(flag)) is int and norm[flag] in (0, 1):
+                norm[flag] = bool(norm[flag])
+        # The call-level default frame (letter 028) fills an unframed item here
+        # — it used to be filled by `_ingest_body` / `_apply_ops`.
+        norm.setdefault("frame", CANON if call_frame is None else call_frame)
+        norm.setdefault("status", "stated")
+        if "aliases" in norm:
+            norm["aliases"] = _alias_members(norm["aliases"])
+        return norm
+
+    def _content_ok(self, item: dict[str, Any]) -> bool:
+        """Step 3 of the gate (GATE-AUTHORITY-V1 §4), after authority: the
+        content checks. Receipts the first failure and returns False; writes
+        nothing. Record fields are the item's own (it is not canonicalized
+        yet); fields it lacks are None. A numeric-string `confidence` is
+        coerced here, on the normalized copy, by the rule the time
+        coordinates follow (`_gate_number`, r2)."""
+        entity, attribute = item.get("entity"), item.get("attribute")
+        value = item.get("value")
+
+        def skip(reason: str, detail: Any = None) -> bool:
+            self._record_skip(entity, attribute, value, reason, detail=detail)
+            return False
+
+        missing = [field for field in _REQUIRED_FIELDS if field not in item]
+        if missing:
+            return skip("malformed_item", {"missing": missing})
+        if not isinstance(entity, str):
+            return skip("malformed_id")
+        if not isinstance(attribute, str) or not attribute.strip():
+            return skip("malformed_item", {"field": "attribute", "value": attribute})
+        value_type = item.get("value_type")
+        if value_type is not None and (
+                not isinstance(value_type, str) or value_type not in VALUE_TYPES):
+            return skip("invalid_field", {"field": "value_type", "value": value_type})
+        for flag in _BOOL_FLAGS:
+            if flag in item and not isinstance(item[flag], bool):
+                return skip("invalid_field", {"field": flag, "value": item[flag]})
+        if "confidence" in item:
+            ok, confidence = _gate_number(item["confidence"])
+            if not ok:
+                return skip("invalid_field",
+                            {"field": "confidence", "value": item["confidence"]})
+            item["confidence"] = confidence
+        if value_type == "entity" and not isinstance(value, str):
+            return skip("malformed_id")
+        return True
+
+    def _authorize(self, item: dict[str, Any], aliases_given: bool) -> WriterRole | None:
+        """Step 2 of the gate (GATE-AUTHORITY-V1 §3): settle an item's write
+        authority before its first write. Writes nothing. An authority
+        violation raises even when the item is also malformed or a
+        structurally invalid edge (INGEST-HARDENING-V1 Cx final).
+
+        In order:
+        1. **The status grant.** A status in the ingestor's grant writes
+           under ingestor authority; anything but `generated` outside it is
+           refused by the ingestor role's own check(), so the message is the
+           one the buffer used to raise after the declarations. It runs
+           before the frame check (r2), so an ungranted status raises
+           whatever the frame, as on the base engine.
+        2. **The frame's shape.** It must be a non-empty string; otherwise
+           the item is skipped `malformed_item` and None is returned. A
+           malformed frame is never defaulted to canon: that would leak a
+           row meant for a private frame.
+        3. **Letter 029, for `generated`.** Never canon or `knows:*`, a
+           resolver must be wired, and no side field whose row would carry
+           no frame (`aliases_given` is judged on the value the host sent,
+           before normalization); then resolver authority."""
+        status = item["status"]
+        if status != "generated":
+            self._role.check(status)
+        frame_target = item["frame"]
+        if not isinstance(frame_target, str) or not frame_target:
+            self._record_skip(item.get("entity"), item.get("attribute"),
+                              item.get("value"), "malformed_item",
+                              detail={"field": "frame", "value": frame_target})
+            return None
+        if status != "generated":
+            return self._role
+        # Letter 029: host-authored generated rows land only in host-owned
+        # named frames (plot:*), never canon or knows:*.
+        if frame_target == CANON or frame_target.startswith("knows:"):
+            raise ValueError(
+                "generated provenance through the gate is permitted only "
+                "into host-owned named frames (e.g. plot:*) — never canon "
+                "or knows:* (letter 029 guard)"
+            )
+        if self._resolver_role is None:
+            raise ValueError("no resolver authority wired for generated rows")
+        # The `source` meta and `alias` rows carry no frame: on a generated
+        # item they would be generated rows in canon, which letter 029
+        # forbids. (The other side rows carry fixed engine statuses inside the
+        # ingestor's grant and need no check.)
+        carried = [field for field, given in (
+            ("source_doc", bool(item.get("source_doc"))),
+            ("aliases", aliases_given),
+        ) if given]
+        if carried:
+            raise RoleViolation(
+                f"a generated item cannot carry {' or '.join(carried)}: those "
+                "rows carry no frame and would be generated rows in canon "
+                "(letter 029 guard)"
+            )
+        return self._resolver_role
+
+    def _ingest_item(self, item: Any, call_frame: str | None = None) -> list[Assertion]:
+        """One item through the gate, in GATE-AUTHORITY-V1 §0's thirteen
+        steps: normalize, authority, content checks, canonicalize, the
+        inverse swap, mechanism attribute, malformed ids, id-shaped values,
+        identity / half-life / time / interval / per-edge checks,
+        declarations, the main row, its side rows, classification.
+        Everything that can refuse the item runs before its first write.
+        ``call_frame`` is the call's default frame for an item that carries
+        none (letter 028)."""
         out: list[Assertion] = []
+        # 1. Normalize (§4): shape only, on a copy; no write.
+        fields = self._normalize_item(item, call_frame)
+        if fields is None:
+            return out
+        # 2. Authority FIRST (§3): the status grant, then the frame's shape,
+        # then letter 029 for a generated item — settled before the content
+        # checks, canonicalization, any declaration or the main row, so a
+        # violation raises with nothing of the item written.
+        write_role = self._authorize(fields, _aliases_given(item.get("aliases")))
+        if write_role is None:
+            return out                       # a malformed frame, receipted
+        item = fields
+        # 3. Content checks (§4): skips.
+        if not self._content_ok(item):
+            return out
+        status = item["status"]
+        frame = item["frame"]
+        # 4. Canonicalize the attribute (existing).
         attribute, receipt = self._canonicalize(item["attribute"])
         # RAW ids first (Cx final): validation must see what the author wrote,
         # not what resolution mapped it to — resolve happens AFTER the
@@ -886,15 +1195,16 @@ class Ingestor:
         # a prose value with a colon ("repaired: the rival arrives") is a
         # literal, never a phantom entity reference (SHAPE-FIX-V1 4a).
         value_type = item.get("value_type") or (
-            "entity" if isinstance(value, str) and _ID_RE.fullmatch(value)
+            "entity" if isinstance(value, str) and ID_RE.fullmatch(value)
             else "literal"
         )
-        # GATE-INVERSE-ALIAS-V1 §2: an inverse relation with an ENTITY value
+        # 5. GATE-INVERSE-ALIAS-V1 §2: an inverse relation with an ENTITY value
         # swaps subject and object here — immediately after canonicalization,
-        # before the malformed-id gate, identity resolution, interval checks
-        # and the per-edge checks, so every later check sees the true
-        # direction. A text value keeps the attribute as authored (§3).
-        # Item-level identity data stays with the ORIGINAL subject.
+        # once value_type is decided, before the mechanism check, the
+        # malformed-id gate, identity resolution, interval checks and the
+        # per-edge checks, so every later check sees the true direction. A
+        # text value keeps the attribute as authored (§3). Item-level
+        # identity data stays with the ORIGINAL subject.
         identity_subject = entity
         authored_detail: str | None = None   # set only when the gate swapped
         forward = self._inverse_of(attribute)
@@ -903,7 +1213,7 @@ class Ingestor:
             authored_detail = f"authored: {entity} {attribute} {value}"
             attribute = forward
             entity, value = value, entity
-        timeless = bool(item.get("timeless", False))
+        timeless = item.get("timeless", False)    # a real bool (§4)
         valid_from = item.get("valid_from")
         # INGEST-LATENCY-V2 Win 3: in cursor-authoritative ingest (bible
         # source-build) the CURSOR governs the story-time axis — the per-item
@@ -918,34 +1228,56 @@ class Ingestor:
         elif valid_from is None and not timeless:
             valid_from = self.cursor.position  # the pose stamps the row
 
-        # Authority gate FIRST (INGEST-HARDENING-V1 Cx final): an authority
-        # violation (generated-into-canon/knows:) must RAISE even if the row is
-        # also a structurally-invalid edge — the skip must never swallow it.
-        status = item.get("status", "stated")
-        write_role = self._role
-        if status == "generated":
-            frame_target = item.get("frame", CANON)
-            if frame_target == CANON or frame_target.startswith("knows:"):
-                raise ValueError(
-                    "generated provenance through the gate is permitted only "
-                    "into host-owned named frames (e.g. plot:*) — never canon "
-                    "or knows:* (letter 029 guard)"
-                )
-            if self._resolver_role is None:
-                raise ValueError("no resolver authority wired for generated rows")
-            write_role = self._resolver_role
+        # 6. GATE-AUTHORITY-V1 §1: a mechanism attribute (MECHANISM_ATTRIBUTES:
+        # retracts, resolved_by, canonicalized_from, learned_at_wallclock,
+        # source_valid_from, correction_proposal) is a row the engine writes
+        # about other rows, with exactly one owning component. The gate never
+        # accepts one as an item, on any path (ingest, ingest_structured, a
+        # commit_set assert op) — the real doors are retract, resolve, and the
+        # gate's own side rows (its canonicalization receipt, the tracking
+        # stamp, the demoted coordinate, the `correction` field's proposal).
+        if attribute in MECHANISM_ATTRIBUTES:
+            self._record_skip(entity, attribute, value, "mechanism_attribute")
+            return out
 
-        # Malformed-id gate (SHAPE-FIX-V1 4a): AFTER the authority gate (an
+        # 7. Malformed-id gate (SHAPE-FIX-V1 4a): AFTER the authority gate (an
         # authority violation must still raise, never be swallowed by a skip —
         # the INGEST-HARDENING ordering), BEFORE the edge guard — and on the
         # RAW ids, before resolution touches them (Cx final).
-        if not _ID_RE.fullmatch(entity) or (
+        if not ID_RE.fullmatch(entity) or (
             value_type == "entity" and isinstance(value, str)
-            and not _ID_RE.fullmatch(value)
+            and not ID_RE.fullmatch(value)
         ):
             self._record_skip(entity, attribute, value, "malformed_id",
                               detail=authored_detail)
             return out
+
+        # The first-use declaration this item would write at step 10 (§5),
+        # planned here: nothing is written, and the host's callback is not yet
+        # marked consulted. Steps 8 and 9 judge the attribute's relation
+        # family as it will stand once that declaration lands (r2), so an
+        # item that declares `stowed_in` containment cannot slip an id-shaped
+        # typo or a self-edge past checks that read the family.
+        is_manual_semantics_row = (
+            entity.startswith(ATTR_PREFIX) and attribute in SEMANTICS_PREDICATES
+        )
+        plan = None if is_manual_semantics_row else self._declaration_plan(attribute, item)
+        family = self._family_after(attribute, plan)
+
+        # 8. GATE-AUTHORITY-V1 §7: on an entity-valued predicate, a value with no
+        # declared value_type that LOOKS like an id but fails the grammar
+        # (`in: "Place:Cellar"`) is a typo, not text — stored as a literal it
+        # would win the location fold and silently relocate its subject. The
+        # same treatment the subject position gets. An explicit value_type is
+        # the author's word: "entity" was checked above, "literal" stands.
+        if ("value_type" not in item and isinstance(value, str)
+                and ID_SHAPED_RE.match(value) and not ID_RE.fullmatch(value)
+                and self._entity_valued(attribute, family)):
+            self._record_skip(entity, attribute, value, "malformed_id")
+            return out
+
+        # 9. Identity resolution, the decay half-life, time values, interval
+        # invariants and the per-edge structural skips (existing).
         raw_entity, raw_value = entity, value
         entity = self._registry.resolve(entity)
         if value_type == "entity" and isinstance(value, str):
@@ -968,8 +1300,9 @@ class Ingestor:
         # is None or a finite real number — checked before the interval
         # invariants, which compare them. Skip-receipted with the offending
         # value in `detail`; under atomic=True the skip aborts the whole set.
-        ok_from, valid_from = _time_value(None if timeless else valid_from)
-        ok_to, row_valid_to = _time_value(item.get("valid_to"))
+        # The rule is `confidence`'s too: one helper (GATE-AUTHORITY-V1 r2).
+        ok_from, valid_from = _gate_number(None if timeless else valid_from)
+        ok_to, row_valid_to = _gate_number(item.get("valid_to"))
         for ok, coordinate in ((ok_from, valid_from), (ok_to, row_valid_to)):
             if not ok:
                 self._record_skip(entity, attribute, value, "invalid_valid_time",
@@ -984,11 +1317,11 @@ class Ingestor:
         if row_valid_to is not None:
             if eff_valid_from is None:
                 self._record_skip(entity, attribute, value, "valid_to_without_valid_from",
-                              detail=authored_detail)
+                                  detail=authored_detail)
                 return out
             if row_valid_to < eff_valid_from:
                 self._record_skip(entity, attribute, value, "valid_to_before_valid_from",
-                              detail=authored_detail)
+                                  detail=authored_detail)
                 return out
 
         # Edge-granular structural guard (Part B): a single invalid edge
@@ -996,8 +1329,7 @@ class Ingestor:
         # typed receipt — the invariant holds (it never enters) and the rest of
         # the chunk still ingests. (Authority failures already raised above.)
         skip = self._edge_skip_reason(
-            entity, attribute, value, value_type,
-            item.get("frame", CANON), eff_valid_from,
+            entity, attribute, value, value_type, frame, eff_valid_from, family,
         )
         if skip is not None:
             # INGESTION-FIDELITY-V2 §D: two raw ids that resolve to one
@@ -1007,35 +1339,89 @@ class Ingestor:
             # GREEN'd spec; a merged lateral loop keeps its original
             # reason. Gate behavior is identical: the row never enters.
             if (entity == value and raw_entity != raw_value
-                    and self._semantics.is_containment(attribute)):
+                    and family == CONTAINMENT):
                 skip = (f"merged_self_edge: {raw_entity!r} and {raw_value!r} "
                         f"resolve to the same entity {entity!r} — {skip}")
             self._record_skip(entity, attribute, value, skip,
                               detail=authored_detail)
             return out  # nothing appended
 
-        is_manual_semantics_row = (
-            entity.startswith(ATTR_PREFIX) and attribute in SEMANTICS_PREDICATES
-        )
-        if not is_manual_semantics_row:
-            out.extend(self._maybe_declare_attribute(attribute, item))
-
-        row = self._buffer.append(
-            entity=entity,
-            attribute=attribute,
-            value=value,
-            value_type=value_type,
-            valid_from=eff_valid_from,
-            valid_to=row_valid_to,
-            frame=item.get("frame", CANON),
-            status=status,
-            confidence=item.get("confidence"),
-            role=write_role,
-        )
-        out.append(row)
+        # 10. Declarations (GATE-AUTHORITY-V1 §5): a declaration the gate would
+        # write must be in its axis vocabulary, validated before anything is
+        # written. Authority first: the buffer's vocabulary-authority refusal
+        # (a core attribute, or data already present) still raises ValueError
+        # whatever the value, through the buffer's own check.
         if is_manual_semantics_row:
-            self._semantics.rebuild()
-        if demoted_vf is not None:
+            self._buffer.check_declaration_authority(entity, attribute)
+            if not valid_declaration(attribute, value):
+                self._record_skip(entity, attribute, value,
+                                  "invalid_semantics_declaration",
+                                  detail={"field": attribute, "value": value,
+                                          "source": "attr_row"})
+                return out
+        elif plan is not None:
+            declaration, source = plan
+            if declaration:
+                self._buffer.check_declaration_authority(
+                    f"{ATTR_PREFIX}{attribute}", next(iter(declaration)))
+                invalid = [(predicate, declared) for predicate, declared
+                           in declaration.items()
+                           if not valid_declaration(predicate, declared)]
+                if invalid:
+                    # The whole item skips: writing its data row anyway would
+                    # lock the attribute, since the buffer refuses any
+                    # declaration once data exists. An invalid callback result
+                    # leaves the callback unconsulted, so every item on the
+                    # attribute skips the same way until the host fixes it.
+                    predicate, declared = invalid[0]
+                    self._record_skip(entity, attribute, value,
+                                      "invalid_semantics_declaration",
+                                      detail={"field": predicate, "value": declared,
+                                              "source": source})
+                    return out
+            if source == "attribute_default":
+                # Consulted once an item on the attribute reaches this step:
+                # the callback is asked again only if every earlier item on
+                # it was refused before here.
+                self._attribute_default_checked.add(attribute)
+            if declaration:
+                out.extend(self._declare(attribute, declaration))
+
+        # 11. The main row — or, for a raw `same_as`, the guarded merge (§2).
+        row: Assertion | None
+        if attribute == "same_as":
+            merged = self._merge_raw_same_as(raw_entity, raw_value, value_type, frame)
+            if merged is None:
+                return out                          # skipped with a receipt
+            out.extend(merged)
+            # The merge's rows join the call's classification (all EVENT by
+            # guardrail, zero model calls), and its `same_as` edge stands in
+            # for the main row: the main-row side rows attach to it. On
+            # `noop_already_merged` there is no main row, so they have nothing
+            # to attach to and are not written; the subject-level rows still
+            # are.
+            to_classify = merged
+            row = merged[1] if merged else None
+        else:
+            row = self._buffer.append(
+                entity=entity,
+                attribute=attribute,
+                value=value,
+                value_type=value_type,
+                valid_from=eff_valid_from,
+                valid_to=row_valid_to,
+                frame=frame,
+                status=status,
+                confidence=item.get("confidence"),
+                role=write_role,
+            )
+            out.append(row)
+            to_classify = [row]
+            if is_manual_semantics_row:
+                self._semantics.rebuild()
+
+        # 12. Side rows, in their existing order.
+        if row is not None and demoted_vf is not None:
             # The per-item story-time coordinate the cursor overrode — preserved
             # losslessly (META_ATTRIBUTES-hidden) for host promotion to a typed
             # content fact (year/era) if wanted (INGEST-LATENCY-V2 Win 3).
@@ -1045,25 +1431,25 @@ class Ingestor:
                     status="inferred", role=self._role,
                 )
             )
-        if receipt:
+        if row is not None and receipt:
             out.append(
                 self._buffer.append(
                     entity=row.id, attribute="canonicalized_from", value=receipt,
                     status="inferred", role=self._role,
                 )
             )
-        if item.get("source_doc"):
+        if row is not None and item.get("source_doc"):
             out.append(
                 self._buffer.append(
                     entity=row.id, attribute="source", value=str(item["source_doc"]),
-                    status=item.get("status", "stated"), role=self._role,
+                    status=status, role=self._role,
                 )
             )
-        if item.get("caused_by"):
+        if row is not None and item.get("caused_by"):
             # Side-channel entity edge: same malformed-id gate as the main row
             # (SHAPE-FIX-V1 4a, Cx final) — a phantom cause never enters.
             caused_by = str(item["caused_by"])
-            if not _ID_RE.fullmatch(caused_by):
+            if not ID_RE.fullmatch(caused_by):
                 self._record_skip(entity, "caused_by", caused_by, "malformed_id")
             else:
                 out.append(
@@ -1073,10 +1459,10 @@ class Ingestor:
                         # The effect-edge rides in its effect's frame: a non-canon
                         # effect's cause must be reachable from a frame-scoped read
                         # (else the situation lens false-deads it — Codex post-impl).
-                        frame=item.get("frame", CANON),
+                        frame=frame,
                     )
                 )
-        if self._observe_mode and not timeless:
+        if row is not None and self._observe_mode and not timeless:
             # The A2 rider: wall-clock learned-at is a gate invariant here.
             out.append(
                 self._buffer.append(
@@ -1085,8 +1471,13 @@ class Ingestor:
                 )
             )
         for alias in item.get("aliases", []):
-            self._registry.add_alias(identity_subject, alias, status=item.get("status", "stated"))
-        if item.get("correction"):
+            # GATE-AUTHORITY-V1 §4: a member that is not a non-empty string is
+            # dropped with a receipt; the item's other rows still land.
+            if isinstance(alias, str) and alias.strip():
+                self._registry.add_alias(identity_subject, alias, status=status)
+            else:
+                self._record_skip(identity_subject, "alias", alias, "invalid_alias")
+        if row is not None and item.get("correction"):
             # The proposal is itself logged (auditable; the promotion's
             # receipts chain ends here, at the utterance's chunk).
             out.append(
@@ -1101,16 +1492,49 @@ class Ingestor:
             # in view (promote_identity_proposals / self-check / tier-2).
             # Same malformed-id gate as the main row (SHAPE-FIX-V1 4a).
             same_as = str(item["same_as"])
-            if not _ID_RE.fullmatch(same_as):
+            if not ID_RE.fullmatch(same_as):
                 self._record_skip(identity_subject, "same_as", same_as, "malformed_id")
             else:
                 self._registry.maybe_same_as(identity_subject, same_as,
                                              evidence="extractor late binding")
-        if self.classify_inline:
-            self._classifier.classify(row)
-        elif self._classify_collect is not None:
-            self._classify_collect.append(row)   # batched at end of the call
+        # 13. Classification.
+        for written in to_classify:
+            if self.classify_inline:
+                self._classifier.classify(written)
+            elif self._classify_collect is not None:
+                self._classify_collect.append(written)   # batched at end of the call
         return out
+
+    def _merge_raw_same_as(
+        self, entity: str, value: Any, value_type: str, frame: str
+    ) -> list[Assertion] | None:
+        """A raw `same_as` item is the guarded merge (GATE-AUTHORITY-V1 §2):
+        the same body as the porcelain `merge` verb, on the raw ids, with
+        evidence "same_as item". Its value must be a well-formed id string
+        given as an entity, whatever `value_type` says — text, an id-shaped
+        typo, or an id the item itself marks `literal` (which `closure()`
+        would ignore) is `malformed_id`; identity is not perspectival, so it
+        must be canon (`same_as_not_canon`); a hard veto skips it
+        (`merge_vetoed`, with the merge receipt's veto and blocking edges).
+        Returns the merge's rows in append order — none for a pair already
+        merged, which is neither a write nor a skip — or None after a skip.
+        The rows are `inferred` whatever the item's status: one merge shape,
+        one provenance."""
+        if not (value_type == "entity" and isinstance(value, str)
+                and ID_RE.fullmatch(value)):
+            self._record_skip(entity, "same_as", value, "malformed_id")
+            return None
+        if frame != CANON:
+            self._record_skip(entity, "same_as", value, "same_as_not_canon",
+                              detail={"field": "frame", "value": frame})
+            return None
+        receipt, rows = self._registry._guarded_merge(entity, value, "same_as item")
+        if receipt["outcome"] == "vetoed":
+            self._record_skip(entity, "same_as", value, "merge_vetoed",
+                              detail={"veto": receipt["reason"],
+                                      "blocking_edges": receipt["blocking_edges"]})
+            return None
+        return rows
 
     # ---------------------------------------------------------- extracted
 
@@ -1131,7 +1555,7 @@ class Ingestor:
             raise RuntimeError("no model callable injected; use ingest_structured")
         rules = _EXTRACT_RULES_LEAN if extract == "lean" else _EXTRACT_RULES_FULL
         if pov is not None:
-            if not _ID_RE.fullmatch(pov):
+            if not ID_RE.fullmatch(pov):
                 raise ValueError(f"pov {pov!r} is not a valid entity id")
             rules += (
                 # The FULL deictic family incl. possessives (HD 126: "my hand"

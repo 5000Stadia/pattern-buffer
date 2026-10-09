@@ -263,6 +263,14 @@ class IdentityRegistry:
         cannot bypass it — not only at the ingest same_as→maybe_same_as gate.
         A vetoed pair is left distinct; the bad proposal stays unpromoted and
         is repaired forward by retracting the offending edge."""
+        rows = self._merge_rows(a, b, evidence)
+        return None if rows is None else rows[0].entity
+
+    def _merge_rows(self, a: str, b: str, evidence: str) -> list[Assertion] | None:
+        """`merge`'s body: re-check both hard vetoes, then append the merge's
+        four rows — the `identity_merge` event, the `same_as` edge
+        (`inferred`, timeless), its `caused_by`, and the evidence — and
+        return them in append order (None when vetoed)."""
         if self.containment_related(a, b):
             logger.warning(
                 "merge vetoed: %s and %s are containment-related (a thing is "
@@ -276,7 +284,7 @@ class IdentityRegistry:
             )
             return None
         event_id = f"event:merge_{self._buffer.head() + 1}"
-        self._buffer.append(
+        event = self._buffer.append(
             entity=event_id, attribute="kind", value="identity_merge",
             status="inferred", role=self._ingestor,
         )
@@ -284,16 +292,16 @@ class IdentityRegistry:
             entity=a, attribute="same_as", value=b, value_type="entity",
             status="inferred", role=self._ingestor,
         )
-        self._buffer.append(
+        cause = self._buffer.append(
             entity=edge.id, attribute="caused_by", value=event_id, value_type="entity",
             status="inferred", role=self._ingestor,
         )
-        self._buffer.append(
+        proof = self._buffer.append(
             entity=event_id, attribute="evidence", value=evidence,
             status="inferred", role=self._ingestor,
         )
         logger.info("merge %s == %s (%s)", a, b, evidence)
-        return event_id
+        return [event, edge, cause, proof]
 
     def maybe_same_as(self, a: str, b: str, evidence: str) -> None:
         """Ambiguity is represented, not forced: the edge survives until
@@ -644,22 +652,32 @@ class IdentityRegistry:
         VERB-V1/V2). Skips the soft discriminativeness heuristic (the host has
         judged) but NOT the hard vetoes — containment AND `distinct_from`.
         Returns a Receipt."""
+        return self._guarded_merge(a, b, evidence)[0]
+
+    def _guarded_merge(self, a: str, b: str, evidence: str) -> tuple[dict, list[Assertion]]:
+        """The one guarded-merge body (GATE-AUTHORITY-V1 §2): the Receipt plus
+        the rows the merge appended, in append order (none unless `merged`).
+        Shared by the porcelain `merge` verb (through `guarded_merge`) and the
+        ingest gate's raw `same_as` — no veto logic is copied anywhere."""
         ra = self.resolve(a)
         if ra == self.resolve(b):
-            return self._receipt("noop_already_merged", ra)
+            return self._receipt("noop_already_merged", ra), []
         blocks = self.containment_block(a, b)
         if blocks:
-            return self._receipt("vetoed", ra, reason="containment", blocking_edges=blocks)
+            return self._receipt(
+                "vetoed", ra, reason="containment", blocking_edges=blocks), []
         dblocks = self.distinct_block(a, b)
         if dblocks:
-            return self._receipt("vetoed", ra, reason="distinct_from", blocking_edges=dblocks)
-        event_id = self.merge(a, b, evidence)
-        if event_id is None:  # defensive: merge() re-checks both hard vetoes
+            return self._receipt(
+                "vetoed", ra, reason="distinct_from", blocking_edges=dblocks), []
+        rows = self._merge_rows(a, b, evidence)
+        if rows is None:  # defensive: _merge_rows re-checks both hard vetoes
             return self._receipt(
                 "vetoed", ra, reason="containment_or_distinct",
                 blocking_edges=self.containment_block(a, b) + self.distinct_block(a, b),
-            )
-        return self._receipt("merged", self.resolve(a), merge_event_id=event_id)
+            ), []
+        return self._receipt(
+            "merged", self.resolve(a), merge_event_id=rows[0].entity), rows
 
     def reject(self, a: str, b: str) -> dict:
         """Assert `distinct_from(a, b)` — the sticky "these are definitively

@@ -47,7 +47,8 @@ class AtomicAbort(Exception):
       (the non-atomic path's shape), plus `detail` only on a record that
       carries one (the bad time coordinate of an `invalid_valid_time` skip,
       FOLD-CORRECTNESS-V1 §6; the authored form of a swapped inverse item,
-      GATE-INVERSE-ALIAS-V1); `[]` when `cause="exception"`.
+      GATE-INVERSE-ALIAS-V1; the bad field, the merge veto or the declaration
+      source of a GATE-AUTHORITY-V1 §0 code); `[]` when `cause="exception"`.
     - `error`: `None` when `cause="gate_skip"`; `{type, message}` otherwise.
     """
 

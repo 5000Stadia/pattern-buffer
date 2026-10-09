@@ -27,12 +27,13 @@ from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
     INVIOLABLE_CORE,
+    MECHANISM_STATUS,
     SEMANTICS_PREDICATES,
     STATUSES,
     VALUE_TYPES,
     Assertion,
 )
-from patternbuffer.roles import WriterRole
+from patternbuffer.roles import RoleViolation, WriterRole
 
 logger = logging.getLogger(__name__)
 
@@ -354,6 +355,15 @@ class PatternBuffer:
     ) -> Assertion:
         """Append one assertion. The only write path that exists."""
         role.check(status)
+        # GATE-AUTHORITY-V1 §1: a mechanism row is written only with its
+        # owner's mark. Checked here, not in `_insert`, so `dump.build` still
+        # replays any old log as it was (readers neutralize forged rows).
+        required = MECHANISM_STATUS.get(attribute)
+        if required is not None and status != required:
+            raise RoleViolation(
+                f"a {attribute!r} row is written only by its owning component, "
+                f"with status {required!r} (got {status!r})"
+            )
         if status not in STATUSES:
             raise ValueError(f"unknown status {status!r}")
         if value_type not in VALUE_TYPES:
@@ -383,7 +393,7 @@ class PatternBuffer:
                 f"assertion stamped for world {row.world_id!r} cannot enter "
                 f"buffer of world {self.world_id!r}"
             )
-        self._validate_attr_semantics_insert(row)
+        self.check_declaration_authority(row.entity, row.attribute)
         self._live_conn().execute(
             "INSERT INTO assertions (seq, id, world_id, entity, attribute, value_type,"
             " value, valid_from, valid_to, frame, status, confidence, asserted_at)"
@@ -412,11 +422,16 @@ class PatternBuffer:
         self._commit_or_defer()
         logger.debug("append %s: (%s · %s)", row.id, row.entity, row.attribute)
 
-    def _validate_attr_semantics_insert(self, row: Assertion) -> None:
-        """Shared attr:* authority guard for append() and dump.build replay."""
-        if not row.entity.startswith(ATTR_PREFIX) or row.attribute not in SEMANTICS_PREDICATES:
+    def check_declaration_authority(self, entity: str, attribute: str) -> None:
+        """The vocabulary-authority refusal for an ``attr:<name> · <axis>``
+        declaration row: never on an inviolable core attribute, and never once
+        folded data exists for the attribute. Raises ValueError; a no-op for
+        any other row. The one check shared by every append, ``dump.build``
+        replay (through ``_insert``) and the ingest gate, which runs it before
+        validating a declared value (GATE-AUTHORITY-V1 §5)."""
+        if not entity.startswith(ATTR_PREFIX) or attribute not in SEMANTICS_PREDICATES:
             return
-        target = row.entity[len(ATTR_PREFIX):]
+        target = entity[len(ATTR_PREFIX):]
         if target in INVIOLABLE_CORE:
             raise ValueError(
                 f"cannot declare semantics for inviolable core attribute {target!r}"
@@ -491,7 +506,9 @@ class PatternBuffer:
         Omitted bounds mean no bound (now / log head). Retraction
         meta-rows themselves are excluded from folds, and a row is
         invisible once a ``retracts`` row targeting it is itself visible
-        on the asserted axis.
+        on the asserted axis — honored only with truth maintenance's mark,
+        status ``retracted`` (GATE-AUTHORITY-V1 §1): a ``retracts`` row
+        forged under any other status hides nothing.
         """
         aao = self.head() if asserted_as_of is None else asserted_as_of
         clauses = ["a.asserted_at <= ?", "a.status != 'retracted'"]
@@ -531,9 +548,10 @@ class PatternBuffer:
             params.append(valid_as_of)
         clauses.append(
             "NOT EXISTS (SELECT 1 FROM assertions r"
-            " WHERE r.entity = a.id AND r.attribute = 'retracts' AND r.asserted_at <= ?)"
+            " WHERE r.entity = a.id AND r.attribute = 'retracts'"
+            " AND r.status = ? AND r.asserted_at <= ?)"
         )
-        params.append(aao)
+        params.extend([MECHANISM_STATUS["retracts"], aao])
         return self._select("WHERE " + " AND ".join(clauses), tuple(params))
 
     def max_valid_from(self) -> float | None:

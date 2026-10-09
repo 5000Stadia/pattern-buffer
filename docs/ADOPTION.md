@@ -168,6 +168,35 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   `valid_to`). A second value asserted over the same window is a same-time
   contradiction (the key reads `conflicted`): to correct a value, `retract` the
   old row first.
+- **NEVER** write a mechanism attribute as an item (GATE-AUTHORITY-V1 §1):
+  `retracts`, `resolved_by`, `canonicalized_from`, `learned_at_wallclock`,
+  `source_valid_from` and `correction_proposal` are rows the engine writes
+  *about* other rows. The gate skips such an item (`mechanism_attribute`) on
+  every path, and the engine reads one only with its owner's mark, so a copied
+  or forged row never hides, spends, aliases or refreshes anything. Use the
+  doors: `retract`
+  (or a `commit_set` retract op), `resolve`, an item's `correction: true`; the
+  gate writes its own receipts, tracking stamps and demoted coordinates. If you
+  feed engine rows to an extractor as context, expect the model to copy some:
+  they come back as receipts, never as effects.
+- **MUST** assert identity in canon. A raw `same_as` item **is a guarded merge**
+  (GATE-AUTHORITY-V1 §2): it goes through the same path as `p.merge` (the
+  containment and `distinct_from` vetoes are absolute) and writes the merge's
+  four `inferred` rows (the `identity_merge` event, the `same_as` edge, its
+  `caused_by`, the evidence) instead of one `stated` row. A raw one outside
+  canon is skipped `same_as_not_canon` (identity is not perspectival), a vetoed
+  one `merge_vetoed` (`detail` names the veto and the blocking edges), a value
+  that is not an id `malformed_id`; a pair already merged writes nothing. When
+  a refused one names a real duplicate, route the receipt to `p.confirm` (a
+  canon proposal exists) or `p.merge`. (An item's `same_as` *field* still only
+  proposes, as `maybe_same_as`.)
+- **MUST** read `Receipt.skipped` as the whole refusal record: every write
+  path fills it, `p.ingest()` included, and a malformed item (a non-object, a
+  missing field, a bad `frame`, a `confidence` or flag of the wrong type, an
+  invalid semantics declaration) is skipped with a code instead of raising
+  mid-chunk or being stored. Authority violations (a status outside the
+  ingestor's grant, `generated` into canon/`knows:*`) still **raise**, before
+  anything of the item is written. The codes are in THE PORCELAIN below.
 - **Inverse predicates (`holds`, `wearing`) — GATE-INVERSE-ALIAS-V1.** The gate
   now swaps direction: `person:ralph holds thing:key` is stored as `thing:key
   held_by person:ralph` (receipt `(inverse) holds->held_by`); `wearing` likewise
@@ -317,7 +346,10 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    # "inline" (default) = per-row; "defer" = no classify (host runs classify_all later);
    # "rules" = guardrails+STATE, zero LM.
    # at (AXIS-HEAD-V1): places the scene cursor before the commit — the per-chunk pose for
-   #   parallel-extract/serial-commit paths (mirrors ingest(at=)).
+   #   parallel-extract/serial-commit paths (mirrors ingest(at=)). A call that raises with
+   #   nothing written (an authority violation, a bad classify mode, a failing model, an
+   #   AtomicAbort) leaves the cursor where it was; after a partial non-atomic write it
+   #   stays at `at`, where those rows were stamped (GATE-AUTHORITY-V1 §6; ingest(at=) too).
    # frame= is a DEFAULT for unframed items, NOT an override (letter 028) — per-item frame
    #   keys WIN, which mixed batches require (a telling scene's knows:B rows must survive).
    #   NOTE: extract() returns RAW model output, and extracted items MAY carry their own
@@ -328,13 +360,33 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    #   semantics; which is right is your world-policy call, not the engine's or the
    #   model's). When frame= is given and items keep a different own frame, the Receipt
    #   carries a warning (never silent — HD 121).
-   # The Receipt's `skipped: [{entity, attribute, value, reason}]` lists rows dropped at
-   # the gate — edge-granular (containment cycle / self-edge / lateral self-loop) AND
-   # `malformed_id` (SHAPE-FIX-V1: any id outside the grammar — person:/you, thing:press_N1,
-   # person:jean-luc — rejected not normalized; runs AFTER the authority gate so a
-   # violation still raises). NOTE: p.ingest() (the prose path) does not yet copy its
-   # skips into its Receipt — audit finding, fix pending; ingest_structured does. One bad row is
-   # skipped, the rest of the chunk still ingests (no silent cap; other gate failures raise).
+   # The Receipt's `skipped: [{entity, attribute, value, reason[, detail]}]` lists what the
+   # gate refused, on every write path, p.ingest() included (its extraction call's skips,
+   # then its source= stamping call's). `reason` is a fixed code from
+   # patternbuffer.ingest.SKIP_REASONS (GATE-AUTHORITY-V1 §0), or one of three legacy
+   # per-edge prose reasons ("cycle-forming containment edge: …", "lateral self-loop: …",
+   # "merged_self_edge: …"; match substrings). The codes:
+   #   malformed_id     an id outside the grammar in any position — person:/you,
+   #                    thing:press_N1, person:jean-luc, or an id-shaped typo on an
+   #                    entity-valued predicate (in: "Place:Cellar"); never normalized
+   #   malformed_item   not an object; entity/attribute/value missing; a blank attribute;
+   #                    a frame that is not a non-empty string (never defaulted to canon)
+   #   invalid_field    value_type outside entity|literal|unresolved|delta; timeless or
+   #                    correction not a bool (0/1 read as false/true); confidence not a
+   #                    finite number (numeric strings are coerced, like times)
+   #   invalid_alias    one aliases member that is not a non-empty string (the rest of the
+   #                    item lands; a string is ONE alias, a tuple/set a list)
+   #   invalid_valid_time, valid_to_without_valid_from, valid_to_before_valid_from,
+   #   invalid_decay_halflife, moved_marker_invalid, moved_open_with_arrival,
+   #   moved_complete_attribute_not_durable
+   #   mechanism_attribute, same_as_not_canon, merge_vetoed (see MUST / NEVER)
+   #   invalid_semantics_declaration   an arity/relation_family/fold_policy/structural
+   #                    value outside its vocabulary — the WHOLE item skips, nothing declared
+   # `detail` appears only when set: the bad field and value, the merge veto and blocking
+   # edges, the declaration's source (item | attribute_default | attr_row), the bad time,
+   # or the authored form of a swapped inverse item. Authority violations still RAISE,
+   # before anything of the item is written. One bad item is skipped; the rest of the
+   # chunk still ingests (no silent cap).
 p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False) -> dict
@@ -533,8 +585,9 @@ it **all-or-none**:
   different-value is a flagged simultaneous contradiction, not an update).
 - **Failure — `AtomicAbort{cause, skipped, error}`** (`from patternbuffer import
   AtomicAbort`), raised only after rollback is confirmed, nothing visible:
-  `cause="gate_skip"` (a malformed-id/cycle/self-edge that would receipt-and-
-  continue on the non-atomic path — `skipped` names the edges, `error=None`);
+  `cause="gate_skip"` (any skip that would receipt-and-continue on the
+  non-atomic path — a malformed id or item, a cycle, a mechanism attribute, a
+  vetoed `same_as`… — `skipped` carries the records, `error=None`);
   `cause="exception"` (authority/semantics/unknown-retract-target — `error=
   {type,message}`, `skipped=[]`). Over MCP the abort is `isError:true` with
   `structuredContent={cause,skipped,error}`.

@@ -17,6 +17,7 @@ from typing import Any, Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.codec import json_default
 from patternbuffer.model import (
+    ASSERTION_ID_RE,
     ATTR_PREFIX,
     META_ATTRIBUTES,
     TASK_CLASSIFY,
@@ -153,9 +154,18 @@ class Classifier:
                 # A place's containment is part of what the place IS — the
                 # study does not move out of the home (fixture sub-rule).
                 return CONSTITUTIVE, 0.9
-            return None  # objects: fixture vs movable is a judgment
-        if self._semantics.is_structural(row.attribute):
+            # objects: fixture vs movable is a judgment (falls to the model)
+        elif self._semantics.is_structural(row.attribute):
             return CONSTITUTIVE, 1.0
+        if ASSERTION_ID_RE.fullmatch(row.entity):
+            # GATE-AUTHORITY-V1 §8: a row about an assertion that no rule
+            # above decides (learned_at_wallclock, a proposal's evidence, host
+            # metadata like last_confirmed) is bookkeeping: STATE 0.5, the
+            # verdict classify="rules" already gives it, never a paid model
+            # call. Not EVENT — that would erase host-authored assertion
+            # metadata from state(). Every derived read skips assertion
+            # subjects, so no fold changes.
+            return STATE, 0.5
         return None
 
     def classify(self, row: Assertion) -> Classification:

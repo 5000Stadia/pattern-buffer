@@ -9,7 +9,9 @@ special-cased.
 from __future__ import annotations
 
 import copy
+import re
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 # Provenance vocabulary (whitepaper §7). `default` appears only in
@@ -65,6 +67,32 @@ META_ATTRIBUTES = frozenset(
     }
 ) | SEMANTICS_PREDICATES
 
+# Mechanism attributes (GATE-AUTHORITY-V1 §1): rows the engine writes about
+# OTHER rows. Each has exactly one owning engine component and is recognized by
+# that owner's mark, never by its name alone — the gate never accepts one as an
+# item, the buffer refuses the wrong status on append, and readers honor only
+# the owner's mark. One read-only definition shared by the buffer, the readers
+# and the gate.
+# - `retracts` hides its target (truth maintenance, `retracted`).
+# - `resolved_by` spends a thunk and names its memo (the resolver, `generated`).
+# - `learned_at_wallclock` is the tracking-mode confirmation stamp that
+#   confidence() recency reads (the gate's A1 rider, `observed`; r2).
+# - `canonicalized_from` is replayed into the attribute-alias map on open (the
+#   gate's own receipt: `inferred`, on an assertion whose attribute is the
+#   receipt's target — a structural mark, so it has no single status here).
+# - `source_valid_from` (the cursor-authoritative demotion) and
+#   `correction_proposal` (the `correction` field's proposal) are the gate's
+#   own records of what it did to an item; no engine read consumes them, so
+#   they carry no status mark here, but a copied row would misstate them and
+#   a host promoting corrections acts on the latter (r2).
+MECHANISM_STATUS = MappingProxyType({
+    "retracts": "retracted",
+    "resolved_by": "generated",
+    "learned_at_wallclock": "observed",
+})
+MECHANISM_ATTRIBUTES = frozenset(MECHANISM_STATUS) | {
+    "canonicalized_from", "source_valid_from", "correction_proposal"}
+
 # Set-valued attributes: multiple coexisting values are data, never a
 # contradiction — a conflict requires a functional key (run-4 finding:
 # 62 of 77 flags were names/aliases/edges misread as disputes).
@@ -74,6 +102,22 @@ SET_VALUED_ATTRIBUTES = frozenset({"name", "alias", "connects_to", "adjacent_to"
 VALUE_TYPES = frozenset({"entity", "literal", "unresolved", "delta"})
 
 CANON = "canon"
+
+# The id grammar (SHAPE-FIX-V1 4a): namespaced snake_case, no stray slashes.
+# A malformed id (person:/you) is SKIPPED at the gate with a typed receipt,
+# never normalized — guessing person:you would manufacture the phantom
+# well-formed. One definition for the gate and the porcelain.
+ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
+
+# A value that LOOKS like an id (GATE-AUTHORITY-V1 §7): a letter-led word, a
+# colon, and no whitespace right after it — `Place:Cellar`, `place:/cellar`,
+# `place:the cellar`, `place:`; never `repaired: the rival arrives`, `12:30`
+# or `a drawer at home`. Matched from the start of the value.
+ID_SHAPED_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*:(?!\s)")
+
+# An assertion id, as the buffer mints them (`a:<seq>`) — GATE-AUTHORITY-V1 §8.
+# A host id merely shaped like the namespace (`a:artifact`) is not one.
+ASSERTION_ID_RE = re.compile(r"^a:[0-9]+$")
 
 # Model task keys. Every schema the engine hands the injected model callable
 # carries one of these as its JSON-Schema `title`, so a host can route a call

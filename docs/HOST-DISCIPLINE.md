@@ -46,7 +46,9 @@ findable and correlatable.
 1. **Identity — which entity, canonically.** A namespaced id
    (`person:`/`place:`/`obj:`/`event:`/`doc:` + snake_case). Attach *every*
    referring expression as an `alias`; when a thing is later named, keep its
-   id and add the name; when you minted a duplicate, emit `same_as`.
+   id and add the name; when you minted a duplicate, emit `same_as` in
+   `canon` (identity is not perspectival: the gate merges it through the
+   guarded merge, and refuses one in a `knows:` frame as `same_as_not_canon`).
    **Why it's load-bearing:** identity is the spine of retrieval — the
    engine's identity *closure* is what gathers all of a subject's facts
    under one query. Fragment the identity and you fragment the subject; a
