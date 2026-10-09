@@ -49,8 +49,10 @@ wins.
   removed (§1, §2).
 - **Batch D's confirmed defaults** (Kabe, 2026-10-08 evening): refer learns a
   word, never a pick; `ask` never learns. §6 and §9 build on them.
-- **Batch C's #1 and #2:** identity is canon's; `knows:` frames follow merges. §6
-  and §8 rely on C's frame-scoped vocabulary and observer frames.
+- **Batch C's #1:** identity is canon's. §6 relies on C's frame-scoped
+  vocabulary. C's #2 (`knows:` frames follow merges, C §7) is held for Kabe's
+  gate g3bf5da and is not built (amended at build, 2026-10-09): §8's `frame=`
+  reads the exact stored frame, and no E behaviour depends on C §7.
 
 ## §0 Dependencies, and the contract words used below
 
@@ -65,7 +67,7 @@ E lands last, after A–D and GATE-INVERSE-ALIAS-V1 (the audit's order).
 | §6 | C §2 | `by_alias(frame=)`. Without it the asker's pass sees every frame, which is harmless: it then binds what canon would |
 | §6, §9 | D | `learn=`, tier 1d, refer's `asserted_as_of`, `ask` never learns |
 | §7 | B §0 | the authority step the physics check joins |
-| §8 | C §6, C §7 | snapshot existence by frame; observer frames |
+| §8 | C §6 | snapshot existence by frame. C §7 (observer frames following merges) is held for g3bf5da, so §8 reads the exact stored frame |
 | §11 | C §4 | `identity_conflicts` (tool 40); the counts below say which base they assume |
 
 If the batch has to split, §4, §5, §7 and §8 need none of A–D and can land first
@@ -645,7 +647,9 @@ policy vocabulary (`thunks.POLICIES` re-exports it, so the buffer needs no
   and likewise `contents(container, …)` and `path(a, b, …)`.
   - They pass it to the `World`/`Indexes` signatures, which already take it.
   - Docstrings stop saying "in canon".
-  - With C, an observer frame reads through identity.
+  - Each reads the rows stored under that frame's own name. C §7 (`knows:`
+    frames following merges) is held for Kabe's gate g3bf5da and is not built
+    (amended at build, 2026-10-09).
 - **`asserted_as_of: int | None = None`**, a log position: rows asserted after it
   are invisible, and retractions asserted after it don't apply.
   - It is appended to every porcelain read that takes a valid-time bound
