@@ -126,8 +126,10 @@ Rules:
 - ENTITIES: every person, place, object, organization, document, and named
   event the text establishes. One id per individual across the WHOLE text:
   someone unnamed early who is named later is ONE entry whose aliases carry
-  every referring expression used anywhere. Ids namespaced person:/place:/
-  obj:/org:/doc:/event: + snake_case. Anchors = roles, recurring locations,
+  every referring expression used anywhere. An id is a namespace, a colon
+  and a snake_case name, nothing between them: person:ilsa_renn,
+  place:records_vault (never person:/ilsa_renn). Namespaces: person, place,
+  obj, org, doc, event. Anchors = roles, recurring locations,
   distinguishing features (identity signals, not facts).
 - SPACE, exhaustively: containers nest — emit entities for rooms AND the
   furniture in them AND the compartments in the furniture (a desk and each
@@ -164,6 +166,19 @@ def _split_field(field: str) -> list[str]:
     return [part.strip() for part in field.split(";") if part.strip()]
 
 
+def _norm_id(raw: str) -> str:
+    """Repair the one id slip pass-0 models make: a slash after the namespace
+    colon (``person:/ilsa_renn``). The engine's id grammar refuses such ids,
+    so every seed row and edge using one would be skipped at the gate."""
+    eid = raw.strip()
+    ns, sep, rest = eid.partition(":")
+    if sep and rest.startswith("/"):
+        fixed = f"{ns}:{rest.lstrip('/')}"
+        logger.debug("pass-0: id %r repaired to %r", eid, fixed)
+        return fixed
+    return eid
+
+
 def parse_registry_lines(
     lines: list[str], world_id: str
 ) -> tuple[WorldRegistry, list[str]]:
@@ -178,7 +193,7 @@ def parse_registry_lines(
         fields = rest.split("|")
         try:
             if kind == "E":
-                eid = fields[0].strip()
+                eid = _norm_id(fields[0])
                 if not eid or ":" not in eid:
                     raise ValueError("bad entity id")
                 card = reg.entities.setdefault(
@@ -212,7 +227,7 @@ def parse_registry_lines(
             elif kind == "P":
                 if len(fields) != 2:
                     raise ValueError("edge needs exactly a|b")
-                a, b = fields[0].strip(), fields[1].strip()
+                a, b = _norm_id(fields[0]), _norm_id(fields[1])
                 if not a or not b:
                     raise ValueError("bad edge")
                 if (a, b) not in reg.places:

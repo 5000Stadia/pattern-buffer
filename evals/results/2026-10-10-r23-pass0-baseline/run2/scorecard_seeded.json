@@ -1,0 +1,290 @@
+{
+  "b3_f1": 0.7303,
+  "b3_precision": 0.9839,
+  "b3_recall": 0.5806,
+  "coverage": 25,
+  "coverage_frac": 0.8928571428571429,
+  "fragmentation": {},
+  "fragmentation_count": 0,
+  "fusion": {
+    "place:records_vault": [
+      "records_vault",
+      "seed_vault"
+    ]
+  },
+  "fusion_count": 1,
+  "gold_entities": 28,
+  "mentions": 62,
+  "mentions_resolved": 34,
+  "mentions_unresolved": 28,
+  "per_entity": {
+    "anchor": {
+      "ids": [
+        "place:anchor"
+      ],
+      "mentions": 3,
+      "resolved": 1,
+      "unresolved": [
+        "settlement",
+        "settlement of anchor"
+      ]
+    },
+    "archive": {
+      "ids": [],
+      "mentions": 2,
+      "resolved": 0,
+      "unresolved": [
+        "archive",
+        "unified archive"
+      ]
+    },
+    "bazaar": {
+      "ids": [
+        "place:bazaar"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "cigarette_tin": {
+      "ids": [
+        "obj:cigarette_tin"
+      ],
+      "mentions": 3,
+      "resolved": 1,
+      "unresolved": [
+        "steel tin",
+        "tin of cigarettes"
+      ]
+    },
+    "condenser_station": {
+      "ids": [],
+      "mentions": 2,
+      "resolved": 0,
+      "unresolved": [
+        "condenser station",
+        "sela's condenser station"
+      ]
+    },
+    "core": {
+      "ids": [
+        "obj:memory_core"
+      ],
+      "mentions": 3,
+      "resolved": 1,
+      "unresolved": [
+        "core",
+        "master meter's memory core"
+      ]
+    },
+    "council_tier": {
+      "ids": [
+        "place:council_tier"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "cray": {
+      "ids": [
+        "person:cray"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "desk": {
+      "ids": [
+        "obj:ilsa_renn_desk"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "dig_sledge": {
+      "ids": [
+        "obj:survey_sledge"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "sledge"
+      ]
+    },
+    "false_drawer": {
+      "ids": [
+        "obj:false_drawer"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "ilsa's false drawer"
+      ]
+    },
+    "figs": {
+      "ids": [],
+      "mentions": 4,
+      "resolved": 0,
+      "unresolved": [
+        "dried figs",
+        "figs",
+        "paper twist of figs",
+        "twist of three dried figs"
+      ]
+    },
+    "footlocker": {
+      "ids": [
+        "obj:tovan_footlocker"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "footlocker"
+      ]
+    },
+    "fuse_tin": {
+      "ids": [
+        "obj:fuse_tin"
+      ],
+      "mentions": 3,
+      "resolved": 1,
+      "unresolved": [
+        "tin of four spare fuses",
+        "tin of spare fuses"
+      ]
+    },
+    "gallery": {
+      "ids": [
+        "place:gallery"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "assembly hall"
+      ]
+    },
+    "ilsa": {
+      "ids": [
+        "person:ilsa_renn"
+      ],
+      "mentions": 4,
+      "resolved": 2,
+      "unresolved": [
+        "clerk",
+        "clerk with the tin ear"
+      ]
+    },
+    "letter": {
+      "ids": [
+        "doc:tovan_letter"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "maps": {
+      "ids": [
+        "obj:survey_maps"
+      ],
+      "mentions": 4,
+      "resolved": 3,
+      "unresolved": [
+        "tovan's aquifer maps"
+      ]
+    },
+    "marn": {
+      "ids": [
+        "person:marn"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "narrator": {
+      "ids": [
+        "person:narrator"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "detective"
+      ]
+    },
+    "pell": {
+      "ids": [
+        "person:pell"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "personal_case": {
+      "ids": [
+        "obj:personal_case"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "cray's personal case"
+      ]
+    },
+    "records_vault": {
+      "ids": [
+        "place:records_vault"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "seed_vault": {
+      "ids": [
+        "place:records_vault"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "sela": {
+      "ids": [
+        "person:sela_voss"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "tovan": {
+      "ids": [
+        "person:tovan_voss"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "vial_crate": {
+      "ids": [
+        "obj:sample_vials"
+      ],
+      "mentions": 4,
+      "resolved": 1,
+      "unresolved": [
+        "crate of sample vials",
+        "crate of twelve empty sample vials",
+        "vial crate"
+      ]
+    },
+    "wellhead": {
+      "ids": [
+        "place:wellhead"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    }
+  },
+  "registry_ids": 88,
+  "uncovered": [
+    "archive",
+    "condenser_station",
+    "figs"
+  ]
+}

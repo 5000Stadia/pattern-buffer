@@ -5,7 +5,8 @@ establish/extend prompt, the eval model shim), then grade the registry.
 Usage (from the repo root):
     PYTHONPATH=src python evals/harness/run_pass0_baseline.py OUT_DIR [--runs 2]
 
-Each run lands in OUT_DIR/run<N>/ with registry.json, scorecard.md/.json and
+Each run lands in OUT_DIR/run<N>/ with registry.json, scorecard.md/.json,
+scorecard_seeded.md/.json (identity after the engine's own merges) and
 meta.json (date, model, segment count, wall time). No pass-1, no battery.
 Stops with a nonzero exit if the model shim errors (quota, CLI missing).
 """
@@ -23,7 +24,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
 
-from grade_registry import grade, write_scorecard
+from grade_registry import grade, seeded_registry, write_scorecard
 from pipeline import Pipeline
 from run_chapter_test import BIBLE_MARKERS, STORY
 
@@ -55,6 +56,8 @@ def run_once(run_dir: Path, segments: list[str]) -> dict:
         pass
     result = grade(registry)
     write_scorecard(result, run_dir, title=f"Pass-0 registry scorecard ({run_dir.name})")
+    write_scorecard(grade(seeded_registry(registry)), run_dir, stem="scorecard_seeded",
+                    title=f"Pass-0 identity after seeding and reconcile ({run_dir.name})")
     meta = {"date": date.today().isoformat(), "model": MODEL, "segments": len(segments),
             "wall_s": wall, "registry_ids": len(registry.entities)}
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")

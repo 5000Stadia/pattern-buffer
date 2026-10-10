@@ -136,6 +136,57 @@ def grade(registry: Any, gold: Mapping[str, list[str]] | None = None) -> dict[st
     }
 
 
+def seeded_registry(registry: Any) -> dict[str, Any]:
+    """The registry as the engine leaves it: seed it into a scratch world
+    (stub model, no pass-1), run identity promotion and ``reconcile``, and
+    fold each merged group into one card under its surviving id. Grading this
+    measures identity after commit, where the engine's own merges count.
+
+    Ids are first repaired as ``registry.parse_registry_lines`` repairs them
+    (a stored registry from before that fix may carry ``person:/x`` ids,
+    which the gate would refuse)."""
+    import tempfile
+
+    from patternbuffer import World
+
+    try:
+        from registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id, seed_items
+    except ImportError:
+        from evals.harness.registry import (EntityCard, TimelineSpec, WorldRegistry,
+                                            _norm_id, seed_items)
+
+    if isinstance(registry, (str, Path)):
+        registry = json.loads(Path(registry).read_text())
+    if not isinstance(registry, Mapping):
+        from dataclasses import asdict
+        registry = asdict(registry)
+    reg = WorldRegistry(
+        world_id=registry["world_id"],
+        entities={_norm_id(k): EntityCard(**v) for k, v in registry["entities"].items()},
+        attributes=dict(registry.get("attributes", {})),
+        timeline=TimelineSpec(**registry.get("timeline", {})),
+        places=[(_norm_id(a), _norm_id(b)) for a, b in registry.get("places", [])],
+    )
+
+    with tempfile.TemporaryDirectory() as tmp:
+        w = World(Path(tmp) / "seeded.world", world_id=reg.world_id,
+                  model=lambda prompt, schema: {})
+        w.ingestor.classify_inline = False
+        for alias, canonical in sorted(reg.attributes.items()):
+            w.ingestor.add_attribute_alias(alias, canonical)
+        w.ingest_structured(seed_items(reg))
+        w.registry.promote_identity_proposals()
+        w.registry.reconcile()
+        entities: dict[str, dict[str, list[str]]] = {}
+        for eid, card in sorted(reg.entities.items()):
+            root = w.registry.resolve(eid)
+            merged = entities.setdefault(root, {"names": [], "aliases": []})
+            merged["names"] += [n for n in card.names if n not in merged["names"]]
+            merged["aliases"] += [a for a in card.aliases if a not in merged["aliases"]]
+        w.close()
+    return {"world_id": reg.world_id, "entities": entities}
+
+
 def scorecard_md(result: Mapping[str, Any], title: str = "Pass-0 registry scorecard") -> str:
     """Render ``grade()`` output as a Markdown scorecard."""
     g = result
