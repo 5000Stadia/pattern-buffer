@@ -1,0 +1,32 @@
+{
+  "audit": {
+    "adds": 5,
+    "dropped": 0,
+    "retracts": 0
+  },
+  "date": "2026-10-10",
+  "entities": 100,
+  "frames": 6,
+  "glean": false,
+  "log_rows": 529,
+  "model": "claude-sonnet-4-6",
+  "pass0_mode": "sequential",
+  "pipeline": "INGEST-V2 (registry-first)",
+  "registry_after_commit_entities": 98,
+  "registry_escapes": 0,
+  "registry_pass0": {
+    "raw_b3_f1": 0.7517,
+    "raw_fusion": 0,
+    "seeded_b3_f1": 0.7517,
+    "seeded_fusion": 0
+  },
+  "timings": {
+    "audit_s": 200.9,
+    "battery_s": 12.1,
+    "commit_s": 261.1,
+    "escape_repair_s": 0.0,
+    "pass0_s": 883.6,
+    "pass1_s": 563.8,
+    "total_s": 1921.5
+  }
+}

@@ -1,0 +1,2767 @@
+{
+  "attributes": {
+    "access_timestamp": "entry_time",
+    "active": "operational_status",
+    "active_reactors": "working_reactors",
+    "air_filtered_twice": "air_filter_level",
+    "air_quality": "air_filter_level",
+    "allocation_amount": "ration_share",
+    "allocation_total": "water_total_out",
+    "assigned_guard": "guard_assignment",
+    "badge_scan_time": "badge_entry_time",
+    "banishment_destination": "exile_destination",
+    "before_that": "previous_role",
+    "behind_panel": "drawer_type",
+    "blunt_hand": "handwriting_author",
+    "bright_with_handling": "seal_condition",
+    "broken": "physical_condition",
+    "builder": "built_by",
+    "calibrated": "operational_status",
+    "calibrations_performed": "calibration_count",
+    "carries": "custody",
+    "carved_text": "inscription",
+    "cigarettes_left": "cigarette_count",
+    "cistern_draw": "water_total_out",
+    "clerk_for": "employer",
+    "clerk_to": "role_held",
+    "commutation_vote_count": "vote_margin",
+    "compounding_since": "discrepancy_start_year",
+    "concealed_compartment": "drawer_type",
+    "concealment_location": "in_binding",
+    "condition": "physical_condition",
+    "constructed_by": "built_by",
+    "convoy_member": "founding_membership",
+    "count": "cigarette_count",
+    "covered_by": "package_wrapping",
+    "creator": "built_by",
+    "credited_to": "built_by",
+    "crew_size": "survey_team_size",
+    "crimp_condition": "seal_condition",
+    "crimp_id": "seal_number",
+    "crimp_number": "seal_number",
+    "crimp_stamp": "seal_number",
+    "crimp_state": "is_sealed",
+    "crimp_status": "seal_condition",
+    "daily_ration": "ration_share",
+    "dark": "operational_status",
+    "data_years": "years_of_data",
+    "dead": "physical_condition",
+    "deaf": "hearing_impairment",
+    "deafness": "hearing_impairment",
+    "death_cause": "cause_of_death",
+    "decade": "time_in_location",
+    "decommissioned": "is_decommissioned",
+    "defunct": "physical_condition",
+    "depth_below": "vertical_distance",
+    "designation": "role",
+    "difference_in_liters": "discrepancy_volume",
+    "digger_count": "survey_team_size",
+    "discrepancy": "allocation_gap",
+    "discrepancy_liters": "divergence_liters",
+    "discrepancy_origin": "discrepancy_start_year",
+    "disease": "cause_of_death",
+    "disposition": "verdict",
+    "distance_above": "vertical_distance",
+    "divergence_volume": "divergence_liters",
+    "door_guard": "guard_assignment",
+    "door_log_entry": "entry_time",
+    "door_log_time": "badge_entry_time",
+    "double-share": "ration_share",
+    "down": "operational_status",
+    "dug_by": "built_by",
+    "duration": "time_in_location",
+    "dusted": "physical_condition",
+    "ear_condition": "hearing_impairment",
+    "effects_released": "probate_state",
+    "effects_status": "probate_state",
+    "elapsed_divergence": "divergence_years",
+    "elapsed_since": "years_ago",
+    "eleven_years_back": "discrepancy_start_year",
+    "employed_by": "employer",
+    "entry_time": "badge_entry_time",
+    "exile_location": "exile_destination",
+    "failed": "operational_status",
+    "false_bottom": "drawer_type",
+    "false_drawer": "drawer_type",
+    "felt-lined": "surface_lining",
+    "filtered": "air_filter_level",
+    "filtration_count": "air_filter_level",
+    "fixed": "rigged",
+    "floors_below": "vertical_distance",
+    "former_role": "previous_role",
+    "founding_member": "founding_membership",
+    "function": "role_held",
+    "fuses_stocked": "fuse_count",
+    "gap_opens": "discrepancy_start_year",
+    "good_ear": "deaf_side",
+    "guard_rotation": "guard_assignment",
+    "guild_crimp": "seal_condition",
+    "guild_hold": "probate_state",
+    "half-share": "ration_share",
+    "hand_of": "handwriting_author",
+    "handwriting": "handwriting_author",
+    "hasp_seal_number": "seal_number",
+    "hasp_sealed": "is_sealed",
+    "hatch_entry_time": "badge_entry_time",
+    "hearing": "hearing_impairment",
+    "hearing_loss": "hearing_impairment",
+    "hearing_side": "deaf_side",
+    "held_by": "custody",
+    "hidden_drawer": "drawer_type",
+    "hidden_in_binding": "in_binding",
+    "holds": "custody",
+    "how_died": "cause_of_death",
+    "how_long": "tenure_length",
+    "how_long_serving": "tenure_length",
+    "how_long_there": "time_in_location",
+    "how_long_to_travel": "travel_time",
+    "how_many": "item_count",
+    "how_many_cigarettes": "cigarette_count",
+    "how_many_reactors_working": "working_reactors",
+    "how_many_times_re-twisted": "seal_condition",
+    "how_many_years": "years_ago",
+    "how_much_the_well_is_pulling": "water_total_in",
+    "humming": "physical_condition",
+    "impaired_ear": "deaf_side",
+    "impaired_hearing": "hearing_impairment",
+    "in_keeping_of": "custody",
+    "in_possession_of": "custody",
+    "in_the_binding": "in_binding",
+    "in_whose_hand": "handwriting_author",
+    "inscribed_word": "case_label",
+    "intact": "physical_condition",
+    "intake": "water_total_in",
+    "interior_material": "surface_lining",
+    "job": "role_held",
+    "journey_days": "days_travel",
+    "judgment": "verdict",
+    "keeper": "custody",
+    "label_reads": "case_label",
+    "labeled": "case_label",
+    "latched": "sealed_status",
+    "lead_handling": "seal_condition",
+    "lead_number": "seal_number",
+    "lined_with": "surface_lining",
+    "liter_gap": "discrepancy_volume",
+    "locked": "sealed_status",
+    "log_entry_time": "badge_entry_time",
+    "lung_illness": "cause_of_death",
+    "lung_rot": "cause_of_death",
+    "made_to_lie": "rigged",
+    "manner_of_death": "cause_of_death",
+    "marked_text": "inscription",
+    "meter_condition": "meter_status",
+    "minutes": "travel_time",
+    "number": "cigarette_count",
+    "number_of": "item_count",
+    "number_of_working_reactors": "working_reactors",
+    "off_inventory": "is_decommissioned",
+    "off_the_map": "is_decommissioned",
+    "office": "role",
+    "officially_decommissioned": "is_decommissioned",
+    "on_watch": "guard_assignment",
+    "open": "is_sealed",
+    "open-air_hazard": "suit_required",
+    "open_or_sealed": "is_sealed",
+    "opened": "sealed_status",
+    "opened_under": "discrepancy_start_year",
+    "origin_year": "discrepancy_start_year",
+    "original_settler": "founding_membership",
+    "originally": "previous_role",
+    "outcome": "verdict",
+    "packaging": "package_wrapping",
+    "people_count": "population",
+    "phantom_reserve": "water_reserve_liters",
+    "phantom_reserve_liters": "divergence_liters",
+    "plumb-line_distance": "vertical_distance",
+    "polymer_mark": "inscription",
+    "position": "role_held",
+    "post": "role",
+    "pressed_shape_in_felt": "surface_lining",
+    "prior_role": "previous_role",
+    "probate": "probate_state",
+    "raised_by": "built_by",
+    "ration": "ration_share",
+    "ration_allowance": "ration_share",
+    "reactor_count": "working_reactors",
+    "reactors": "working_reactors",
+    "record_span": "years_of_data",
+    "released_to": "probate_state",
+    "requires_suit": "suit_required",
+    "reserve": "reserve_level",
+    "reserve_gap": "discrepancy_volume",
+    "reserve_gone": "reserve_level",
+    "reserve_liters": "water_reserve_liters",
+    "reserve_remaining": "reserve_level",
+    "reserve_status": "reserve_level",
+    "reserve_volume": "water_reserve_liters",
+    "residents": "population",
+    "role": "role_held",
+    "ruling": "verdict",
+    "running": "operational_status",
+    "scratched_text": "inscription",
+    "sealed": "is_sealed",
+    "sealed_by_guild": "probate_state",
+    "sealed_shut": "is_sealed",
+    "sealed_state": "is_sealed",
+    "second_hand": "handwriting_author",
+    "sentence": "verdict",
+    "sentence_location": "exile_destination",
+    "serves_as": "role_held",
+    "settlement_population": "population",
+    "share": "ration_share",
+    "shortfall_volume": "discrepancy_volume",
+    "signed_in": "entry_time",
+    "signed_off": "is_decommissioned",
+    "sitting_for": "time_in_location",
+    "skimmed": "rigged",
+    "small_gray_regular_hand": "handwriting_author",
+    "souls": "population",
+    "spare_fuse_count": "fuse_count",
+    "spine-to-ribs_gap": "allocation_gap",
+    "stamp_number": "seal_number",
+    "standing_guard": "guard_assignment",
+    "state": "physical_condition",
+    "stored_for": "time_in_location",
+    "stored_under": "package_wrapping",
+    "suit_needed": "suit_required",
+    "tampered": "rigged",
+    "team_size": "survey_team_size",
+    "telltale_color": "meter_status",
+    "telltale_status": "meter_status",
+    "tenure": "tenure_length",
+    "the_gap": "allocation_gap",
+    "the_number": "allocation_gap",
+    "throttled": "rigged",
+    "time_in_position": "tenure_length",
+    "time_of_entry": "entry_time",
+    "time_to_reach": "travel_time",
+    "times_calibrated": "calibration_count",
+    "tin_contents": "cigarette_count",
+    "tin_count": "cigarette_count",
+    "tin_ear": "hearing_impairment",
+    "tin_ear_side": "deaf_side",
+    "title": "role_held",
+    "total_count": "item_count",
+    "total_inflow": "water_total_in",
+    "total_outflow": "water_total_out",
+    "total_reserve": "water_reserve_liters",
+    "travel_days": "days_travel",
+    "tucked_behind": "in_binding",
+    "tucked_behind_binding": "in_binding",
+    "unaccounted_water": "allocation_gap",
+    "unbroken": "physical_condition",
+    "unlatched": "sealed_status",
+    "unsuited": "suit_required",
+    "used_to_be": "previous_role",
+    "vertical_feet": "vertical_distance",
+    "visible_drawer": "drawer_type",
+    "vote_count": "vote_margin",
+    "votes_cast": "vote_margin",
+    "walking_time": "travel_time",
+    "was_on_the_founding_convoy": "founding_membership",
+    "water_allocated": "water_total_out",
+    "water_arriving": "water_total_in",
+    "water_discrepancy": "discrepancy_volume",
+    "water_drawn_from_cisterns": "water_total_out",
+    "what_it_says_on_case": "case_label",
+    "which_side": "deaf_side",
+    "who_built": "built_by",
+    "who_guards": "guard_assignment",
+    "whose_writing": "handwriting_author",
+    "word_on_case": "case_label",
+    "working": "physical_condition",
+    "working_under": "employer",
+    "wrapped_in": "package_wrapping",
+    "wrapping_material": "package_wrapping",
+    "written_by": "handwriting_author",
+    "years_back": "years_ago",
+    "years_in_post": "tenure_length",
+    "years_of_divergence": "divergence_years"
+  },
+  "entities": {
+    "doc:canonical_books": {
+      "aliases": [
+        "the canonical records",
+        "the books",
+        "canonical allocation records"
+      ],
+      "anchors": [
+        "vault-stored",
+        "authoritative Allocation archive"
+      ],
+      "kind": "doc",
+      "names": [
+        "the canonical books"
+      ]
+    },
+    "doc:canonical_ledgers": {
+      "aliases": [],
+      "anchors": [
+        "in Records Vault racks",
+        "matched Ilsa's inventory book"
+      ],
+      "kind": "doc",
+      "names": [
+        "the canonical ledgers"
+      ]
+    },
+    "doc:construction_schematics": {
+      "aliases": [
+        "the colony plans",
+        "the schematic"
+      ],
+      "anchors": [
+        "Pell found and read",
+        "shows original colony layout including Seed Vault"
+      ],
+      "kind": "doc",
+      "names": [
+        "the old construction schematics"
+      ]
+    },
+    "doc:core_record": {
+      "aliases": [],
+      "anchors": [
+        "extracted from core",
+        "in unified archive",
+        "confirms divergence"
+      ],
+      "kind": "doc",
+      "names": [
+        "the core's record"
+      ]
+    },
+    "doc:council_allocation_books": {
+      "aliases": [
+        "the allocation books",
+        "the ledger",
+        "allocation books"
+      ],
+      "anchors": [
+        "Council-kept",
+        "official water-accounting record"
+      ],
+      "kind": "doc",
+      "names": [
+        "the Council allocation books"
+      ]
+    },
+    "doc:council_books": {
+      "aliases": [],
+      "anchors": [
+        "water allocation accounting records"
+      ],
+      "kind": "doc",
+      "names": [
+        "the Council's books",
+        "the books",
+        "the accounting"
+      ]
+    },
+    "doc:cray_ledgers": {
+      "aliases": [],
+      "anchors": [
+        "in Cray's blunt hand",
+        "phantom reserve",
+        "water sold twice",
+        "in Seed Vault"
+      ],
+      "kind": "doc",
+      "names": [
+        "Cray's ledgers"
+      ]
+    },
+    "doc:crays_books": {
+      "aliases": [],
+      "anchors": [
+        "in unified archive",
+        "in records vault"
+      ],
+      "kind": "doc",
+      "names": [
+        "Cray's books"
+      ]
+    },
+    "doc:dead_admin_records": {
+      "aliases": [
+        "deceased admin files",
+        "old administrator records",
+        "dead records"
+      ],
+      "anchors": [
+        "vault-stored",
+        "historical Allocation files"
+      ],
+      "kind": "doc",
+      "names": [
+        "dead administrators' records"
+      ]
+    },
+    "doc:dead_mens_files": {
+      "aliases": [],
+      "anchors": [
+        "in Records Vault racks"
+      ],
+      "kind": "doc",
+      "names": [
+        "the dead men's files"
+      ]
+    },
+    "doc:decommission_order": {
+      "aliases": [],
+      "anchors": [
+        "signed by Cray",
+        "eleven years back",
+        "officially removed Seed Vault from inventory"
+      ],
+      "kind": "doc",
+      "names": [
+        "the decommission order"
+      ]
+    },
+    "doc:door_log": {
+      "aliases": [
+        "the wellhead door log",
+        "the entry log",
+        "the badge log",
+        "the log"
+      ],
+      "anchors": [
+        "Wellhead record",
+        "badge-entry register",
+        "two-entry evidence"
+      ],
+      "kind": "doc",
+      "names": [
+        "the door log"
+      ]
+    },
+    "doc:father_survey": {
+      "aliases": [
+        "the old survey",
+        "the aquifer survey",
+        "father's survey"
+      ],
+      "anchors": [
+        "pre-narrative document",
+        "aquifer site data",
+        "southern survey"
+      ],
+      "kind": "doc",
+      "names": [
+        "Father's old survey"
+      ]
+    },
+    "doc:ilsa_ledgers": {
+      "aliases": [
+        "the second ledger"
+      ],
+      "anchors": [
+        "in Ilsa Renn's small gray regular hand",
+        "continuation of Cray's",
+        "in Seed Vault"
+      ],
+      "kind": "doc",
+      "names": [
+        "the second-hand ledgers"
+      ]
+    },
+    "doc:inventory_ledger": {
+      "aliases": [],
+      "anchors": [
+        "Ilsa Renn's",
+        "carried like a hymnal",
+        "matched Records Vault contents"
+      ],
+      "kind": "doc",
+      "names": [
+        "the inventory ledger"
+      ]
+    },
+    "doc:marns_books": {
+      "aliases": [],
+      "anchors": [
+        "in unified archive",
+        "in records vault"
+      ],
+      "kind": "doc",
+      "names": [
+        "Marn's books"
+      ]
+    },
+    "doc:rationing_schedule": {
+      "aliases": [
+        "the schedule",
+        "the posted schedule",
+        "the ration notice"
+      ],
+      "anchors": [
+        "Council decree",
+        "bulletin wall posting"
+      ],
+      "kind": "doc",
+      "names": [
+        "the rationing schedule"
+      ]
+    },
+    "doc:second_set_of_books": {
+      "aliases": [
+        "the second books",
+        "the shadow ledger",
+        "the other books",
+        "the second economy books"
+      ],
+      "anchors": [
+        "alleged by Tovan",
+        "vault-stored (alleged)",
+        "shadow accounting record"
+      ],
+      "kind": "doc",
+      "names": [
+        "the second set of books"
+      ]
+    },
+    "doc:unified_archive": {
+      "aliases": [],
+      "anchors": [
+        "in records vault",
+        "custodied by Ilsa Renn"
+      ],
+      "kind": "doc",
+      "names": [
+        "the unified archive"
+      ]
+    },
+    "event:anchor_founding": {
+      "aliases": [
+        "the founding convoy"
+      ],
+      "anchors": [
+        "Ilsa was records officer",
+        "origin of Anchor colony"
+      ],
+      "kind": "event",
+      "names": [
+        "the founding"
+      ]
+    },
+    "event:anchor_panic": {
+      "aliases": [],
+      "anchors": [
+        "after truth number revealed to settlement"
+      ],
+      "kind": "event",
+      "names": [
+        "the panic",
+        "the bill"
+      ]
+    },
+    "event:assembly": {
+      "aliases": [],
+      "anchors": [
+        "whole settlement in gallery",
+        "number rose on wall",
+        "narrator at Wellhead",
+        "Ilsa moved core same night"
+      ],
+      "kind": "event",
+      "names": [
+        "the assembly"
+      ]
+    },
+    "event:badge_entries": {
+      "aliases": [
+        "the two door logs",
+        "the double entry",
+        "the 2300 and 2340 entries"
+      ],
+      "anchors": [
+        "same-door same-night",
+        "Tovan's badge used twice"
+      ],
+      "kind": "event",
+      "names": [
+        "the Wellhead badge entries"
+      ]
+    },
+    "event:credential_reuse": {
+      "aliases": [],
+      "anchors": [
+        "stolen credential walk",
+        "40 minutes after Tovan's entry"
+      ],
+      "kind": "event",
+      "names": [
+        "the second sign-in",
+        "the second Tovan"
+      ]
+    },
+    "event:dome_breach": {
+      "aliases": [
+        "the breach",
+        "the early years breach",
+        "the dome incident"
+      ],
+      "anchors": [
+        "early Anchor era",
+        "structural failure",
+        "cause of clerk's deafness"
+      ],
+      "kind": "event",
+      "names": [
+        "the dome breach"
+      ]
+    },
+    "event:marn_tribunal": {
+      "aliases": [
+        "the tribunal",
+        "the pending tribunal",
+        "the hearing"
+      ],
+      "anchors": [
+        "pending proceeding",
+        "Marn confined",
+        "seal melted"
+      ],
+      "kind": "event",
+      "names": [
+        "Marn's tribunal"
+      ]
+    },
+    "event:meter_dark": {
+      "aliases": [],
+      "anchors": [
+        "at the Wellhead",
+        "same night as Tovan's death"
+      ],
+      "kind": "event",
+      "names": [
+        "master meter going dark",
+        "the meter failing"
+      ]
+    },
+    "event:open_assembly": {
+      "aliases": [
+        "the tribunal",
+        "the assembly"
+      ],
+      "anchors": [
+        "core read out",
+        "sentences issued",
+        "day-0 anchor"
+      ],
+      "kind": "event",
+      "names": [
+        "the open assembly"
+      ]
+    },
+    "event:rationing_vote": {
+      "aliases": [
+        "the vote at dawn",
+        "the dawn vote",
+        "the rationing decision"
+      ],
+      "anchors": [
+        "half-shares general",
+        "double-shares dig crews",
+        "bulletin wall posting"
+      ],
+      "kind": "event",
+      "names": [
+        "the rationing vote"
+      ]
+    },
+    "event:southern_survey": {
+      "aliases": [],
+      "anchors": [
+        "commissioned by Sela",
+        "six diggers",
+        "ongoing"
+      ],
+      "kind": "event",
+      "names": [
+        "the southern survey"
+      ]
+    },
+    "event:technician_death": {
+      "aliases": [
+        "the night the technician died"
+      ],
+      "anchors": [
+        "triggered Marn's order",
+        "Ilsa pulled core same night"
+      ],
+      "kind": "event",
+      "names": [
+        "the technician's death"
+      ]
+    },
+    "event:the_assembly": {
+      "aliases": [
+        "the council assembly",
+        "the gathering",
+        "the meeting"
+      ],
+      "anchors": [
+        "day-0 anchor",
+        "Council convening",
+        "recent pivot"
+      ],
+      "kind": "event",
+      "names": [
+        "the assembly"
+      ]
+    },
+    "event:the_collapse": {
+      "aliases": [
+        "the pre-collapse era",
+        "pre-settlement collapse",
+        "the breach",
+        "the breach year"
+      ],
+      "anchors": [
+        "historical era marker",
+        "predates current settlement",
+        "structural event",
+        "dead elevator died",
+        "predates decommission"
+      ],
+      "kind": "event",
+      "names": [
+        "the Collapse"
+      ]
+    },
+    "event:tovan_death": {
+      "aliases": [
+        "the death on the flats",
+        "tovan's end",
+        "his death",
+        "the incident on the flats"
+      ],
+      "anchors": [
+        "on the salt flats",
+        "without a suit",
+        "outdoor fatality",
+        "flats location",
+        "before assembly"
+      ],
+      "kind": "event",
+      "names": [
+        "Tovan's death",
+        "the Voss matter"
+      ]
+    },
+    "event:tovan_gap": {
+      "aliases": [],
+      "anchors": [
+        "opened same year as decommission order"
+      ],
+      "kind": "event",
+      "names": [
+        "Tovan's gap"
+      ]
+    },
+    "obj:access_panel": {
+      "aliases": [
+        "the meter access panel"
+      ],
+      "anchors": [
+        "on old meter housing",
+        "spare fuses taped inside"
+      ],
+      "kind": "obj",
+      "names": [
+        "the access panel"
+      ]
+    },
+    "obj:anchor_reactors": {
+      "aliases": [
+        "the reactors"
+      ],
+      "anchors": [
+        "three reactors",
+        "humming steadily",
+        "throughout structure"
+      ],
+      "kind": "obj",
+      "names": [
+        "Anchor's reactors"
+      ]
+    },
+    "obj:anti_static_cloth": {
+      "aliases": [],
+      "anchors": [
+        "wrapped around memory core case",
+        "preservation wrapping"
+      ],
+      "kind": "obj",
+      "names": [
+        "anti-static cloth"
+      ]
+    },
+    "obj:aquifer_maps": {
+      "aliases": [
+        "his brother's aquifer maps",
+        "tovan's maps",
+        "the maps"
+      ],
+      "anchors": [
+        "fold-worn physical maps",
+        "found in Tovan's pocket",
+        "waterproof tube on dig sledge headed south"
+      ],
+      "kind": "obj",
+      "names": [
+        "the maps",
+        "aquifer maps",
+        "deep aquifer maps",
+        "Tovan's maps",
+        "the aquifer maps"
+      ]
+    },
+    "obj:block_meters": {
+      "aliases": [],
+      "anchors": [
+        "one per block",
+        "cistern-draw sensors"
+      ],
+      "kind": "obj",
+      "names": [
+        "flow meters",
+        "block meters",
+        "block readings"
+      ]
+    },
+    "obj:cigarette_tin": {
+      "aliases": [
+        "the tin",
+        "the cigarette tin",
+        "it"
+      ],
+      "anchors": [
+        "flat steel container",
+        "narrator-carried",
+        "five-cigarette capacity"
+      ],
+      "kind": "obj",
+      "names": [
+        "the flat steel tin"
+      ]
+    },
+    "obj:condenser_logbook": {
+      "aliases": [
+        "the logbook",
+        "the daily flow records",
+        "the flow records"
+      ],
+      "anchors": [
+        "daily record book",
+        "Sela-maintained",
+        "binding-hidden note"
+      ],
+      "kind": "obj",
+      "names": [
+        "the condenser station logbook"
+      ]
+    },
+    "obj:core": {
+      "aliases": [
+        "the old core",
+        "the meter core"
+      ],
+      "anchors": [
+        "ten-year master-total store",
+        "read at open assembly"
+      ],
+      "kind": "obj",
+      "names": [
+        "the core"
+      ]
+    },
+    "obj:council_writ": {
+      "aliases": [],
+      "anchors": [
+        "required for entry to Allocation vault",
+        "needed Pell's mother's signature"
+      ],
+      "kind": "obj",
+      "names": [
+        "the Council writ"
+      ]
+    },
+    "obj:crays_personal_case": {
+      "aliases": [
+        "the personal case",
+        "the case"
+      ],
+      "anchors": [
+        "latched",
+        "logged but unopened",
+        "in records vault"
+      ],
+      "kind": "obj",
+      "names": [
+        "Cray's PERSONAL case"
+      ]
+    },
+    "obj:dig_sledge": {
+      "aliases": [
+        "the sledge"
+      ],
+      "anchors": [
+        "headed south from south lock",
+        "carries maps and condensers"
+      ],
+      "kind": "obj",
+      "names": [
+        "the dig sledge"
+      ]
+    },
+    "obj:door_log": {
+      "aliases": [],
+      "anchors": [
+        "hatch-entry record system",
+        "separate from maintenance log"
+      ],
+      "kind": "obj",
+      "names": [
+        "the door log"
+      ]
+    },
+    "obj:dried_figs": {
+      "aliases": [
+        "the figs",
+        "the paper twist of figs",
+        "three dried figs",
+        "the paper twist"
+      ],
+      "anchors": [
+        "three figs",
+        "paper-twist wrapped",
+        "Bazaar-bought",
+        "table-placed"
+      ],
+      "kind": "obj",
+      "names": [
+        "the dried figs"
+      ]
+    },
+    "obj:false_drawer": {
+      "aliases": [],
+      "anchors": [
+        "concealed compartment in Ilsa's desk"
+      ],
+      "kind": "obj",
+      "names": [
+        "the false drawer"
+      ]
+    },
+    "obj:floor_plates": {
+      "aliases": [],
+      "anchors": [
+        "structural",
+        "reactors humming through them on ascent"
+      ],
+      "kind": "obj",
+      "names": [
+        "the floor plates"
+      ]
+    },
+    "obj:footlocker": {
+      "aliases": [
+        "crimp 0447"
+      ],
+      "anchors": [
+        "sealed crimp",
+        "under Sela's bunk at condenser station"
+      ],
+      "kind": "obj",
+      "names": [
+        "the footlocker"
+      ]
+    },
+    "obj:gallery_display": {
+      "aliases": [
+        "the gallery wall",
+        "the green columns"
+      ],
+      "anchors": [
+        "wall display in gallery",
+        "showed ten years of master totals"
+      ],
+      "kind": "obj",
+      "names": [
+        "the gallery display"
+      ]
+    },
+    "obj:gray_stuff": {
+      "aliases": [],
+      "anchors": [
+        "narrator's client drink"
+      ],
+      "kind": "obj",
+      "names": [
+        "the gray stuff"
+      ]
+    },
+    "obj:guild_badge": {
+      "aliases": [
+        "guild badge",
+        "boy's badge"
+      ],
+      "anchors": [
+        "from technician's guild locker",
+        "used by Ilsa to remove memory core"
+      ],
+      "kind": "obj",
+      "names": [
+        "the badge"
+      ]
+    },
+    "obj:guild_crimp": {
+      "aliases": [],
+      "anchors": [
+        "on Seed Vault hatch",
+        "cut and re-twisted many times",
+        "lead bright with handling"
+      ],
+      "kind": "obj",
+      "names": [
+        "the guild crimp"
+      ]
+    },
+    "obj:guild_locker": {
+      "aliases": [
+        "the boy's guild locker"
+      ],
+      "anchors": [
+        "held the guild badge"
+      ],
+      "kind": "obj",
+      "names": [
+        "the technician's guild locker"
+      ]
+    },
+    "obj:ilsa_desk": {
+      "aliases": [
+        "the clerk's desk"
+      ],
+      "anchors": [
+        "standard clerk's desk",
+        "one visible drawer",
+        "one false drawer behind panel"
+      ],
+      "kind": "obj",
+      "names": [
+        "Ilsa Renn's desk"
+      ]
+    },
+    "obj:ilsa_desk_false_drawer": {
+      "aliases": [
+        "the second drawer"
+      ],
+      "anchors": [
+        "behind panel in Ilsa's desk",
+        "shallow",
+        "felt-lined",
+        "shape of document case pressed into felt",
+        "held memory core case"
+      ],
+      "kind": "obj",
+      "names": [
+        "the false drawer"
+      ]
+    },
+    "obj:ilsa_desk_visible_drawer": {
+      "aliases": [],
+      "anchors": [
+        "outermost drawer of Ilsa's desk",
+        "holds six lead crimp blanks and seal wire spool"
+      ],
+      "kind": "obj",
+      "names": [
+        "the visible drawer"
+      ]
+    },
+    "obj:ilsa_renns_desk": {
+      "aliases": [
+        "her old desk",
+        "the desk"
+      ],
+      "anchors": [
+        "has false drawer",
+        "in records vault"
+      ],
+      "kind": "obj",
+      "names": [
+        "Ilsa's desk"
+      ]
+    },
+    "obj:inventory_ledger": {
+      "aliases": [
+        "the ledger"
+      ],
+      "anchors": [
+        "in records vault with unified archive"
+      ],
+      "kind": "obj",
+      "names": [
+        "the inventory ledger"
+      ]
+    },
+    "obj:lamp": {
+      "aliases": [],
+      "anchors": [
+        "used by narrator and Pell to traverse the dead stairs"
+      ],
+      "kind": "obj",
+      "names": [
+        "the lamp"
+      ]
+    },
+    "obj:lead_crimp_blanks": {
+      "aliases": [],
+      "anchors": [
+        "six",
+        "in visible drawer of Ilsa's desk"
+      ],
+      "kind": "obj",
+      "names": [
+        "lead crimp blanks"
+      ]
+    },
+    "obj:maintenance_crimp_seal": {
+      "aliases": [
+        "the crimp seal",
+        "the lead seal",
+        "the hasp seal",
+        "crimp 0447",
+        "the lead-and-wire seal"
+      ],
+      "anchors": [
+        "guild probate seal",
+        "0447-stamped",
+        "wire-and-lead closure",
+        "on footlocker hasp"
+      ],
+      "kind": "obj",
+      "names": [
+        "the maintenance crimp seal"
+      ]
+    },
+    "obj:maintenance_log": {
+      "aliases": [],
+      "anchors": [
+        "service history record system",
+        "separate from door log"
+      ],
+      "kind": "obj",
+      "names": [
+        "the maintenance log"
+      ]
+    },
+    "obj:marn_allocation_seal": {
+      "aliases": [
+        "the allocation seal",
+        "the seal",
+        "marn's seal"
+      ],
+      "anchors": [
+        "authority emblem",
+        "destroyed in front of witnesses"
+      ],
+      "kind": "obj",
+      "names": [
+        "Marn's Allocation seal"
+      ]
+    },
+    "obj:master_meter": {
+      "aliases": [
+        "the dead meter",
+        "the meter"
+      ],
+      "anchors": [
+        "fixed at Wellhead",
+        "total-water instrument",
+        "memory-core equipped",
+        "water-accounting device",
+        "scorched housing",
+        "decommissioned",
+        "water measurement device at Wellhead",
+        "memory core removed"
+      ],
+      "kind": "obj",
+      "names": [
+        "the master meter",
+        "the last honest meter",
+        "the meter"
+      ]
+    },
+    "obj:master_meter_housing": {
+      "aliases": [],
+      "anchors": [
+        "outer shell of master meter",
+        "polymer construction"
+      ],
+      "kind": "obj",
+      "names": [
+        "the housing",
+        "meter housing"
+      ]
+    },
+    "obj:master_meter_memory_core": {
+      "aliases": [
+        "the master meter's memory core",
+        "the core"
+      ],
+      "anchors": [
+        "key evidence",
+        "pulled from Wellhead",
+        "stored in steel case wrapped in anti-static cloth"
+      ],
+      "kind": "obj",
+      "names": [
+        "the memory core"
+      ]
+    },
+    "obj:memory_core": {
+      "aliases": [
+        "the master meter's memory core",
+        "the core",
+        "the missing core",
+        "it"
+      ],
+      "anchors": [
+        "data storage unit inside master meter",
+        "removable data device",
+        "compact",
+        "extracted from master meter",
+        "missing"
+      ],
+      "kind": "obj",
+      "names": [
+        "the memory core"
+      ]
+    },
+    "obj:memory_core_case": {
+      "aliases": [
+        "document case"
+      ],
+      "anchors": [
+        "contains memory core",
+        "wrapped in anti-static cloth",
+        "on top shelf in Seed Vault"
+      ],
+      "kind": "obj",
+      "names": [
+        "the steel document case"
+      ]
+    },
+    "obj:narrators_bottle": {
+      "aliases": [
+        "the gray stuff"
+      ],
+      "anchors": [
+        "kept full in narrator's office"
+      ],
+      "kind": "obj",
+      "names": [
+        "the bottle"
+      ]
+    },
+    "obj:new_master_meter": {
+      "aliases": [
+        "the new meter",
+        "the master meter"
+      ],
+      "anchors": [
+        "in old meter housing",
+        "calibrated by Pell"
+      ],
+      "kind": "obj",
+      "names": [
+        "the new master meter"
+      ]
+    },
+    "obj:number_display": {
+      "aliases": [
+        "the number",
+        "wall display"
+      ],
+      "anchors": [
+        "in gallery",
+        "showed rising meter reading at assembly night"
+      ],
+      "kind": "obj",
+      "names": [
+        "the number on the wall"
+      ]
+    },
+    "obj:old_meter_housing": {
+      "aliases": [
+        "the meter housing"
+      ],
+      "anchors": [
+        "houses new master meter",
+        "has TOVAN inscription",
+        "had scorch mark"
+      ],
+      "kind": "obj",
+      "names": [
+        "the old housing"
+      ]
+    },
+    "obj:patchwork_dome": {
+      "aliases": [],
+      "anchors": [
+        "structural covering of Anchor settlement"
+      ],
+      "kind": "obj",
+      "names": [
+        "the patchwork dome",
+        "Anchor's dome"
+      ]
+    },
+    "obj:pell_rifle": {
+      "aliases": [],
+      "anchors": [
+        "Pell's assigned weapon"
+      ],
+      "kind": "obj",
+      "names": [
+        "Pell's rifle",
+        "his rifle"
+      ]
+    },
+    "obj:personal_case": {
+      "aliases": [
+        "personal case"
+      ],
+      "anchors": [
+        "half-size",
+        "latched",
+        "labeled PERSONAL in Cray's blunt hand",
+        "in Seed Vault",
+        "not opened"
+      ],
+      "kind": "obj",
+      "names": [
+        "the personal case"
+      ]
+    },
+    "obj:pneumatic_ledger_racks": {
+      "aliases": [
+        "the ledger racks",
+        "the racks",
+        "the wall of racks",
+        "the rack wall"
+      ],
+      "anchors": [
+        "Allocation Office wall fixture",
+        "pre-Collapse manufacture",
+        "archive storage"
+      ],
+      "kind": "obj",
+      "names": [
+        "the pneumatic ledger racks"
+      ]
+    },
+    "obj:rain_trap": {
+      "aliases": [],
+      "anchors": [
+        "at northern waystation",
+        "Marn's charge"
+      ],
+      "kind": "obj",
+      "names": [
+        "the rain trap"
+      ]
+    },
+    "obj:repeater_tower": {
+      "aliases": [
+        "the tower"
+      ],
+      "anchors": [
+        "at northern waystation",
+        "Marn's charge"
+      ],
+      "kind": "obj",
+      "names": [
+        "the repeater tower"
+      ]
+    },
+    "obj:sample_vials": {
+      "aliases": [],
+      "anchors": [
+        "twelve",
+        "empty",
+        "in wooden crate",
+        "germ stock relics",
+        "dusted",
+        "unbroken"
+      ],
+      "kind": "obj",
+      "names": [
+        "the sample vials"
+      ]
+    },
+    "obj:seal_blanks": {
+      "aliases": [
+        "blank seals",
+        "the blanks",
+        "unused seals"
+      ],
+      "anchors": [
+        "vault-stored",
+        "physical seal materials",
+        "unfilled",
+        "in Records Vault racks"
+      ],
+      "kind": "obj",
+      "names": [
+        "seal blanks",
+        "the seal blanks"
+      ]
+    },
+    "obj:seal_wire_spool": {
+      "aliases": [],
+      "anchors": [
+        "in visible drawer of Ilsa's desk"
+      ],
+      "kind": "obj",
+      "names": [
+        "seal wire spool"
+      ]
+    },
+    "obj:seed_vault_hatch": {
+      "aliases": [
+        "the hatch"
+      ],
+      "anchors": [
+        "entrance to Seed Vault",
+        "has wheel lock and guild crimp"
+      ],
+      "kind": "obj",
+      "names": [
+        "the Seed Vault hatch"
+      ]
+    },
+    "obj:spare_fuses": {
+      "aliases": [
+        "a tin of four spare fuses",
+        "the fuses"
+      ],
+      "anchors": [
+        "taped inside access panel by Pell"
+      ],
+      "kind": "obj",
+      "names": [
+        "the spare fuses"
+      ]
+    },
+    "obj:survey_condensers": {
+      "aliases": [
+        "condensers"
+      ],
+      "anchors": [
+        "two units from condenser station",
+        "on dig sledge headed south"
+      ],
+      "kind": "obj",
+      "names": [
+        "the two condensers"
+      ]
+    },
+    "obj:tarps": {
+      "aliases": [],
+      "anchors": [
+        "covering Seed Vault contents",
+        "lifted and resettled for a decade"
+      ],
+      "kind": "obj",
+      "names": [
+        "the tarps"
+      ]
+    },
+    "obj:tovan_badge": {
+      "aliases": [
+        "the badge",
+        "tovan's id",
+        "the identity badge",
+        "it"
+      ],
+      "anchors": [
+        "Wellhead-entry credential",
+        "not found on body",
+        "guild badge"
+      ],
+      "kind": "obj",
+      "names": [
+        "Tovan's badge"
+      ]
+    },
+    "obj:tovan_credential": {
+      "aliases": [
+        "the credential"
+      ],
+      "anchors": [
+        "Tovan's personal access token"
+      ],
+      "kind": "obj",
+      "names": [
+        "Tovan's badge",
+        "dead man's badge",
+        "stolen credential"
+      ]
+    },
+    "obj:tovan_footlocker": {
+      "aliases": [
+        "the footlocker",
+        "the dented green case",
+        "the case",
+        "the effects case"
+      ],
+      "anchors": [
+        "dented green container",
+        "hasp",
+        "guild-sealed",
+        "unopened"
+      ],
+      "kind": "obj",
+      "names": [
+        "Tovan's footlocker"
+      ]
+    },
+    "obj:tovan_letter": {
+      "aliases": [
+        "the dead man's letter",
+        "tovan's letter"
+      ],
+      "anchors": [
+        "asserted divergence",
+        "read at assembly"
+      ],
+      "kind": "obj",
+      "names": [
+        "the letter"
+      ]
+    },
+    "obj:tovan_note": {
+      "aliases": [
+        "the folded sheet",
+        "tovan's letter",
+        "the letter",
+        "the note",
+        "t.'s note"
+      ],
+      "anchors": [
+        "handwritten",
+        "folded",
+        "hidden in logbook binding",
+        "addressed to Sela"
+      ],
+      "kind": "obj",
+      "names": [
+        "Tovan's note"
+      ]
+    },
+    "obj:wheel_lock": {
+      "aliases": [],
+      "anchors": [
+        "locking mechanism on Seed Vault hatch"
+      ],
+      "kind": "obj",
+      "names": [
+        "the wheel lock"
+      ]
+    },
+    "obj:wooden_crate_vials": {
+      "aliases": [
+        "crate of sample vials"
+      ],
+      "anchors": [
+        "twelve empty sample vials inside",
+        "near Seed Vault hatch",
+        "dusted",
+        "unbroken"
+      ],
+      "kind": "obj",
+      "names": [
+        "the wooden crate"
+      ]
+    },
+    "org:allocation_office": {
+      "aliases": [],
+      "anchors": [
+        "water allocation management",
+        "Council department"
+      ],
+      "kind": "org",
+      "names": [
+        "the Allocation Office",
+        "the Council's Allocation Office"
+      ]
+    },
+    "org:council": {
+      "aliases": [],
+      "anchors": [
+        "governing body of Anchor"
+      ],
+      "kind": "org",
+      "names": [
+        "the Council"
+      ]
+    },
+    "org:dig_crews": {
+      "aliases": [
+        "dig crew",
+        "the diggers",
+        "excavation crews"
+      ],
+      "anchors": [
+        "Anchor labor force",
+        "double-ration group"
+      ],
+      "kind": "org",
+      "names": [
+        "the dig crews"
+      ]
+    },
+    "org:hard_faction": {
+      "aliases": [],
+      "anchors": [
+        "faction at tribunal",
+        "sought harsher sentence"
+      ],
+      "kind": "org",
+      "names": [
+        "the hard faction"
+      ]
+    },
+    "org:the_council": {
+      "aliases": [
+        "council",
+        "the governing body"
+      ],
+      "anchors": [
+        "governing body",
+        "rationing authority",
+        "tribunal authority",
+        "issues writs",
+        "has dedicated tier in Anchor"
+      ],
+      "kind": "org",
+      "names": [
+        "the Council"
+      ]
+    },
+    "org:the_guild": {
+      "aliases": [],
+      "anchors": [
+        "guild crimp",
+        "guild locker",
+        "badge system"
+      ],
+      "kind": "org",
+      "names": [
+        "the guild"
+      ]
+    },
+    "org:tovan_guild": {
+      "aliases": [
+        "the guild",
+        "the maintenance guild",
+        "his guild"
+      ],
+      "anchors": [
+        "trade guild",
+        "probate-seal issuer",
+        "dead-member protocol"
+      ],
+      "kind": "org",
+      "names": [
+        "Tovan's guild"
+      ]
+    },
+    "org:tribunal": {
+      "aliases": [],
+      "anchors": [
+        "convened at open assembly",
+        "issued sentences"
+      ],
+      "kind": "org",
+      "names": [
+        "the tribunal"
+      ]
+    },
+    "org:wellhead": {
+      "aliases": [],
+      "anchors": [
+        "technical organization",
+        "sent tech to assembly"
+      ],
+      "kind": "org",
+      "names": [
+        "Wellhead"
+      ]
+    },
+    "person:council_cousins": {
+      "aliases": [
+        "the two clerks",
+        "the interchangeable clerks",
+        "them"
+      ],
+      "anchors": [
+        "soft",
+        "Council relatives",
+        "Allocation Office pair"
+      ],
+      "kind": "person",
+      "names": [
+        "the Council cousins"
+      ]
+    },
+    "person:cray": {
+      "aliases": [
+        "cray",
+        "the administrator",
+        "his predecessor"
+      ],
+      "anchors": [
+        "Marn's predecessor",
+        "dome builder",
+        "deceased administrator",
+        "deceased",
+        "lung rot",
+        "decommission signer",
+        "blunt hand in ledgers",
+        "former official",
+        "books and PERSONAL case in archive"
+      ],
+      "kind": "person",
+      "names": [
+        "Administrator Cray",
+        "Cray"
+      ]
+    },
+    "person:ilsa_renn": {
+      "aliases": [
+        "the clerk",
+        "the clerk with the tin ear",
+        "cray's clerk",
+        "marn's clerk",
+        "the custodian"
+      ],
+      "anchors": [
+        "records officer",
+        "inventory keeper",
+        "custodian",
+        "Clerk",
+        "Custodian of unified archive",
+        "false-drawer desk"
+      ],
+      "kind": "person",
+      "names": [
+        "Ilsa Renn"
+      ]
+    },
+    "person:marn": {
+      "aliases": [
+        "the administrator",
+        "the confined one",
+        "him"
+      ],
+      "anchors": [
+        "Allocation Officer",
+        "Council tier administrator",
+        "Allocation seal holder",
+        "Council tier resident",
+        "in tribunal",
+        "authority figure",
+        "Wellhead connected",
+        "lived above Seed Vault",
+        "gave order to pull core",
+        "exiled",
+        "former official",
+        "book-keeper"
+      ],
+      "kind": "person",
+      "names": [
+        "Marn",
+        "Allocation Officer Marn"
+      ]
+    },
+    "person:marn_guards": {
+      "aliases": [
+        "the guards",
+        "the door guards",
+        "them"
+      ],
+      "anchors": [
+        "Marn's door watch",
+        "rotating post"
+      ],
+      "kind": "person",
+      "names": [
+        "the guard rotation"
+      ]
+    },
+    "person:narrator": {
+      "aliases": [
+        "the detective",
+        "the investigator",
+        "i",
+        "the client's man"
+      ],
+      "anchors": [
+        "client-facing investigator",
+        "first-person voice",
+        "detective",
+        "flat-steel-tin carrier",
+        "investigator",
+        "first-person narrator",
+        "unnamed",
+        "office worker"
+      ],
+      "kind": "person",
+      "names": [
+        "the narrator",
+        "the investigator"
+      ]
+    },
+    "person:pell": {
+      "aliases": [
+        "the kid",
+        "the kid named pell",
+        "the nervous kid",
+        "the deputy",
+        "him"
+      ],
+      "anchors": [
+        "Wellhead guard",
+        "nineteen",
+        "mother on Council",
+        "deputy warden of Wellhead",
+        "rifle bearer",
+        "young",
+        "reads construction schematics for fun",
+        "deputy warden",
+        "new-meter commissioner"
+      ],
+      "kind": "person",
+      "names": [
+        "Pell"
+      ]
+    },
+    "person:pells_mother": {
+      "aliases": [
+        "his mother"
+      ],
+      "anchors": [
+        "signed Council writ for vault access",
+        "carried commutation vote"
+      ],
+      "kind": "person",
+      "names": [
+        "Pell's mother"
+      ]
+    },
+    "person:sela": {
+      "aliases": [
+        "s.",
+        "the client",
+        "her",
+        "tovan's sister"
+      ],
+      "anchors": [
+        "Tovan's sister",
+        "footlocker custodian",
+        "letter recipient"
+      ],
+      "kind": "person",
+      "names": [
+        "Sela"
+      ]
+    },
+    "person:sela_voss": {
+      "aliases": [
+        "voss",
+        "the water steward"
+      ],
+      "anchors": [
+        "Tovan's sister",
+        "condenser operator",
+        "Water Steward of Anchor"
+      ],
+      "kind": "person",
+      "names": [
+        "Sela Voss",
+        "Sela"
+      ]
+    },
+    "person:stall_woman": {
+      "aliases": [
+        "the fig seller",
+        "her"
+      ],
+      "anchors": [
+        "Bazaar vendor",
+        "dried-fig seller"
+      ],
+      "kind": "person",
+      "names": [
+        "the stall woman"
+      ]
+    },
+    "person:the_technician": {
+      "aliases": [
+        "the boy"
+      ],
+      "anchors": [
+        "deceased",
+        "guild locker owner",
+        "death triggered core removal"
+      ],
+      "kind": "person",
+      "names": [
+        "the technician"
+      ]
+    },
+    "person:tin_ear_clerk": {
+      "aliases": [
+        "the small gray woman",
+        "the gray woman",
+        "the clerk",
+        "her"
+      ],
+      "anchors": [
+        "deaf on left side",
+        "vault inventory holder",
+        "long-tenured"
+      ],
+      "kind": "person",
+      "names": [
+        "the tin-ear clerk"
+      ]
+    },
+    "person:tovan": {
+      "aliases": [
+        "the client's brother",
+        "t.",
+        "him"
+      ],
+      "anchors": [
+        "deceased",
+        "badge owner",
+        "condenser-station worker",
+        "letter author",
+        "namesake of Tovan's gap"
+      ],
+      "kind": "person",
+      "names": [
+        "Tovan"
+      ]
+    },
+    "person:tovan_father": {
+      "aliases": [
+        "tovan's father",
+        "their father"
+      ],
+      "anchors": [
+        "survey author",
+        "historical figure"
+      ],
+      "kind": "person",
+      "names": [
+        "Father"
+      ]
+    },
+    "person:tovan_voss": {
+      "aliases": [
+        "voss",
+        "the dead man",
+        "her brother",
+        "his brother",
+        "a record people kept"
+      ],
+      "anchors": [
+        "maintenance technician",
+        "Sela's brother",
+        "master meter servicer",
+        "deceased",
+        "aquifer-map author",
+        "water-account keeper"
+      ],
+      "kind": "person",
+      "names": [
+        "Tovan Voss",
+        "Tovan"
+      ]
+    },
+    "person:wellhead_tech": {
+      "aliases": [
+        "wellhead technician"
+      ],
+      "anchors": [
+        "wired core to gallery display"
+      ],
+      "kind": "person",
+      "names": [
+        "the Wellhead tech"
+      ]
+    },
+    "place:allocation_corridor": {
+      "aliases": [],
+      "anchors": [
+        "on Council tier",
+        "route out toward gallery stairs"
+      ],
+      "kind": "place",
+      "names": [
+        "the Allocation corridor"
+      ]
+    },
+    "place:allocation_office": {
+      "aliases": [
+        "the office",
+        "allocation",
+        "the paper office"
+      ],
+      "anchors": [
+        "Council tier",
+        "ledger rack wall",
+        "three-clerk room",
+        "vault-adjacent",
+        "on Council tier",
+        "fronts Records Vault"
+      ],
+      "kind": "place",
+      "names": [
+        "the Allocation Office"
+      ]
+    },
+    "place:anchor": {
+      "aliases": [
+        "the settlement",
+        "the dome settlement",
+        "here",
+        "the community"
+      ],
+      "anchors": [
+        "patchwork dome settlement",
+        "single-water-law colony",
+        "dome settlement",
+        "rationed water",
+        "sealed world",
+        "the settlement",
+        "the colony",
+        "main settlement",
+        "has Council and Water Steward"
+      ],
+      "kind": "place",
+      "names": [
+        "Anchor",
+        "the settlement"
+      ]
+    },
+    "place:bazaar": {
+      "aliases": [
+        "the market",
+        "the bazaar",
+        "the market floor"
+      ],
+      "anchors": [
+        "marketplace",
+        "under south dome panel",
+        "evening gathering point"
+      ],
+      "kind": "place",
+      "names": [
+        "the Bazaar"
+      ]
+    },
+    "place:bazaar_level": {
+      "aliases": [
+        "the bazaar"
+      ],
+      "anchors": [
+        "middle level of Anchor",
+        "market stalls"
+      ],
+      "kind": "place",
+      "names": [
+        "the Bazaar level"
+      ]
+    },
+    "place:bazaar_stall": {
+      "aliases": [
+        "the stall",
+        "the fig stall",
+        "the vendor stall"
+      ],
+      "anchors": [
+        "Bazaar vendor station",
+        "open-air selling point"
+      ],
+      "kind": "place",
+      "names": [
+        "the Bazaar stall"
+      ]
+    },
+    "place:bazaar_table": {
+      "aliases": [
+        "the table",
+        "the meeting table"
+      ],
+      "anchors": [
+        "Bazaar seating",
+        "where the figs sat"
+      ],
+      "kind": "place",
+      "names": [
+        "the table at the Bazaar"
+      ]
+    },
+    "place:bulletin_wall": {
+      "aliases": [
+        "the board",
+        "the schedule wall",
+        "the posting wall"
+      ],
+      "anchors": [
+        "public notice surface",
+        "outside Bazaar"
+      ],
+      "kind": "place",
+      "names": [
+        "the bulletin wall"
+      ]
+    },
+    "place:cistern_three": {
+      "aliases": [
+        "the cistern",
+        "third cistern",
+        "cistern 3"
+      ],
+      "anchors": [
+        "water storage structure",
+        "Cray-dug"
+      ],
+      "kind": "place",
+      "names": [
+        "Cistern Three"
+      ]
+    },
+    "place:cisterns": {
+      "aliases": [],
+      "anchors": [
+        "Anchor's water storage",
+        "block distribution source"
+      ],
+      "kind": "place",
+      "names": [
+        "the cisterns"
+      ]
+    },
+    "place:condenser_site": {
+      "aliases": [],
+      "anchors": [
+        "Sela's workplace",
+        "edge of settlement near salt flats"
+      ],
+      "kind": "place",
+      "names": [
+        "the condensers",
+        "out past the Rust Quarter"
+      ]
+    },
+    "place:condenser_station": {
+      "aliases": [
+        "the station",
+        "the flow station",
+        "sela's station",
+        "her station"
+      ],
+      "anchors": [
+        "Rust Quarter",
+        "logbook-kept",
+        "daily water-flow recorder",
+        "Sela's base",
+        "water infrastructure site"
+      ],
+      "kind": "place",
+      "names": [
+        "the condenser station"
+      ]
+    },
+    "place:council_tier": {
+      "aliases": [
+        "council tier",
+        "the tier",
+        "upper level"
+      ],
+      "anchors": [
+        "upper administrative level of Anchor",
+        "twice-filtered air",
+        "governing level",
+        "Allocation Office location",
+        "Marn's confinement",
+        "upper tier of Anchor",
+        "contains Allocation Office",
+        "40 vertical feet above sub-basement"
+      ],
+      "kind": "place",
+      "names": [
+        "the Council tier"
+      ]
+    },
+    "place:dead_elevator_shaft": {
+      "aliases": [
+        "dead elevator shaft"
+      ],
+      "anchors": [
+        "defunct",
+        "only shaft ever connecting Council tier to sub-basement",
+        "died in breach year",
+        "never recut"
+      ],
+      "kind": "place",
+      "names": [
+        "the dead elevator"
+      ]
+    },
+    "place:dead_stairs": {
+      "aliases": [],
+      "anchors": [
+        "two unlit maintenance flights",
+        "20 minutes with lamp",
+        "connects Bazaar service gate to sub-basement"
+      ],
+      "kind": "place",
+      "names": [
+        "the dead stairs"
+      ]
+    },
+    "place:deep_aquifer": {
+      "aliases": [],
+      "anchors": [
+        "underground water source",
+        "charted on Tovan's maps"
+      ],
+      "kind": "place",
+      "names": [
+        "the deep aquifer",
+        "deep aquifer"
+      ]
+    },
+    "place:flats": {
+      "aliases": [
+        "outside",
+        "the desert",
+        "the surface",
+        "beyond the dome"
+      ],
+      "anchors": [
+        "exterior of Anchor",
+        "open terrain",
+        "mortal zone",
+        "exterior harsh terrain",
+        "requires survival suit to enter safely"
+      ],
+      "kind": "place",
+      "names": [
+        "the flats"
+      ]
+    },
+    "place:gallery": {
+      "aliases": [
+        "the assembly hall"
+      ],
+      "anchors": [
+        "public assembly space",
+        "number display wall",
+        "whole-settlement gathering point",
+        "assembly space in Anchor",
+        "has display wall"
+      ],
+      "kind": "place",
+      "names": [
+        "the gallery"
+      ]
+    },
+    "place:gallery_stairs": {
+      "aliases": [],
+      "anchors": [
+        "connects Council tier to Bazaar level",
+        "named for the gallery"
+      ],
+      "kind": "place",
+      "names": [
+        "the gallery stairs"
+      ]
+    },
+    "place:marn_quarters": {
+      "aliases": [
+        "his quarters",
+        "the confined quarters",
+        "his rooms"
+      ],
+      "anchors": [
+        "Council tier",
+        "guarded door",
+        "confinement space"
+      ],
+      "kind": "place",
+      "names": [
+        "Marn's quarters"
+      ]
+    },
+    "place:narrator_office": {
+      "aliases": [],
+      "anchors": [
+        "within Anchor",
+        "client meeting space",
+        "doorway"
+      ],
+      "kind": "place",
+      "names": [
+        "my office",
+        "the narrator's office"
+      ]
+    },
+    "place:narrators_office": {
+      "aliases": [
+        "the narrator's office"
+      ],
+      "anchors": [
+        "narrator's workspace",
+        "in Anchor"
+      ],
+      "kind": "place",
+      "names": [
+        "my office"
+      ]
+    },
+    "place:northern_waystation": {
+      "aliases": [
+        "the relay shack",
+        "the waystation"
+      ],
+      "anchors": [
+        "three days north via old highway",
+        "Marn's exile destination"
+      ],
+      "kind": "place",
+      "names": [
+        "the northern waystation"
+      ]
+    },
+    "place:old_highway": {
+      "aliases": [
+        "the highway"
+      ],
+      "anchors": [
+        "route between Rust Quarter and salt flats",
+        "route north from Anchor"
+      ],
+      "kind": "place",
+      "names": [
+        "the old highway"
+      ]
+    },
+    "place:records_vault": {
+      "aliases": [
+        "the vault",
+        "the allocation vault"
+      ],
+      "anchors": [
+        "behind Allocation Office on Council tier",
+        "canonical ledgers",
+        "racked floor to ceiling",
+        "houses unified archive",
+        "Ilsa's workspace",
+        "in Anchor"
+      ],
+      "kind": "place",
+      "names": [
+        "the Records Vault"
+      ]
+    },
+    "place:rust_quarter": {
+      "aliases": [
+        "rust quarter",
+        "the quarter"
+      ],
+      "anchors": [
+        "peripheral district of Anchor",
+        "outer district of Anchor",
+        "condenser station location",
+        "district at Anchor perimeter",
+        "desert wind passes beyond it"
+      ],
+      "kind": "place",
+      "names": [
+        "the Rust Quarter"
+      ]
+    },
+    "place:salt_flats": {
+      "aliases": [
+        "the desert",
+        "the open sky"
+      ],
+      "anchors": [
+        "exterior zone",
+        "suit-required",
+        "constant wind",
+        "survey territory"
+      ],
+      "kind": "place",
+      "names": [
+        "the salt flats",
+        "the flats",
+        "the open desert"
+      ]
+    },
+    "place:seed_vault": {
+      "aliases": [
+        "the vault",
+        "seed vault"
+      ],
+      "anchors": [
+        "pre-Collapse storage bunker",
+        "decommissioned",
+        "wheel-lock hatch",
+        "second economy records within"
+      ],
+      "kind": "place",
+      "names": [
+        "the Seed Vault"
+      ]
+    },
+    "place:seed_vault_top_shelf": {
+      "aliases": [],
+      "anchors": [
+        "top shelf inside Seed Vault",
+        "held memory core case and personal case"
+      ],
+      "kind": "place",
+      "names": [
+        "the top shelf"
+      ]
+    },
+    "place:service_gate": {
+      "aliases": [],
+      "anchors": [
+        "behind the stalls in the Bazaar",
+        "entry to maintenance passage"
+      ],
+      "kind": "place",
+      "names": [
+        "the service gate"
+      ]
+    },
+    "place:south_dome_panel": {
+      "aliases": [
+        "the dome panel",
+        "south dome",
+        "the patch panel",
+        "the panel"
+      ],
+      "anchors": [
+        "patch-glass fitted",
+        "Bazaar-adjacent",
+        "Cray-built"
+      ],
+      "kind": "place",
+      "names": [
+        "the south dome panel"
+      ]
+    },
+    "place:south_lock": {
+      "aliases": [
+        "the south exit"
+      ],
+      "anchors": [
+        "southern exit from Anchor"
+      ],
+      "kind": "place",
+      "names": [
+        "the south lock"
+      ]
+    },
+    "place:southern_aquifer_site": {
+      "aliases": [
+        "the aquifer site",
+        "the survey site",
+        "father's survey site"
+      ],
+      "anchors": [
+        "survey-documented water source",
+        "verification target"
+      ],
+      "kind": "place",
+      "names": [
+        "the southern aquifer site"
+      ]
+    },
+    "place:sub_basement": {
+      "aliases": [],
+      "anchors": [
+        "lowest accessible level",
+        "40 vertical feet below Council tier",
+        "houses Seed Vault"
+      ],
+      "kind": "place",
+      "names": [
+        "the sub-basement"
+      ]
+    },
+    "place:survey_site": {
+      "aliases": [
+        "the site tovan died verifying"
+      ],
+      "anchors": [
+        "outside Anchor",
+        "aquifer verification location",
+        "target of southern survey",
+        "Tovan died here"
+      ],
+      "kind": "place",
+      "names": [
+        "the survey site",
+        "the survey"
+      ]
+    },
+    "place:vault": {
+      "aliases": [
+        "the canonical vault",
+        "the records vault"
+      ],
+      "anchors": [
+        "canonical-records room",
+        "one definite article",
+        "single assumed room",
+        "secure archive"
+      ],
+      "kind": "place",
+      "names": [
+        "the vault"
+      ]
+    },
+    "place:wellhead": {
+      "aliases": [
+        "the heart",
+        "wellhead",
+        "the water point",
+        "the post"
+      ],
+      "anchors": [
+        "at the bottom of Anchor",
+        "coolant pipes",
+        "green telltales",
+        "guard post",
+        "water-source structure",
+        "Pell's post",
+        "hatch-guarded",
+        "master meter location",
+        "narrator destination on assembly night"
+      ],
+      "kind": "place",
+      "names": [
+        "the Wellhead",
+        "the Wellhead facility"
+      ]
+    },
+    "place:wellhead_hatch": {
+      "aliases": [
+        "the hatch",
+        "wellhead door",
+        "the entry hatch"
+      ],
+      "anchors": [
+        "entrance to Wellhead interior",
+        "logged entry point",
+        "badge-scan point",
+        "night-crossing passage"
+      ],
+      "kind": "place",
+      "names": [
+        "the Wellhead hatch",
+        "the hatch"
+      ]
+    }
+  },
+  "places": [
+    [
+      "place:narrator_office",
+      "place:anchor"
+    ],
+    [
+      "place:anchor",
+      "place:wellhead_hatch"
+    ],
+    [
+      "place:wellhead_hatch",
+      "place:wellhead"
+    ],
+    [
+      "place:anchor",
+      "place:council_tier"
+    ],
+    [
+      "place:anchor",
+      "place:rust_quarter"
+    ],
+    [
+      "place:rust_quarter",
+      "place:old_highway"
+    ],
+    [
+      "place:old_highway",
+      "place:condenser_site"
+    ],
+    [
+      "place:old_highway",
+      "place:salt_flats"
+    ],
+    [
+      "place:anchor",
+      "place:salt_flats"
+    ],
+    [
+      "place:salt_flats",
+      "place:survey_site"
+    ],
+    [
+      "place:anchor",
+      "place:bazaar"
+    ],
+    [
+      "place:anchor",
+      "place:wellhead"
+    ],
+    [
+      "place:anchor",
+      "place:flats"
+    ],
+    [
+      "place:council_tier",
+      "place:allocation_office"
+    ],
+    [
+      "place:council_tier",
+      "place:marn_quarters"
+    ],
+    [
+      "place:allocation_office",
+      "place:vault"
+    ],
+    [
+      "place:bazaar",
+      "place:bulletin_wall"
+    ],
+    [
+      "place:bazaar",
+      "place:bazaar_stall"
+    ],
+    [
+      "place:bazaar",
+      "place:bazaar_table"
+    ],
+    [
+      "place:wellhead",
+      "place:wellhead_hatch"
+    ],
+    [
+      "place:rust_quarter",
+      "place:condenser_station"
+    ],
+    [
+      "place:flats",
+      "place:southern_aquifer_site"
+    ],
+    [
+      "place:allocation_office",
+      "place:records_vault"
+    ],
+    [
+      "place:allocation_office",
+      "place:allocation_corridor"
+    ],
+    [
+      "place:allocation_corridor",
+      "place:gallery_stairs"
+    ],
+    [
+      "place:gallery_stairs",
+      "place:gallery"
+    ],
+    [
+      "place:gallery_stairs",
+      "place:bazaar_level"
+    ],
+    [
+      "place:bazaar_level",
+      "place:service_gate"
+    ],
+    [
+      "place:service_gate",
+      "place:dead_stairs"
+    ],
+    [
+      "place:dead_stairs",
+      "place:sub_basement"
+    ],
+    [
+      "place:sub_basement",
+      "place:seed_vault"
+    ],
+    [
+      "place:anchor",
+      "place:old_highway"
+    ],
+    [
+      "place:old_highway",
+      "place:northern_waystation"
+    ],
+    [
+      "place:anchor",
+      "place:south_lock"
+    ],
+    [
+      "place:south_lock",
+      "place:survey_site"
+    ]
+  ],
+  "timeline": {
+    "anchors": {
+      "anchor_colony_founded": -7300.0,
+      "anchor_panic": 1.0,
+      "assembly_night": -1.0,
+      "core_data_origin": -3650.0,
+      "core_moved_to_seed_vault": -1.0,
+      "core_pulled_from_wellhead": -5.0,
+      "cray_death": -2370.0,
+      "cray_dies_lung_rot": -3650.0,
+      "cray_signs_decommission_order": -4015.0,
+      "credential_reuse": -3.0,
+      "discrepancy_origin": -4012.0,
+      "divergence_start": -4015.0,
+      "meter_goes_dark": -3.0,
+      "narrative_present": 3.0,
+      "narrator_confronts_marn": 0.0,
+      "narrator_visits_wellhead": 0.0,
+      "open_assembly": 0.0,
+      "sela_visits_narrator": 0.0,
+      "survey_sledge_departure": 1.0,
+      "technician_dies": -5.0,
+      "tovan_death": -21.0,
+      "tovan_dies": -3.0,
+      "tovan_enters_wellhead": -3.0,
+      "tovan_gap_opens": -4015.0
+    },
+    "origin": "Day 0 is when Sela Voss visits the narrator's office to report her brother Tovan's death and the accusation that he stole the master meter"
+  },
+  "world_id": "w:anchor_v2"
+}

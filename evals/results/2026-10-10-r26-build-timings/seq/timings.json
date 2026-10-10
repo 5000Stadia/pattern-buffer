@@ -1,0 +1,20 @@
+{
+  "audit_s": 200.9,
+  "battery_s": 12.1,
+  "commit_classify_all_s": 255.64,
+  "commit_promotion_s": 0.03,
+  "commit_replay_s": 2.41,
+  "commit_s": 261.1,
+  "commit_seed_s": 2.73,
+  "commit_truth_scan_s": 0.29,
+  "escape_repair_s": 0.0,
+  "pass0_s": 883.6,
+  "pass0_segment_s": [
+    209.93,
+    282.48,
+    215.34,
+    175.83
+  ],
+  "pass1_s": 563.8,
+  "total_s": 1921.5
+}

@@ -273,6 +273,53 @@ def establish(
     return prior
 
 
+_GLEAN_PROMPT = """\
+A first pass built the entity registry below from this passage. List ONLY
+entities the passage establishes that the registry MISSED: people, places
+(rooms, furniture, compartments), objects, organizations, documents, named
+events. Output registry lines only, one per line:
+
+  E|<entity_id>|<kind>|<names ;-sep>|<aliases ;-sep>|<anchors ;-sep>
+
+An id is a namespace, a colon and a snake_case name (person, place, obj,
+org, doc, event). Re-emit an existing id only to add a new alias. Emit
+nothing for entities already listed. If nothing was missed, return no lines.
+
+REGISTRY (compact):
+{compact}
+
+PASSAGE:
+{text}
+"""
+
+
+def glean(
+    text: str,
+    registry: WorldRegistry,
+    model: Callable[[str, dict], Any],
+    world_id: str,
+) -> WorldRegistry:
+    """One extra call over ``text`` asking only for missed ``E|`` lines, merged
+    into ``registry`` in place (R26 gleaning). Only ``E|`` lines are accepted."""
+    if registry.world_id != world_id:
+        raise RegistryWorldMismatch(
+            f"registry is for {registry.world_id!r}, not {world_id!r}"
+        )
+    compact = "\n".join(
+        f"E|{eid}|{c.kind}|{'; '.join(c.names)}" for eid, c in sorted(registry.entities.items())
+    )
+    out = model(_GLEAN_PROMPT.format(compact=compact, text=text), _PASS0_SCHEMA)
+    lines = [ln for ln in out["lines"] if ln.strip().startswith("E|")]
+    fresh, rejects = parse_registry_lines(lines, world_id)
+    if rejects:
+        logger.warning("glean: %d rejected line(s): %s", len(rejects), rejects[:5])
+    before = len(registry.entities)
+    registry.merge(fresh)
+    logger.info("glean: %d new entities (now %d)", len(registry.entities) - before,
+                len(registry.entities))
+    return registry
+
+
 def seed_items(registry: WorldRegistry) -> list[dict]:
     """The registry's gate items — phase 1 of the single commit (spec §3.3).
     Entity kinds, names, aliases, and place edges as timeless stated rows;

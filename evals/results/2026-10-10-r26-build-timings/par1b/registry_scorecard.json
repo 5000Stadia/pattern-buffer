@@ -1,0 +1,335 @@
+{
+  "b3_f1": 0.832,
+  "b3_precision": 1.0,
+  "b3_recall": 0.7124,
+  "coverage": 28,
+  "coverage_frac": 1.0,
+  "fragmentation": {
+    "bazaar": [
+      "place:bazaar",
+      "place:bazaar_level"
+    ],
+    "core": [
+      "obj:core",
+      "obj:master_meter_memory_core",
+      "obj:memory_core"
+    ],
+    "desk": [
+      "obj:ilsa_desk",
+      "obj:ilsa_renns_desk"
+    ],
+    "false_drawer": [
+      "obj:false_drawer",
+      "obj:ilsa_desk_false_drawer"
+    ],
+    "footlocker": [
+      "obj:footlocker",
+      "obj:tovan_footlocker"
+    ],
+    "ilsa": [
+      "person:ilsa_renn",
+      "person:tin_ear_clerk"
+    ],
+    "letter": [
+      "obj:tovan_letter",
+      "obj:tovan_note"
+    ],
+    "personal_case": [
+      "obj:crays_personal_case",
+      "obj:personal_case"
+    ],
+    "records_vault": [
+      "place:records_vault",
+      "place:vault"
+    ],
+    "sela": [
+      "person:sela",
+      "person:sela_voss"
+    ],
+    "tovan": [
+      "person:tovan",
+      "person:tovan_voss"
+    ],
+    "vial_crate": [
+      "obj:sample_vials",
+      "obj:wooden_crate_vials"
+    ],
+    "wellhead": [
+      "org:wellhead",
+      "place:wellhead"
+    ]
+  },
+  "fragmentation_count": 13,
+  "fusion": {},
+  "fusion_count": 0,
+  "gold_entities": 28,
+  "mentions": 62,
+  "mentions_resolved": 48,
+  "mentions_unresolved": 14,
+  "per_entity": {
+    "anchor": {
+      "ids": [
+        "place:anchor"
+      ],
+      "mentions": 3,
+      "resolved": 2,
+      "unresolved": [
+        "settlement of anchor"
+      ]
+    },
+    "archive": {
+      "ids": [
+        "doc:unified_archive"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "archive"
+      ]
+    },
+    "bazaar": {
+      "ids": [
+        "place:bazaar",
+        "place:bazaar_level"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "cigarette_tin": {
+      "ids": [
+        "obj:cigarette_tin"
+      ],
+      "mentions": 3,
+      "resolved": 1,
+      "unresolved": [
+        "steel tin",
+        "tin of cigarettes"
+      ]
+    },
+    "condenser_station": {
+      "ids": [
+        "place:condenser_station"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "sela's condenser station"
+      ]
+    },
+    "core": {
+      "ids": [
+        "obj:core",
+        "obj:master_meter_memory_core",
+        "obj:memory_core"
+      ],
+      "mentions": 3,
+      "resolved": 3,
+      "unresolved": []
+    },
+    "council_tier": {
+      "ids": [
+        "place:council_tier"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "cray": {
+      "ids": [
+        "person:cray"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "desk": {
+      "ids": [
+        "obj:ilsa_desk",
+        "obj:ilsa_renns_desk"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "dig_sledge": {
+      "ids": [
+        "obj:dig_sledge"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "false_drawer": {
+      "ids": [
+        "obj:false_drawer",
+        "obj:ilsa_desk_false_drawer"
+      ],
+      "mentions": 2,
+      "resolved": 1,
+      "unresolved": [
+        "ilsa's false drawer"
+      ]
+    },
+    "figs": {
+      "ids": [
+        "obj:dried_figs"
+      ],
+      "mentions": 4,
+      "resolved": 3,
+      "unresolved": [
+        "twist of three dried figs"
+      ]
+    },
+    "footlocker": {
+      "ids": [
+        "obj:footlocker",
+        "obj:tovan_footlocker"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "fuse_tin": {
+      "ids": [
+        "obj:spare_fuses"
+      ],
+      "mentions": 3,
+      "resolved": 1,
+      "unresolved": [
+        "fuse tin",
+        "tin of spare fuses"
+      ]
+    },
+    "gallery": {
+      "ids": [
+        "place:gallery"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "ilsa": {
+      "ids": [
+        "person:ilsa_renn",
+        "person:tin_ear_clerk"
+      ],
+      "mentions": 4,
+      "resolved": 3,
+      "unresolved": [
+        "ilsa"
+      ]
+    },
+    "letter": {
+      "ids": [
+        "obj:tovan_letter",
+        "obj:tovan_note"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "maps": {
+      "ids": [
+        "obj:aquifer_maps"
+      ],
+      "mentions": 4,
+      "resolved": 2,
+      "unresolved": [
+        "survey maps",
+        "tovan's aquifer maps"
+      ]
+    },
+    "marn": {
+      "ids": [
+        "person:marn"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "narrator": {
+      "ids": [
+        "person:narrator"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "pell": {
+      "ids": [
+        "person:pell"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "personal_case": {
+      "ids": [
+        "obj:crays_personal_case",
+        "obj:personal_case"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "records_vault": {
+      "ids": [
+        "place:records_vault",
+        "place:vault"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "seed_vault": {
+      "ids": [
+        "place:seed_vault"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    },
+    "sela": {
+      "ids": [
+        "person:sela",
+        "person:sela_voss"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "tovan": {
+      "ids": [
+        "person:tovan",
+        "person:tovan_voss"
+      ],
+      "mentions": 2,
+      "resolved": 2,
+      "unresolved": []
+    },
+    "vial_crate": {
+      "ids": [
+        "obj:sample_vials",
+        "obj:wooden_crate_vials"
+      ],
+      "mentions": 4,
+      "resolved": 2,
+      "unresolved": [
+        "crate of twelve empty sample vials",
+        "vial crate"
+      ]
+    },
+    "wellhead": {
+      "ids": [
+        "org:wellhead",
+        "place:wellhead"
+      ],
+      "mentions": 1,
+      "resolved": 1,
+      "unresolved": []
+    }
+  },
+  "registry_ids": 159,
+  "uncovered": []
+}
