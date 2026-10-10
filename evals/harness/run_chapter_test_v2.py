@@ -5,10 +5,22 @@ Rounds: pass-0 (whole story -> registry) -> pass-1 (parallel chunk
 extraction, staged) -> escape repair -> single commit -> pass-2 audit ->
 battery -> scorecard. Timing for each round is recorded against the
 spec §E.2 estimate.
+
+Usage (repo root):
+    PYTHONPATH=src python evals/harness/run_chapter_test_v2.py \\
+        [--out DIR] [--pass0 sequential|parallel] [--glean]
+
+R26 BUILD-TIMINGS-V1: ``--out`` names the run directory (default: the old
+dated ``...-v2pipeline-run4`` name); ``--pass0 parallel`` establishes each
+chapter on its own and reduces by merge; ``--glean`` adds one missed-entity
+call per segment. ``timings.json`` holds every stage; the registry is graded
+raw and seeded (``registry_scorecard*``) and given the R24 alias index.
 """
 
 from __future__ import annotations
 
+import argparse
+import copy
 import json
 import logging
 import sys
@@ -35,7 +47,43 @@ OUT = ROOT / "evals" / "results"
 WORLD_ID = "w:anchor_v2"
 
 
-def main() -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--out", default=None,
+                    help="run directory (default: results/<date>-<seed>-v2pipeline-run4)")
+    ap.add_argument("--pass0", choices=("sequential", "parallel"), default="sequential",
+                    help="sequential: establish then extend with prior (default); "
+                         "parallel: establish each segment alone, reduce by merge")
+    ap.add_argument("--glean", action="store_true",
+                    help="after each segment's registry, one call for missed E| lines")
+    return ap.parse_args(argv)
+
+
+def write_json(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def write_registry_reports(registry, segments: list[str], run_dir: Path) -> dict:
+    """Grade ``registry`` raw and seeded (``registry_scorecard*``, named apart
+    from the battery's ``scorecard``) and write the R24 alias index. No model
+    call. Returns the headline numbers."""
+    from grade_registry import grade, seeded_registry, write_scorecard
+    import alias_index
+
+    raw = grade(registry)
+    write_scorecard(raw, run_dir, stem="registry_scorecard",
+                    title=f"Pass-0 registry scorecard ({run_dir.name})")
+    seeded = grade(seeded_registry(registry))
+    write_scorecard(seeded, run_dir, stem="registry_scorecard_seeded",
+                    title=f"Pass-0 identity after seeding and reconcile ({run_dir.name})")
+    alias_index.write_report(alias_index.build_report(registry, segments), run_dir,
+                             title=f"Alias index ({run_dir.name})")
+    return {"raw_b3_f1": raw["b3_f1"], "seeded_b3_f1": seeded["b3_f1"],
+            "raw_fusion": raw["fusion_count"], "seeded_fusion": seeded["fusion_count"]}
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     story = STORY.read_text()
     for marker in BIBLE_MARKERS:
         if marker in story:
@@ -46,24 +94,36 @@ def main() -> int:
 
     from model_shim import claude_model, MODEL as model_name
 
-    run_dir = OUT / f"{date.today().isoformat()}-{seed_version}-v2pipeline-run4"
+    run_dir = (Path(args.out) if args.out
+               else OUT / f"{date.today().isoformat()}-{seed_version}-v2pipeline-run4")
     run_dir.mkdir(parents=True, exist_ok=True)
     pipe = Pipeline(claude_model, WORLD_ID, run_dir, max_workers=4)
     chunk_list = [(CHAPTER_DAYS[no], text) for no, text in chunks(story)]
     timings: dict[str, float] = {}
 
+    def flush_timings() -> None:  # rewritten as stages finish, so a failed run keeps its split
+        write_json(run_dir / "timings.json", {**timings, **pipe.timings})
+
     t = time.time()
     # Chapter-split scaffold: establish over Ch.1, extend over 2-4 (spec §3.2).
     segments = ["## Chapter" + part for part in story.split("## Chapter")[1:]]
-    registry = pipe.pass0(segments=segments)
+    registry = pipe.pass0(segments=segments, parallel=args.pass0 == "parallel",
+                          glean=args.glean)
     timings["pass0_s"] = round(time.time() - t, 1)
     logger.info("pass-0: %d entities, %d attr aliases, %d edges (%.0fs)",
                 len(registry.entities), len(registry.attributes),
                 len(registry.places), timings["pass0_s"])
+    # Graded as pass-0 left it (comparable to R23); escape repair and commit
+    # extend the live registry afterwards.
+    pass0_registry = copy.deepcopy(registry)
+    pass0_registry.save(run_dir / "registry_pass0.json")
+    registry_summary = write_registry_reports(pass0_registry, segments, run_dir)
+    flush_timings()
 
     t = time.time()
     results = pipe.pass1(chunk_list, registry)
     timings["pass1_s"] = round(time.time() - t, 1)
+    flush_timings()
     failed = [r.chunk_id for r in results if r.failed]
     if failed:
         raise SystemExit(f"noncanonical: chunks {failed} failed; staging retained")
@@ -77,6 +137,7 @@ def main() -> int:
     world_path.unlink(missing_ok=True)
     world = pipe.commit(world_path, registry)
     timings["commit_s"] = round(time.time() - t, 1)
+    flush_timings()
 
     t = time.time()
     from audit import run_audit
@@ -84,9 +145,12 @@ def main() -> int:
     timings["audit_s"] = round(time.time() - t, 1)
 
     (run_dir / "ingest_dump.jsonl").write_text(dump(world.buffer))
-    timings["total_s"] = round(sum(timings.values()), 1)
 
+    t = time.time()
     verdicts = run_battery(world)
+    timings["battery_s"] = round(time.time() - t, 1)
+    timings["total_s"] = round(sum(v for k, v in timings.items() if k != "total_s"), 1)
+    flush_timings()
     meta = {
         "date": date.today().isoformat(),
         "model": model_name,
@@ -99,8 +163,13 @@ def main() -> int:
         "audit": {"adds": audit_report.applied_adds,
                   "retracts": audit_report.applied_retracts,
                   "dropped": len(audit_report.dropped_ops)},
+        "pass0_mode": args.pass0,
+        "glean": args.glean,
+        "registry_pass0": registry_summary,
+        "registry_after_commit_entities": len(registry.entities),
         "timings": timings,
     }
+    write_json(run_dir / "meta.json", meta)
     card = scoring.write(verdicts, meta, run_dir)
     print(f"scorecard: {card}")
     print(json.dumps(meta, indent=2))
