@@ -78,3 +78,16 @@ each stage above, and the report names the slowest stage.
 4. Then stop and report (n7df1c6). ROADMAP R26 updated by pb.
 
 Not in scope: engine changes, R25's merge gate, any change to pass-1.
+
+## Known risks, reported but not in the pass mark (added after the build, before any run)
+
+- **Timeline.** A parallel segment has no prior, so it picks its own day 0;
+  the reduce keeps chapter 1's origin and adds later anchors on their own
+  scales. Sequential pass-0 already shows later chapters no timeline (its
+  extend note lists only ids and attributes), so the gap is smaller than it
+  looks, but the report compares the registries' timeline anchors across
+  runs, and the battery's as-of questions will show damage.
+- **Ids across chapters.** Nothing pins one id per person across independent
+  segments; the raw and seeded B3 numbers measure this.
+- **Attribute canonicals.** Two chapters can coin different canonical names
+  for one concept; the report lists canonicals found in only one run mode.
