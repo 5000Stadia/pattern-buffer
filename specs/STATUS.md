@@ -6,7 +6,7 @@ the authoritative current state.** A spec marked *Shipped* has its feature live 
 `src/patternbuffer/` with tests; browse the spec for the design and the whitepaper
 §25 for the consolidated architecture.
 
-_Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A–E pbr-GREEN and merged, C without its §7; R22 merged — `docs/AUDIT-2026-10.md`, `docs/HANDOFF-2026-10-09.md`)._
+_Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A–E pbr-GREEN and merged, C without its §7; R22 merged; R23's pass-0 baseline recorded 2026-10-10 — `docs/AUDIT-2026-10.md`, `docs/HANDOFF-2026-10-09.md`)._
 
 ## Shipped — feature live in the engine
 | Spec | What it shipped |
@@ -46,6 +46,7 @@ _Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A�
 | REFER-LEARNING-V1 | Audit batch D: `refer` learns a word, never a pick. Only a scoped vocabulary miss that tier 2 maps onto one entity writes, as a `learned_alias` in the call's frame (bookkeeping, never identity); tier 1d reads it back only after authored vocabulary found nothing and only where its entity is in scope; pinned reads, `learn=False` and `ask` never write; tier 1 reads as of the caller's log position; aliases match like names; `owned_by` returns the owner; legacy `refer:tier2:` aliases read as words. Whitepaper A22 |
 | READ-SURFACE-V1 | Audit batch E: the porcelain reads what the gate writes. A host durability pin (`attr:<name> · durability`); `fold_policy: last_write` given its meaning and `move` removed; one attribute name on both sides of the gate (`canonical_attribute`); `state()` serves the whole key (`values`, `conflicting_facts`, status `unresolved` for a placeholder); `who_knows` matches the folded value; `ask()` has one effective time (the caller's `as_of` is a ceiling) and binds the asker's own words first; a world file carries its physics (an immutable physics row; reopening runs it, a mismatch raises); `frame=`/`asserted_as_of=` on the reads; a porcelain `refer`; MCP tools 41-42. `events()` from one reader is R22 (EVENTS-ONE-READER-V1). Whitepaper A23 |
 | EVENTS-ONE-READER-V1 | Roadmap R22: every event read goes through one reader. Structural event rows become classification-independent records that `events()`, `in_transit()`, the lenses and `neighborhood()` share; event rows never fold; `state()` on an event entity answers from its record. Whitepaper A24 |
+| PASS0-GRADER-V1 | Roadmap R23 (measurement only, no engine change): grades pass-0's registry against the gold `fixtures.ENTITIES` (coverage, fragmentation, fusion, B3 linking P/R/F1). First baseline, two runs: `evals/results/2026-10-10-r23-pass0-baseline/REPORT.md` |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs — decisions in effect
