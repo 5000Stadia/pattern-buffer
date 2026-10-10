@@ -1,8 +1,8 @@
 # R23 pass-0 registry baseline (2026-10-10)
 
 Grader: `evals/harness/grade_registry.py` against the gold `fixtures.ENTITIES`
-(**28** gold entities, 62 deduplicated mentions; the spec text says 29, the
-file has 28). Runner: `evals/harness/run_pass0_baseline.py` (pass-0 only: the
+(**28** gold entities, 62 deduplicated mentions; the spec's first draft said
+29, corrected to 28). Runner: `evals/harness/run_pass0_baseline.py` (pass-0 only: the
 `run_chapter_test_v2.py` segmentation, 4 chapter segments, `Pipeline.pass0`,
 `establish`/extend prompt unchanged, shim `claude_model`).
 
@@ -52,7 +52,17 @@ repeat) before it counts as an improvement.
   noise comes from.
 - **Id-format artifact in the fresh runs:** ids come out as `person:/ilsa_renn`
   (with a slash) where the older registry has `person:ilsa_renn`. Harmless to
-  the grader (it ignores id spelling) but worth knowing; not investigated.
+  the grader (it ignores id spelling). Cause: the pass-0 prompt in
+  `evals/harness/registry.py` writes the namespaces as a slash-separated list,
+  "Ids namespaced person:/place:/obj:/...", and today's model reads `person:/`
+  as the prefix. Every fresh id has the slash (95 of 95). Not fixed here: R23
+  measures pass-0 as it is; the wording fix belongs with the first pass-0
+  change, and its run gets graded against this baseline.
+- **The split happens despite the prompt asking for the opposite.** Pass-0's
+  rules say "someone unnamed early who is named later is ONE entry", and the
+  clerk's id lists `ilsa renn` as an alias, yet a second id is minted. A
+  deterministic fold of ids that share a full name (the research note's
+  alias-index pass) would close this one without a model call.
 
 ## The older data point
 

@@ -13,7 +13,7 @@ the research note name its failure mode: **fragmentation**, one person minted as
 several ids, and its opposite, two people fused into one id.
 
 The gold set is the one that already exists: `evals/harness/fixtures.py`
-`ENTITIES`, 29 entities of *The Last Honest Meter*, each with the alias set
+`ENTITIES`, 28 entities of *The Last Honest Meter*, each with the alias set
 transcribed from the bible. The gold is partial (it names what the bible names),
 so the grader never charges a registry id that matches no gold entity.
 
@@ -21,7 +21,7 @@ Each gold alias string is a **mention**. A mention resolves to the registry ids
 whose names or aliases match it (normalized: lowercase, outer space and a
 leading article stripped). From that:
 
-- **Coverage:** gold entities with at least one resolved mention, of 29.
+- **Coverage:** gold entities with at least one resolved mention, of 28.
 - **Fragmentation:** gold entities whose mentions resolve to two or more ids,
   with the ids listed.
 - **Fusion:** registry ids that receive mentions of two or more gold entities.
