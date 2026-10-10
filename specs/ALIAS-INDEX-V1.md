@@ -1,6 +1,7 @@
 # ALIAS-INDEX-V1: a deterministic alias pass between pass-0 and pass-1 (roadmap R24)
 
-**Status:** draft r0 (2026-10-10). Nothing built. Research note technique 1
+**Status:** r1 (2026-10-10). Part A built and merged to local main (evals
+only); Part B waits on gate g3bf5da. Research note technique 1
 (`docs/research/book-to-world-extraction-2026-10.md`), reshaped by what R23
 measured.
 
@@ -63,3 +64,26 @@ not here.
    `evals/results/2026-10-10-r23-pass0-baseline/`, with the vault and Ilsa
    pairs found in both fresh runs.
 3. ROADMAP R24 notes Part A done and Part B waiting on g3bf5da.
+
+## Build notes (Part A, 2026-10-10)
+
+Taken in the build, each documented in `alias_index.py`:
+- Only **strong** distinctness evidence (different proper names, coordination)
+  excludes a merge candidate. Co-presence is reported as weak and only
+  annotates: read literally, co-presence would exclude the Ilsa pair whenever
+  "Renn" and "the gray woman" share a paragraph.
+- Co-presence is per **paragraph**, not per segment: the segments are whole
+  chapters, so segment co-presence would link nearly every pair.
+- Different-proper-names and co-presence are checked only on **risk pairs**
+  (pairs sharing an identifying string, or one listing the other's name);
+  coordination on every same-kind pair. Checking all pairs lists thousands of
+  unrelated ones.
+- "the vault" and "vault" normalize to one key, `vault`; the report keeps the
+  spellings. Ids are reported repaired (`_norm_id`), originals under
+  `id_repairs`.
+- Escape candidates are noisy on this story (sentence-initial words,
+  surname-only "Voss"); they are a pre-pass-1 list to read, not a gate.
+- Results: in run1 and run2 the vault pair is found (strong) and `vault` is
+  ambiguous across three ids; the Ilsa pair is a merge candidate in all three
+  registries. `Pipeline(alias_slice=False)` is the default and leaves the
+  slice unchanged; turning it on is for a measured chapter-test run.
