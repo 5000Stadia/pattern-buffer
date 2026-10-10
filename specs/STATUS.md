@@ -49,6 +49,7 @@ _Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches Aâ€
 | PASS0-GRADER-V1 | Roadmap R23 (measurement only, no engine change): grades pass-0's registry against the gold `fixtures.ENTITIES` (coverage, fragmentation, fusion, B3 linking P/R/F1). First baseline, two runs: `evals/results/2026-10-10-r23-pass0-baseline/REPORT.md` |
 | ALIAS-INDEX-V1 | Roadmap R24 Part A (harness only, engine unchanged): a deterministic alias index between pass-0 and pass-1 reporting ambiguous strings, a kinship/address stoplist, escape candidates, distinctness evidence and merge candidates; `Pipeline(alias_slice=)` off by default. Part B (identity rows) waits on gate g3bf5da |
 | BUILD-TIMINGS-V1 | Roadmap R26 (harness only): per-stage build timings; `Pipeline.pass0(parallel=, glean=)`, both off by default. Measured: parallel pass-0 is ~2.7x faster but fragments the registry; stays off until the merge gate (R25) |
+| SECOND-WRITER guard (fix) | One live World per file, enforced: a buffer that sees SQLite's `data_version` move (another connection committed) raises `SecondWriter`, latching; the unit authorizer admits only that read-only pragma. Not multi-writer support. pbr GREEN 2026-10-10 |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs â€” decisions in effect
