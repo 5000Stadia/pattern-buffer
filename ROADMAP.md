@@ -87,7 +87,7 @@ state is in `docs/HANDOFF-2026-10-09.md`.
 - [x] R18 Batch D, refer learns words, not picks — pbr GREEN, merged 2026-10-09 (`specs/REFER-LEARNING-V1.md`; whitepaper A22)
 - [x] R19 Batch E, the additive read surface: construct's three asks — pbr GREEN, merged 2026-10-09 (`specs/READ-SURFACE-V1.md` r1.1; whitepaper A23)
 - [~] R20 Ship notices to construct as each batch lands; construct repairs its worlds with the holds/wearing recipe (live player worlds are Kabe's call; construct brings him the list) (`docs/ADOPTION.md` "Inverse predicates"). A and R14 noticed 2026-10-09; construct's 1,542 tests green on them, nothing to re-baseline. B noticed 2026-10-09; construct green on it (1,544 tests) after a one-line fix to its private-API test patch. C noticed 2026-10-09; construct green on it (1,544 tests); it confirms thedeep's chen/elias_chen with the g698a80 repairs. D noticed 2026-10-09; construct green on it (1,544 tests), watching the cost of re-judging ambiguous references in its latency work. E noticed 2026-10-09; construct green on it (1,544 tests, one of its tests updated for the `in` spelling rule); the five junk protagonist-frame aliases E's first-own-words rule binds join the g698a80 repair list; construct adopts E's levers in daytime. R22 merged after construct's own run on the branch (1,545 tests), with its kind-less events guarded
-- [ ] R21 P2 structure: one merge-veto gate table, one rows-between scan, `indexes.py` split behind its facade, the classifier rubric unified (`docs/AUDIT-2026-10.md` "P2")
+- [ ] R21 P2 structure: one merge-veto gate table, one rows-between scan, `indexes.py` split behind its facade, the classifier rubric unified (`docs/AUDIT-2026-10.md` "P2"); the split is proposed to Kabe in `docs/proposals/R21-INDEXES-SPLIT.md`, not yet built
 - [x] R22 `events()` from one reader, shared with `in_transit`; `state()` on event entities — pbr GREEN, construct green on the branch, merged 2026-10-10 (`specs/EVENTS-ONE-READER-V1.md`; whitepaper A24)
 
 ## M3 — Book in, world out
@@ -98,7 +98,7 @@ and the three most promising techniques are in
 adds a memorization control: a counterfeit edition plus a noise floor, so Alice
 measures reading, not recall.
 
-- [ ] R23 Grade pass-0 registry quality directly against gold (linking P/R/F1 plus a cluster fragmentation metric), so every change is measured (research note "Answer")
+- [~] R23 Grade pass-0 registry quality directly against gold (linking P/R/F1 plus a cluster fragmentation metric), so every change is measured (research note "Answer") — in progress: `specs/PASS0-GRADER-V1.md` on `m3/r23-pass0-grader` says what done means (grader on the existing gold, a first two-run baseline)
 - [ ] R24 A deterministic alias-index pass between pass-0 and pass-1: global name propagation, a kinship/address stoplist, `distinct_from` proposals from coordination and co-presence (research note, technique 1)
 - [ ] R25 Handle-based incremental `extend` with a verified merge gate: the harness mints the ids, and merges are checked by a yes/no call (research note, technique 2)
 - [ ] R26 Per-stage build timings, then parallel map-reduce pass-0 plus gleaning (research note, technique 3)
