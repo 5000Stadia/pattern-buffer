@@ -166,7 +166,7 @@ _EXTRACT_RULES_FULL = (
     "- MOVEMENT: when the text narrates a person actually leaving or arriving "
     "at a place (goes out, slips away, comes in, arrives, departs, walks/rides/"
     "drives from A to B), ALSO emit an event with a FRESH UNIQUE id of the form "
-    "'event:<short-occurrence-slug>' — a new id for every distinct movement, "
+    "'event:<short_occurrence_slug>' — a new id for every distinct movement, "
     "never reused — with these attributes, all sharing the one id: kind=moved; "
     "agent=<person id>; origin=<place> and/or destination=<place> exactly as the "
     "text gives them (a bound place is its entity id; a named-but-unregistered "
