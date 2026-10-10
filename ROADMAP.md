@@ -98,7 +98,7 @@ and the three most promising techniques are in
 adds a memorization control: a counterfeit edition plus a noise floor, so Alice
 measures reading, not recall.
 
-- [x] R23 Grade pass-0 registry quality directly against gold (linking P/R/F1 plus a cluster fragmentation metric), so every change is measured (research note "Answer") — done 2026-10-10: `evals/harness/grade_registry.py`; baseline in `evals/results/2026-10-10-r23-pass0-baseline/REPORT.md` (two runs: B3 F1 0.752 / 0.735, noise floor ~0.02; no fusion; one split, Ilsa Renn, in every run)
+- [x] R23 Grade pass-0 registry quality directly against gold (linking P/R/F1 plus a cluster fragmentation metric), so every change is measured (research note "Answer") — done 2026-10-10: `evals/harness/grade_registry.py`; baseline in `evals/results/2026-10-10-r23-pass0-baseline/REPORT.md` (two runs: B3 F1 0.752 / 0.735, noise floor ~0.02). Pass-0 splits Ilsa Renn in every run; after seeding, the engine's reconcile closes that split but fuses the Records Vault with the Seed Vault in both fresh runs (evidence for g3bf5da P3). Also found and fixed: today's model minted `person:/x` ids the engine refuses (`fix/pass0-id-shape`)
 - [ ] R24 A deterministic alias-index pass between pass-0 and pass-1: global name propagation, a kinship/address stoplist, `distinct_from` proposals from coordination and co-presence (research note, technique 1)
 - [ ] R25 Handle-based incremental `extend` with a verified merge gate: the harness mints the ids, and merges are checked by a yes/no call (research note, technique 2)
 - [ ] R26 Per-stage build timings, then parallel map-reduce pass-0 plus gleaning (research note, technique 3)
