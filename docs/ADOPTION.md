@@ -441,6 +441,10 @@ cautions:
   Each `World` is its file's only writer: it tracks the log head and its
   derived read caches in memory and does not see another connection's appends
   until it is reopened. One live `World` per file; route readers through it.
+  Enforced: a handle that notices another connection's commit raises
+  `SecondWriter` on its next operation (and every one after; reopen to
+  recover). A `World` is also bound to the thread that opened it (SQLite's
+  own check): hand work to that thread rather than sharing the handle.
 - **MUST** preserve frame absence: serve consumers only frames they are
   entitled to; out-of-frame content is absent from the payload already — do
   not re-add it from caches.

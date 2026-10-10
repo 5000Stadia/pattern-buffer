@@ -91,6 +91,14 @@ class WorldPhysicsMismatch(ValueError):
     under its physics; a world that needs other physics is a new world."""
 
 
+class SecondWriter(RuntimeError):
+    """Another connection committed to this world's file while this buffer
+    held it open (the one-live-World-per-file rule, ADOPTION). This buffer's
+    head and derived caches cannot see that write, so every later operation
+    on it raises instead of serving stale reads or minting a clashing row id;
+    reopen the world, and route all writers and readers through one World."""
+
+
 class PoisonedConnection(RuntimeError):
     """Raised by every later operation after a rollback-unconfirmable abort
     poisons the connection (ATOMIC-ACTIVATION-V1 §B1) — uncertain transaction
@@ -318,6 +326,10 @@ class PatternBuffer:
         self._log_version = 0
         self._conn = sqlite3.connect(self.path)
         self._conn.executescript(_SCHEMA)
+        # SQLite's data_version moves only when ANOTHER connection commits to
+        # the file; `_live_conn()` compares it on every operation (the
+        # second-writer guard). Disarmed (None) until construction is done.
+        self._data_version: int | None = None
         existing = self._meta("world_id")
         if existing is None:
             self._live_conn().execute(
@@ -339,6 +351,10 @@ class PatternBuffer:
         self._owner_phase = "none"       # {none, begin, commit, rollback}
         self._unit_committed = False     # last unit reached a terminal COMMIT
         self._unit_precall_head: int | None = None
+        self._data_version = self._read_data_version()
+
+    def _read_data_version(self) -> int:
+        return self._conn.execute("PRAGMA data_version").fetchone()[0]
 
     def _meta(self, key: str) -> str | None:
         row = self._live_conn().execute(
@@ -666,6 +682,11 @@ class PatternBuffer:
         if self._poisoned:
             raise PoisonedConnection(
                 "connection poisoned after an unconfirmable rollback")
+        if self._data_version is not None and self._read_data_version() != self._data_version:
+            raise SecondWriter(
+                f"another connection wrote to {self.path} while this World held it "
+                "open; this handle cannot see that write. One live World per "
+                "file: reopen, and route every writer and reader through it")
         return self._conn
 
     def _commit_or_defer(self) -> None:
@@ -700,6 +721,10 @@ class PatternBuffer:
             return (sqlite3.SQLITE_OK
                     if want is not None and arg1 == want else sqlite3.SQLITE_DENY)
         if action in _ALLOWED_ACTIONS:
+            return sqlite3.SQLITE_OK
+        # The second-writer guard's read of `PRAGMA data_version` (no
+        # argument: read-only), so the guard stays live inside a unit.
+        if action == sqlite3.SQLITE_PRAGMA and arg1 == "data_version" and arg2 is None:
             return sqlite3.SQLITE_OK
         return sqlite3.SQLITE_DENY
 
