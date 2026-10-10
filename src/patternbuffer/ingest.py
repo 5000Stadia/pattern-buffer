@@ -153,7 +153,9 @@ _EXTRACT_SCHEMA = {
 _EXTRACT_RULES_FULL = (
     "Extract world-state assertions from this narrative passage.\n"
     "Return triples (entity, attribute, value). Rules:\n"
-    "- entity ids namespaced: person:/place:/obj:/event:/doc: + snake_case.\n"
+    "- entity ids namespaced: <namespace>:<snake_case_name>, namespace one of "
+    "person, place, obj, event, doc; lowercase letters, digits and underscores after "
+    "the colon, nothing else (never <namespace>:/<name>, never hyphens).\n"
     "- attributes: use 'in' for where a thing or person is (a place or a "
     "container); 'connects_to' for passage; 'kind' for what a thing is; domain "
     "attributes freely otherwise.\n"
@@ -228,7 +230,9 @@ _EXTRACT_RULES_FULL = (
 _EXTRACT_RULES_LEAN = (
     "Extract world-state assertions from this narrative passage.\n"
     "Return triples (entity, attribute, value). Rules:\n"
-    "- entity ids namespaced: person:/place:/obj:/event: + snake_case.\n"
+    "- entity ids namespaced: <namespace>:<snake_case_name>, namespace one of "
+    "person, place, obj, event; lowercase letters, digits and underscores after "
+    "the colon, nothing else (never <namespace>:/<name>, never hyphens).\n"
     "- attributes: 'in' for where a thing or person is (a place or a "
     "container); 'connects_to' for passage; 'kind' for what a thing is; domain "
     "attributes otherwise.\n"
