@@ -89,6 +89,7 @@ class Pipeline:
         run_dir: str | Path,
         max_workers: int = 4,
         reject_threshold: float = 0.20,
+        alias_slice: bool = False,
     ) -> None:
         self.model = model
         self.world_id = world_id
@@ -97,6 +98,10 @@ class Pipeline:
         self.staging.mkdir(parents=True, exist_ok=True)
         self.max_workers = max_workers
         self.reject_threshold = reject_threshold
+        # R24 ALIAS-INDEX-V1: when True, the size-guard slice keeps the ids the
+        # alias index hits (plus ids sharing a string with them) instead of the
+        # raw substring test. Off by default: the slice is unchanged.
+        self.alias_slice = alias_slice
 
     # ------------------------------------------------------------- pass 0
 
@@ -134,10 +139,17 @@ class Pipeline:
         # Deterministic size-guard slice (spec §4.2): attribute map +
         # timeline + place graph + persons + lexical alias hits.
         lowered = chunk_text.lower()
+        alias_keep: set[str] | None = None
+        if self.alias_slice:
+            import alias_index  # lazy: the default path never loads it
+
+            alias_keep = alias_index.slice_ids(registry, chunk_text)
         keep: dict[str, Any] = {}
         for eid, card in sorted(registry.entities.items()):
-            hit = eid.startswith("person:") or any(
-                a in lowered for a in card.aliases + [n.lower() for n in card.names]
+            hit = eid.startswith("person:") or (
+                eid in alias_keep if alias_keep is not None else any(
+                    a in lowered for a in card.aliases + [n.lower() for n in card.names]
+                )
             )
             if hit:
                 keep[eid] = {"kind": card.kind, "names": card.names, "aliases": card.aliases}
