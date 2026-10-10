@@ -50,20 +50,53 @@ repeat) before it counts as an improvement.
 - **Run-to-run:** the same gold entities are lost or kept differently
   (condenser_station, the `maps`/`footlocker` alias sets), which is where the
   noise comes from.
-- **Id-format artifact in the fresh runs:** ids come out as `person:/ilsa_renn`
-  (with a slash) where the older registry has `person:ilsa_renn`. Harmless to
-  the grader (it ignores id spelling). Cause: the pass-0 prompt in
-  `evals/harness/registry.py` writes the namespaces as a slash-separated list,
-  "Ids namespaced person:/place:/obj:/...", and today's model reads `person:/`
-  as the prefix. Every fresh id has the slash (95 of 95). Not fixed here: R23
-  measures pass-0 as it is; the wording fix belongs with the first pass-0
-  change, and its run gets graded against this baseline.
+- **Id-format bug in the fresh runs (not harmless; fixed after this
+  baseline).** Ids came out as `person:/ilsa_renn` where the older registry has
+  `person:ilsa_renn`, because the pass-0 prompt listed the namespaces as
+  "person:/place:/obj:/...". The grader ignores id spelling, but the engine
+  does not: its id grammar refuses every such id, so seeding a fresh registry
+  skips every row, and the chapter test could not have built a world with
+  today's model. Fixed on `fix/pass0-id-shape`: the prompt now gives
+  `person:ilsa_renn` as the shape, and the registry parser repairs a slash
+  after the namespace. The numbers above are unchanged by the fix (the grader
+  never read the id).
 - **The split happens despite the prompt asking for the opposite.** Pass-0's
   rules say "someone unnamed early who is named later is ONE entry", and the
-  clerk's id lists `ilsa renn` as an alias, yet a second id is minted. A
-  deterministic fold of ids that share a full name (the research note's
-  alias-index pass) would close this one without a model call.
+  clerk's id lists `ilsa renn` as an alias, yet a second id is minted. The
+  engine's own reconcile closes it downstream (next section).
 
+## After seeding: identity as the engine leaves it
+
+The registry is not the last word on identity: the commit seeds it into the
+world, and the engine's promotion and `reconcile` merge ids that share names.
+`grade_registry.seeded_registry()` does exactly that on a scratch world (stub
+model, no pass-1, ids repaired) and folds each merged group into one card.
+Scorecards: `*/scorecard_seeded.md`.
+
+| metric | run1 | run2 | older |
+|---|---|---|---|
+| ids after merges | 92 | 88 | 106 |
+| fragmented gold entities | **0** | **0** | **0** |
+| fused ids | **1** | **1** | 0 |
+| B3 precision | 0.984 | 0.984 | 1.000 |
+| B3 recall | 0.602 | 0.581 | 0.567 |
+| B3 F1 | 0.747 | 0.730 | 0.724 |
+
+- **Reconcile closes the Ilsa split in all three.** The clerk and Ilsa Renn
+  end as one id.
+- **Reconcile fuses the Records Vault with the Seed Vault in both fresh runs.**
+  This is the story's planted coarse-then-split container (bible feature 3).
+  Both vault cards carry the alias "the vault", and a third card,
+  `place:vault`, is named "the vault"; reconcile merges each vault into it,
+  which chains the two vaults into one place. Nothing marks them distinct,
+  and nothing vetoes a merge between two cards with different proper names.
+  It is engine behaviour (identity, `reconcile`), the same class as the
+  automatic merges that fused a protagonist with an NPC in construct's worlds,
+  so it is evidence for gate g3bf5da's point P3 (identity's root causes,
+  through pbr), not something R23 or R24 changes. The older registry had no
+  `place:vault` card, so it escaped.
+- So the identity number that matters for M3 is the seeded one, and its
+  failure today is a fusion, not a fragmentation.
 ## The older data point
 
 `examples/anchor/registry.json` is the pass-0 artifact of the stamped run-4
@@ -80,5 +113,6 @@ the two-run floor).
 ## Files
 
 `run1/`, `run2/`: `registry.json`, `scorecard.md`, `scorecard.json`, `meta.json`.
-`older-examples-anchor/`: scorecard only. Rerun:
+`older-examples-anchor/`: scorecards only. Each directory also has
+`scorecard_seeded.md/.json`. Rerun:
 `PYTHONPATH=src python evals/harness/run_pass0_baseline.py OUT_DIR`.

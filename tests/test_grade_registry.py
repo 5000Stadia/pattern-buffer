@@ -123,3 +123,28 @@ def test_accepts_registry_object_and_json_path(tmp_path) -> None:
 def test_scorecard_lists_problems() -> None:
     md = scorecard_md(grade(reg(**{"a:1": (["ilsa", "sela"], [])}), GOLD))
     assert "`a:1`" in md and "Fusion" in md
+
+
+def test_seeded_registry_counts_the_engines_own_merges() -> None:
+    from evals.harness.grade_registry import seeded_registry
+
+    reg = {
+        "world_id": "w:t",
+        "entities": {
+            "person:/ilsa_renn": {"kind": "person", "names": ["Ilsa Renn"], "aliases": ["ilsa"],
+                                  "anchors": []},
+            "person:/tin_ear_clerk": {"kind": "person", "names": ["the clerk"],
+                                      "aliases": ["ilsa renn", "the clerk with the tin ear"],
+                                      "anchors": []},
+            "person:/pell": {"kind": "person", "names": ["Pell"], "aliases": [], "anchors": []},
+        },
+        "attributes": {}, "timeline": {"origin": "", "anchors": {}}, "places": [],
+    }
+    gold = {"ilsa": ["Ilsa Renn", "the clerk with the tin ear"], "pell": ["Pell"]}
+    before = grade(reg, gold)
+    seeded = seeded_registry(reg)
+    after = grade(seeded, gold)
+    assert all(":/" not in eid for eid in seeded["entities"])  # ids repaired
+    assert before["fragmentation_count"] == 1
+    assert after["fragmentation_count"] == 0
+    assert after["registry_ids"] == 2
