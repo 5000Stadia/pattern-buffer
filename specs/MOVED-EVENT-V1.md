@@ -408,6 +408,15 @@ tested once (the host hit as-of drift re-deriving it — Cx 253 §4).
   transit with `last_known_containment = None`. This distinguishes a same-cursor
   origin `in` asserted *before* the event (in transit, last-known = origin) from
   an arrival `in` asserted *after* it (arrived, excluded).
+- *(Note 2026-10-09, EVENTS-ONE-READER-V1 §3: `in_transit()` reads `events()`'s
+  event records and parse — one parse, so the two agree on a move whose
+  `origin` was asserted twice. A record is a move when its `kind` (the pick:
+  top evidence rank, then latest) is `moved`; `agent`, `origin`, `destination`
+  and `manner` are the pick; `valid_to` is the payload's, and "valid_from <= t"
+  is the reader's "has occurred by t". The anchor is read from the record:
+  `(t, min(asserted_at) over the record's movement-payload rows)`. The
+  containment comparison also runs at `asserted_as_of`, which is appended last
+  on both signatures, so they stay identical.)*
 - **derived read only** — writes nothing durable (projector/renderer
   discipline intact), adds no mutation verb, changes neither the fold nor
   `locate()`. A sibling of `events()`/`locate()`.

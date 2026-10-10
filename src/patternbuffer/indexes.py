@@ -9,7 +9,7 @@ import logging
 import math
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Callable
+from typing import Any, Callable, Iterable, Sequence
 
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import (
@@ -30,9 +30,11 @@ from patternbuffer.decay import DecayPolicy
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    EVENT_PREFIX,
     MECHANISM_STATUS,
     META_ATTRIBUTES,
     Assertion,
+    is_event_row,
 )
 from patternbuffer.semantics import AttributeSemantics
 
@@ -50,6 +52,16 @@ _NEIGHBORHOOD_DEPTH_CAP = 3
 # chapter-test run 3: a narrator's wrong `inferred` theory outheld later
 # `stated` canon.) Governs every durability class (FOLD-CORRECTNESS-V1 §4).
 _EVIDENCE_RANK = {"stated": 3, "observed": 3, "generated": 2, "inferred": 1, "assumed": 0}
+# The movement-payload keys of a `kind=moved` event (MOVED-EVENT-V1 §E1), named
+# once (EVENTS-ONE-READER-V1 §3): a move's closing coordinate is the `valid_to`
+# its payload rows carry, and `in_transit`'s anchor reads them.
+MOVEMENT_KEYS = ("kind", "agent", "origin", "destination", "manner")
+# A record's single-valued keys (EVENTS-ONE-READER-V1 §4 Rule B): the event
+# algebra (whitepaper §12, `event(kind, agents, patients, t, effects)`) and
+# MOVED-EVENT-V1 give each one value, so top-rank rows disagreeing at the
+# winner's stamp are a contradiction. Every other attribute is description,
+# which an occurrence may hold several values of, and is never conflicted.
+_EVENT_SINGLE_VALUED = frozenset({"kind", "origin", "destination", "manner"})
 CONFIDENCE_PARAMS = {
     # CONFIDENCE-V1: fixed, tunable read-layer weights. These scores are
     # derived on demand and are never stored in the assertion log or sidecar.
@@ -478,8 +490,12 @@ class Indexes:
             entity_in=closure, attribute_in=attrs,
             frame=frame, valid_as_of=valid_as_of, asserted_as_of=asserted_as_of,
         ):
-            if self._classifier.durability(row.id) == EVENT:
-                continue  # events never fold
+            # Events never fold (EVENTS-ONE-READER-V1 §4 Rule A): an event row
+            # is dropped by its structure, classified or not — an unclassified
+            # row reads STATE, so a test of the class alone let it fold until a
+            # sweep — and so is every other row the classifier made EVENT.
+            if is_event_row(row) or self._classifier.durability(row.id) == EVENT:
+                continue
             candidates.append(row)
         if not candidates:
             return FoldResult(winner=None)
@@ -487,7 +503,8 @@ class Indexes:
         # Accrue reads raw numeric literal/delta rows (it filters to numbers
         # internally and ignores unresolved/thunk machinery), so it branches
         # before the thunk filter. Deltas are STATE by guardrail, never EVENT,
-        # so the gather-loop EVENT drop above leaves the ledger intact.
+        # and never event rows, so the gather-loop drop above leaves the ledger
+        # intact — an accrue ledger on an event still folds.
         if self._semantics.is_accrue(attribute):
             return self._fold_accrue(candidates)
 
@@ -1410,6 +1427,210 @@ class Indexes:
         out.discard(entity)
         return sorted(out)
 
+    # ------------------------------------- event records (EVENTS-ONE-READER-V1)
+    # An event is an entity (whitepaper §3.1) whose rows are its RECORD: what
+    # kind of occurrence it was, who and what took part, when. A record is
+    # read, never folded — nothing supersedes an occurrence, and an occurrence
+    # is not a value of any other entity's key (§5). One reader returns
+    # records, and every event read uses it.
+
+    def event_records(
+        self,
+        frame: str = CANON,
+        *,
+        ids: Iterable[str] | None = None,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+    ) -> dict[str, tuple[Assertion, ...]]:
+        """The event records visible in `frame` (EVENTS-ONE-READER-V1 §1):
+        resolved event id -> its record, events in the listing order
+        (`_event_order`) and each record's rows in `_recency_key` order.
+
+        - **Identity.** An event is a resolved id: the event rows
+          (`is_event_row`) visible in `frame` are grouped by the canonical id
+          of their stored subject. A row on any other subject never makes an
+          event — not a `caused_by` that names one, not an identity edge, not
+          a thing contained in one. An event merged into a closure whose
+          canonical id is not an `event:` id is keyed by that id, as
+          `entities()` reports it.
+        - **The record** is the event's rows minus the engine's machinery
+          (`META_ATTRIBUTES`: identity edges, provenance, semantics), which
+          rides beside a record as it does beside every entity.
+        - **Never the sidecar**: no classification lookup, so a record reads
+          the same before a sweep as after it.
+        - **The asserted axis** is `visible(asserted_as_of=)`, retractions
+          included, as for every read.
+        - **The valid axis**, one rule for every event read: an event has
+          occurred by `T` when `T` is None, when it has no stamped row (a
+          timeless event, such as a merge), or when its earliest stamped
+          `valid_from` is <= `T`; its record as of `T` is its timeless rows
+          plus its rows stamped <= `T`. `valid_to` never hides an event row:
+          a closed or zero-duration event stays history (MOVED-EVENT-V1 §D.6).
+        - **`ids`** limits the read to the named events, each through its
+          identity closure (the per-event callers: `event_attribute`, the
+          `situation` lens, `event_participation`, `caused_by_of`)."""
+        if ids is None:
+            rows = self._buffer.visible(frame=frame, entity_prefix=EVENT_PREFIX,
+                                        asserted_as_of=asserted_as_of)
+        else:
+            members: set[str] = set()
+            for eid in ids:
+                members |= self._closure_of(self._resolve(eid))
+            # Only a stored `event:` subject carries event rows: a closure
+            # without one has no record, and is read without a query.
+            stored = sorted(m for m in members if m.startswith(EVENT_PREFIX))
+            if not stored:
+                return {}
+            rows = self._buffer.visible(entity_in=stored, frame=frame,
+                                        asserted_as_of=asserted_as_of)
+        grouped: dict[str, list[Assertion]] = {}
+        for row in rows:
+            if not is_event_row(row) or row.attribute in META_ATTRIBUTES:
+                continue
+            grouped.setdefault(self._resolve(row.entity), []).append(row)
+        records: dict[str, tuple[Assertion, ...]] = {}
+        for event_id, record in grouped.items():
+            record.sort(key=self._recency_key)
+            if valid_as_of is not None:
+                stamped = [r.valid_from for r in record if r.valid_from is not None]
+                if stamped and min(stamped) > valid_as_of:
+                    continue  # has not occurred by T
+                record = [r for r in record
+                          if r.valid_from is None or r.valid_from <= valid_as_of]
+            records[event_id] = tuple(record)
+        return dict(sorted(records.items(), key=lambda item: self._event_order(item[1])))
+
+    @staticmethod
+    def _event_time(record: Sequence[Assertion]) -> float | None:
+        """An event's `t`: the greatest `valid_from` in its record, or None
+        when every row is timeless."""
+        stamps = [r.valid_from for r in record if r.valid_from is not None]
+        return max(stamps) if stamps else None
+
+    @classmethod
+    def _event_order(cls, record: Sequence[Assertion]) -> tuple:
+        """The one order wherever events are listed (EVENTS-ONE-READER-V1 §1):
+        by `t` (None first), then by the event's earliest row in
+        `_recency_key` order — today's `events()` order, reproduced."""
+        t = cls._event_time(record)
+        return (t if t is not None else float("-inf"),
+                min(cls._recency_key(r) for r in record))
+
+    @classmethod
+    def _event_pick(cls, rows: Sequence[Assertion]) -> Assertion | None:
+        """The pick, the one rule for every single value read from a record
+        (EVENTS-ONE-READER-V1 §1): among an attribute's rows, those at the top
+        evidence rank (`_top_evidence`), then the one with the greatest
+        `_recency_key`. Rank first, as batch A applies it to every fold: a
+        later `assumed` kind never displaces a `stated` one (P5)."""
+        if not rows:
+            return None
+        return max(cls._top_evidence(list(rows)), key=cls._recency_key)
+
+    @classmethod
+    def event_payload(cls, event_id: str, record: Sequence[Assertion]) -> dict[str, Any]:
+        """One event's dict, built from its record (a pure function;
+        EVENTS-ONE-READER-V1 §1): MOVED-EVENT-V1 §E1's twelve keys, in their
+        order.
+
+        `kind`, `origin`, `destination`, `manner`: the pick, and
+        `origin_bound`/`destination_bound` are the pick's `value_type ==
+        "entity"` (the stored discriminator, never grammar). `agents`,
+        `patients`, `caused_by`: every row's stored value, in `_recency_key`
+        order. `t`: the greatest `valid_from` in the record, or None. `valid_to`:
+        the `valid_to` of the latest movement-payload row (`MOVEMENT_KEYS`)
+        that carries one — None for an open event; a completed zero-duration
+        move carries `valid_from == valid_to`."""
+        ordered = sorted(record, key=cls._recency_key)
+
+        def pick(attribute: str) -> Assertion | None:
+            return cls._event_pick([r for r in ordered if r.attribute == attribute])
+
+        def values(attribute: str) -> list[Any]:
+            return [r.value for r in ordered if r.attribute == attribute]
+
+        kind, origin = pick("kind"), pick("origin")
+        destination, manner = pick("destination"), pick("manner")
+        closing = [r for r in ordered
+                   if r.attribute in MOVEMENT_KEYS and r.valid_to is not None]
+        return {
+            "id": event_id,
+            "kind": kind.value if kind is not None else None,
+            "agents": values("agent"),
+            "patients": values("patient"),
+            "t": cls._event_time(ordered),
+            "caused_by": values("caused_by"),
+            "origin": origin.value if origin is not None else None,
+            "destination": destination.value if destination is not None else None,
+            "manner": manner.value if manner is not None else None,
+            "valid_to": closing[-1].valid_to if closing else None,
+            "origin_bound": origin.value_type == "entity" if origin is not None else None,
+            "destination_bound": (destination.value_type == "entity"
+                                  if destination is not None else None),
+        }
+
+    def event_attribute(
+        self,
+        entity: str,
+        attribute: str,
+        frame: str = CANON,
+        valid_as_of: float | None = None,
+        asserted_as_of: int | None = None,
+        *,
+        correlated: bool = False,
+    ) -> FoldResult:
+        """A point read of an event's record (EVENTS-ONE-READER-V1 §4 Rule B):
+        one attribute from the record of `entity`'s closure, as of the read
+        (`event_records`' two axes). With `correlated=True` it reads the
+        records of the `aka` union, as `state_union` and
+        `current_state(correlated=)` do.
+
+        No row, or a machinery attribute (`META_ATTRIBUTES`): nothing served.
+        `winner` is the pick. `kind`, `origin`, `destination` and `manner` are
+        single-valued: when the top-rank rows at the winner's stamp disagree
+        (`_value_key`) the result is conflicted, `conflicting` holding their
+        ids in log order — the fold's own same-stamp contradiction test. Every
+        other attribute is description and never conflicted. A set-valued one
+        (`name`, `alias`, `connects_to`, a declared set) keeps READ-SURFACE-V1
+        §4's rule for a set-valued key: its members, each value once, in member
+        order, whenever there are members. Any other description attribute
+        with two or more rows holds them all in `_value_rows`, in
+        `_recency_key` order — §4's rule extended to a record's description.
+        `state()` serves `_value_rows` as `values`. The point reads (`state`,
+        `state_union`, `ask`'s keys, identity's kind lookup) call this only when
+        the fold serves nothing; `fold_key` itself stays standing-only."""
+        if attribute in META_ATTRIBUTES:
+            return FoldResult(winner=None)
+        entity = self._resolve(entity)
+        ids = (self._correlation_of(entity, valid_as_of=valid_as_of,
+                                    asserted_as_of=asserted_as_of, frame=frame)
+               if correlated else {entity})
+        rows = sorted(
+            (r for record in self.event_records(
+                frame, ids=sorted(ids), valid_as_of=valid_as_of,
+                asserted_as_of=asserted_as_of).values()
+             for r in record if r.attribute == attribute),
+            key=self._recency_key)
+        winner = self._event_pick(rows)
+        if winner is None:
+            return FoldResult(winner=None)
+        if attribute in _EVENT_SINGLE_VALUED:
+            tied = sorted((r for r in self._top_evidence(rows)
+                           if r.valid_from == winner.valid_from),
+                          key=lambda r: r.asserted_at)
+            if len({self._value_key(r) for r in tied}) > 1:
+                return FoldResult(winner=winner, conflicted=True,
+                                  conflicting=tuple(r.id for r in tied))
+            return FoldResult(winner=winner)
+        if self._semantics.is_set_valued(attribute):
+            members = self._fold_set_valued(rows)
+            return FoldResult(winner=winner, values=members.values,
+                              _value_rows=members._value_rows)
+        if len(rows) > 1:
+            return FoldResult(winner=winner, values=tuple(r.value for r in rows),
+                              _value_rows=tuple(rows))
+        return FoldResult(winner=winner)
+
     def event_participation(
         self,
         entity: str,
@@ -1417,24 +1638,34 @@ class Indexes:
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> list[str]:
-        """Events whose participant row points at this entity's closure.
+        """Events whose record, as of the read, has an `agent` or `patient`
+        row resolving into this entity's closure (EVENTS-ONE-READER-V1 §6).
 
-        EVENT rows are intentionally not folded, so this reads visible rows
-        directly through indexed participant/value filters.
+        Candidates come from the indexed participant/value lookup, kept only
+        when the row is an event row; their records then decide, under the
+        reader's valid-axis rule — so a closed or zero-duration event stays
+        reachable once it has occurred, and a non-event subject with an
+        `agent` row is no event.
         """
         entity = self._resolve(entity)
-        out: set[str] = set()
+        candidates: set[str] = set()
         for eid in sorted(self._closure_of(entity)):
             for row in self._buffer.visible(
                 attribute_in=["agent", "patient"],
                 value=eid,
                 frame=frame,
-                valid_as_of=valid_as_of,
                 asserted_as_of=asserted_as_of,
             ):
-                if not row.entity.startswith("a:") and not row.entity.startswith(ATTR_PREFIX):
-                    out.add(self._resolve(row.entity))
-        return sorted(out)
+                if is_event_row(row):
+                    candidates.add(self._resolve(row.entity))
+        if not candidates:
+            return []
+        records = self.event_records(frame, ids=sorted(candidates),
+                                     valid_as_of=valid_as_of, asserted_as_of=asserted_as_of)
+        return sorted(
+            event_id for event_id, record in records.items()
+            if any(r.attribute in ("agent", "patient") and isinstance(r.value, str)
+                   and self._resolve(r.value) == entity for r in record))
 
     def caused_by_of(
         self,
@@ -1443,25 +1674,20 @@ class Indexes:
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> list[str]:
-        # Identity-closure-scoped: a caused_by row may sit on any member of a
-        # merged event's closure, not only the canonical id (post-impl review).
-        events: set[str] = set()
-        for e in event_ids:
-            events |= self._closure_of(self._resolve(e))
-        events = sorted(events)
-        if not events:
+        """The resolved `caused_by` values of these events' records, as of the
+        read (EVENTS-ONE-READER-V1 §6). Each event is read through its
+        identity closure, so a cause on a merged event's stored id is reached
+        (post-impl review)."""
+        ids = sorted({self._resolve(e) for e in event_ids})
+        if not ids:
             return []
         out: set[str] = set()
-        for row in self._buffer.visible(
-            entity_in=events,
-            attribute="caused_by",
-            value_type="entity",
-            frame=frame,
-            valid_as_of=valid_as_of,
-            asserted_as_of=asserted_as_of,
-        ):
-            if isinstance(row.value, str):
-                out.add(self._resolve(row.value))
+        for record in self.event_records(frame, ids=ids, valid_as_of=valid_as_of,
+                                         asserted_as_of=asserted_as_of).values():
+            for row in record:
+                if (row.attribute == "caused_by" and row.value_type == "entity"
+                        and isinstance(row.value, str)):
+                    out.add(self._resolve(row.value))
         return sorted(out)
 
     def incoming_refs(

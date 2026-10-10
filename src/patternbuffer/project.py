@@ -17,7 +17,7 @@ from typing import Callable
 from patternbuffer.buffer import PatternBuffer
 from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, EVENT, STATE, Classifier
 from patternbuffer.indexes import Indexes
-from patternbuffer.model import ATTR_PREFIX, CANON, Assertion
+from patternbuffer.model import ATTR_PREFIX, CANON, Assertion, is_event_row
 from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
@@ -108,6 +108,11 @@ class Projector:
                 row.attribute in self._semantics.containment_family()
                 and not row.entity.startswith("a:")
                 and not row.entity.startswith(ATTR_PREFIX)
+                # EVENTS-ONE-READER-V1 §4 Rule A: an event is never inside a
+                # container, here as in the fold behind contents() — an event
+                # row is skipped by structure, as is any row classified EVENT.
+                and not is_event_row(row)
+                and self._classifier.durability(row.id) != EVENT
             ):
                 by_entity.setdefault(self._indexes.resolve_entity(row.entity), []).append(row)
         parent: dict[str, str] = {}
@@ -339,22 +344,16 @@ class Projector:
                 live_events.add(self._indexes.resolve_entity(meta.value))
         if not live_events:
             return
-        # Emit the EVENT-durability rows for the live events, recency-ordered.
-        event_rows: list[Assertion] = []
-        for row in self._buffer.visible(
-            frame=m.frame, valid_as_of=None, asserted_as_of=m.asserted_as_of
-        ):
-            if self._classifier.durability(row.id) != EVENT:
-                continue
-            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
-                continue
-            if self._indexes.resolve_entity(row.entity) not in live_events:
-                continue
-            if m.as_of is not None and row.valid_from is not None and row.valid_from > m.as_of:
-                continue
-            event_rows.append(row)
-        event_rows.sort(
-            key=lambda r: (r.valid_from if r.valid_from is not None else float("-inf"), r.seq)
+        # Emit the live events' records (EVENTS-ONE-READER-V1 §5), as of the
+        # read, recency-ordered: an event's own rows, classified or not, never
+        # its identity edges, and nothing for a live "event" with no event rows
+        # (a `caused_by` naming a person).
+        event_rows: list[Assertion] = sorted(
+            (row for record in self._indexes.event_records(
+                m.frame, ids=sorted(live_events), valid_as_of=m.as_of,
+                asserted_as_of=m.asserted_as_of).values()
+             for row in record),
+            key=self._indexes._recency_key,
         )
         if budget is not None:
             # The floor is never truncated; the live-events bucket yields to
@@ -367,29 +366,29 @@ class Projector:
 
     def _lens_events(self, m: Materialization, entities: list[str],
                      since: float | None = None) -> None:
+        """What happened (EVENTS-ONE-READER-V1 §5): the whole records of the
+        events the scope is involved in, read as of `m.as_of` and
+        `m.asserted_as_of`. An event is in scope when the scope is empty, when
+        its id is in the scope, or when a row of its record has an entity
+        value that resolves into the scope — an agent, a patient, the place it
+        happened `in`, an event it was `caused_by`. `since` keeps an event
+        whose `t` (its latest stamp) is >= `since`. Events come in the listing
+        order, rows within an event in `_recency_key` order; a row on another
+        subject (an identity edge, a subject-level `caused_by`, the rows of a
+        thing contained in an event) is never emitted."""
         in_scope = set(entities)
-        events = []
-        for row in self._buffer.visible(
-            frame=m.frame, valid_as_of=None, asserted_as_of=m.asserted_as_of
-        ):
-            if self._classifier.durability(row.id) != EVENT:
+        resolve = self._indexes.resolve_entity
+        for event_id, record in self._indexes.event_records(
+                m.frame, valid_as_of=m.as_of, asserted_as_of=m.asserted_as_of).items():
+            if in_scope and event_id not in in_scope and not any(
+                    row.value_type == "entity" and isinstance(row.value, str)
+                    and resolve(row.value) in in_scope for row in record):
                 continue
-            if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
-                continue  # meta rows ride with their subjects
-            subject = self._indexes.resolve_entity(row.entity)
-            object_ = (
-                self._indexes.resolve_entity(row.value)
-                if row.value_type == "entity" and isinstance(row.value, str)
-                else None
-            )
-            if subject in in_scope or object_ in in_scope or not in_scope:
-                if m.as_of is not None and row.valid_from is not None and row.valid_from > m.as_of:
+            if since is not None:
+                t = self._indexes._event_time(record)
+                if t is None or t < since:
                     continue
-                if since is not None and (row.valid_from is None or row.valid_from < since):
-                    continue
-                events.append(row)
-        events.sort(key=lambda r: (r.valid_from if r.valid_from is not None else float("-inf"), r.seq))
-        m.assertions.extend(events)
+            m.assertions.extend(record)
 
     def _lens_sheet(self, m: Materialization, entities: list[str],
                     correlated: bool = False) -> None:

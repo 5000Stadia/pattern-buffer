@@ -102,6 +102,12 @@ Call this set `served_ids` and remember which are `open` (unresolved-winner).
    **EVENT-durability** assertion rows visible in `m.frame` at the as-of/asserted
    bounds (consistent with `_lens_events`' row selection). Event entity id is
    `row.entity` resolved — never the assertion id (finding 1).
+   *(Note 2026-10-09, EVENTS-ONE-READER-V1 §5: bucket 2 emits the live events'
+   **records** — `event_records(m.frame, ids=live, valid_as_of=m.as_of,
+   asserted_as_of=m.asserted_as_of)`, recency-ordered, budgeted as below. An
+   event's own rows join whether or not they are classified; identity edges
+   never join; a live "event" with no event rows (a `caused_by` naming a
+   person) emits nothing. Live events are still found exactly as in 1–2.)*
 
 Anchoring is now implicit and correct: an event is emitted only because it
 produced a still-served state/thread **about a scope entity**.

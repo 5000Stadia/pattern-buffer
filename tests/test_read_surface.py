@@ -467,14 +467,20 @@ def test_s2_o2e_last_write_keeps_evidence_rank(wm):
 
 def test_s2_o2f_event_row_never_served_on_last_write(wm):
     """READ-SURFACE-V1 §2 O2f: an `event:`-subject row on a last_write attribute
-    is never served."""
+    is never served by the fold.
+
+    Amended by EVENTS-ONE-READER-V1 §4 at its build: the fold (`World.state`)
+    still never serves an event row, last_write or not; the porcelain's
+    `state()` on an event's own attribute now reads the event's record when the
+    fold serves nothing (its Rule B), so it no longer answers `unknown` here —
+    tests/test_events_one_reader.py pins that side."""
     w, _ = wm
     _declare(w, "arc_phase", fold_policy="last_write")
     w.porcelain.ingest_structured([
         {"entity": "event:bell", "attribute": "arc_phase", "value": "climax",
          "valid_from": 3.0},
     ])
-    assert w.porcelain.state("event:bell", "arc_phase")["status"] == "unknown"
+    assert w.state("event:bell", "arc_phase").winner is None
 
 
 def test_s2_o2g_last_write_beside_set_valued_is_skipped(tmp_path):

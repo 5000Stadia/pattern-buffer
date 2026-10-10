@@ -127,6 +127,8 @@ Every assertion is classified by lifetime. The classes are orthogonal to attribu
 
 **Durability is an index, not truth (P1).** The class is a judgment *about* a fact. It lives in a rebuildable sidecar keyed by assertion ID — never baked into the log. A misclassification is repaired by re-running the classifier over the untouched log.
 
+**An event is read, never folded** *(A24)*. An **event row** — a row whose stored subject is an `event:` id, other than an accrue `delta` — is EVENT by its structure, so the fold drops it whether or not a sweep has classified it: "EVENT never folds" holds before classification as well as after it. An event's rows are its **record** — what kind of occurrence it was, who and what took part, when. Nothing supersedes an occurrence, and an occurrence is not a value of any other entity's key, so a record is read whole by one reader, never folded (§12, §13; EVENTS-ONE-READER-V1).
+
 ### 5.1 Classifier
 
 `classify(assertion, world_context) → { durability, class_confidence }` — largely an LLM judgment over linguistic signals, with deterministic guardrails:
@@ -298,6 +300,8 @@ refer(description, scope, frame, constraints)   resolve a referring expression (
 
 Reads are queries over derived indexes: `locate(x)` (walk the tree), `contents(x)`, `state(e, a, as_of, frame)`, `history(e)`, `path(a, b)` (lateral graph), `describe(e, frame)`, and `materialize(…)` (§13).
 
+An `event(…)` is an entity whose rows are its record (§5), and **`state(e, a)` on an event reads its record** *(A24)*: the attribute's value by **the pick** — the top evidence rank, then the latest — the same value `events()` reports. `kind` and the movement keys hold one value each, so two that disagree at one stamp are conflicted; any other attribute is description, which an occurrence may hold several values of. An event that has not occurred by `as_of` (its first stamped row is later) is unknown in every attribute. Standing reads that compare or aggregate across entities (`where`, `aggregate`, `who_knows`, `confidence`, `frame_diff`) stay standing-only.
+
 **Five roles, strict authority** (roles, not necessarily five processes):
 
 | Role | LLM? | May write |
@@ -330,9 +334,11 @@ materialize(scope, as_of, frame, lens, budget) → materialization
 
 - `establishing_set` — CONSTITUTIVE + DISPOSITIONAL + the *establishing* STATE: the first non-event-effect value per (entity, attribute) — the world at rest, before the plot perturbs it. The default for re-entry ("221B at rest," not "221B mid-confrontation"). Honors `world_defining` pins.
 - `current_state` — adds STATE folded to `as_of`.
-- `what_happened` — the EVENT chain in scope, time-ordered, with causality; the backstory digest.
+- `what_happened` — the EVENT chain in scope, time-ordered, with causality; the backstory digest. It serves **whole events** *(A24)*: the record of every event the scope is involved in — its id is in scope, or its record names a scope entity (an agent, a patient, the place it happened `in`, a cause) — read as of `as_of`; never a row on another subject (an identity edge, the rows of a thing contained in an event).
 - `character_sheet` — one entity's accumulated card, frame-respecting.
-- `situation` — standing truth folded to `as_of` **∪** the live EVENT activity since a `since` cursor: the re-entry lens for "what's true here now, and what just happened" in one read (SITUATION-LENS-V1; catalogued in §25).
+- `situation` — standing truth folded to `as_of` **∪** the live EVENT activity since a `since` cursor: the re-entry lens for "what's true here now, and what just happened" in one read (SITUATION-LENS-V1; catalogued in §25). The live events are emitted as their **records** *(A24)*.
+
+The standing lenses (`establishing_set`, `current_state`, `character_sheet`) never show an event's rows: an event has no standing truth, and its view is `what_happened` (A24).
 
 **Algorithm:** select in-scope, in-frame assertions valid at `as_of` per lens → fold STATE by supersession per (entity, attribute, frame) key — *per frame; a belief fold never overwrites canon* → walk the containment tree for the spatial spine, ordered by depth and salience → fill gaps from kind-defaults, every fill marked `default` → resolve forced thunks via the resolver (which feeds new assertions back through classification — the system is closed under its own operations) → shape to budget.
 
@@ -651,6 +657,15 @@ to add the verb (that is how §25.4–§25.7 came to exist). The verb families:
 - **Knowledge/diff reads:** `frame_diff`, `who_knows`, `events` (the payload
   additively carries the six movement keys — `origin`/`destination`/`manner`/
   `valid_to`/`origin_bound`/`destination_bound`, MOVED-EVENT-V1).
+- **One reader for events** *(A24)*: `events`, `in_transit`, `state` on an
+  event, the `what_happened` and `situation` lenses and `neighborhood`'s event
+  edges all read **event records** — an event's rows grouped by its resolved
+  id, without the sidecar, as of both time axes. So `events()` needs no sweep,
+  lists every event entity and nothing else (one entry per resolved id), and
+  windows whole events: `until=T` lists an event once it has occurred (its
+  first stamped row is at or before `T`), `since=S` keeps one whose latest
+  stamp is at or after `S`; `in_transit` parses a move exactly as `events()`
+  does.
 - **Identity:** `reconcile`, `proposals`, `confirm`, `merge`, `reject`,
   `correlate`, `correlations`, `correlation_conflicts`, `adjudicate_deferred`,
   `typing_conflicts`, `retype`, `identity_conflicts`.
@@ -661,8 +676,9 @@ to add the verb (that is how §25.4–§25.7 came to exist). The verb families:
   (on the porcelain since A23; tier 1 only with `model=False`),
   `canonical_attribute` (the gate's name for an attribute).
 - **As of the log:** every read that takes a valid-time bound also takes
-  `asserted_as_of`, a log position (A23; not `salience`, `in_transit`,
-  `fidelity_audit` or `ask`), and `locate`/`contents`/`path` take `frame=`.
+  `asserted_as_of`, a log position (A23; `in_transit` too since A24; not
+  `salience`, `fidelity_audit` or `ask`), and `locate`/`contents`/`path` take
+  `frame=`.
 
 Every read that can carry a value is **plain-JSON-safe** at the boundary
 (exact-decimals leave as tagged scalars, never raw `Decimal`); the core returns
@@ -755,7 +771,11 @@ Reads that surface *the relevant neighbourhood* of a subject, not just one key:
 
 - **`neighborhood(entity, depth, edge_kinds, budget)`** — the salience-ranked
   local subgraph across containment, lateral, and relation edges: the "what's
-  around this and what matters" read for host briefings.
+  around this and what matters" read for host briefings. Its event edges read
+  event records *(A24)*: an event whose record, as of the read, has an
+  `agent`/`patient` row resolving to the entity, and the causes its record
+  names — so a closed or zero-duration event stays reachable once it has
+  occurred, and a non-event subject is never an event neighbour.
 - **`salience(entity)`** — the projection-time ranking of §13, exposed as a read
   (recency + reinforcement + reference frequency + delta-from-baseline;
   computed, cached in the sidecar, never authoritative — P1 preserved).
@@ -900,3 +920,4 @@ exact number, the host owns what it denominates.
 | A21 | 2026-10 | **Identity is canon's, description is perspectival.** The canon identity edges (`same_as`/`maybe_same_as`/`distinct_from`) are canon-only at the gate (a `same_as`, raw or an item's `same_as` key, skips `same_as_not_canon`; the other two `identity_edge_outside_canon`) and every identity decision reads canon rows; `name`/`alias` rows (an item's `aliases` included) are read in their own frame, and `by_alias`/`refer` take a frame, with no canon fallback. `aka` becomes a **soft auto-merge block** acting on whole correlation groups (amends AKA-CORRELATION-V1 §1's neutrality; a `distinct_from` between two groups blocks the auto-merger as it vetoes `correlate`; `conflict_already_correlated`); `identity_conflicts()` surfaces merges past the vetoes; `open_conflicts` is computed on read, frame-scoped and as-of; snapshot existence follows perspective (frame or canon); `retype(absorb=)` refuses a contradicting `to_kind` (§6, §11, §25.2, §25.4). Founder decision 1 (identity edges canon-only; names/aliases frame-scoped). The spec's §7 (`knows:` frames follow merges, founder decision 2) is not part of this amendment: withdrawn from the build pending a founder decision | FRAME-SCOPED-IDENTITY-V1 r2 (pbr GREEN); `docs/AUDIT-2026-10.md` batch C, founder decision 1 |
 | A22 | 2026-10 | `refer` learns a word, never a pick (§9's last line amended). Only a **vocabulary miss** writes: tier 1 found no candidate in the call's scope and tier 2 mapped the expression onto one entity there. The row is a `learned_alias` (timeless EVENT bookkeeping, never identity) in the call's frame, receipted by the gate; it is read back at tier 1d, below every authored name, alias and unique kind in scope, and only where its entity is in the caller's scope. A pinned (`asserted_as_of`) read and `ask` never write. The replaced line ("Resolution events may themselves be logged as discourse-scoped aliases … with bounded lifetime") invited logging picks, and the engine cannot scope or bound anything by a conversation (a host concept, §17.1) | REFER-LEARNING-V1 (pbr GREEN; audit 2026-10 batch D; founder decision 4, 2026-10-08) |
 | A23 | 2026-10 | The porcelain reads what the gate writes (§5.1, §10, §13, §16, §25.1; the October self-audit's batch E). **Canonicalization holds at the read boundary**: every porcelain argument that names an attribute passes through the gate's own `canonical_attribute`. **`state()` serves the whole key**: a key whose served row is an unresolved placeholder answers `unresolved`, never a known value; a set-valued key lists its members (`values`) and a conflicted key the facts on each side (`conflicting_facts`); every Fact carries `value_type`. **`who_knows` matches the folded value** — any member of a set, an accrue key's total, a `$decimal` tag; a placeholder is not knowledge — the one test `state(value=)` also answers as `matches`. **`ask` has one effective time** (the caller's `as_of` is a ceiling the parse can lower, never raise) and binds the asker's own words first, model-free and learning nothing; it names placeholder and conflicted keys instead of serving a thunk spec. **A world file carries its physics**: the resolution policy is an immutable physics row (`attr:__world__ · resolution_policy`) recorded at genesis, and reopening under other physics raises `WorldPhysicsMismatch`. Two host-control levers: the **durability pin** (a host's declared class for its own attribute, read before the model; undeclared vocabulary stays model-judged) and **`fold_policy: last_write`** given its meaning (the latest row of the top evidence rank; undeclared keys fold `by_class`; `move` removed). `frame=` on `locate`/`contents`/`path`, `asserted_as_of=` on twenty reads, and `refer` on the porcelain and over MCP (tier 1 only there). Answers change only where they were wrong, plus the new keys | READ-SURFACE-V1 r1.1 (pbr GREEN; audit 2026-10 batch E; founder decisions #3 and #4, 2026-10-08) |
+| A24 | 2026-10 | **An event is read, never folded; every event read goes through one reader** (§5, §12, §13, §25.1, §25.4). An **event row** (a row whose stored subject is an `event:` id, other than an accrue `delta`) never folds, by structure — classified or not — so an event is never inside a container and its keys fold to nothing before a sweep as after it. An event's rows are its **record**, read by `event_records()`: grouped by resolved id, without the sidecar, minus identity and provenance machinery, as of both time axes — an event has occurred by `T` when its first stamped row is at or before `T` (a timeless event always has), its record as of `T` is its timeless rows plus those stamped by then, and `valid_to` never hides an event row; a single value is the pick (top evidence rank, then latest). `events()` needs no sweep, lists every event entity and nothing else, once per resolved id, and windows whole events; `in_transit()` parses a move exactly as `events()` does and takes `asserted_as_of`; `state(e, a)` on an event reads its record (conflicted when `kind` or a movement key holds two values at one stamp), as does identity's kind gate, so an event never merges with a person over a shared name; `what_happened` serves the whole records of the events a scope is involved in, `situation` emits live events' records, and `neighborhood`'s event edges reach a closed or zero-duration event once it has occurred. The standing lenses and the cross-entity reads (`where`, `aggregate`, `who_knows`, `confidence`, `frame_diff`) stay standing-only. Answers change only where they were wrong | EVENTS-ONE-READER-V1 r1 (pbr GREEN; audit 2026-10 P2-5, P2-7, E8; READ-SURFACE-V1 §10) |

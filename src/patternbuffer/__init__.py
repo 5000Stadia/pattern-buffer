@@ -17,7 +17,7 @@ from typing import Any, Callable
 from patternbuffer.buffer import PatternBuffer, WorldPhysicsMismatch
 from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
-from patternbuffer.indexes import Indexes
+from patternbuffer.indexes import MOVEMENT_KEYS, Indexes
 from patternbuffer.ingest import Ingestor
 from patternbuffer.model import (
     ATTR_PREFIX,
@@ -116,7 +116,7 @@ class World:
         # (never stance — the no-bias invariant); deny is a resolution policy,
         # not an epistemic mode, so it takes the non-tracking branch.
         self.indexes.set_time_physics(self.policy == OBSERVE_OR_UNKNOWN, clock)
-        self.registry.set_kind_provider(lambda e: self.indexes.fold_key(e, "kind"))
+        self.registry.set_kind_provider(self._kind_read)
         self.salience_index = SalienceIndex(self.buffer, self.classifier, self.indexes)
         self.indexes.set_salience_provider(self.salience_index.salience)
         self.truth = TruthMaintenance(
@@ -215,55 +215,47 @@ class World:
     # judgment, so it is one engine-derived read (a sibling of locate()/events()).
     # Writes nothing durable; adds no mutation verb; changes neither the fold nor
     # locate(). Identical signature on World and the porcelain.
-    _MOVE_PAYLOAD = ("kind", "agent", "origin", "destination", "manner")
-
     def in_transit(self, agent: str | None = None, as_of: float | None = None,
-                   frame: str = CANON) -> list[dict]:
-        # Event payload rows regardless of valid-time (openness is decided here,
-        # not by visibility): omit valid_as_of so no valid-time bound is applied;
-        # asserted/retraction filtering still holds.
-        rows = self.buffer.visible(frame=frame, entity_prefix="event:")
-        by_event: dict[str, list] = {}
-        for r in rows:
-            by_event.setdefault(self.registry.resolve(r.entity), []).append(r)
+                   frame: str = CANON, asserted_as_of: int | None = None) -> list[dict]:
+        """Open moved events whose agent has not yet arrived, read from event
+        records (EVENTS-ONE-READER-V1 §3): `events()`'s reader and its parse,
+        as of both time axes. A record is a move when its `kind` (the pick)
+        is `moved`; openness, the anchor and the containment comparison are
+        MOVED-EVENT-V1 §E2's."""
+        indexes = self.indexes
         wanted = self.registry.resolve(agent) if agent is not None else None
         out: list[dict] = []
-        for eid, ev_rows in by_event.items():
-            kind = next((r for r in ev_rows
-                         if r.attribute == "kind" and r.value == "moved"), None)
-            if kind is None:
+        # The reader applies the valid axis: a record as of `as_of` exists only
+        # once the move has occurred, and `valid_to` never hides its rows.
+        for eid, record in indexes.event_records(
+                frame, valid_as_of=as_of, asserted_as_of=asserted_as_of).items():
+            ev = indexes.event_payload(eid, record)
+            if ev["kind"] != "moved":
                 continue
-            payload = [r for r in ev_rows if r.attribute in self._MOVE_PAYLOAD]
-            valid_from = kind.valid_from
-            valid_to = kind.valid_to
-            # openness (§ E2). as_of=None: open iff valid_to is None. Numeric t:
-            # valid_from <= t AND (valid_to is None OR t < valid_to). A zero-
-            # duration (complete) or closed event is never in transit.
-            if as_of is None:
-                if valid_to is not None:
-                    continue
-            else:
-                vf = valid_from if valid_from is not None else float("-inf")
-                if not (vf <= as_of and (valid_to is None or as_of < valid_to)):
-                    continue
-            agent_val = next((r.value for r in ev_rows if r.attribute == "agent"), None)
+            # openness (§ E2). as_of=None: open iff valid_to is None. At t: it
+            # has occurred by t (the reader) AND (valid_to is None OR t <
+            # valid_to). A zero-duration (complete) or closed move is never in
+            # transit.
+            valid_to = ev["valid_to"]
+            if valid_to is not None and (as_of is None or as_of >= valid_to):
+                continue
+            agent_row = indexes._event_pick([r for r in record if r.attribute == "agent"])
+            agent_val = agent_row.value if agent_row is not None else None
             if wanted is not None and (agent_val is None
                                        or self.registry.resolve(agent_val) != wanted):
                 continue
-            origin = next((r.value for r in ev_rows if r.attribute == "origin"), None)
-            dest = next((r.value for r in ev_rows if r.attribute == "destination"), None)
-            manner = next((r.value for r in ev_rows if r.attribute == "manner"), None)
-            # event-start anchor = (valid_from, min asserted_at over PAYLOAD rows
-            # only) — attr:* meta-rows are already excluded (entity != event:*).
-            anchor = (valid_from if valid_from is not None else float("-inf"),
-                      min(r.asserted_at for r in payload))
+            # event-start anchor = (t, min asserted_at over the record's
+            # movement-payload rows only).
+            anchor = (ev["t"] if ev["t"] is not None else float("-inf"),
+                      min(r.asserted_at for r in record if r.attribute in MOVEMENT_KEYS))
             # containment comparison (pbr's tuple rule). Exclude (arrived) only
             # when a containment winner exists whose (valid_from, asserted_at) is
             # AT OR AFTER the anchor; a head predating the anchor = last-known.
             last_known = None
             if agent_val is not None:
                 winner = self.state(self.registry.resolve(agent_val), "in",
-                                    frame=frame, valid_as_of=as_of).winner
+                                    frame=frame, valid_as_of=as_of,
+                                    asserted_as_of=asserted_as_of).winner
                 if winner is not None:
                     w_anchor = (winner.valid_from if winner.valid_from is not None
                                 else float("-inf"), winner.asserted_at)
@@ -271,13 +263,26 @@ class World:
                         continue  # arrived / relocated — not in transit
                     last_known = (self.registry.resolve(winner.value)
                                   if winner.value_type == "entity" else winner.value)
-            out.append({"agent": agent_val, "origin": origin,
-                        "destination": dest, "manner": manner,
+            out.append({"agent": agent_val, "origin": ev["origin"],
+                        "destination": ev["destination"], "manner": ev["manner"],
                         "last_known_containment": last_known})
         return sorted(out, key=lambda d: (str(d["agent"]), str(d["destination"])))
 
     def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
+
+    def _kind_read(self, entity: str):
+        """Identity's kind lookup (EVENTS-ONE-READER-V1 §4 Rule C): the canon
+        fold of `kind`, falling back to the event record when the fold serves
+        nothing. An event's rows never fold (Rule A), so without the fallback
+        identity's merge gates would lose an event's kind in a build (where it
+        used to fold as unclassified STATE); with it they see the kind before a
+        sweep and after it alike, and an event never auto-merges with a
+        non-event over a shared proper name."""
+        fold = self.indexes.fold_key(entity, "kind")
+        if fold.winner is None:
+            fold = self.indexes.event_attribute(entity, "kind")
+        return fold
 
     # AKA-CORRELATION-V1 — the explicit, opt-in correlated identity surface.
     def state_union(self, entity: str, attribute: str, frame: str = CANON, **kw):
