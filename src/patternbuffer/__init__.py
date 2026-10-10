@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
-from patternbuffer.buffer import PatternBuffer, WorldPhysicsMismatch
+from patternbuffer.buffer import PatternBuffer, SecondWriter, WorldPhysicsMismatch
 from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.indexes import MOVEMENT_KEYS, Indexes
@@ -48,7 +48,7 @@ __version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
 __all__ = ["World", "Materialization", "Resolution", "AtomicAbort",
-           "WorldPhysicsMismatch", "__version__"]
+           "SecondWriter", "WorldPhysicsMismatch", "__version__"]
 
 
 class World:
