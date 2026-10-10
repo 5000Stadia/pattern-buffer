@@ -220,3 +220,18 @@ class TestRunner:
         import run_chapter_test_v2 as r
         r.write_json(tmp_path / "t.json", {"b": 1, "a": [1.5]})
         assert json.loads((tmp_path / "t.json").read_text()) == {"a": [1.5], "b": 1}
+
+
+def test_a_registry_aliasing_an_inverse_relation_still_seeds() -> None:
+    """R26 par1b: a reduced registry proposed `holds` as an alias; the engine
+    refuses it, and the seeded grade (like commit) skips it instead of failing."""
+    from evals.harness.grade_registry import seeded_registry
+
+    reg = {
+        "world_id": "w:t",
+        "entities": {"person:ada": {"kind": "person", "names": ["Ada"], "aliases": [],
+                                    "anchors": []}},
+        "attributes": {"holds": "carries", "inside": "in"},
+        "timeline": {"origin": "", "anchors": {}}, "places": [],
+    }
+    assert list(seeded_registry(reg)["entities"]) == ["person:ada"]

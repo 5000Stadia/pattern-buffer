@@ -369,7 +369,14 @@ class Pipeline:
         w = World(world_path, world_id=self.world_id, model=self.model)  # rides beside the dump
         w.ingestor.classify_inline = False
         for alias, canonical in sorted(registry.attributes.items()):
-            w.ingestor.add_attribute_alias(alias, canonical)
+            try:
+                w.ingestor.add_attribute_alias(alias, canonical)
+            except ValueError as exc:
+                # The engine refuses some aliases (an inverse relation such as
+                # `holds` cannot be renamed, GATE-INVERSE-ALIAS-V1). A registry
+                # proposing one loses that alias, not the world build.
+                logger.warning("commit: attribute alias %r -> %r refused: %s",
+                               alias, canonical, exc)
         w.ingest_structured(seed_items(registry))
         t_replay = time.perf_counter()
         # Per-item ingest with gate quarantine: the engine's write-time

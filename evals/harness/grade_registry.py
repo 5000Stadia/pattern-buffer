@@ -173,7 +173,10 @@ def seeded_registry(registry: Any) -> dict[str, Any]:
                   model=lambda prompt, schema: {})
         w.ingestor.classify_inline = False
         for alias, canonical in sorted(reg.attributes.items()):
-            w.ingestor.add_attribute_alias(alias, canonical)
+            try:
+                w.ingestor.add_attribute_alias(alias, canonical)
+            except ValueError:  # refused by the engine (e.g. `holds`), as at commit
+                pass
         w.ingest_structured(seed_items(reg))
         w.registry.promote_identity_proposals()
         w.registry.reconcile()
