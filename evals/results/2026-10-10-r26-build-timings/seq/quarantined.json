@@ -1,0 +1,24 @@
+[
+{
+"error": "valid_to_before_valid_from",
+"item": {
+"attribute": "in",
+"entity": "obj:tovan_badge",
+"status": "stated",
+"valid_from": 7.0,
+"valid_to": 0.0,
+"value": "person:tovan_voss"
+}
+},
+{
+"error": "valid_to_before_valid_from",
+"item": {
+"attribute": "in",
+"entity": "doc:second_books",
+"status": "stated",
+"valid_from": 9.0,
+"valid_to": 3.0,
+"value": "place:seed_vault"
+}
+}
+]

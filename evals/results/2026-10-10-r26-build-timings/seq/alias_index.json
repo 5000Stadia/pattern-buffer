@@ -1,0 +1,2232 @@
+{
+  "ambiguous_strings": [
+    {
+      "ids": [
+        "org:allocation_office",
+        "place:allocation_office"
+      ],
+      "same_kind": false,
+      "spellings": [
+        "Allocation Office",
+        "the Allocation Office"
+      ],
+      "string": "allocation office",
+      "text_mentions": 3
+    },
+    {
+      "ids": [
+        "obj:seed_vault_hatch",
+        "obj:wellhead_hatch"
+      ],
+      "same_kind": true,
+      "spellings": [
+        "the hatch"
+      ],
+      "string": "hatch",
+      "text_mentions": 2
+    }
+  ],
+  "counts": {
+    "ambiguous_strings": 2,
+    "distinct_pairs": 0,
+    "distinct_pairs_strong": 0,
+    "escape_candidates": 11,
+    "index_strings": 167,
+    "merge_candidates": 0,
+    "merge_excluded": 0,
+    "segments_with_hits": 4,
+    "stoplisted_strings": 0
+  },
+  "distinctness_evidence": [],
+  "entities": 98,
+  "escape_candidates": [
+    {
+      "count": 2,
+      "example": "e Council tier pending tribunal, with a guard rotation outside his door and his Allocation seal melted down in front of witnesses. Pell had been promoted to deputy warden",
+      "overlaps": [
+        "doc:council_books",
+        "obj:allocation_seal",
+        "org:allocation_office",
+        "person:marn",
+        "place:allocation_corridor",
+        "place:allocation_office"
+      ],
+      "segments": [
+        1,
+        2
+      ],
+      "string": "allocation",
+      "surface": "Allocation"
+    },
+    {
+      "count": 2,
+      "example": "case, half the size, latched, unlabeled but for one word in Cray's blunt hand: PERSONAL. We logged it on the spot \u2014 weight, dimensions, the word \u2014 and we did not open",
+      "overlaps": [
+        "obj:personal_case"
+      ],
+      "segments": [
+        2,
+        3
+      ],
+      "string": "personal",
+      "surface": "PERSONAL"
+    },
+    {
+      "count": 2,
+      "example": "\u201cThe Voss matter is closed,\u201d he said.",
+      "overlaps": [
+        "event:tovan_death",
+        "person:sela_voss",
+        "person:tovan_voss"
+      ],
+      "segments": [
+        0
+      ],
+      "string": "voss",
+      "surface": "Voss"
+    },
+    {
+      "count": 1,
+      "example": "Beside it sat a second case, half the size, latched, unlabeled but for one word in Cra",
+      "overlaps": [],
+      "segments": [
+        2
+      ],
+      "string": "beside",
+      "surface": "Beside"
+    },
+    {
+      "count": 1,
+      "example": "erm stock and genetic samples for a future that had gone a different direction. Decommissioned, off the inventory, off everyone's mental map. Cray had signed the decommission",
+      "overlaps": [],
+      "segments": [
+        2
+      ],
+      "string": "decommissioned",
+      "surface": "Decommissioned"
+    },
+    {
+      "count": 1,
+      "example": "lumns agreed with a dead man's letter to the liter. Eleven years of divergence. Forty-one thousand, two hundred liters of phantom reserve. The letter had asserted; the c",
+      "overlaps": [],
+      "segments": [
+        3
+      ],
+      "string": "forty-one",
+      "surface": "Forty-one"
+    },
+    {
+      "count": 1,
+      "example": "Getting down to it was its own education in how Anchor thinks. The Seed Vault sits dire",
+      "overlaps": [],
+      "segments": [
+        2
+      ],
+      "string": "getting",
+      "surface": "Getting"
+    },
+    {
+      "count": 1,
+      "example": "\u201cShow me the door log. Not the maintenance log. The door.\u201d",
+      "overlaps": [],
+      "segments": [
+        0
+      ],
+      "string": "show",
+      "surface": "Show"
+    },
+    {
+      "count": 1,
+      "example": "\u201cStart with the meter,\u201d I said.",
+      "overlaps": [],
+      "segments": [
+        0
+      ],
+      "string": "start",
+      "surface": "Start"
+    },
+    {
+      "count": 1,
+      "example": "\u201cThey closed it,\u201d Sela said. \u201cThief, coward, suicide. Tidy.\u201d",
+      "overlaps": [],
+      "segments": [
+        0
+      ],
+      "string": "thief",
+      "surface": "Thief"
+    },
+    {
+      "count": 1,
+      "example": "Sela Voss was confirmed as Water Steward of Anchor by acclamation she did not ask for and visibly did not enjoy. Her first act was",
+      "overlaps": [
+        "place:anchor"
+      ],
+      "segments": [
+        3
+      ],
+      "string": "water steward of anchor",
+      "surface": "Water Steward of Anchor"
+    }
+  ],
+  "id_repairs": {},
+  "index": {
+    "access panel": [
+      "obj:access_panel"
+    ],
+    "accounting": [
+      "doc:council_books"
+    ],
+    "administrator cray": [
+      "person:cray"
+    ],
+    "allocation corridor": [
+      "place:allocation_corridor"
+    ],
+    "allocation office": [
+      "org:allocation_office",
+      "place:allocation_office"
+    ],
+    "allocation officer marn": [
+      "person:marn"
+    ],
+    "allocation seal": [
+      "obj:allocation_seal"
+    ],
+    "anchor": [
+      "place:anchor"
+    ],
+    "anti-static cloth": [
+      "obj:anti_static_cloth"
+    ],
+    "aquifer maps": [
+      "obj:tovan_maps"
+    ],
+    "assembly": [
+      "event:assembly"
+    ],
+    "bazaar": [
+      "place:bazaar"
+    ],
+    "block flow meters": [
+      "obj:block_meters"
+    ],
+    "books": [
+      "doc:council_books"
+    ],
+    "bulletin wall": [
+      "obj:bulletin_wall"
+    ],
+    "bunk": [
+      "obj:sela_bunk"
+    ],
+    "canonical books": [
+      "doc:council_books"
+    ],
+    "cigarette tin": [
+      "obj:cigarette_tin"
+    ],
+    "cistern three": [
+      "place:cistern_three"
+    ],
+    "cisterns": [
+      "place:cisterns"
+    ],
+    "clerk's desk": [
+      "obj:clerk_desk"
+    ],
+    "collapse": [
+      "event:collapse"
+    ],
+    "colony convoy": [
+      "org:founding_convoy"
+    ],
+    "condenser logbook": [
+      "doc:condenser_logbook"
+    ],
+    "condenser station": [
+      "place:condensers"
+    ],
+    "condenser station's logbook": [
+      "doc:condenser_logbook"
+    ],
+    "condensers": [
+      "place:condensers"
+    ],
+    "convoy": [
+      "org:founding_convoy"
+    ],
+    "corridors": [
+      "place:corridors"
+    ],
+    "council": [
+      "org:council"
+    ],
+    "council allocation books": [
+      "doc:council_books"
+    ],
+    "council tier": [
+      "place:council_tier"
+    ],
+    "council's allocation office": [
+      "org:allocation_office"
+    ],
+    "council's books": [
+      "doc:council_books"
+    ],
+    "cray": [
+      "person:cray"
+    ],
+    "cray's books": [
+      "doc:council_books"
+    ],
+    "dead elevator": [
+      "place:dead_elevator"
+    ],
+    "dead stairs": [
+      "place:dead_stairs"
+    ],
+    "decommission order": [
+      "doc:decommission_order"
+    ],
+    "deep aquifer": [
+      "place:deep_aquifer"
+    ],
+    "deep aquifer maps": [
+      "obj:tovan_maps"
+    ],
+    "desert": [
+      "place:desert"
+    ],
+    "dig sledge": [
+      "obj:dig_sledge"
+    ],
+    "document case": [
+      "obj:memory_core_case"
+    ],
+    "dome": [
+      "obj:dome"
+    ],
+    "dome breach": [
+      "event:dome_breach"
+    ],
+    "door log": [
+      "obj:door_log"
+    ],
+    "elevator shaft": [
+      "place:dead_elevator"
+    ],
+    "false drawer": [
+      "obj:false_drawer"
+    ],
+    "father's old survey": [
+      "doc:father_survey"
+    ],
+    "flat steel tin": [
+      "obj:cigarette_tin"
+    ],
+    "flats": [
+      "place:desert"
+    ],
+    "flow meters": [
+      "obj:block_meters"
+    ],
+    "folded sheet": [
+      "doc:tovan_letter"
+    ],
+    "footlocker": [
+      "obj:tovan_footlocker"
+    ],
+    "fuse tin": [
+      "obj:fuse_tin"
+    ],
+    "gallery": [
+      "place:gallery"
+    ],
+    "gallery display": [
+      "obj:gallery_display"
+    ],
+    "gallery stairs": [
+      "place:gallery_stairs"
+    ],
+    "gray stuff": [
+      "obj:gray_drink"
+    ],
+    "guild": [
+      "org:guild"
+    ],
+    "guild seal": [
+      "obj:guild_seal"
+    ],
+    "hard faction": [
+      "org:hard_faction"
+    ],
+    "hatch": [
+      "obj:seed_vault_hatch",
+      "obj:wellhead_hatch"
+    ],
+    "hidden drawer": [
+      "obj:false_drawer"
+    ],
+    "his dead man's badge": [
+      "obj:tovan_badge"
+    ],
+    "his rifle": [
+      "obj:pell_rifle"
+    ],
+    "honest meter": [
+      "obj:master_meter"
+    ],
+    "ilsa": [
+      "person:vault_clerk"
+    ],
+    "ilsa renn": [
+      "person:vault_clerk"
+    ],
+    "ilsa's desk": [
+      "obj:clerk_desk"
+    ],
+    "ilsa's inventory": [
+      "doc:records_inventory"
+    ],
+    "inventory book": [
+      "doc:records_inventory"
+    ],
+    "inventory ledger": [
+      "doc:records_inventory"
+    ],
+    "lead crimp blanks": [
+      "obj:desk_crimp_blanks"
+    ],
+    "ledger racks": [
+      "obj:ledger_racks"
+    ],
+    "maintenance crimp": [
+      "obj:guild_seal"
+    ],
+    "maintenance log": [
+      "obj:maintenance_log"
+    ],
+    "maps": [
+      "obj:tovan_maps"
+    ],
+    "marn": [
+      "person:marn"
+    ],
+    "marn's books": [
+      "doc:second_books"
+    ],
+    "master meter": [
+      "obj:master_meter"
+    ],
+    "master meter going dark": [
+      "event:meter_dark"
+    ],
+    "master meter housing": [
+      "obj:master_meter_housing"
+    ],
+    "memory core": [
+      "obj:memory_core"
+    ],
+    "meter": [
+      "obj:master_meter"
+    ],
+    "meter failure": [
+      "event:meter_dark"
+    ],
+    "meter went dark": [
+      "event:meter_dark"
+    ],
+    "my office": [
+      "place:narrator_office"
+    ],
+    "narrator": [
+      "person:narrator"
+    ],
+    "new core": [
+      "obj:new_memory_core"
+    ],
+    "new master meter": [
+      "obj:new_master_meter"
+    ],
+    "new memory core": [
+      "obj:new_memory_core"
+    ],
+    "north waystation": [
+      "place:northern_waystation"
+    ],
+    "northern waystation": [
+      "place:northern_waystation"
+    ],
+    "office": [
+      "place:narrator_office"
+    ],
+    "old highway": [
+      "place:old_highway"
+    ],
+    "old housing": [
+      "obj:master_meter_housing"
+    ],
+    "old survey": [
+      "doc:father_survey"
+    ],
+    "only honest one": [
+      "obj:master_meter"
+    ],
+    "open desert": [
+      "place:desert"
+    ],
+    "open sky": [
+      "place:desert"
+    ],
+    "patch-glass": [
+      "obj:south_dome_panel"
+    ],
+    "patchwork dome": [
+      "obj:dome"
+    ],
+    "pell": [
+      "person:pell"
+    ],
+    "pell's mother": [
+      "person:pells_mother"
+    ],
+    "personal case": [
+      "obj:personal_case"
+    ],
+    "pneumatic ledger racks": [
+      "obj:ledger_racks"
+    ],
+    "rain trap": [
+      "obj:rain_trap"
+    ],
+    "records vault": [
+      "place:vault"
+    ],
+    "relay shack": [
+      "place:northern_waystation"
+    ],
+    "repeater tower": [
+      "obj:repeater_tower"
+    ],
+    "rifle": [
+      "obj:pell_rifle"
+    ],
+    "rust quarter": [
+      "place:rust_quarter"
+    ],
+    "salt flats": [
+      "place:salt_flats"
+    ],
+    "sample crate": [
+      "obj:sample_vials_crate"
+    ],
+    "sample vials": [
+      "obj:sample_vials"
+    ],
+    "seal blanks": [
+      "obj:seal_blanks"
+    ],
+    "seal wire": [
+      "obj:seal_wire_spool"
+    ],
+    "second books": [
+      "doc:second_books"
+    ],
+    "second entry": [
+      "event:impostor_entry"
+    ],
+    "second set of books": [
+      "doc:second_books"
+    ],
+    "second tovan": [
+      "event:impostor_entry"
+    ],
+    "second vault": [
+      "place:seed_vault"
+    ],
+    "seed vault": [
+      "place:seed_vault"
+    ],
+    "sela": [
+      "person:sela_voss"
+    ],
+    "sela voss": [
+      "person:sela_voss"
+    ],
+    "sela's bunk": [
+      "obj:sela_bunk"
+    ],
+    "service gate": [
+      "place:service_gate"
+    ],
+    "settlement": [
+      "place:anchor"
+    ],
+    "shadow books": [
+      "doc:second_books"
+    ],
+    "six crimp blanks": [
+      "obj:desk_crimp_blanks"
+    ],
+    "small gray woman": [
+      "person:vault_clerk"
+    ],
+    "south dome panel": [
+      "obj:south_dome_panel"
+    ],
+    "south lock": [
+      "place:south_lock"
+    ],
+    "southern aquifer site": [
+      "place:survey_site"
+    ],
+    "southern survey": [
+      "event:southern_survey"
+    ],
+    "spool of seal wire": [
+      "obj:seal_wire_spool"
+    ],
+    "steel document case": [
+      "obj:memory_core_case"
+    ],
+    "stolen credential": [
+      "obj:tovan_badge"
+    ],
+    "stolen credential walk": [
+      "event:impostor_entry"
+    ],
+    "sub-basement": [
+      "place:sub_basement"
+    ],
+    "survey maps": [
+      "obj:tovan_maps"
+    ],
+    "survey site": [
+      "place:survey_site"
+    ],
+    "survey team": [
+      "org:survey_team"
+    ],
+    "tin ear clerk": [
+      "person:vault_clerk"
+    ],
+    "tin of spare fuses": [
+      "obj:fuse_tin"
+    ],
+    "tovan": [
+      "person:tovan_voss"
+    ],
+    "tovan voss": [
+      "person:tovan_voss"
+    ],
+    "tovan's credential": [
+      "obj:tovan_badge"
+    ],
+    "tovan's death": [
+      "event:tovan_death"
+    ],
+    "tovan's footlocker": [
+      "obj:tovan_footlocker"
+    ],
+    "tovan's letter": [
+      "doc:tovan_letter"
+    ],
+    "tribunal": [
+      "event:tribunal"
+    ],
+    "twelve vials": [
+      "obj:sample_vials"
+    ],
+    "two unlit maintenance flights": [
+      "place:dead_stairs"
+    ],
+    "vault": [
+      "place:vault"
+    ],
+    "vault clerk": [
+      "person:vault_clerk"
+    ],
+    "vault hatch": [
+      "obj:seed_vault_hatch"
+    ],
+    "visible drawer": [
+      "obj:desk_visible_drawer"
+    ],
+    "voss matter": [
+      "event:tovan_death"
+    ],
+    "walked out onto the flats without a suit": [
+      "event:tovan_death"
+    ],
+    "waterproof tube": [
+      "obj:waterproof_tube"
+    ],
+    "wellhead": [
+      "place:wellhead"
+    ],
+    "wellhead hatch": [
+      "obj:wellhead_hatch"
+    ],
+    "wellhead tech": [
+      "person:wellhead_tech"
+    ],
+    "wooden crate": [
+      "obj:sample_vials_crate"
+    ]
+  },
+  "merge_candidates": [],
+  "merge_excluded": [],
+  "segment_hits": [
+    {
+      "ids": {
+        "doc:council_books": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "accounting"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "books"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council's books"
+          }
+        ],
+        "event:impostor_entry": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "second tovan"
+          }
+        ],
+        "event:tovan_death": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "voss matter"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "walked out onto the flats without a suit"
+          }
+        ],
+        "obj:block_meters": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "flow meters"
+          }
+        ],
+        "obj:dome": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "patchwork dome"
+          }
+        ],
+        "obj:door_log": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "door log"
+          }
+        ],
+        "obj:gray_drink": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "gray stuff"
+          }
+        ],
+        "obj:maintenance_log": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "maintenance log"
+          }
+        ],
+        "obj:master_meter": [
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "master meter"
+          },
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "meter"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "only honest one"
+          }
+        ],
+        "obj:memory_core": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "memory core"
+          }
+        ],
+        "obj:pell_rifle": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "his rifle"
+          }
+        ],
+        "obj:tovan_badge": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "his dead man's badge"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "stolen credential"
+          }
+        ],
+        "obj:tovan_maps": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "deep aquifer maps"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "maps"
+          }
+        ],
+        "obj:wellhead_hatch": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "wellhead hatch"
+          }
+        ],
+        "org:allocation_office": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council's allocation office"
+          }
+        ],
+        "org:council": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council"
+          }
+        ],
+        "person:marn": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "allocation officer marn"
+          },
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "marn"
+          }
+        ],
+        "person:pell": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "pell"
+          }
+        ],
+        "person:sela_voss": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "sela"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "sela voss"
+          }
+        ],
+        "person:tovan_voss": [
+          {
+            "ambiguous": false,
+            "count": 11,
+            "match": "exact",
+            "string": "tovan"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tovan voss"
+          }
+        ],
+        "place:anchor": [
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "anchor"
+          },
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "settlement"
+          }
+        ],
+        "place:cisterns": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "cisterns"
+          }
+        ],
+        "place:condensers": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "condensers"
+          }
+        ],
+        "place:corridors": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "corridors"
+          }
+        ],
+        "place:council_tier": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council tier"
+          }
+        ],
+        "place:desert": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "desert"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "open desert"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "open sky"
+          }
+        ],
+        "place:narrator_office": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "my office"
+          }
+        ],
+        "place:old_highway": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "old highway"
+          }
+        ],
+        "place:rust_quarter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "rust quarter"
+          }
+        ],
+        "place:salt_flats": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "salt flats"
+          }
+        ],
+        "place:survey_site": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "survey site"
+          }
+        ],
+        "place:wellhead": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "wellhead"
+          }
+        ]
+      },
+      "segment": 0
+    },
+    {
+      "ids": {
+        "doc:condenser_logbook": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "condenser station's logbook"
+          }
+        ],
+        "doc:council_books": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "accounting"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "books"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "canonical books"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council allocation books"
+          }
+        ],
+        "doc:father_survey": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "father's old survey"
+          }
+        ],
+        "doc:second_books": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "second books"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "second set of books"
+          }
+        ],
+        "doc:tovan_letter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "folded sheet"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tovan's letter"
+          }
+        ],
+        "event:assembly": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "assembly"
+          }
+        ],
+        "event:collapse": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "collapse"
+          }
+        ],
+        "event:dome_breach": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "dome breach"
+          }
+        ],
+        "event:impostor_entry": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "second entry"
+          }
+        ],
+        "event:tribunal": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tribunal"
+          }
+        ],
+        "obj:allocation_seal": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "allocation seal"
+          }
+        ],
+        "obj:bulletin_wall": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "bulletin wall"
+          }
+        ],
+        "obj:cigarette_tin": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "flat steel tin"
+          }
+        ],
+        "obj:door_log": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "door log"
+          }
+        ],
+        "obj:guild_seal": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "maintenance crimp"
+          }
+        ],
+        "obj:ledger_racks": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "pneumatic ledger racks"
+          }
+        ],
+        "obj:master_meter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "master meter"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "meter"
+          }
+        ],
+        "obj:memory_core": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "memory core"
+          }
+        ],
+        "obj:pell_rifle": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "rifle"
+          }
+        ],
+        "obj:seal_blanks": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "seal blanks"
+          }
+        ],
+        "obj:south_dome_panel": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "patch-glass"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "south dome panel"
+          }
+        ],
+        "obj:tovan_footlocker": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tovan's footlocker"
+          }
+        ],
+        "obj:wellhead_hatch": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "wellhead hatch"
+          }
+        ],
+        "org:allocation_office": [
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "prefix",
+            "string": "allocation"
+          },
+          {
+            "ambiguous": true,
+            "count": 2,
+            "match": "exact",
+            "string": "allocation office"
+          }
+        ],
+        "org:council": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "council"
+          }
+        ],
+        "org:guild": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "guild"
+          }
+        ],
+        "person:cray": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "administrator cray"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "cray"
+          }
+        ],
+        "person:marn": [
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "prefix",
+            "string": "allocation"
+          },
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "marn"
+          }
+        ],
+        "person:pell": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "pell"
+          }
+        ],
+        "person:sela_voss": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "sela"
+          }
+        ],
+        "person:tovan_voss": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "tovan"
+          }
+        ],
+        "person:vault_clerk": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "small gray woman"
+          }
+        ],
+        "place:allocation_office": [
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "prefix",
+            "string": "allocation"
+          },
+          {
+            "ambiguous": true,
+            "count": 2,
+            "match": "exact",
+            "string": "allocation office"
+          }
+        ],
+        "place:anchor": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "anchor"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "settlement"
+          }
+        ],
+        "place:bazaar": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "bazaar"
+          }
+        ],
+        "place:cistern_three": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "cistern three"
+          }
+        ],
+        "place:council_tier": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "council tier"
+          }
+        ],
+        "place:desert": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "desert"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "flats"
+          }
+        ],
+        "place:narrator_office": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "office"
+          }
+        ],
+        "place:rust_quarter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "rust quarter"
+          }
+        ],
+        "place:survey_site": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "southern aquifer site"
+          }
+        ],
+        "place:vault": [
+          {
+            "ambiguous": false,
+            "count": 9,
+            "match": "exact",
+            "string": "vault"
+          }
+        ],
+        "place:wellhead": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "wellhead"
+          }
+        ]
+      },
+      "segment": 1
+    },
+    {
+      "ids": {
+        "doc:council_books": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "books"
+          }
+        ],
+        "doc:decommission_order": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "decommission order"
+          }
+        ],
+        "doc:records_inventory": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "inventory book"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "inventory ledger"
+          }
+        ],
+        "event:assembly": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "assembly"
+          }
+        ],
+        "event:collapse": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "collapse"
+          }
+        ],
+        "obj:anti_static_cloth": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "anti-static cloth"
+          }
+        ],
+        "obj:clerk_desk": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "clerk's desk"
+          }
+        ],
+        "obj:desk_crimp_blanks": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "lead crimp blanks"
+          }
+        ],
+        "obj:false_drawer": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "false drawer"
+          }
+        ],
+        "obj:master_meter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "master meter"
+          }
+        ],
+        "obj:memory_core": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "memory core"
+          }
+        ],
+        "obj:memory_core_case": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "document case"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "steel document case"
+          }
+        ],
+        "obj:sample_vials": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "sample vials"
+          }
+        ],
+        "obj:sample_vials_crate": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "wooden crate"
+          }
+        ],
+        "obj:seal_blanks": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "seal blanks"
+          }
+        ],
+        "obj:seal_wire_spool": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "spool of seal wire"
+          }
+        ],
+        "obj:seed_vault_hatch": [
+          {
+            "ambiguous": true,
+            "count": 2,
+            "match": "exact",
+            "string": "hatch"
+          }
+        ],
+        "obj:wellhead_hatch": [
+          {
+            "ambiguous": true,
+            "count": 2,
+            "match": "exact",
+            "string": "hatch"
+          }
+        ],
+        "org:allocation_office": [
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "prefix",
+            "string": "allocation"
+          },
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "exact",
+            "string": "allocation office"
+          }
+        ],
+        "org:council": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council"
+          }
+        ],
+        "org:founding_convoy": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "convoy"
+          }
+        ],
+        "org:guild": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "guild"
+          }
+        ],
+        "person:cray": [
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "cray"
+          }
+        ],
+        "person:marn": [
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "prefix",
+            "string": "allocation"
+          },
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "marn"
+          }
+        ],
+        "person:pell": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "pell"
+          }
+        ],
+        "person:pells_mother": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "pell's mother"
+          }
+        ],
+        "person:tovan_voss": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tovan"
+          }
+        ],
+        "person:vault_clerk": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "ilsa renn"
+          }
+        ],
+        "place:allocation_corridor": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "allocation corridor"
+          }
+        ],
+        "place:allocation_office": [
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "prefix",
+            "string": "allocation"
+          },
+          {
+            "ambiguous": true,
+            "count": 1,
+            "match": "exact",
+            "string": "allocation office"
+          }
+        ],
+        "place:anchor": [
+          {
+            "ambiguous": false,
+            "count": 7,
+            "match": "exact",
+            "string": "anchor"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "settlement"
+          }
+        ],
+        "place:bazaar": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "bazaar"
+          }
+        ],
+        "place:corridors": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "corridors"
+          }
+        ],
+        "place:council_tier": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "council tier"
+          }
+        ],
+        "place:dead_elevator": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "dead elevator"
+          }
+        ],
+        "place:dead_stairs": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "dead stairs"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "two unlit maintenance flights"
+          }
+        ],
+        "place:gallery": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "gallery"
+          }
+        ],
+        "place:gallery_stairs": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "gallery stairs"
+          }
+        ],
+        "place:seed_vault": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "seed vault"
+          }
+        ],
+        "place:service_gate": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "service gate"
+          }
+        ],
+        "place:sub_basement": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "sub-basement"
+          }
+        ],
+        "place:vault": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "records vault"
+          },
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "vault"
+          }
+        ],
+        "place:wellhead": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "wellhead"
+          }
+        ]
+      },
+      "segment": 2
+    },
+    {
+      "ids": {
+        "doc:council_books": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "cray's books"
+          }
+        ],
+        "doc:records_inventory": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "inventory ledger"
+          }
+        ],
+        "doc:second_books": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "marn's books"
+          }
+        ],
+        "event:assembly": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "assembly"
+          }
+        ],
+        "event:southern_survey": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "southern survey"
+          }
+        ],
+        "event:tribunal": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "tribunal"
+          }
+        ],
+        "obj:access_panel": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "access panel"
+          }
+        ],
+        "obj:dig_sledge": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "dig sledge"
+          }
+        ],
+        "obj:false_drawer": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "false drawer"
+          }
+        ],
+        "obj:gallery_display": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "gallery display"
+          }
+        ],
+        "obj:gray_drink": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "gray stuff"
+          }
+        ],
+        "obj:master_meter": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "meter"
+          }
+        ],
+        "obj:master_meter_housing": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "old housing"
+          }
+        ],
+        "obj:new_master_meter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "new master meter"
+          }
+        ],
+        "obj:new_memory_core": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "new core"
+          }
+        ],
+        "obj:personal_case": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "personal case"
+          }
+        ],
+        "obj:rain_trap": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "rain trap"
+          }
+        ],
+        "obj:repeater_tower": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "repeater tower"
+          }
+        ],
+        "obj:sela_bunk": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "bunk"
+          }
+        ],
+        "obj:tovan_footlocker": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "footlocker"
+          }
+        ],
+        "obj:tovan_maps": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "aquifer maps"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "maps"
+          }
+        ],
+        "obj:waterproof_tube": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "waterproof tube"
+          }
+        ],
+        "org:council": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "council"
+          }
+        ],
+        "org:hard_faction": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "hard faction"
+          }
+        ],
+        "org:survey_team": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "survey team"
+          }
+        ],
+        "person:cray": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "cray"
+          }
+        ],
+        "person:marn": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "marn"
+          }
+        ],
+        "person:pell": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "pell"
+          }
+        ],
+        "person:pells_mother": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "pell's mother"
+          }
+        ],
+        "person:sela_voss": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "sela"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "sela voss"
+          }
+        ],
+        "person:tovan_voss": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "tovan"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tovan voss"
+          }
+        ],
+        "person:vault_clerk": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "ilsa renn"
+          }
+        ],
+        "person:wellhead_tech": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "wellhead tech"
+          }
+        ],
+        "place:anchor": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "anchor"
+          }
+        ],
+        "place:condensers": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "condenser station"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "condensers"
+          }
+        ],
+        "place:desert": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "desert"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "flats"
+          }
+        ],
+        "place:gallery": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "gallery"
+          }
+        ],
+        "place:narrator_office": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "my office"
+          }
+        ],
+        "place:northern_waystation": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "northern waystation"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "relay shack"
+          }
+        ],
+        "place:old_highway": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "old highway"
+          }
+        ],
+        "place:rust_quarter": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "rust quarter"
+          }
+        ],
+        "place:south_lock": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "south lock"
+          }
+        ],
+        "place:vault": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "records vault"
+          }
+        ]
+      },
+      "segment": 3
+    }
+  ],
+  "segments": 4,
+  "stoplisted": {},
+  "world_id": "w:anchor_v2"
+}

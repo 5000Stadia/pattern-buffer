@@ -1,6 +1,6 @@
 # BUILD-TIMINGS-V1: where a book build's time goes, and parallel pass-0 (roadmap R26)
 
-**Status:** r1 (2026-10-10). Harness only: no engine change. Research note
+**Status:** r1 (2026-10-10). Run and reported: `evals/results/2026-10-10-r26-build-timings/REPORT.md` (pass mark met by the letter; parallel pass-0 stays off, it fragments the registry). Harness only: no engine change. Research note
 technique 3 (`docs/research/book-to-world-extraction-2026-10.md`), sized by
 the monitor's note n7df1c6: at most **4 full runs**, then stop and report.
 
