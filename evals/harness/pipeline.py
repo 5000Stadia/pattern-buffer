@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -19,9 +20,11 @@ from typing import Any, Callable
 from patternbuffer import World
 
 import grammar
-from registry import RegistryWorldMismatch, WorldRegistry, establish, seed_items
+from registry import RegistryWorldMismatch, WorldRegistry, establish, glean, seed_items
 
 logger = logging.getLogger(__name__)
+
+_glean = glean  # pass0 has a ``glean`` parameter that shadows the function
 
 REGISTRY_TOKEN_CAP = 6000  # ~chars/4; above this the deterministic slice applies
 
@@ -102,6 +105,9 @@ class Pipeline:
         # alias index hits (plus ids sharing a string with them) instead of the
         # raw substring test. Off by default: the slice is unchanged.
         self.alias_slice = alias_slice
+        # R26 BUILD-TIMINGS-V1: wall seconds per stage, filled by pass0 and
+        # commit (the runner adds the rest). Observation only.
+        self.timings: dict[str, Any] = {}
 
     # ------------------------------------------------------------- pass 0
 
@@ -110,16 +116,81 @@ class Pipeline:
         text: str | None = None,
         prior: WorldRegistry | None = None,
         segments: list[str] | None = None,
+        parallel: bool = False,
+        glean: bool = False,
     ) -> WorldRegistry:
         """Establish/extend the registry. With ``segments`` the document is
         scaffolded incrementally (establish over the first segment, extend
-        over each subsequent one) — smaller calls, same interface."""
+        over each subsequent one) — smaller calls, same interface.
+
+        ``parallel=True`` (R26): each segment is established on its own (no
+        prior) on the worker pool, then the segment registries are reduced in
+        segment order with ``WorldRegistry.merge`` (same id, one card; first
+        decisions pinned). ``glean=True``: after a segment's registry is made,
+        one more call asks only for entities it missed. Per-segment call
+        seconds land in ``self.timings``."""
         parts = segments if segments is not None else [text or ""]
-        registry = prior
-        for part in parts:
-            registry = establish(part, self.model, self.world_id, prior=registry)
+        if parallel:
+            registry = self._pass0_parallel(parts, prior, glean)
+        else:
+            registry = prior
+            seg_s: list[float] = []
+            glean_s: list[float] = []
+            for part in parts:
+                t = time.perf_counter()
+                registry = establish(part, self.model, self.world_id, prior=registry)
+                seg_s.append(round(time.perf_counter() - t, 2))
+                if glean:
+                    t = time.perf_counter()
+                    registry = _glean(part, registry, self.model, self.world_id)
+                    glean_s.append(round(time.perf_counter() - t, 2))
+            self.timings["pass0_segment_s"] = seg_s
+            if glean:
+                self.timings["pass0_glean_s"] = glean_s
         assert registry is not None
         registry.save(self.run_dir / "registry.json")
+        return registry
+
+    def _pass0_one(self, part: str, glean: bool) -> tuple[WorldRegistry, float, float]:
+        t = time.perf_counter()
+        reg = establish(part, self.model, self.world_id, prior=None)
+        call_s = round(time.perf_counter() - t, 2)
+        glean_s = 0.0
+        if glean:
+            t = time.perf_counter()
+            reg = _glean(part, reg, self.model, self.world_id)
+            glean_s = round(time.perf_counter() - t, 2)
+        return reg, call_s, glean_s
+
+    def _pass0_parallel(
+        self, parts: list[str], prior: WorldRegistry | None, glean: bool
+    ) -> WorldRegistry:
+        if prior is not None and prior.world_id != self.world_id:
+            raise RegistryWorldMismatch(
+                f"prior registry is for {prior.world_id!r}, not {self.world_id!r}"
+            )
+        t0 = time.perf_counter()
+        pool = ThreadPoolExecutor(max_workers=self.max_workers)
+        try:
+            futures = [pool.submit(self._pass0_one, part, glean) for part in parts]
+            done = [f.result() for f in futures]  # segment order; first failure raises
+        except BaseException:
+            pool.shutdown(wait=True, cancel_futures=True)  # QuotaExhausted etc. propagate
+            raise
+        pool.shutdown()
+        self.timings["pass0_wall_s"] = round(time.perf_counter() - t0, 2)
+        self.timings["pass0_segment_s"] = [d[1] for d in done]
+        if glean:
+            self.timings["pass0_glean_s"] = [d[2] for d in done]
+        t = time.perf_counter()
+        registry = prior
+        for reg, _, _ in done:
+            if registry is None:
+                registry = reg
+            else:
+                registry.merge(reg)
+        self.timings["pass0_reduce_s"] = round(time.perf_counter() - t, 3)
+        assert registry is not None
         return registry
 
     # ------------------------------------------------------------- pass 1
@@ -293,12 +364,14 @@ class Pipeline:
         world_path = Path(world_path)
         if world_path.exists():
             raise RuntimeError(f"commit target {world_path} already exists")
+        t_seed = time.perf_counter()
         registry.save(self.run_dir / "registry.json")  # the artifact always
         w = World(world_path, world_id=self.world_id, model=self.model)  # rides beside the dump
         w.ingestor.classify_inline = False
         for alias, canonical in sorted(registry.attributes.items()):
             w.ingestor.add_attribute_alias(alias, canonical)
         w.ingest_structured(seed_items(registry))
+        t_replay = time.perf_counter()
         # Per-item ingest with gate quarantine: the engine's write-time
         # guards (e.g. the containment self-edge rejection, LIVE-FINDINGS
         # Fix 1) raise on a malformed extracted row. Append-only means a
@@ -328,11 +401,22 @@ class Pipeline:
             (self.run_dir / "quarantined.json").write_text(
                 json.dumps(quarantined, indent=0, sort_keys=True))
             logger.info("commit: %d item(s) quarantined at the gate", len(quarantined))
+        t_classify = time.perf_counter()
         w.classifier.classify_all(batch_size=40)
+        t_promote = time.perf_counter()
         # 036: gate same_as now proposes; promotion happens HERE, where the
         # whole world is in view (shared name anchors promote; title-only
         # candidates stay proposals for tier-2/confirmation).
         w.registry.promote_identity_proposals()
+        t_scan = time.perf_counter()
         w.truth.scan()
+        t_end = time.perf_counter()
+        self.timings.update({
+            "commit_seed_s": round(t_replay - t_seed, 2),
+            "commit_replay_s": round(t_classify - t_replay, 2),
+            "commit_classify_all_s": round(t_promote - t_classify, 2),
+            "commit_promotion_s": round(t_scan - t_promote, 2),
+            "commit_truth_scan_s": round(t_end - t_scan, 2),
+        })
         logger.info("committed: %d rows", w.buffer.head())
         return w
