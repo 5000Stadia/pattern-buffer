@@ -479,6 +479,16 @@ def test_empty_source_raises_before_any_write(tmp_path):
         read_source_segments(_write_raw(tmp_path, {"segments": [], "sha256": canonical_sha256([])}))
     with pytest.raises(ValueError, match="empty"):
         seeded_registry(STORED["r23-run1"] / "registry.json", segments=[])
+    # pbr code r2: an explicit source is a non-empty list of strings, checked
+    # before anything is written (a bare string is not read as its characters)
+    for bad in ("one whole chapter as a bare string", ["a segment", 7], ("a", "tuple")):
+        with pytest.raises(ValueError, match="list of strings"):
+            p.commit(target, reg, segments=bad)
+        assert not target.exists()
+        assert not (p.run_dir / ALIAS_INDEX_FILE).exists()
+        assert (p.run_dir / "registry.json").read_bytes() == reg_before
+        with pytest.raises(ValueError, match="list of strings"):
+            seeded_registry(STORED["r23-run1"] / "registry.json", segments=bad)
 
 
 def _write_raw(tmp_path, payload) -> Path:

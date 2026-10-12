@@ -123,7 +123,11 @@ def read_source_segments(path: Path) -> list[str]:
 
 
 def require_source(parts: Any, where: str = "segments") -> None:
-    """An empty segment list is not a source (ALIAS-INDEX-V1 r4): raise."""
+    """A source is a non-empty list of strings (ALIAS-INDEX-V1 r4): anything
+    else raises before any write. A bare string is refused rather than read as
+    its characters."""
+    if not isinstance(parts, list) or not all(isinstance(x, str) for x in parts):
+        raise ValueError(f"{where}: segments must be a list of strings")
     if not parts:
         raise ValueError(f"{where}: an empty segment list is not a source")
 
