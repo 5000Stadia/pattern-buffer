@@ -77,10 +77,12 @@
 {"assertion_id": "a:77", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:78", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:79", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:80", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:81", "class_confidence": 0.95, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:82", "class_confidence": 1.0, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:83", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:80", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:81", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:82", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:83", "class_confidence": 0.95, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:84", "class_confidence": 1.0, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:85", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:1", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:2", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:3", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}

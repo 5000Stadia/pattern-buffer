@@ -946,19 +946,32 @@ def test_s2_a_passing_raw_same_as_writes_the_merge_verbs_rows(tmp_path):
     gate, verb = seeded("gate"), seeded("verb")
     r = _raw_same_as(gate, "person:x", "person:y", status="stated", valid_from=4.0)
     verb.porcelain.merge("person:x", "person:y", evidence="same_as item")
-    assert dump(gate.buffer) == dump(verb.buffer)
+    # IDENTITY-ROOT-CAUSES-V1 §3 (r3): the rows are the same byte for byte except
+    # `decided_by`, which is `statement` for the raw item and `host` for the verb.
+    gate_rows = [json.loads(line) for line in dump(gate.buffer).splitlines()]
+    verb_rows = [json.loads(line) for line in dump(verb.buffer).splitlines()]
+    assert len(gate_rows) == len(verb_rows)
+    decided = {}
+    for tag, rows in (("gate", gate_rows), ("verb", verb_rows)):
+        (decision,) = [row for row in rows if row["attribute"] == "decided_by"]
+        decided[tag] = decision["value"]
+    assert decided == {"gate": "statement", "verb": "host"}
+    assert [row for row in gate_rows if row["attribute"] != "decided_by"] \
+        == [row for row in verb_rows if row["attribute"] != "decided_by"]
+    assert [row["seq"] for row in gate_rows] == [row["seq"] for row in verb_rows]
     assert r.skipped == []
     # READ-SURFACE-V1 §7: a fresh world's physics row shifts these ids by one.
     assert [(row["entity"], row["attribute"]) for row in r.rows] == [
         ("event:merge_7", "kind"), ("person:x", "same_as"),
-        ("a:8", "caused_by"), ("event:merge_7", "evidence")]
+        ("a:8", "caused_by"), ("event:merge_7", "evidence"),
+        ("event:merge_7", "decided_by")]
     assert {gate.classifier.durability(row["assertion_id"]) for row in r.rows} == {"EVENT"}
     assert gate.registry.resolve("person:x") == gate.registry.resolve("person:y")
     edge = r.rows[1]["assertion_id"]
     r = _raw_same_as(gate, "person:z", "person:x", source_doc="doc:ledger",
                      caused_by="event:reveal", correction=True)
     edge = r.rows[1]["assertion_id"]
-    assert [(row["entity"], row["attribute"]) for row in r.rows[4:]] == [
+    assert [(row["entity"], row["attribute"]) for row in r.rows[5:]] == [
         (edge, "source"), (edge, "caused_by"), (edge, "correction_proposal")]
     gate.close()
     verb.close()
@@ -1031,7 +1044,7 @@ def test_s2_commit_set_carries_the_merge_or_aborts(world):
                                   "value": "person:y"}},
     ])
     assert [r.attribute for r in rows] == ["mood", "kind", "same_as", "caused_by",
-                                           "evidence"]
+                                           "evidence", "decided_by"]
     assert world.registry.resolve("person:y") == world.registry.resolve("person:x")
 
 
