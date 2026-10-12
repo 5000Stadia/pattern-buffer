@@ -28,6 +28,7 @@ Two invariants this module owns (whitepaper guardrail; spec §5):
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 
 from patternbuffer.buffer import PatternBuffer
@@ -78,15 +79,24 @@ _AXIS_VOCABULARIES = {
 _GUARDRAILED = frozenset({"name", "alias"}) | META_ATTRIBUTES
 
 
+# A kind named in a `resolvable_for` declaration: the id-safe name grammar (the
+# id prefix's: lowercase letters, digits, underscore, led by a letter), so a
+# kind is never free text and never fragments the way an aspect name would.
+KIND_NAME_RE = re.compile(r"[a-z][a-z0-9_]*")
+
+
 def valid_declaration(predicate: str, value: object) -> bool:
     """Whether a declared ``value`` is in ``predicate``'s axis vocabulary
     (GATE-AUTHORITY-V1 §5): ``arity`` ∈ ARITIES, ``relation_family`` ∈
     RELATION_FAMILIES, ``fold_policy`` ∈ FOLD_POLICIES, ``durability`` ∈
-    PINNABLE_DURABILITIES (READ-SURFACE-V1 §1), ``structural`` a real bool.
-    The gate validates every declaration it would write through this, and the
-    read side ignores a declared value that fails it."""
+    PINNABLE_DURABILITIES (READ-SURFACE-V1 §1), ``structural`` a real bool,
+    ``resolvable_for`` a kind name (RESOLVE-UNMARKED-V1). The gate validates
+    every declaration it would write through this, and the read side ignores a
+    declared value that fails it."""
     if predicate == "structural":
         return isinstance(value, bool)
+    if predicate == "resolvable_for":
+        return isinstance(value, str) and KIND_NAME_RE.fullmatch(value) is not None
     vocabulary = _AXIS_VOCABULARIES.get(predicate)
     return vocabulary is not None and isinstance(value, str) and value in vocabulary
 
@@ -150,6 +160,10 @@ class AttributeSemantics:
     def __init__(self, buffer: PatternBuffer) -> None:
         self._buffer = buffer
         self._declared: dict[str, dict[str, object]] = {}
+        # RESOLVE-UNMARKED-V1: `resolvable_for` is set-valued and apart from
+        # the axes, so declaring it never makes an attribute "declared" (which
+        # would silence its first-use hints and `attribute_default`).
+        self._resolvable: dict[str, frozenset[str]] = {}
         # Memos over `_declared`, cleared with it on every rebuild: the resolved
         # per-attribute Semantics and the two family sets.
         self._resolved: dict[str, Semantics] = {}
@@ -161,11 +175,19 @@ class AttributeSemantics:
         """Scan visible ``attr:*`` declarations into the sidecar (parity with
         the canonicalization map and the durability sidecar)."""
         declared: dict[str, dict[str, object]] = {}
+        resolvable: dict[str, set[str]] = {}
         for row in self._buffer.visible(entity_prefix=ATTR_PREFIX):
-            if row.attribute in SEMANTICS_PREDICATES:
-                name = row.entity[len(ATTR_PREFIX):]
-                declared.setdefault(name, {})[row.attribute] = row.value
+            if row.attribute not in SEMANTICS_PREDICATES:
+                continue
+            name = row.entity[len(ATTR_PREFIX):]
+            if row.attribute == "resolvable_for":
+                if (valid_declaration("resolvable_for", row.value)
+                        and not self.is_unresolvable(name)):
+                    resolvable.setdefault(name, set()).add(row.value)
+                continue
+            declared.setdefault(name, {})[row.attribute] = row.value
         self._declared = declared
+        self._resolvable = {k: frozenset(v) for k, v in resolvable.items()}
         self._resolved = {}
         self._families = {}
         # Keyed on the buffer's log version, not its head: a rollback followed
@@ -225,6 +247,9 @@ class AttributeSemantics:
         axis vocabulary (`valid_declaration`). The gate skips an incoherent
         declaration `invalid_semantics_declaration`.
 
+        - ``resolvable_for`` on an attribute that is never resolvable: the
+          inviolable core, `name`, `alias` or a META attribute
+          (RESOLVE-UNMARKED-V1; ``"core"``).
         - A pin on `name`, `alias` or a META attribute: a guardrail fixes
           their class before the pin is read (``"guardrail"``).
         - A pin other than CONSTITUTIVE beside ``structural: true``, in either
@@ -235,6 +260,8 @@ class AttributeSemantics:
           (``"arity=set_valued"`` / ``"relation_family=containment"`` /
           ``"fold_policy=last_write"``). Within one declaration the fold
           policy is the key refused."""
+        if "resolvable_for" in declaration and self.is_unresolvable(attribute):
+            return "resolvable_for", "core"
         current = self.semantics(attribute)
         pin = declaration.get("durability")
         structural = declaration.get("structural", current.structural)
@@ -283,6 +310,27 @@ class AttributeSemantics:
 
     def is_structural(self, attribute: str) -> bool:
         return self.semantics(attribute).structural
+
+    def resolvable_kinds(self, aspect: str) -> frozenset[str]:
+        """The kinds the resolver may invent `aspect` for (RESOLVE-UNMARKED-V1):
+        the visible ``attr:<aspect> · resolvable_for · <kind>`` rows, empty
+        when none. A value outside the kind grammar, or on an attribute that
+        can never be resolvable, is ignored on read."""
+        self._refresh()
+        return self._resolvable.get(aspect, frozenset())
+
+    def has_resolvable(self) -> bool:
+        """Whether the world declares any aspect resolvable: the opt-in that
+        RESOLVE-UNMARKED-V1 keys the ``undeclared`` answer on."""
+        self._refresh()
+        return bool(self._resolvable)
+
+    @staticmethod
+    def is_unresolvable(attribute: str) -> bool:
+        """An attribute that can never be declared resolvable: the inviolable
+        core and the guardrailed names (`name`, `alias`, META attributes).
+        `contents` is none of these, and is declarable."""
+        return attribute in INVIOLABLE_CORE or attribute in _GUARDRAILED
 
     def is_declared(self, attribute: str) -> bool:
         """Whether an explicit ``attr:*`` declaration exists (vs. defaulting)."""

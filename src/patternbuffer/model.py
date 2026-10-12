@@ -44,8 +44,12 @@ STRUCTURAL_PREDICATES = (
 ATTR_PREFIX = "attr:"
 # `durability` is the host's durability pin (READ-SURFACE-V1 §1): a declared
 # class for its own attribute, read by the classifier before the model.
+# `resolvable_for` (RESOLVE-UNMARKED-V1) is set-valued, one row per kind, and
+# never folds: it declares which kinds of entity the resolver may invent that
+# aspect for.
 SEMANTICS_PREDICATES = frozenset(
-    {"arity", "relation_family", "fold_policy", "structural", "durability"}
+    {"arity", "relation_family", "fold_policy", "structural", "durability",
+     "resolvable_for"}
 )
 INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from", "aka"}
 
