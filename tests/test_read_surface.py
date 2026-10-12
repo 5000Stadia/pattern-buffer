@@ -857,7 +857,7 @@ def test_s4_known_functional_key_byte_identical_but_value_type(wm):
     assert fact["entity"] == "person:ann" and fact["value"] == "place:hall"
     assert fact["valid"] == [1.0, None]
     assert fact["divergent"] is False and fact["b_value"] is None
-    assert set(fact["provenance"]) == {"status", "source_chain", "assertion_id"}
+    assert set(fact["provenance"]) == {"status", "source_chain", "assertion_id", "frame"}
 
 
 def test_s4_value_type_appended_after_b_value(wm):
