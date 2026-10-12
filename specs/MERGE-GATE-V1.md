@@ -165,8 +165,8 @@ Candidates are sorted by `(a, b)` and sent in batches of `batch_size` (default 2
 All on the five stored registries, through the shared path, with no model calls:
 
 1. **Candidate recall.** Every pair of ids that the grader reports as one split gold entity after
-   R24 is a candidate: **11 of 11** (par1b 4, par2b 7). The candidate count is reported: 84, 98,
-   92, 287 and 285 today, which is 4, 4, 4, 12 and 12 batches of 25.
+   R24 is a candidate: **11 of 11** (par1b 4, par2b 7). The candidate count is reported: 83, 97,
+   92, 286 and 284 today, which is 4, 4, 4, 12 and 12 batches of 25.
 2. **Oracle ceiling.** A test gate answers `same` exactly for the candidates whose two cards
    resolve to the same single gold entity, and `unsure` for every other pair. With it:
    - split entities are **0** in all five registries;
@@ -219,8 +219,9 @@ All on the five stored registries, through the shared path, with no model calls:
   - The build reports the exact counts before asking.
 - **Judged against:**
   - **Precision.** No `same` on any pair whose cards resolve to different gold entities, in
-    either repetition: 0 of the 43 gold-different candidates (run1 5, run2 9, seq 4, par1b 16, par2b
-    9).
+    either repetition: 0 of the 39 gold-different candidates (run1 4, run2 8, seq 4, par1b 15, par2b
+    8). The filter that drops pairs already held apart removes the vault pair, which the r1 count
+    of 43 included.
   - **Recall.** At least **8 of the 11** gold-same pairs merged, in each repetition.
   - **F1 not below R24's default** in any registry, in each repetition.
   - **Unlabelled candidates** (most pairs have no gold label): the number of `same` verdicts is
