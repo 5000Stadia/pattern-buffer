@@ -115,6 +115,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 - [x] R39 S1: the WorldService library (one handle, a serialized write queue, reads and resolve for every module, a rate cap) and an optional standalone runner with a `record` door — pbr GREEN, merged 2026-10-12 (`specs/WORLD-SERVICE-V1.md` r5; `patternbuffer.service`; whitepaper A27). The host attaches and pumps; viewers read an in-memory `World.snapshot()` through an explicit allowlist locked to the view frame; resolve plus mirror happens in one unit; the rate cap comes through `svc.gated(model)`; the runner is localhost only
 - [~] R40 S2: the player's-view export plus a change feed, for offline mirrors
 - [ ] R41 E3: worn things are objects (`worn_by`), promoted like furniture, after R35
+- [ ] R42 A host-only `closure(entity, asserted_as_of=None)` read (plus `distinct_between` if construct's swap needs it), so construct stops copying the engine's identity walk; after R40 merges. *Monitor's call for Kabe (gate gc857b5, note ne26319).*
 
 ## Later
 
