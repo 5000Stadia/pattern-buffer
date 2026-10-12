@@ -44,9 +44,9 @@ current behaviour.
 
 | Root cause | Automatic merges it explains | Examples (shared anchor → fused ids) |
 |---|---|---|
-| Sentence-like anchor | 8 distinct pairs | "singing into a wind that had tried and failed to quiet them" → ida, lena, mae, nell, opal, rue; "received corin in the guild hall" → anselm_varo, corin; "kit sent wren through the loose floor hatch" → two different events; "the true tale of the crown" → a title fused with a group |
-| Speaker-relative anchor | 6 distinct pairs | **"my apprentice" → wren, ash_apprentice and "his apprentice" → dorn_vale, ash_apprentice: this is the protagonist fusion**; "her prayer book", "his keys", "her father", "my father" (some may be right; none is evidence, since the words name a different thing for each speaker) |
-| Merge touching a frame owner | 38 of 125 | includes the protagonist fusion wren = ash_apprentice, and the ida group; also many right ones (tarn_vale = vale), which will now need one `confirm` each |
+| Sentence-like anchor | 8 distinct pairs | "singing into a wind that had tried and failed to quiet them" → ida, lena, mae, nell, opal, rue; "received corin in the guild hall" → anselm_varo, corin; "kit sent tamsin through the loose floor hatch" → two different events; "the true tale of the crown" → a title fused with a group |
+| Speaker-relative anchor | 6 distinct pairs | **"my apprentice" → tamsin, ash_apprentice and "his apprentice" → dorn_vale, ash_apprentice: this is the protagonist fusion**; "her prayer book", "his keys", "her father", "my father" (some may be right; none is evidence, since the words name a different thing for each speaker) |
+| Merge touching a frame owner | 38 of 125 | includes the protagonist fusion tamsin = ash_apprentice, and the ida group; also many right ones (tarn_vale = vale), which will now need one `confirm` each |
 
 ## §1 Sentence-like and speaker-relative anchors don't drive automatic merges
 
@@ -180,7 +180,7 @@ evidence begins "confirmed proposal: reconcile: …".
 
 **Measured effect:**
 - 38 of the 125 automatic merges in construct's worlds touch a frame owner.
-- Among them are the protagonist fusion (wren = ash_apprentice) and the six-way ida fusion.
+- Among them are the protagonist fusion (tamsin = ash_apprentice) and the six-way ida fusion.
 - Many are right (tarn_vale = vale), and construct confirms those. The proposals arrive already
   deduplicated, one per pair.
 

@@ -573,7 +573,7 @@ Why it is held. An internal pre-review measured on copies of construct's live
 worlds that following merges leaks knowledge, because automatic `reconcile`
 merges on garbage aliases had fused characters:
 - **"World B"** (`world B file 1`): the merged closure
-  {wren, dorn, dorn_vale, ash_apprentice} includes the protagonist. Under r1
+  {tamsin, dorn, dorn_vale, ash_apprentice} includes the protagonist. Under r1
   the protagonist's frame serves 58 rows instead of its own 19, including the 4
   clues seeded into NPC Dorn's frame (3 genuine, 1 red herring).
 - **"World C"** (`world C file 1` and 3 more):
@@ -680,7 +680,7 @@ g698a80), not to this build. r1's text follows, unchanged, for reference.
   - In `world C files`, `reconcile` merged
     `ida/lena/mae/nell/opal/rue` on the garbage alias "singing into
     a wind that had tried and failed to quiet them".
-  - In `world B file 1`, it merged `wren/dorn/ash_apprentice` on
+  - In `world B file 1`, it merged `tamsin/dorn/ash_apprentice` on
     "my apprentice"/"his apprentice".
   - Today the bad merge corrupts their canon facts. After, it also fuses their
     knowledge frames. Retracting those `same_as` rows splits both again, since

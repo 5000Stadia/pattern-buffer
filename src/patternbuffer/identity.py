@@ -288,7 +288,7 @@ class IdentityRegistry:
         """Shared attributes where BOTH sides hold present, DURABLE
         (CONSTITUTIVE/DISPOSITIONAL), and CONTRADICTORY folded values — the
         generalization of the kind veto to every standing fact (SHAPE-FIX-V1
-        Win 4; HD 089: a retrieval lead and a defense apprentice fused because
+        Win 4; HD 089: a supply lead and a ward apprentice fused because
         only `kind` was consulted). Two entities whose standing identities
         contradict are probably two things: a soft distinctness signal, same
         tier as a relating edge — auto-merge declines to a proposal; the host's

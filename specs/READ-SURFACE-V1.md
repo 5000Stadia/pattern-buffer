@@ -1096,10 +1096,10 @@ this spec names; none is unexplained.
   to unanswered); 420 serve every member of a set; 207 non-canon asks bind
   the asker's own word (rule B). Of the 207, 206 are references canon could
   not bind; one overrides a canon binding. In
-  `world B file 1`, Bee's frame aliases "the camp" to
+  `world B file 1`, Cai's frame aliases "the camp" to
   `person:oda_calder` alone; canon carries that alias on four people, so
-  canon binds the one camp in Bee's scene, `place:drainage_camp`, by kind.
-  Rule B, as specified, puts Bee's alias first, and here that serves an
+  canon binds the one camp in Cai's scene, `place:culvert_camp`, by kind.
+  Rule B, as specified, puts Cai's alias first, and here that serves an
   extraction-made alias over the likelier place (the root cause gate g3bf5da
   also names). Default 1 is on Kabe's list to revisit; this is its one live
   case of overriding canon.

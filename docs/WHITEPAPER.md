@@ -753,8 +753,8 @@ containment, `distinct_from` — are absolute):
 - **The durable-contradiction veto** — the kind-check generalized to *every
   standing fact*: two entities whose shared, present, **durable**
   (CONSTITUTIVE/DISPOSITIONAL) attributes hold contradictory values are probably
-  two things; auto-merge soft-declines to a proposal (a retrieval lead and a
-  defense apprentice do not fuse just because they share a first name). A
+  two things; auto-merge soft-declines to a proposal (a supply lead and a
+  ward apprentice do not fuse just because they share a first name). A
   live-play defect made this concrete.
 
 `proposals()` returns each open proposal with a structured `auto_decline`
