@@ -51,6 +51,7 @@ _Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches A�
 | BUILD-TIMINGS-V1 | Roadmap R26 (harness only): per-stage build timings; `Pipeline.pass0(parallel=, glean=)`, both off by default. Measured: parallel pass-0 is ~2.7x faster but fragments the registry; stays off until the merge gate (R25) |
 | SECOND-WRITER guard (fix) | One live World per file, enforced: a buffer that sees SQLite's `data_version` move (another connection committed) raises `SecondWriter`, latching; the unit authorizer admits only that read-only pragma. Not multi-writer support. pbr GREEN 2026-10-10 |
 | RESOLVE-REQUEST-V1 | A `patternbuffer_resolve` call carries a `ResolveRequest` (entity, aspect, kind, inherited and declared constraints, as_of, frame, policy) on its schema object (`TaskSchema`, byte-identical JSON); code generators read it with `task_request()`. E2 of the unified world access structure. pbr GREEN 2026-10-12 |
+| R21 indexes split | `indexes.py` becomes the package `indexes/` (`_core`, `fold`, `walks`, `knowledge`, `events`, `neighborhood`, `routes`), with one `Indexes` façade and every name re-exported. Five private reach-ins get public names, with aliases kept. Byte-identical: 165 construct worlds, about 1.79M reads, 0 differences. pbr GREEN 2026-10-12 |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs — decisions in effect
