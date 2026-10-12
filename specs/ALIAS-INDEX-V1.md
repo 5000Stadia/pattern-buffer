@@ -1,6 +1,6 @@
 # ALIAS-INDEX-V1: a deterministic alias pass between pass-0 and pass-1 (roadmap R24)
 
-**Status:** r4 (2026-10-12): it answers pbr's code RED.
+**Status:** r4.1 (2026-10-12): two-flag wording throughout (pbr r4). r4 answered pbr's code RED.
 - **A different finalization.** The grader's seeded measure ran `reconcile`; `Pipeline.commit`
   never does. So the r2 table measured a finalization that real book commits do not run.
 - **What re-measuring showed.** Without `reconcile`, no registry fuses the vaults and none merges
@@ -179,7 +179,9 @@ The findings:
   - It writes only non-person strong pairs. On every stored registry its one effect is the vault
     split.
   - The chapter test is re-run with it on, and must stay green.
-  - `alias_distinct=False` restores today's commit exactly.
+  - *(r4.1)* Only `Pipeline(reconcile=False, alias_distinct=False)` restores today's commit exactly.
+    With `reconcile=True` (the default), turning `alias_distinct` off still changes the log through
+    reconciliation.
 
 ### Pass mark (fixed before the build; restated in r4)
 
@@ -203,8 +205,15 @@ compared with the same path with `alias_distinct=False` (reconcile on), and with
 5. **No person pair gets a `distinct_from`.** A fixture with two person cards that have different
    proper names and share an alias gets no row, and a later `correlate` between them still
    succeeds.
-6. The chapter test and the full suite are green with the flag on. With it off, a commit's log is
-   byte-identical to today's.
+6. *(r4.1)* **The three modes, by both flags.** The suite is green, and the stored-registry
+   measures and the 4b fixture commit assert:
+   - `(reconcile=True, alias_distinct=True)`, the default: it reconciles, and the vault pair stays
+     apart;
+   - `(reconcile=True, alias_distinct=False)`: the vault fusion appears;
+   - `(reconcile=False, alias_distinct=False)`: the commit's log is byte-identical to today's.
+
+   The chapter test with the default flags is a metered run, and goes with the next metered build
+   (R27), which goes back to Kabe first. It remains required.
 7. *(r3)* **Determinism and compatibility.**
    - The same staged `run_dir` committed twice, once by the `Pipeline` that ran pass-0 and once by
      a fresh `Pipeline` constructed on that `run_dir`, produces byte-identical world logs and
