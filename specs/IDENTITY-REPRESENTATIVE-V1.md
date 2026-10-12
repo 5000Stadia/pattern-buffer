@@ -1,6 +1,6 @@
 # IDENTITY-REPRESENTATIVE-V1: a host merge can name the id the closure is served under
 
-**Status:** r3. It answers pbr's r2 RED on the already-merged path (§1a, §1b). pbr agreed the
+**Status:** r3.1. Check 5a is narrowed to designated calls only (pbr). r3: It answers pbr's r2 RED on the already-merged path (§1a, §1b). pbr agreed the
 election rule; r2 folded in construct's answers (mc29a14). Author: pb, 2026-10-12.
 
 **Source.** Construct's ask m0243e8 (its gate gc53c58), a root cause found on a fresh build of the
@@ -122,9 +122,11 @@ authored arc after each merge.
    row with the wrong status, or on a non-host merge event, elects nothing.
 5. **Validation.** A representative outside both closures raises before any write.
 5a. **Re-point** *(r3)*:
-    - `merge`, `confirm` and `retype(absorb=)` on an already-merged pair each write exactly the
-      §1a rows, with no `same_as` or `caused_by`, and report `noop_already_merged` with
-      `repointed: true`;
+    - `merge` and `confirm` **given `representative=`**, and `retype(absorb=)`, which designates
+      implicitly, on an already-merged pair each write exactly the §1a rows, with no `same_as` or
+      `caused_by`, and report `noop_already_merged` with `repointed: true`;
+    - **without** `representative=`, a no-op `merge(a, b)` or `confirm(a, b)` writes nothing and its
+      Receipt is byte-identical to today *(r3.1, pbr)*;
     - retracting the re-point event's `kind` row, or its `representative` row, withdraws it;
     - a `vetoed` or `no_proposal` outcome writes nothing, with or without `representative=`.
 6. **Byte-identity.** On copies of construct's worlds, which hold no designations, `resolve` and
