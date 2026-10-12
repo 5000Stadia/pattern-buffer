@@ -1,6 +1,8 @@
 # ALIAS-INDEX-V1: a deterministic alias pass between pass-0 and pass-1 (roadmap R24)
 
-**Status:** r4.1 (2026-10-12): two-flag wording throughout (pbr r4). r4 answered pbr's code RED.
+**Status:** r4.2 (2026-10-12): reconciliation is coupled to Part B. Its default is `auto`: on
+exactly when Part B runs, so a commit with no source is today's commit (pbr r4.1). r4.1: two-flag
+wording (pbr r4). r4 answered pbr's code RED.
 - **A different finalization.** The grader's seeded measure ran `reconcile`; `Pipeline.commit`
   never does. So the r2 table measured a finalization that real book commits do not run.
 - **What re-measuring showed.** Without `reconcile`, no registry fuses the vaults and none merges
@@ -119,10 +121,15 @@ The findings:
 - **Both paths use it.** `Pipeline.commit` and `grade_registry.seeded_registry` both call
   `seed_world`, then `alias_distinct_pass` (when on, with a source), then, in commit only, the
   pass-1 replay and classification, then `finalize_identity`. Nothing else differs.
-- **`Pipeline(reconcile=True)` by default.** Book commits now reconcile. `reconcile=False,
-  alias_distinct=False` is today's commit, byte-identical.
-- **Why default-on for both.** Reconcile without Part B fuses the vaults; Part B without reconcile
-  does nothing. They are on together, and each can be turned off for measurement.
+- *(r4.2)* **`Pipeline(reconcile="auto", alias_distinct=True)` by default.** `reconcile` takes
+  `"auto"`, `True` or `False`.
+  - **`"auto"`** reconciles **exactly when Part B runs**: when `alias_distinct` is on and a source
+    exists. With no source, or with `alias_distinct=False`, `"auto"` does not reconcile. The commit
+    is then today's, byte for byte.
+  - **`True` / `False`** force it either way. They exist for measurement.
+- **Why coupled.** Reconcile without Part B fuses the vaults, and Part B without reconcile does
+  nothing. So the default never runs one without the other. A direct `commit()` caller with no
+  source keeps today's behaviour.
 
 ### The shape
 
@@ -179,9 +186,10 @@ The findings:
   - It writes only non-person strong pairs. On every stored registry its one effect is the vault
     split.
   - The chapter test is re-run with it on, and must stay green.
-  - *(r4.1)* Only `Pipeline(reconcile=False, alias_distinct=False)` restores today's commit exactly.
-    With `reconcile=True` (the default), turning `alias_distinct` off still changes the log through
-    reconciliation.
+  - *(r4.2)* Today's commit, byte-identical, is any run in which nothing reconciles. That covers
+    the default with no source; the default with `alias_distinct=False`; and an explicit
+    `reconcile=False` with `alias_distinct=False`. With an explicit `reconcile=True`, turning
+    `alias_distinct` off still changes the log through reconciliation.
 
 ### Pass mark (fixed before the build; restated in r4)
 
@@ -205,12 +213,14 @@ compared with the same path with `alias_distinct=False` (reconcile on), and with
 5. **No person pair gets a `distinct_from`.** A fixture with two person cards that have different
    proper names and share an alias gets no row, and a later `correlate` between them still
    succeeds.
-6. *(r4.1)* **The three modes, by both flags.** The suite is green, and the stored-registry
-   measures and the 4b fixture commit assert:
-   - `(reconcile=True, alias_distinct=True)`, the default: it reconciles, and the vault pair stays
-     apart;
-   - `(reconcile=True, alias_distinct=False)`: the vault fusion appears;
-   - `(reconcile=False, alias_distinct=False)`: the commit's log is byte-identical to today's.
+6. *(r4.2)* **The modes, by both flags and the source.** The suite is green, and the
+   stored-registry measures and the 4b fixture commit assert:
+   - `("auto", True)` with a source, the default: it reconciles, and the vault pair stays apart;
+   - `("auto", True)` with **no source**: Part B is skipped, nothing reconciles, and the log is
+     byte-identical to today's;
+   - `("auto", False)`: the log is byte-identical to today's;
+   - `(True, False)`: it reconciles, and the vault fusion appears (the measurement mode);
+   - `(False, False)`: the log is byte-identical to today's.
 
    The chapter test with the default flags is a metered run, and goes with the next metered build
    (R27), which goes back to Kabe first. It remains required.
@@ -218,8 +228,9 @@ compared with the same path with `alias_distinct=False` (reconcile on), and with
    - The same staged `run_dir` committed twice, once by the `Pipeline` that ran pass-0 and once by
      a fresh `Pipeline` constructed on that `run_dir`, produces byte-identical world logs and
      identical `alias_index.json` files.
-   - A `run_dir` with no `source_segments.json`, and no `segments` argument, commits exactly as
-     today, and its report says `skipped: no_source`.
+   - *(r4.2)* A `run_dir` with no `source_segments.json`, and no `segments` argument, under the
+     default flags, commits exactly as today: no Part B and no reconcile. Its report says
+     `skipped: no_source`.
    - A tampered `source_segments.json` raises before anything is written.
    - *(r4)* An **empty** segment list is not a source. A file holding `[]`, even with a matching
      digest, raises before any write, and so does an explicit `segments=[]`.
