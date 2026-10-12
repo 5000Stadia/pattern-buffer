@@ -1,6 +1,7 @@
 # IDENTITY-REPRESENTATIVE-V1: a host merge can name the id the closure is served under
 
-**Status:** r1, spec for pbr review before code. Author: pb, 2026-10-12.
+**Status:** r2. It folds in construct's answers (mc29a14) on the later-merge default, retype, and
+the receipt, and supersedes r1 in review. Author: pb, 2026-10-12.
 
 **Source.** Construct's ask m0243e8 (its gate gc53c58), a root cause found on a fresh build of the
 ironhold seed:
@@ -26,8 +27,14 @@ authored arc after each merge.
 
 1. **The designation.**
    - `merge(a, b, evidence, representative=None)` and `confirm(a, b, representative=None)` take an
-     optional `representative`. Construct's ask covers only these two verbs; `retype(absorb=)` is
-     left out of r1 and can follow.
+     optional `representative`.
+   - **`retype(spurious, kind, absorb=target)` designates `target` implicitly** *(r2, construct)*.
+     Absorbing a slip id into its target always keeps the target as the representative.
+     - **Why:** construct calls it at build time (`typing_conflicts` then `retype`). If the slip id
+       was seen first, today it becomes the canonical id, so a wrong-kind id (`person:harth` for
+       `place:harth`) would be served as the place.
+     - **Scope:** this applies to future retype calls only. Earlier absorbs carry no designation and
+       elect as before.
    - The value must be `a`, `b`, or a member of either one's closure. Anything else raises
      `ValueError` before any write.
    - When given, the merge event gains one row, `event:merge_N · representative · <id>`.
@@ -57,6 +64,13 @@ authored arc after each merge.
 5. **Engine and legacy merges** elect first-seen, as now. A closure with no honoured designation is
    byte-identical to today.
 
+6. **The receipt names the representative** *(r2, construct)*.
+   - Every merge, confirm and retype Receipt already carries `canonical_id`, which is `resolve(a)`
+     after the write. It **is** the elected representative, and this spec pins that meaning in a
+     test.
+   - A host asserts `receipt["canonical_id"] == <its arc id>` before writing plot rows.
+   - For a vetoed merge the field still reads the pre-merge closure's id, as today.
+
 ## What changes, and for whom
 
 - **Only closures with an honoured host designation** change the canonical id they are served
@@ -71,7 +85,12 @@ authored arc after each merge.
 1. **Construct's case.** merge(elias, elias_venn, representative=elias) means `resolve` of either
    id is `person:elias`. Without `representative`, it is `person:elias_venn`, as today.
 2. **Latest wins.** A newer designation re-points the closure. A third id merged without one keeps
-   the standing representative.
+   the standing representative. That is construct's requirement: the arc's id must not move when a
+   later fold adds a fragment.
+2a. **Retype.** `retype(person:harth, "place", absorb=place:harth)` keeps `place:harth` as the
+    representative even when `person:harth` was seen first.
+2b. **Receipt.** `canonical_id` equals the designated representative after merge, confirm and
+    retype.
 3. **Retraction.**
    - Retracting the designation row reverts to the prior designation or first-seen.
    - Retracting the merge's `same_as` edge cancels its designation and splits the closure (R35 §2
