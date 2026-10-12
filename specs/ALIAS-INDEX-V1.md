@@ -1,6 +1,7 @@
 # ALIAS-INDEX-V1: a deterministic alias pass between pass-0 and pass-1 (roadmap R24)
 
-**Status:** r2 (2026-10-12): Part B specified, for pbr's review. r1 (2026-10-10): Part A built
+**Status:** r3 (2026-10-12): it answers pbr's r2 RED. Commit reads a durable source, and a
+fresh `Pipeline` reproduces the same commit (marked *(r3)*). r2: Part B specified. r1 (2026-10-10): Part A built
 and merged to local main (evals only). Part B was unblocked by g3bf5da P3 and R35, and the
 monitor started it for Kabe (note nd86f34). Research note technique 1
 (`docs/research/book-to-world-extraction-2026-10.md`), reshaped by what R23
@@ -83,6 +84,26 @@ The findings:
   (`seed_items`) and before pass-1's items are replayed, classified and promoted.
   - The pipeline runs `alias_index.build_report(registry, segments)` on the same segments pass-0
     read.
+- **The source is durable, not in memory** *(r3, pbr)*.
+  - **`pass0` writes it.** `pass0` writes the exact parts it read (its `segments`, or `[text]`)
+    to `run_dir/source_segments.json`, as `{"segments": [...], "sha256": <of the canonical JSON
+    of the list>}`, beside `registry.json`.
+  - **The file is the only source.** Nothing is cached in memory. A fresh `Pipeline` pointed at an
+    already-staged `run_dir` reads the same file.
+  - **`commit` takes an optional argument.** It becomes `commit(world_path, registry,
+    segments=None)`. The source is chosen in this order:
+    1. an explicit `segments` argument;
+    2. otherwise `run_dir/source_segments.json`, whose `sha256` must verify (a mismatch raises
+       before anything is written);
+    3. otherwise **no source**. Part B is skipped, a warning is logged, and the report records
+       `{"part_b": "skipped", "reason": "no_source"}`. The commit's log is then byte-identical to
+       today's, so existing direct `commit()` callers are unaffected.
+  - **The report is built at commit, from the registry being committed.** Any change
+    `repair_escapes` makes to the registry (it extends the registry and saves it) is therefore
+    included, with no separate binding step.
+  - **`run_dir/alias_index.json`.** The report Part B acted on is written here, carrying
+    `registry_sha256` (of the canonical registry JSON as seeded) and `segments_sha256`. A rerun
+    can be checked against it.
   - For each **strong** distinctness pair (Part A item 5: different proper names, or coordination)
     whose two ids are both seeded, it writes `porcelain.reject(a, b)`, the host's `distinct_from`.
   - Then the engine's own gate, `promote_identity_proposals` and `reconcile`, respect it as they
@@ -94,8 +115,12 @@ The findings:
     false name: the disguise, the reveal. A `distinct_from` is a hard veto. It would block the
     later `merge`, and it would also block `correlate`, the reveal path (FRAME-SCOPED-IDENTITY-V1
     §3(a)).
-  - **So the pass writes `distinct_from` only when neither id is a person.** The person namespace,
-    and a `kind` of `person`, are the same test S2 uses.
+  - **So the pass writes `distinct_from` only when neither id is a person.** *(r3)* A person is:
+    - an id whose normalized form (`_norm_id`) is in the `person:` namespace; or
+    - an id whose seeded **card** `kind` is `person`; or
+    - an id whose canon `kind`, folded in the world after seeding, is `person`.
+
+    The pass checks all three, and any one makes the pair report-only.
   - **Strong person pairs are written to the report only.** In par1b these are Sela Voss / Tovan
     Voss and Cray / Marn. A host may act on them.
 - **Merge candidates stay report-only** (above).
@@ -126,6 +151,15 @@ B exactly as `Pipeline.commit` does, under the same engine as main:
    succeeds.
 6. The chapter test and the full suite are green with the flag on. With it off, a commit's log is
    byte-identical to today's.
+7. *(r3)* **Determinism and compatibility.**
+   - The same staged `run_dir` committed twice, once by the `Pipeline` that ran pass-0 and once by
+     a fresh `Pipeline` constructed on that `run_dir`, produces byte-identical world logs and
+     identical `alias_index.json` files.
+   - A `run_dir` with no `source_segments.json`, and no `segments` argument, commits exactly as
+     today, and its report says `skipped: no_source`.
+   - A tampered `source_segments.json` raises before anything is written.
+   - A registry changed by `repair_escapes` is the registry the report reads: its
+     `registry_sha256` matches the saved `registry.json`.
 
 No new metered build is run for this item. A run that measures it end to end belongs to R27, which
 comes back to Kabe first.
