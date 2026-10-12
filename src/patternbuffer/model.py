@@ -117,6 +117,9 @@ META_ATTRIBUTES = frozenset(
 # and the gate.
 # - `retracts` hides its target (truth maintenance, `retracted`).
 # - `resolved_by` spends a thunk and names its memo (the resolver, `generated`).
+# - `decided_by` records who decided an identity merge (IDENTITY-ROOT-CAUSES-V1
+#   §3): the identity registry writes it on the `identity_merge` event, with
+#   status `inferred`, and readers honor it only there.
 # - `learned_at_wallclock` is the tracking-mode confirmation stamp that
 #   confidence() recency reads (the gate's A1 rider, `observed`; r2).
 # - `canonicalized_from` is replayed into the attribute-alias map on open (the
@@ -131,6 +134,7 @@ MECHANISM_STATUS = MappingProxyType({
     "retracts": "retracted",
     "resolved_by": "generated",
     "learned_at_wallclock": "observed",
+    "decided_by": "inferred",
 })
 MECHANISM_ATTRIBUTES = frozenset(MECHANISM_STATUS) | {
     "canonicalized_from", "source_valid_from", "correction_proposal"}

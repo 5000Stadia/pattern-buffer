@@ -40,6 +40,37 @@ _HONORIFICS = frozenset({
 })
 
 
+# IDENTITY-ROOT-CAUSES-V1 §1: only a name-like anchor is identity evidence. An
+# anchor is name-like when it has at most this many raw words (a sentence or
+# clause is not a name) and does not open with a speaker-relative possessive
+# ("my apprentice" names a different person for every speaker). Frozen:
+# changing either is a spec change.
+_NAME_MAX_WORDS = 5
+_RELATIVE_POSSESSIVES = frozenset({"my", "our", "your", "his", "her", "their", "its"})
+
+# IDENTITY-ROOT-CAUSES-V1 §3: who decided an identity merge.
+DECIDED_BY_VALUES = ("host", "statement", "engine")
+
+# The evidence prefixes of merges written before `decided_by` existed, and the
+# value each derives (§3). Anything else reads `unknown`, which every policy
+# treats as `engine` (the cheaper error: an unclear merge counts as automatic).
+_LEGACY_DECIDED_BY = (
+    ("reconcile:", "engine"),
+    ("promoted from", "engine"),
+    ("adjudicate_deferred:", "engine"),
+    ("confirmed proposal:", "host"),
+    ("retype absorb:", "host"),
+)
+
+# The proposal evidence reconcile records for a pair the auto gate declined
+# for a named identity reason (§1, §4); any other decline keeps the generic text.
+_PROPOSAL_EVIDENCE = {
+    "not_name_like": "reconcile: shared anchor not name-like (adjudicate)",
+    "frame_owner": "reconcile: frame owner, host confirmation required",
+}
+_GENERIC_PROPOSAL_EVIDENCE = "reconcile: shared anchor, gate declined (adjudicate)"
+
+
 # REFER-LEARNING-V1 §2/§7: the `source` receipt prefix of every word refer
 # learns. On a `learned_alias` row it is the receipt; on an `alias` row it marks
 # a legacy learned alias, written by the retired pre-spec accrual path.
@@ -66,6 +97,25 @@ def _content_tokens(text: str) -> list[str]:
             continue
         out.append(tok)
     return out
+
+
+def _anchor_words(text: str) -> list[str]:
+    """The raw words of an anchor (IDENTITY-ROOT-CAUSES-V1 §1(a)): lowercase,
+    split on anything that is not a letter, a digit or an apostrophe, every
+    word kept — articles and honorifics included. Not `_content_tokens`, which
+    drops them: right for comparing names, wrong for spotting a sentence."""
+    words = re.findall(r"(?:[^\W_]|')+", text.lower())
+    return [w for w in words if any(c.isalnum() for c in w)]
+
+
+def _name_like(text: str) -> bool:
+    """Whether an anchor can be identity evidence (§1): at most five raw words,
+    and not opening with a speaker-relative possessive. A non-name-like anchor
+    stays a good `alias` row for lookup; only its weight as evidence is gone."""
+    words = _anchor_words(text)
+    if len(words) > _NAME_MAX_WORDS:
+        return False
+    return not (words and words[0] in _RELATIVE_POSSESSIVES)
 
 
 class IdentityRegistry:
@@ -99,6 +149,13 @@ class IdentityRegistry:
         self._component_of: dict[str, frozenset[str]] = {}
         self._representative: dict[frozenset[str], str] = {}
         self._first_seen: dict[str, int] | None = None
+        # IDENTITY-ROOT-CAUSES-V1 §2/§4: two more head-time views, derived per
+        # log version and never stored — the retracted-merge edges, and which
+        # entities own a `knows:` frame.
+        self._retracted_version = -1
+        self._retracted_edges: list[tuple[str, str]] = []
+        self._owner_version = -1
+        self._frame_owner: dict[str, bool] = {}
 
     def set_kind_provider(self, fn) -> None:
         """Install the kind-fold lookup the recall gate consults (§2)."""
@@ -282,7 +339,8 @@ class IdentityRegistry:
     def containment_related(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
         return bool(self.containment_block(a, b, asserted_as_of))
 
-    def merge(self, a: str, b: str, evidence: str) -> str | None:
+    def merge(self, a: str, b: str, evidence: str,
+              decided_by: str = "engine") -> str | None:
         """Identity merge, logged as an event (auditable, reversible by
         retraction). Returns the merge event's entity id, or None if vetoed.
 
@@ -291,15 +349,25 @@ class IdentityRegistry:
         not its contents). The veto lives here so a direct/manual merge()
         cannot bypass it — not only at the ingest same_as→maybe_same_as gate.
         A vetoed pair is left distinct; the bad proposal stays unpromoted and
-        is repaired forward by retracting the offending edge."""
-        rows = self._merge_rows(a, b, evidence)
+        is repaired forward by retracting the offending edge.
+
+        ``decided_by`` records who decided the merge (IDENTITY-ROOT-CAUSES-V1
+        §3): the caller says, nothing is inferred from the evidence text. A
+        bare ``merge`` is the engine's own act unless the caller is a host."""
+        rows = self._merge_rows(a, b, evidence, decided_by)
         return None if rows is None else rows[0].entity
 
-    def _merge_rows(self, a: str, b: str, evidence: str) -> list[Assertion] | None:
+    def _merge_rows(self, a: str, b: str, evidence: str, decided_by: str,
+                    extracted: bool = False) -> list[Assertion] | None:
         """`merge`'s body: re-check both hard vetoes, then append the merge's
-        four rows — the `identity_merge` event, the `same_as` edge
-        (`inferred`, timeless), its `caused_by`, and the evidence — and
-        return them in append order (None when vetoed)."""
+        rows — the `identity_merge` event, the `same_as` edge (`inferred`,
+        timeless), its `caused_by`, the evidence, who decided it
+        (``decided_by``: host | statement | engine) and, for a statement that
+        came from prose extraction, `extracted · true` — and return them in
+        append order (None when vetoed)."""
+        if decided_by not in DECIDED_BY_VALUES:
+            raise ValueError(
+                f"decided_by must be one of {DECIDED_BY_VALUES}, got {decided_by!r}")
         if self.containment_related(a, b):
             logger.warning(
                 "merge vetoed: %s and %s are containment-related (a thing is "
@@ -329,8 +397,18 @@ class IdentityRegistry:
             entity=event_id, attribute="evidence", value=evidence,
             status="inferred", role=self._ingestor,
         )
-        logger.info("merge %s == %s (%s)", a, b, evidence)
-        return [event, edge, cause, proof]
+        decision = self._buffer.append(
+            entity=event_id, attribute="decided_by", value=decided_by,
+            status="inferred", role=self._ingestor,
+        )
+        rows = [event, edge, cause, proof, decision]
+        if extracted:
+            rows.append(self._buffer.append(
+                entity=event_id, attribute="extracted", value=True,
+                status="inferred", role=self._ingestor,
+            ))
+        logger.info("merge %s == %s (%s; decided by %s)", a, b, evidence, decided_by)
+        return rows
 
     def maybe_same_as(self, a: str, b: str, evidence: str) -> None:
         """Ambiguity is represented, not forced: the edge survives until
@@ -479,6 +557,82 @@ class IdentityRegistry:
                 out.add((row.attribute, row.value.strip().lower()))
         return out
 
+    # -------------------- IDENTITY-ROOT-CAUSES-V1: decided-against and frame owners
+
+    def _retracted_merge_edges(self) -> list[tuple[str, str]]:
+        """The endpoints of every canon `same_as` row a marked retraction hides
+        at head (§2) — each one a recorded decision that these two were judged
+        not one thing. One buffer query per log version, like `_components()`;
+        the head view only (the automatic paths are head-time)."""
+        version = self._buffer.log_version
+        if self._retracted_version != version:
+            self._retracted_edges = [
+                (row.entity, row.value)
+                for row in self._buffer.retracted_targets(
+                    attribute="same_as", frame=CANON)
+                if row.value_type == "entity" and isinstance(row.value, str)
+            ]
+            self._retracted_version = version
+        return self._retracted_edges
+
+    def _settled_apart(self, a: str, b: str) -> bool:
+        """Whether a retracted merge settles a and b apart (§2): some retracted
+        `same_as` edge has one endpoint in a's closure and the other in b's.
+        Only the edge counts — retracting the `identity_merge` event alone
+        changes no closure and settles nothing. The automatic paths never
+        merge such a pair and `reconcile` never re-proposes it; the host verbs
+        (`merge`, `confirm`) can still decide it."""
+        edges = self._retracted_merge_edges()
+        if not edges:
+            return False
+        clos_a, clos_b = self.closure(a), self.closure(b)
+        return any((x in clos_a and y in clos_b) or (x in clos_b and y in clos_a)
+                   for x, y in edges)
+
+    def _owns_frame(self, entity: str) -> bool:
+        """Whether the entity's closure owns a frame (§4): some member `m` has
+        a visible row in frame `knows:m`. A frame owner is a point of view;
+        fusing two of them fuses who knows what. Derived per log version."""
+        version = self._buffer.log_version
+        if self._owner_version != version:
+            self._frame_owner = {}
+            self._owner_version = version
+        for member in self.closure(entity):
+            owns = self._frame_owner.get(member)
+            if owns is None:
+                owns = self._frame_owner[member] = bool(
+                    self._buffer.visible(frame=f"knows:{member}"))
+            if owns:
+                return True
+        return False
+
+    def merge_decided_by(self, merge_event_id: str,
+                         asserted_as_of: int | None = None) -> str:
+        """Who decided a merge event (§3): `host`, `statement`, `engine` — or
+        `unknown` for a merge written before `decided_by` existed whose
+        evidence names no verb (every policy treats `unknown` as `engine`).
+        The row is honored only on a `kind · identity_merge` event that carries
+        this component's mark (`inferred`); a forged row decides nothing. Old
+        merges derive from their evidence prefix at read time — nothing is
+        written for them."""
+        buf = self._buffer
+        kinds = buf.visible(entity=merge_event_id, attribute="kind",
+                            frame=CANON, asserted_as_of=asserted_as_of)
+        if not any(k.value == "identity_merge" and k.status == "inferred"
+                   for k in kinds):
+            return "unknown"
+        for row in buf.visible(entity=merge_event_id, attribute="decided_by",
+                               frame=CANON, asserted_as_of=asserted_as_of):
+            if row.status == "inferred" and row.value in DECIDED_BY_VALUES:
+                return row.value
+        for row in buf.visible(entity=merge_event_id, attribute="evidence",
+                               frame=CANON, asserted_as_of=asserted_as_of):
+            text = str(row.value)
+            for prefix, derived in _LEGACY_DECIDED_BY:
+                if text.startswith(prefix):
+                    return derived
+        return "unknown"
+
     def _kind_state(self, a: str, b: str) -> str:
         """Kind relation for the recall gate (§2): 'conflict' (a contested or
         differing kind — never a merge basis), 'present_equal' (both folded
@@ -505,57 +659,87 @@ class IdentityRegistry:
         return "noncommittal"
 
     def _mergeable(self, a: str, b: str) -> bool:
-        """The single AUTO-merge gate (used by promote + reconcile), now
-        precision-biased (V2 §3): the author individuates through structure and
-        the engine only auto-merges the obvious. Any distinctness signal
-        downgrades to a proposal — a shared proper `name` merges at any length
-        under non-conflicting kind, a shared `alias` merges only if specific
-        (>=2 content tokens) with present-equal kind, BUT not if a relating edge
-        joins them or the shared anchor is just the type word."""
+        """The single AUTO-merge gate (used by promote + reconcile): whether
+        `_auto_verdict` is `merge`."""
+        return self._auto_verdict(a, b) == "merge"
+
+    def _auto_verdict(self, a: str, b: str) -> str:
+        """The AUTO-merge decision, precision-biased (V2 §3): the author
+        individuates through structure and the engine only auto-merges the
+        obvious. Any distinctness signal downgrades to a proposal — a shared
+        proper `name` merges at any length under non-conflicting kind, a shared
+        `alias` merges only if specific (>=2 content tokens) with present-equal
+        kind, BUT not if a relating edge joins them or the shared anchor is
+        just the type word.
+
+        IDENTITY-ROOT-CAUSES-V1: only a name-like anchor counts as evidence
+        (§1); a pair a retracted merge settled apart is never merged (§2); and
+        a pair either of whose closures owns a `knows:` frame is left to the
+        host (§4). Returns `merge`, or the decline: `settled_apart` (never
+        re-proposed), `not_name_like` or `frame_owner` (proposed with their own
+        evidence), or `declined` (any other soft or hard decline)."""
         if self.resolve(a) == self.resolve(b):
-            return False
+            return "declined"
         if self.containment_related(a, b):     # hard: a thing is not its container
-            return False
+            return "declined"
         if self.distinct_block(a, b):          # hard: explicitly marked distinct (§1)
-            return False
+            return "declined"
         # FRAME-SCOPED-IDENTITY-V1 §3(c), amending AKA-CORRELATION-V1 §1: `aka`
         # is a SOFT auto-merge block. A timeless same_as would swallow a
         # valid-timed reveal and leak the masked figure's name to before it —
         # the backward leak `aka` exists to prevent. Host-authoritative merges
         # (merge, confirm, retype's absorb) stay available.
         if self._aka_relates(a, b):            # soft: correlated facets are two things
-            return False
+            return "declined"
         # FRAME-SCOPED-IDENTITY-V1 §3(c) (r2): correlate's group-level veto —
         # a canon `distinct_from` between a's correlation group and b's. The
         # merge would put it inside one group (a~b, b distinct_from x: merging
         # a with x joins x to b's group). In `correlate`'s order: after the
         # already-correlated test.
         if self._group_distinct_block(a, b):   # the world says the groups differ
-            return False
+            return "declined"
+        # IDENTITY-ROOT-CAUSES-V1 §2: a retracted merge is a decision — settled
+        # apart, like the hard blocks, for every automatic purpose.
+        if self._settled_apart(a, b):
+            return "settled_apart"
         if self.relating_edges_between(a, b):  # soft: related ⇒ probably distinct (§3a)
-            return False
+            return "declined"
         if self.durable_contradictions(a, b):  # soft: standing facts contradict (Win 4)
-            return False
+            return "declined"
         ta, tb = self.typed_name_anchors(a), self.typed_name_anchors(b)
         shared = {t for (_, t) in ta} & {t for (_, t) in tb}
         if not shared:
-            return False
+            return "declined"
         kind = self._kind_state(a, b)
         if kind == "conflict":
-            return False
+            return "declined"
         # §3b: a shared anchor whose text is just the entity's kind value (the
         # *type word*, e.g. name "bedroom" on kind bedroom) is non-distinctive —
         # it does not drive an auto-merge.
         kinds = self._kind_values(a) | self._kind_values(b)
-        for text in shared:
-            if text in kinds:
-                continue  # non-distinctive type-word anchor
+        distinctive = [t for t in shared if t not in kinds]
+        # IDENTITY-ROOT-CAUSES-V1 §1: of those, only a name-like anchor is
+        # identity evidence; a sentence or a speaker-relative phrase is
+        # description. Every shared anchor failing is its own decline.
+        evidence = [t for t in distinctive if _name_like(t)]
+        if distinctive and not evidence:
+            return "not_name_like"
+        agreed = False
+        for text in evidence:
             name_strength = ("name", text) in ta or ("name", text) in tb
             if name_strength:
-                return True  # non-conflicting kind already ensured
+                agreed = True  # non-conflicting kind already ensured
+                break
             if kind == "present_equal" and len(_content_tokens(text)) >= 2:
-                return True
-        return False
+                agreed = True
+                break
+        if not agreed:
+            return "declined"
+        # IDENTITY-ROOT-CAUSES-V1 §4: a frame owner is a point of view; the
+        # engine never fuses two on its own. The host says `confirm`.
+        if self._owns_frame(a) or self._owns_frame(b):
+            return "frame_owner"
+        return "merge"
 
     def name_collisions(self, frame: str = CANON,
                         valid_as_of: float | None = None) -> list[dict]:
@@ -617,6 +801,10 @@ class IdentityRegistry:
             # their correlation groups — reconcile neither merges nor proposes
             # the pair, so it is settled, not a gap for reconcile to close.
             return "hard_blocked", "distinct_group"
+        if self._settled_apart(a, b):
+            # IDENTITY-ROOT-CAUSES-V1 §2: a retracted merge decided these apart;
+            # reconcile neither merges nor re-proposes the pair — settled.
+            return "hard_blocked", "retracted_merge"
         if self._kind_state(a, b) == "conflict" and (
                 self._slip_asymmetry(a, b) or self._slip_asymmetry(b, a)):
             return "typing_slip", None                   # host fixes with retype(absorb=)
@@ -655,7 +843,8 @@ class IdentityRegistry:
                                           frame=CANON)
                 self.merge(a, b, evidence=(
                     f"promoted from {row.id}: gated coreference"
-                    + (f"; proposal evidence: {ev[0].value}" if ev else "")))
+                    + (f"; proposal evidence: {ev[0].value}" if ev else "")),
+                    decided_by="engine")
                 promoted += 1
         if promoted:
             logger.info("identity promotion: %d merge(s)", promoted)
@@ -690,9 +879,13 @@ class IdentityRegistry:
                     a, b = members[i], members[j]
                     if self.resolve(a) == self.resolve(b):
                         continue  # collapsed by an earlier merge this pass
-                    if self._mergeable(a, b):
-                        self.merge(a, b, evidence="reconcile: gated shared-anchor coreference")
+                    verdict = self._auto_verdict(a, b)
+                    if verdict == "merge":
+                        self.merge(a, b, evidence="reconcile: gated shared-anchor coreference",
+                                   decided_by="engine")
                         merged += 1
+                    elif verdict == "settled_apart":
+                        continue  # IDENTITY-ROOT-CAUSES-V1 §2: decided apart; never re-proposed
                     elif (not self.containment_related(a, b)
                           and not self.distinct_block(a, b)
                           and not self._aka_relates(a, b)
@@ -705,7 +898,8 @@ class IdentityRegistry:
                         # two facets of one identity are two things by design —
                         # and so is a pair whose correlation groups a canon
                         # `distinct_from` separates (§3(c), r2).
-                        self.maybe_same_as(a, b, evidence="reconcile: shared anchor, gate declined (adjudicate)")
+                        self.maybe_same_as(a, b, evidence=_PROPOSAL_EVIDENCE.get(
+                            verdict, _GENERIC_PROPOSAL_EVIDENCE))
 
         merged += self.promote_identity_proposals()
         if merged:
@@ -714,14 +908,19 @@ class IdentityRegistry:
 
     # ------------------------------------ host reconciliation surface (#31)
 
-    def guarded_merge(self, a: str, b: str, evidence: str) -> dict:
+    def guarded_merge(self, a: str, b: str, evidence: str,
+                      decided_by: str = "host") -> dict:
         """Host-authoritative merge through the guarded path (MERGE-RECONCILE-
         VERB-V1/V2). Skips the soft discriminativeness heuristic (the host has
-        judged) but NOT the hard vetoes — containment AND `distinct_from`.
-        Returns a Receipt."""
-        return self._guarded_merge(a, b, evidence)[0]
+        judged) but NOT the hard vetoes — containment AND `distinct_from`. It
+        likewise skips the automatic paths' own restraints: a pair a retracted
+        merge settled apart, or whose closure owns a frame, merges here
+        (IDENTITY-ROOT-CAUSES-V1 §2, §4). Records `decided_by` (host unless
+        the caller is the gate). Returns a Receipt."""
+        return self._guarded_merge(a, b, evidence, decided_by)[0]
 
-    def _guarded_merge(self, a: str, b: str, evidence: str) -> tuple[dict, list[Assertion]]:
+    def _guarded_merge(self, a: str, b: str, evidence: str, decided_by: str,
+                       extracted: bool = False) -> tuple[dict, list[Assertion]]:
         """The one guarded-merge body (GATE-AUTHORITY-V1 §2): the Receipt plus
         the rows the merge appended, in append order (none unless `merged`).
         Shared by the porcelain `merge` verb (through `guarded_merge`) and the
@@ -737,7 +936,7 @@ class IdentityRegistry:
         if dblocks:
             return self._receipt(
                 "vetoed", ra, reason="distinct_from", blocking_edges=dblocks), []
-        rows = self._merge_rows(a, b, evidence)
+        rows = self._merge_rows(a, b, evidence, decided_by, extracted)
         if rows is None:  # defensive: _merge_rows re-checks both hard vetoes
             return self._receipt(
                 "vetoed", ra, reason="containment_or_distinct",
@@ -820,17 +1019,21 @@ class IdentityRegistry:
                                            frame=CANON)
                 ev = evr[0].value if evr else None
                 break
-        return self.guarded_merge(a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}")
+        return self.guarded_merge(
+            a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}",
+            decided_by="host")
 
     # ------------------------------------------ SHAPE-FIX-V1 (buckets 1 + 2)
 
     def _distinctive_anchor_tokens(self, entity: str) -> set[str]:
         """Content tokens of the entity's name-class anchors, minus type-word
-        anchors (an anchor that IS the kind value carries no identity)."""
+        anchors (an anchor that IS the kind value carries no identity) and
+        anchors that are not name-like (a sentence or a speaker-relative phrase
+        is description, not identity: IDENTITY-ROOT-CAUSES-V1 §1)."""
         kinds = self._kind_values(entity)
         out: set[str] = set()
         for _attr, text in self.typed_name_anchors(entity):
-            if text in kinds:
+            if text in kinds or not _name_like(text):
                 continue
             out.update(_content_tokens(text))
         return out
@@ -875,14 +1078,19 @@ class IdentityRegistry:
                           # the one predicate _mergeable reads too (FSI-V1 §3(c))
             if self._group_distinct_block(ra, rb):
                 continue  # a distinct_from separates their groups (FSI-V1 §3(c), r2)
+            if self._settled_apart(ra, rb):
+                continue  # a retracted merge decided these apart (IRC-V1 §2)
             if self._kind_state(ra, rb) == "conflict":
                 continue
             if self.durable_contradictions(ra, rb):
                 continue  # standing facts contradict (Win 4) — host judges
             if not self._anchor_subsumed(ra, rb):
                 continue
+            if self._owns_frame(ra) or self._owns_frame(rb):
+                continue  # a point of view: the host confirms (IRC-V1 §4)
             event_id = self.merge(
-                ra, rb, evidence="adjudicate_deferred: fragment subsumption"
+                ra, rb, evidence="adjudicate_deferred: fragment subsumption",
+                decided_by="engine",
             )
             if event_id is not None:
                 merged.append(self._receipt(
@@ -1105,7 +1313,8 @@ class IdentityRegistry:
         for row in self._containment_rows_between(re_, rt):
             self._retract(row.id, f"retype artifact edge: {evidence}")
             retracted.append(row.id)
-        result = self.guarded_merge(re_, rt, evidence=f"retype absorb: {evidence}")
+        result = self.guarded_merge(re_, rt, evidence=f"retype absorb: {evidence}",
+                                    decided_by="host")
         result["retracted"] = retracted
         return result
 
@@ -1236,6 +1445,10 @@ class IdentityRegistry:
             # groups, right after `correlated` (correlate's own order). A
             # direct distinct pair never lists; this one does, declined.
             code = "distinct_group"
+        elif self._settled_apart(a, b):
+            # IDENTITY-ROOT-CAUSES-V1 §2, in _auto_verdict's order: a retracted
+            # merge decided this pair apart (an existing proposal still lists).
+            code = "settled_apart"
         elif any(r["relation_family"] != "containment" for r in related):
             code = "relating_edge"
         elif contradictions:
@@ -1247,18 +1460,24 @@ class IdentityRegistry:
         else:
             kinds = self._kind_values(a) | self._kind_values(b)
             distinctive = [t for t in shared if t not in kinds]
+            # IDENTITY-ROOT-CAUSES-V1 §1: only name-like anchors are evidence.
+            evidence = [t for t in distinctive if _name_like(t)]
             name_texts = ({t for (attr, t) in ta if attr == "name"}
                           | {t for (attr, t) in tb if attr == "name"})
-            if any(t in name_texts for t in distinctive):
-                code = None          # a distinctive name merges at any length (mirror _mergeable)
-            elif not distinctive:
+            if not distinctive:
                 code = "non_distinctive"
-            elif not any(len(_content_tokens(t)) >= 2 for t in distinctive):
+            elif not evidence:
+                code = "not_name_like"
+            elif any(t in name_texts for t in evidence):
+                code = None          # a distinctive name merges at any length (mirror _mergeable)
+            elif not any(len(_content_tokens(t)) >= 2 for t in evidence):
                 code = "alias_not_specific"
             elif kind != "present_equal":
                 code = "kind_absent"
             else:
                 code = None          # specific alias + present-equal kind would have merged
+            if code is None and (self._owns_frame(a) or self._owns_frame(b)):
+                code = "frame_owner"  # IRC-V1 §4: would have merged, the host confirms
         return {
             "code": code,
             "kinds": [self._kind_context(a), self._kind_context(b)],
@@ -1332,9 +1551,11 @@ class IdentityRegistry:
 
         One entry per closure, sorted by `canonical_id`:
         `{canonical_id, members (sorted), containment_edges, distinct_edges,
-        same_as: [{assertion_id, edge, merge_event_id}]}` — edge lists in log
-        order, `same_as` listing every canon `same_as` row inside the closure,
-        `merge_event_id` from the row's `caused_by` (None for a raw row). The
+        same_as: [{assertion_id, edge, merge_event_id[, decided_by]}]}` — edge
+        lists in log order, `same_as` listing every canon `same_as` row inside
+        the closure, `merge_event_id` from the row's `caused_by` (None for a
+        raw row, which then has no `decided_by`; otherwise `decided_by` is
+        `host` | `statement` | `engine` | `unknown`, IDENTITY-ROOT-CAUSES-V1 §3). The
         host decides which `same_as` to retract; the engine chooses no cut.
         Canon only (identity is canon's) and read-only."""
         edges = self._same_as_edges(asserted_as_of)
@@ -1375,11 +1596,17 @@ class IdentityRegistry:
                 causes = self._buffer.visible(
                     entity=row.id, attribute="caused_by", value_type="entity",
                     frame=CANON, asserted_as_of=asserted_as_of)
-                same_as.append({
+                entry = {
                     "assertion_id": row.id,
                     "edge": f"{row.entity}·same_as·{row.value}",
                     "merge_event_id": causes[0].value if causes else None,
-                })
+                }
+                if causes and isinstance(causes[0].value, str):
+                    # IDENTITY-ROOT-CAUSES-V1 §3: who decided the merge (a raw
+                    # row with no merge event has no decision to report).
+                    entry["decided_by"] = self.merge_decided_by(
+                        causes[0].value, asserted_as_of)
+                same_as.append(entry)
             out.append({
                 "canonical_id": self.resolve(next(iter(members)), asserted_as_of),
                 "members": sorted(members),

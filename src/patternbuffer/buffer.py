@@ -632,6 +632,29 @@ class PatternBuffer:
         params.extend([MECHANISM_STATUS["retracts"], aao])
         return self._select("WHERE " + " AND ".join(clauses), tuple(params))
 
+    def retracted_targets(
+        self,
+        *,
+        attribute: str,
+        frame: str = CANON,
+        asserted_as_of: int | None = None,
+    ) -> list[Assertion]:
+        """Rows of ``attribute`` in ``frame`` that a ``retracts`` row hides at
+        ``asserted_as_of`` (log head when omitted) — the rows ``visible()``
+        omits, in append order (IDENTITY-ROOT-CAUSES-V1 §2). The retraction
+        counts only with truth maintenance's mark, status ``retracted``
+        (GATE-AUTHORITY-V1 §1), exactly as ``visible()`` honors it. Read-only;
+        the one reader of a decided-against identity edge."""
+        aao = self.head() if asserted_as_of is None else asserted_as_of
+        return self._select(
+            "WHERE a.asserted_at <= ? AND a.status != 'retracted'"
+            " AND a.attribute = ? AND a.frame = ?"
+            " AND EXISTS (SELECT 1 FROM assertions r"
+            " WHERE r.entity = a.id AND r.attribute = 'retracts'"
+            " AND r.status = ? AND r.asserted_at <= ?)",
+            (aao, attribute, frame, MECHANISM_STATUS["retracts"], aao),
+        )
+
     def max_valid_from(self) -> float | None:
         """The valid-time high-water mark over ALL rows, all frames (None when
         no timed rows exist). Log coordinates are real after retraction —
