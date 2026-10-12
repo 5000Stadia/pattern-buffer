@@ -114,7 +114,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 - [x] R38 E1: resolve the unmarked. In an opted-in story world, `resolve()` on a declared aspect with nothing known plants and forces it in one call; anything undeclared is refused — pbr GREEN, merged 2026-10-12 (`specs/RESOLVE-UNMARKED-V1.md`; whitepaper A26)
 - [x] R39 S1: the WorldService library (one handle, a serialized write queue, reads and resolve for every module, a rate cap) and an optional standalone runner with a `record` door — pbr GREEN, merged 2026-10-12 (`specs/WORLD-SERVICE-V1.md` r5; `patternbuffer.service`; whitepaper A27). The host attaches and pumps; viewers read an in-memory `World.snapshot()` through an explicit allowlist locked to the view frame; resolve plus mirror happens in one unit; the rate cap comes through `svc.gated(model)`; the runner is localhost only
 - [x] R40 S2: the player's-view export plus a change feed, for offline mirrors
-- [~] R41 E3: worn things are objects (`worn_by`), promoted like furniture, after R35
+- [x] R41 E3: worn things are objects (`worn_by`), promoted like furniture, after R35
 - [x] R42 A host-only `closure(entity, asserted_as_of=None)` read (plus `distinct_between` if construct's swap needs it), so construct stops copying the engine's identity walk; after R40 merges. *Monitor's call for Kabe (gate gc857b5, note ne26319).*
 - [x] R42a `facts(..., bookkeeping=False)`: a frame scan without the engine's bookkeeping rows, so construct holds no copy of `META_ATTRIBUTES` (cr's boundary finding). *Monitor's call for Kabe (gate g4d7cf0, note n7052ef).*
 
