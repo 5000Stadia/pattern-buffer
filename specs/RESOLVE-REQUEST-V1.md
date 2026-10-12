@@ -88,4 +88,3 @@ time skip would leave a 30-year-old at 30.
 - DISPOSITIONAL facts stay in `inherited` and never appear in `current`;
 - an ancestor's state never appears;
 - the prompt is unchanged.
-
