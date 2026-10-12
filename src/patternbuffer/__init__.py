@@ -140,6 +140,10 @@ class World:
         self.resolver = Resolver(
             self.buffer, self.classifier, self.indexes, roles["resolver"],
             model or _no_model, self.policy,
+            semantics=self.semantics,
+            # RESOLVE-UNMARKED-V1: an undated placeholder sits at the cursor
+            # (the ingestor is built below; the lookup is late-bound).
+            cursor=lambda: self.ingestor.cursor.position,
         )
         self.projector = Projector(
             self.buffer, self.classifier, self.indexes, self.semantics,

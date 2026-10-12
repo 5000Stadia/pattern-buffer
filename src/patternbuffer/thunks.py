@@ -33,6 +33,7 @@ from patternbuffer.model import (  # noqa: F401 — the policies are re-exported
     task_schema,
 )
 from patternbuffer.roles import WriterRole
+from patternbuffer.semantics import AttributeSemantics
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,8 @@ class Resolver:
         role: WriterRole,
         model: Callable[[str, dict], Any],
         world_policy: str = INVENT_UNDER_CANON,
+        semantics: AttributeSemantics | None = None,
+        cursor: Callable[[], float | None] | None = None,
     ) -> None:
         if world_policy not in POLICIES:
             raise ValueError(f"unknown policy {world_policy!r}")
@@ -92,6 +95,11 @@ class Resolver:
         self._role = role
         self._model = model
         self._world_policy = world_policy
+        # RESOLVE-UNMARKED-V1: the declarations that open an aspect to
+        # invention, and the scene cursor an undated placeholder sits at. A
+        # resolver wired with neither never plants (the pre-E1 behavior).
+        self._semantics = semantics
+        self._cursor = cursor
 
     # ----------------------------------------------------------- the table
 
@@ -139,6 +147,17 @@ class Resolver:
         """Force a thunk per policy. Memoized: a second force serves the
         cache. `access` is the observer-position seam (spec §9.2) —
         accepted, not yet exercised in the spike."""
+        return self.resolve_planted(entity, aspect, frame, access)[0]
+
+    def resolve_planted(
+        self,
+        entity: str,
+        aspect: str,
+        frame: str = CANON,
+        access: object | None = None,
+    ) -> tuple[list[Assertion] | object, bool]:
+        """`resolve`, and whether this call planted the placeholder it forced
+        (RESOLVE-UNMARKED-V1)."""
         thunk = self._find_thunk_row(entity, aspect, frame)
 
         # Memoized: a spent thunk serves its cache, forever, identically.
@@ -146,23 +165,86 @@ class Resolver:
             marker = self._resolved_marker(thunk)
             if marker is not None:
                 ids = marker.value if isinstance(marker.value, list) else [marker.value]
-                return [self._buffer.get(i) for i in ids]
+                return [self._buffer.get(i) for i in ids], False
 
         # Concrete state on the key answers without any thunk machinery.
         fold = self._indexes.fold_key(entity, aspect, frame)
         if fold.winner is not None and fold.winner.value_type != "unresolved":
-            return [fold.winner]
+            return [fold.winner], False
 
         if thunk is None:
-            return UNKNOWN if self._world_policy == OBSERVE_OR_UNKNOWN else []
+            if self._may_plant(entity, aspect, frame):
+                return self._plant_and_force(entity, aspect, frame), True
+            return (UNKNOWN if self._world_policy == OBSERVE_OR_UNKNOWN else []), False
 
         spec = thunk.value if isinstance(thunk.value, dict) else {}
         policy = spec.get("policy", self._world_policy)
         if policy == DENY:
             raise ResolutionDenied(f"{entity}·{aspect} is sealed (policy=deny)")
         if policy == OBSERVE_OR_UNKNOWN:
-            return UNKNOWN  # never invents; only observation resolves
-        return self._invent(thunk, spec, frame)
+            return UNKNOWN, False  # never invents; only observation resolves
+        return self._invent(thunk, spec, frame), False
+
+    # ------------------------------------------- the unmarked (RESOLVE-UNMARKED-V1)
+
+    def undeclared_reason(self, entity: str, aspect: str, frame: str = CANON) -> str | None:
+        """Why `aspect` of `entity` is not open to invention, as prose for a
+        module to read; None when the aspect is declared ``resolvable_for``
+        the entity's folded kind."""
+        kinds = self._semantics.resolvable_kinds(aspect) if self._semantics else frozenset()
+        if not kinds:
+            return f"{aspect!r} is not declared resolvable_for any kind in this world"
+        winner = self._indexes.fold_key(entity, "kind", frame).winner
+        kind = None if winner is None or winner.value_type == "unresolved" else winner.value
+        if not isinstance(kind, str) or kind not in kinds:
+            return (f"{aspect!r} is declared resolvable_for {sorted(kinds)}, "
+                    f"not for the kind of {entity} ({kind!r})")
+        return None
+
+    def has_thunk(self, entity: str, aspect: str, frame: str = CANON) -> bool:
+        """Whether a placeholder for (entity, aspect) stands in the frame."""
+        return self._find_thunk_row(entity, aspect, frame) is not None
+
+    def opted_in(self) -> bool:
+        """Whether this is an inventing world that declares any aspect
+        resolvable: the only world in which an undeclared aspect is reported."""
+        return (self._semantics is not None and self._semantics.has_resolvable()
+                and self._world_policy == INVENT_UNDER_CANON)
+
+    def _may_plant(self, entity: str, aspect: str, frame: str) -> bool:
+        """The unmarked case's guard (RESOLVE-UNMARKED-V1 §2): the world
+        invents under canon, the aspect is declared for the entity's folded
+        kind, and, for `contents`, the entity holds nothing. The placeholder
+        and the concrete value were ruled out by the caller."""
+        if self._world_policy != INVENT_UNDER_CANON:
+            return False
+        if self.undeclared_reason(entity, aspect, frame) is not None:
+            return False
+        return not (aspect == "contents" and self._indexes.contents(entity, frame=frame))
+
+    def _plant_and_force(self, entity: str, aspect: str, frame: str) -> list[Assertion]:
+        """Plant the resolver's own `generated` placeholder and force it in ONE
+        atomic unit (ATOMIC-ACTIVATION-V1): a failure anywhere, the model
+        included, leaves neither the placeholder nor any row. The placeholder
+        is timeless when the host pinned the aspect CONSTITUTIVE or
+        DISPOSITIONAL, otherwise it sits at the scene cursor."""
+        pin = self._semantics.durability_pin(aspect) if self._semantics else None
+        valid_from = (None if pin in (CONSTITUTIVE, DISPOSITIONAL) or self._cursor is None
+                      else self._cursor())
+        subject = self._indexes.resolve_entity(entity)
+        spec = {"policy": self._world_policy, "planted": "resolve"}
+
+        def body() -> list[Assertion]:
+            placeholder = self._buffer.append(
+                entity=subject, attribute=aspect, value=spec, value_type="unresolved",
+                valid_from=valid_from, frame=frame, status="generated", role=self._role,
+            )
+            self._classifier.classify(placeholder)  # guardrail: STATE
+            return self._invent(placeholder, spec, frame)
+
+        out = self._buffer.atomic_unit(body)
+        logger.info("planted and resolved %s·%s", subject, aspect)
+        return out
 
     def _find_thunk_row(self, entity: str, aspect: str, frame: str) -> Assertion | None:
         canonical = self._indexes.resolve_entity(entity)

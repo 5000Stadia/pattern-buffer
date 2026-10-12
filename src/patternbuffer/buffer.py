@@ -462,6 +462,10 @@ class PatternBuffer:
             raise ValueError(
                 f"cannot declare semantics for inviolable core attribute {target!r}"
             )
+        if attribute == "resolvable_for":
+            # RESOLVE-UNMARKED-V1: opening an aspect to invention changes no
+            # fold, so existing data on the aspect does not lock it.
+            return
         prior = self._live_conn().execute(
             "SELECT id FROM assertions"
             " WHERE attribute = ? AND entity NOT LIKE ? AND entity NOT LIKE ?"

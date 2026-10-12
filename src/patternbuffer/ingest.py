@@ -282,7 +282,10 @@ _SEMANTICS_HINT_KEYS = ("arity", "relation_family", "fold_policy")
 # durability pin (READ-SURFACE-V1 §1). Neither is an item hint: a pin decides
 # which rows the model sees and which lens serves them — the host's decision
 # about its own vocabulary, made once, never carried in by a model-written item.
-_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural", "durability")
+# `resolvable_for` (RESOLVE-UNMARKED-V1) is the same kind of decision, and is
+# last so the data-exists authority check below still reads an axis first.
+_SEMANTICS_DECL_KEYS = (*_SEMANTICS_HINT_KEYS, "structural", "durability",
+                        "resolvable_for")
 
 
 # GATE-AUTHORITY-V1 §0: the fixed codes a skip receipt's `reason` is drawn
@@ -576,13 +579,36 @@ class Ingestor:
             return None
         default = self._attribute_default(attribute)
         declaration = self._semantics_payload(default, _SEMANTICS_DECL_KEYS) if default else {}
+        kinds = declaration.get("resolvable_for")
+        if isinstance(kinds, (list, tuple, set, frozenset)):
+            # A set of kinds: kept as a list (sorted, for a stable row order);
+            # an invalid member survives to the gate's validation below.
+            declaration["resolvable_for"] = sorted(kinds, key=str)
         return declaration, "attribute_default"
+
+    @staticmethod
+    def _valid_planned(predicate: str, declared: Any) -> bool:
+        """`valid_declaration` for a planned declaration, where
+        ``resolvable_for`` may carry a non-empty list of kinds."""
+        if predicate == "resolvable_for" and isinstance(declared, list):
+            return bool(declared) and all(
+                valid_declaration(predicate, kind) for kind in declared)
+        return valid_declaration(predicate, declared)
 
     def _declare(self, attribute: str, declaration: dict[str, Any]) -> list[Assertion]:
         """Write a validated first-use declaration before the triggering data
         row."""
         out: list[Assertion] = []
+        rows = []
         for predicate, value in declaration.items():
+            if predicate == "resolvable_for":
+                # Set-valued: one row per kind, none the world already holds.
+                held = self._semantics.resolvable_kinds(attribute)
+                value = [value] if isinstance(value, str) else value
+                rows.extend((predicate, kind) for kind in value if kind not in held)
+            else:
+                rows.append((predicate, value))
+        for predicate, value in rows:
             row = self._buffer.append(
                 entity=f"{ATTR_PREFIX}{attribute}",
                 attribute=predicate,
@@ -1411,7 +1437,10 @@ class Ingestor:
         # (a core attribute, or data already present) still raises ValueError
         # whatever the value, through the buffer's own check.
         if is_manual_semantics_row:
-            self._buffer.check_declaration_authority(entity, attribute)
+            if attribute != "resolvable_for":
+                # `resolvable_for` on a core attribute skips (below) rather
+                # than raising: RESOLVE-UNMARKED-V1 §1.
+                self._buffer.check_declaration_authority(entity, attribute)
             if not valid_declaration(attribute, value):
                 self._record_skip(entity, attribute, value,
                                   "invalid_semantics_declaration",
@@ -1436,7 +1465,7 @@ class Ingestor:
                     f"{ATTR_PREFIX}{attribute}", next(iter(declaration)))
                 invalid = [(predicate, declared) for predicate, declared
                            in declaration.items()
-                           if not valid_declaration(predicate, declared)]
+                           if not self._valid_planned(predicate, declared)]
                 if invalid:
                     # The whole item skips: writing its data row anyway would
                     # lock the attribute, since the buffer refuses any
