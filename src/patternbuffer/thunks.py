@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -21,6 +22,7 @@ from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, STATE, Classifie
 from patternbuffer.codec import json_default
 from patternbuffer.indexes import Indexes
 from patternbuffer.model import (  # noqa: F401 — the policies are re-exported
+    ATTR_PREFIX,
     CANON,
     DENY,
     INVENT_UNDER_CANON,
@@ -42,6 +44,11 @@ logger = logging.getLogger(__name__)
 
 UNKNOWN = object()  # the honest answer in observe_or_unknown worlds
 
+# WORN-OBJECTS-V1 §1: an aspect whose resolution mints entities joined to the
+# resolved entity by a containment relation, instead of writing literal rows on
+# one key. The value is the relation each minted item holds to the entity.
+MINTING_ASPECTS: dict[str, str] = {"contents": "in", "attire": "worn_by"}
+
 _RESOLVE_SCHEMA = {
     "title": TASK_RESOLVE,
     "type": "object",
@@ -53,6 +60,9 @@ _RESOLVE_SCHEMA = {
                 "properties": {
                     "value": {},
                     "detail": {"type": "string"},
+                    # WORN-OBJECTS-V1 §2: a minted item's look words,
+                    # {declared aspect: scalar}; anything else is dropped.
+                    "aspects": {"type": "object"},
                 },
                 "required": ["value"],
             },
@@ -60,6 +70,14 @@ _RESOLVE_SCHEMA = {
     },
     "required": ["items"],
 }
+
+
+def _is_json_scalar(value: Any) -> bool:
+    """A JSON scalar for an item look (WORN-OBJECTS-V1 §2): a string, an int, a
+    finite float, or a bool. A null, list or object is not one."""
+    if isinstance(value, float):
+        return math.isfinite(value)
+    return isinstance(value, (str, int, bool))
 
 
 class ResolutionDenied(PermissionError):
@@ -100,6 +118,11 @@ class Resolver:
         # resolver wired with neither never plants (the pre-E1 behavior).
         self._semantics = semantics
         self._cursor = cursor
+        # WORN-OBJECTS-V1 §2: how many item look pairs the latest resolve call
+        # dropped (an undeclared aspect or a non-scalar value). Reset on every
+        # `resolve_planted`; the porcelain reports it. Request-local data, never
+        # stored.
+        self.last_dropped_aspects = 0
 
     # ----------------------------------------------------------- the table
 
@@ -164,6 +187,7 @@ class Resolver:
         caller already opened (the `perceive_in` path); it is never a general
         rule that units nest, and a nested ``atomic_unit`` elsewhere is
         refused as ever."""
+        self.last_dropped_aspects = 0
         thunk = self._find_thunk_row(entity, aspect, frame)
 
         # Memoized: a spent thunk serves its cache, forever, identically.
@@ -295,37 +319,48 @@ class Resolver:
             f"{holder} · {attr} · {json.dumps(value, default=json_default)}"
             for holder, attr, value in inherited
         ] + declared
+        relation = MINTING_ASPECTS.get(thunk_row.attribute)
+        kind = self._indexes.fold_key(thunk_row.entity, "kind", frame).winner
+        kind_value = None if kind is None or kind.value_type == "unresolved" else kind.value
         prompt = (
             f"Resolve an unestablished aspect of a fictional world: the "
             f"{thunk_row.attribute} of {thunk_row.entity}.\n"
             "Invent content CONSISTENT WITH every constraint below; introduce "
-            "nothing that contradicts them. Plain, concrete items only.\n\n"
-            "Constraints (canon, in force):\n- " + "\n- ".join(constraints or ["(none)"])
+            "nothing that contradicts them. Plain, concrete items only.\n"
+        )
+        if relation is not None:
+            prompt += self._looks_sentence(kind_value)
+        prompt += (
+            "\nConstraints (canon, in force):\n- " + "\n- ".join(constraints or ["(none)"])
         )
         # RESOLVE-REQUEST-V1: the same call, its purpose also carried as data.
-        kind = self._indexes.fold_key(thunk_row.entity, "kind", frame).winner
         request = ResolveRequest(
             world_id=self._buffer.world_id,
             entity=thunk_row.entity,
             aspect=thunk_row.attribute,
-            kind=None if kind is None or kind.value_type == "unresolved" else kind.value,
+            kind=kind_value,
             inherited=tuple(inherited),
             declared=tuple(declared),
             as_of=thunk_row.valid_from,
             frame=frame,
             policy=spec.get("policy", self._world_policy),
             current=self._current_facts(thunk_row, frame),
+            existing=(self._existing_items(thunk_row, relation, frame)
+                      if relation is not None and thunk_row.attribute != "contents" else ()),
         )
         out = self._model(prompt, task_schema(_RESOLVE_SCHEMA, request))
         appended: list[Assertion] = []
-        if thunk_row.attribute == "contents":
-            # Contents are never literal rows on one key (P2: emptiness and
-            # contents derive from the tree). Invention mints entities with
-            # containment edges; the contents query serves them forever.
+        if relation is not None:
+            # A minting aspect is never literal rows on one key (P2: emptiness
+            # and contents derive from the tree). Invention mints entities with
+            # a containment edge to the resolved entity; the containment read
+            # serves them forever (WORN-OBJECTS-V1 §1).
+            dropped = 0
             for item in out["items"]:
                 eid = f"obj:gen_{self._buffer.head() + 1}"
+                item_kind = str(item.get("kind", "object"))
                 kind_row = self._buffer.append(
-                    entity=eid, attribute="kind", value=str(item.get("kind", "object")),
+                    entity=eid, attribute="kind", value=item_kind,
                     frame=frame, status="generated", role=self._role,
                 )
                 name_row = self._buffer.append(
@@ -333,16 +368,19 @@ class Resolver:
                     frame=frame, status="generated", role=self._role,
                 )
                 edge = self._buffer.append(
-                    entity=eid, attribute="in", value=thunk_row.entity,
+                    entity=eid, attribute=relation, value=thunk_row.entity,
                     value_type="entity", valid_from=thunk_row.valid_from,
                     frame=frame, status="generated", role=self._role,
                 )
                 self._classifier.classify(kind_row)   # guardrail: CONSTITUTIVE
                 self._classifier.classify(name_row)   # guardrail: CONSTITUTIVE
                 # The resolver holds the world context here: invented
-                # contents are movables. Judgment injected, log untouched.
+                # items are movables. Judgment injected, log untouched.
                 self._classifier.set(edge.id, "STATE")
+                dropped += self._write_looks(eid, item_kind, item.get("aspects"),
+                                             thunk_row, frame)
                 appended.append(edge)
+            self.last_dropped_aspects = dropped
         else:
             for item in out["items"]:
                 row = self._buffer.append(
@@ -370,6 +408,103 @@ class Resolver:
             thunk_row.entity, thunk_row.attribute, len(appended),
         )
         return appended
+
+    # ------------------------------------ minted items (WORN-OBJECTS-V1)
+
+    def _write_looks(self, eid: str, item_kind: str, aspects: Any,
+                     thunk_row: Assertion, frame: str) -> int:
+        """Write a minted item's look rows (§2): one `generated` row per
+        ``{aspect: scalar}`` pair whose aspect is declared ``resolvable_for``
+        the item's minted kind and whose value is a JSON scalar. Every other
+        pair is dropped, logged at WARNING and counted; the resolve still
+        succeeds. Returns the number dropped. A look is timeless when its
+        aspect is pinned CONSTITUTIVE or DISPOSITIONAL, as a placeholder is,
+        otherwise it begins at the placeholder's time, as the item's edge does."""
+        if aspects is None:
+            return 0
+        if not isinstance(aspects, dict):
+            logger.warning("dropped non-object aspects %r on minted %s", aspects, eid)
+            return 1
+        dropped = 0
+        for aspect, value in aspects.items():
+            if (not isinstance(aspect, str) or aspect in MINTING_ASPECTS
+                    or self._semantics is None
+                    or item_kind not in self._semantics.resolvable_kinds(aspect)):
+                logger.warning("dropped aspect %r on minted %s (%s): not declared "
+                               "resolvable_for that kind", aspect, eid, item_kind)
+                dropped += 1
+                continue
+            if not _is_json_scalar(value):
+                logger.warning("dropped aspect %r on minted %s: %r is not a JSON scalar",
+                               aspect, eid, value)
+                dropped += 1
+                continue
+            pin = self._semantics.durability_pin(aspect)
+            row = self._buffer.append(
+                entity=eid, attribute=aspect, value=value,
+                valid_from=None if pin in (CONSTITUTIVE, DISPOSITIONAL)
+                else thunk_row.valid_from,
+                frame=frame, status="generated", role=self._role,
+            )
+            self._classifier.classify(row)
+        return dropped
+
+    def _looks_sentence(self, entity_kind: Any) -> str:
+        """The prompt's one added sentence for a minting aspect (§2): the
+        declared aspects an item may carry as looks, with the kinds each is
+        declared for. Empty when the world declares none (the prompt is then
+        unchanged). Minting aspects are never looks, and an aspect declared
+        only for the resolved entity's own kind is not one either."""
+        if self._semantics is None:
+            return ""
+        names = sorted({
+            row.entity[len(ATTR_PREFIX):]
+            for row in self._buffer.visible(entity_prefix=ATTR_PREFIX,
+                                            attribute="resolvable_for")
+        })
+        parts = []
+        for name in names:
+            kinds = self._semantics.resolvable_kinds(name)
+            if name in MINTING_ASPECTS or not (kinds - {entity_kind}):
+                continue
+            parts.append(f"{name} ({', '.join(sorted(kinds))})")
+        if not parts:
+            return ""
+        return ('Each item may carry "aspects", an object of its looks, using only '
+                "these declared aspects (the kinds each is declared for) with plain "
+                "scalar values: " + "; ".join(parts) + ".\n")
+
+    def _existing_items(self, thunk_row: Assertion, relation: str,
+                        frame: str) -> tuple[tuple[str, str | None, tuple[str, ...]], ...]:
+        """`ResolveRequest.existing` (WORN-OBJECTS-V1 §1, V1.2): the items
+        already joined to the entity by ``relation``, as ``(id, kind-or-None,
+        sorted names)`` sorted by id. Every field is read in the resolve's
+        frame at ``valid_as_of = thunk_row.valid_from`` over the log as it
+        stands now (no ``asserted_as_of`` bound): the request is built at the
+        force. An item counts only when the winner of its folded containment-
+        family key at that time is a row whose attribute is ``relation`` and
+        whose value resolves to the entity, so a ``held_by``/``carried_by``
+        child, an edge superseded by ``in``, and an edge valid only after the
+        time are not counted. A timeless placeholder leaves the time unbounded."""
+        at = thunk_row.valid_from
+        out = []
+        for eid in self._indexes.contents(thunk_row.entity, frame=frame, valid_as_of=at):
+            edge = self._indexes.fold_key(eid, "in", frame, at).winner
+            if edge is None or edge.attribute != relation:
+                continue
+            kind = self._indexes.fold_key(eid, "kind", frame, at)
+            kind_value = (kind.winner.value if kind.winner is not None
+                          and not kind.conflicted
+                          and kind.winner.value_type != "unresolved"
+                          and isinstance(kind.winner.value, str) else None)
+            closure = sorted(self._indexes.closure_of(eid))
+            names = tuple(sorted({
+                row.value for row in self._buffer.visible(
+                    entity_in=closure, attribute="name", frame=frame, valid_as_of=at)
+                if isinstance(row.value, str)
+            }))
+            out.append((eid, kind_value, names))
+        return tuple(sorted(out, key=lambda item: item[0]))
 
     def _current_facts(self, thunk_row: Assertion, frame: str) -> tuple[tuple[str, Any], ...]:
         """The entity's own folded STATE facts as of the placeholder's time

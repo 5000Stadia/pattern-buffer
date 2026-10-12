@@ -214,7 +214,12 @@ class ResolveRequest:
     lines, in the same order. ``current`` (RESOLVE-REQUEST-V1.1) holds the
     entity's OWN folded STATE facts as of ``as_of`` — age, hair as cut today —
     as ``(attribute, value)`` sorted by attribute; it is for code generators
-    only and never reaches the prompt."""
+    only and never reaches the prompt. ``existing`` (RESOLVE-REQUEST-V1.2,
+    WORN-OBJECTS-V1) is, for a minting aspect (`attire`), the items already
+    joined to the entity by its relation, as ``(id, kind-or-None, sorted
+    names)`` sorted by id, read in the resolve's frame at ``as_of`` over the log
+    as it stands at the force; the generator answers the complement. It is ``()``
+    for every other aspect, `contents` included."""
 
     world_id: str
     entity: str
@@ -226,6 +231,7 @@ class ResolveRequest:
     frame: str
     policy: str
     current: tuple[tuple[str, Any], ...] = ()
+    existing: tuple[tuple[str, str | None, tuple[str, ...]], ...] = ()
 
 
 class TaskSchema(dict):

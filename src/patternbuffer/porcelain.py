@@ -557,11 +557,21 @@ class Porcelain:
             if reason is not None and not resolver.has_thunk(entity, aspect, frame):
                 return {"status": "undeclared", "facts": [],
                         "receipt": self._receipt([]).to_dict(), "reason": reason}
+        receipt = self._receipt(rows)
+        dropped = resolver.last_dropped_aspects
+        if dropped:
+            # WORN-OBJECTS-V1 §2: item look pairs the resolve dropped (an
+            # undeclared aspect or a non-scalar value), counted, never silent.
+            receipt.warnings.append(
+                f"{dropped} item aspect pair(s) dropped (undeclared for the "
+                "item's kind, or not a scalar)")
         result = {"status": "resolved",
                   "facts": [self._fact(r).to_dict() for r in rows],
-                  "receipt": self._receipt(rows).to_dict()}
+                  "receipt": receipt.to_dict()}
         if planted:
             result["planted"] = True
+        if dropped:
+            result["dropped_aspects"] = dropped
         if perceived is not None:
             result["perceived"] = {
                 "frame": perceive_in,

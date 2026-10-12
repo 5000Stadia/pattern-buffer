@@ -683,6 +683,19 @@ class IdentityRegistry:
                 out.add(row.entity)
         return out
 
+    @staticmethod
+    def _is_anchor_row(row: Assertion) -> bool:
+        """Whether a row is identity evidence by name (WORN-OBJECTS-V1 §4): its
+        attribute is `name` or `alias`, its value is a string, and its status is
+        not `generated`. Invention is never evidence that two things are one: a
+        generated "red wool dress" on two women is the generator repeating
+        itself, not the story naming one dress. Every anchor collector reads
+        through this one predicate, so no collector can drift from the rule. The
+        vocabulary lookup (`by_alias`, `refer`) is not a collector and still
+        finds an invented thing by its name."""
+        return (row.attribute in ("name", "alias") and isinstance(row.value, str)
+                and row.status != "generated")
+
     def typed_name_anchors(self, entity: str) -> set[tuple[str, str]]:
         """NAME-class anchors as ``(attribute, normalized_text)`` (IDENTITY-
         RECALL-V1 §3): like name_anchors but keeps the name-vs-alias kind so
@@ -693,8 +706,7 @@ class IdentityRegistry:
         # FRAME-SCOPED-IDENTITY-V1 §2: a canon merge anchors on canon names
         # only — a name known only to Alice never drives canon identity.
         for row in self._buffer.visible(frame=CANON):
-            if row.entity in closure and row.attribute in ("name", "alias") \
-                    and isinstance(row.value, str):
+            if row.entity in closure and self._is_anchor_row(row):
                 out.add((row.attribute, row.value.strip().lower()))
         return out
 
@@ -894,7 +906,7 @@ class IdentityRegistry:
         are reported for visibility but flagged resolved. Zero writes."""
         text_to_reps: dict[str, set[str]] = {}
         for row in self._buffer.visible(frame=frame, valid_as_of=valid_as_of):
-            if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
+            if not self._is_anchor_row(row):
                 continue
             if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
                 continue
@@ -1003,7 +1015,7 @@ class IdentityRegistry:
         text_to_closures: dict[str, set[str]] = {}
         # FRAME-SCOPED-IDENTITY-V1 §2: canon reconcile reads canon names only.
         for row in self._buffer.visible(frame=CANON):
-            if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
+            if not self._is_anchor_row(row):
                 continue
             if row.entity.startswith("a:"):
                 continue
@@ -1334,7 +1346,7 @@ class IdentityRegistry:
         # FRAME-SCOPED-IDENTITY-V1 §2: a slip is a canon question, anchored on
         # canon names only — a name living in Marn's frame is not canon's.
         for row in self._buffer.visible(frame=CANON):
-            if row.attribute not in ("name", "alias") or not isinstance(row.value, str):
+            if not self._is_anchor_row(row):
                 continue
             if row.entity.startswith("a:") or row.entity.startswith(ATTR_PREFIX):
                 continue
