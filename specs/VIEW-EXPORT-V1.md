@@ -1,6 +1,9 @@
 # VIEW-EXPORT-V1: the player's view as a document, kept in step by a feed
 
-**Status:** r1, for pbr's spec review. Author: pb, 2026-10-12.
+**Status:** r2. It answers pbr's r1 RED (m e8f8c102): the look values are literal-only, `del` and
+`put` cover both layers, and every answer says `present_on`. It also folds in holo-emitter's shape
+read (m095e7d): handles can come back in, containment slots, the birth address, and the §7 wording.
+Changes are marked *(r2)*. Author: pb, 2026-10-12.
 **Source:** roadmap R40, S2 of `specs/proposals/UNIFIED-WORLD-ACCESS.md` §7, approved by Kabe on
 2026-10-12 (gate gde97f3), including its point 5: *unopened contents can sit on the device, without
 their meaning; accepted*. The monitor started this item for Kabe (note n662076).
@@ -96,18 +99,42 @@ owners R35 already recognises (`identity.py`, `frame_owner`).
 own contents, recursively, with a visited set. It never descends into a person, and never emits
 one. Every item reached that is not in `known` and is not a person gets one record:
 - `kind`: canon's folded `kind`, or omitted when it is not `known`;
-- `in`: `[relation, ref]`. The relation is the containment attribute that holds the item in its
-  parent (`in`, `within`, `held_by`, `worn_by` or `carried_by`). `ref` is the parent's id if the
-  parent is in `known`, otherwise the parent's handle;
+- `in`: `[relation, ref]`, or `[relation, ref, slot]` *(r2, holo-emitter b)*. The relation is the
+  containment attribute that holds the item in its parent (`in`, `within`, `held_by`, `worn_by` or
+  `carried_by`). `ref` is the parent's id if the parent is in `known`, otherwise the parent's handle.
+  `slot` is canon's folded `slot` on the item (which drawer, which shelf), present only when it is
+  known;
+- `address` *(r2, holo-emitter d)*: canon's folded `address` on the item (a generator's birth
+  address, such as `manor/study/desk:0`), present only when it is known;
 - `look`: for each aspect declared `resolvable_for` the item's folded kind (the world's closed
-  vocabulary of drawable aspects, E1), canon's folded value as `[aspect, value, type]` tuples,
-  sorted. An aspect that is unresolved, conflicted or unknown is omitted.
+  vocabulary of drawable aspects, E1), canon's folded value as `[aspect, value]` pairs, sorted. An
+  aspect that is unresolved, conflicted or unknown is omitted.
+
+**Literal only** *(r2, pbr 1)*. Every value in a present record (`kind`, `slot`, `address`, each
+`look` value) is served only when the winning row's `value_type` is literal and the value is a
+JSON scalar (string, number or boolean). Otherwise the field or aspect is omitted. That excludes:
+- an entity-valued declared aspect (`made_by -> person:secret`, `points_to -> obj:x`), which would
+  carry a canonical id and a relation across;
+- a structured value (object or list), which can embed ids;
+- a set-valued or accrue key.
+
+`look` therefore carries no type column. The only ids in a present record are `ref`, which is a
+known id or a handle.
+
+**Words, not meaning.** `kind` and the look values are canon's own words. They are drawable by the
+closed-vocabulary rule (proposal §3 and §8): the modules declare the kinds and aspects, and a term
+outside the vocabulary is `other`, never free text. *(r2, holo-emitter c)* Mapping a declared kind
+onto a renderer's catalogue is that vocabulary's job, not this export's.
+
+**Additive** *(r2, holo-emitter d)*. Present records add to the contents a renderer generates for
+a place itself; they never replace them.
 
 **Nothing else crosses.** That excludes:
 - any other attribute (no `owned_by`, no `knows`, no event, no relation between two items);
 - any row of another `knows:` frame;
 - any id of an unperceived thing. The item's canonical id appears only inside the handle's MAC;
-  a container that is itself unperceived appears only as its handle.
+  a container that is itself unperceived appears only as its handle;
+- any non-literal value (above).
 
 **Why persons are excluded.**
 - A person's appearance in canon is who they are. Shipping it would undo disguise (proposal §2):
@@ -145,7 +172,10 @@ log holds now and adds no recipe concept.
     cursor would let a client name any past or future valid time and diff canon's drawer contents
     at that moment against now. Without a key no canon crosses, so the known layer, the player's
     own frame, is safe to answer at any `head ≤ current` and `at ≤ current at`.
-- **`feed(since=c)`** answers `{"cursor": new, "at": at, "ops": [...]}`:
+- **`feed(since=c)`** answers `{"cursor": new, "at": at, "present_on": bool, "ops": [...]}`.
+  `present_on` *(r2, pbr 3)* is public and in every answer, including a reset and an empty one. It
+  says whether this answer's document has a present layer (a key was given). The signed cursor's
+  `p` still detects a mode change, which forces a reset.
   1. `c is None` → ops are `clear` followed by a `put` for every subject.
   2. The answer is the same reset when:
      - `c` is malformed, its MAC fails, or its `v`, `w`, `f`, `s` or `p` differ from this call's;
@@ -158,18 +188,26 @@ log holds now and adds no recipe concept.
   4. Otherwise the answer is the diff of old and new, in this order:
      - `reveal` ops: a handle in old `present` whose item is now in `known`, as
        `{"op": "reveal", "handle": h, "id": id}`, so a client can carry its local state across;
-     - `del` ops: a subject in old and not in new (`{"op": "del", "layer": "present", "key": h}`);
-     - `put` ops: a subject new or changed, with its whole record
-       (`{"op": "put", "layer": "known", "key": id, "value": {...}}`).
+     - `del` ops, **in either layer** *(r2, pbr 2)*: a subject in the old layer and not in the new
+       one, as `{"op": "del", "layer": "known"|"present", "key": k}`. A handle a `reveal` already
+       removed gets no `del`. A known subject leaves when its last view row is retracted or ends
+       before `at`;
+     - `put` ops, **in either layer** *(r2, pbr 2)*: a subject new to its layer, or with a changed
+       record, carrying the whole record, as
+       `{"op": "put", "layer": "known"|"present", "key": k, "value": {...}}`.
 
      Within each kind of op, the order is sorted by `(layer, key)`.
   5. Same `(head, at)` and digest: `ops` is empty, and the cursor is unchanged.
 - **`apply(doc, answer)`** runs the ops in order:
-  - `clear` empties both layers. `present` stays `null` when the answer's cursor says the layer is
-    off;
+  - `clear` sets `known` to `{}`, and `present` to `{}` when the answer's `present_on` is true,
+    else to `null` *(r2, pbr 3)*. A `put` to `present` while it is `null` is an error; the feed
+    never emits one;
   - `reveal` drops `present[handle]`; the `put` of `known[id]` follows in the same answer;
   - `del` and `put` act on the named layer;
   - `cursor` and `at` are taken from the answer.
+
+  An answer with no `clear` always has the same `present_on` as the document it applies to: a mode
+  change resets.
 
   It is a pure function, and its prose here is the contract a JS client implements.
 - **The defining property, tested:** for every position `c` a client could hold,
@@ -202,6 +240,24 @@ log holds now and adds no recipe concept.
   off.
 - A `set_view_frame` change makes every older cursor reset, because `f` differs. That is correct:
   a different player has a different view.
+- **Handles come back in** *(r2, holo-emitter a)*. A player who opens a drawer offline sees its
+  present records, but the device can't reveal them. On reconnect, it reports what was perceived by
+  handle. Two doors map a handle back to its thing, both using the host's key, on the owner thread,
+  against the live World:
+  - `WorldService.unhandle(handle) -> str | None`, a host method, not a viewer verb. Under an
+    author, construct receives the device's events and maps them with it before it commits. It
+    answers the canonical id only for a handle in the present layer **as of now**: in the view's
+    places, not a person, not already known. Otherwise it answers `None`: a stale, foreign, forged
+    or person handle maps to nothing.
+  - `record` on the standalone runner accepts a handle as an item's `entity`, or as its `value`
+    when `value_type` is `entity`. The record job maps each handle through `unhandle` before the
+    commit. If any handle maps to `None`, the whole batch is `refused` (`unknown_handle`) and
+    nothing is written.
+  - A recorded play event about the thing writes it into the view frame, as `record` already does.
+    So the next feed answers `reveal` → `put`, and the device's knowledge and the world's agree.
+  - Neither door leaks: a handle the device holds already names a thing in its present layer, and
+    the answer to a bad handle is the same `None` or `refused` whether or not the thing exists
+    elsewhere.
 
 ### 6. For a static build
 
@@ -216,9 +272,12 @@ log holds now and adds no recipe concept.
 
 ### 7. What a client must not assume
 
-- A subject absent from `known` is unknown to the player. Present-layer records are drawables
-  only; a client treats them as unknown until a `reveal` (holo-emitter's own rule, blueprint §3:
-  "treat them as absent").
+- A subject absent from `known` is unknown to the player. *(r2, holo-emitter's wording)*: **the
+  client may hold drawables of unknown things (the present layer) but never their meaning, and treats
+  them as unknown until perceived locally or revealed.** No tap, hint or notebook entry comes from a
+  present record until then.
+- A set-valued key arrives as several tuples with one attribute; a client folds them as a set. A
+  conflicted key has no value; a renderer draws it at its own default, as unknown.
 - **Superseded:** blueprint §3 says "in integrated mode the client never receives unknown
   entities". The offline mirror deliberately ships drawables of unknown things, under Kabe's point
   5. Online clients that call the service's other reads see only the view, as before.
@@ -228,8 +287,12 @@ log holds now and adds no recipe concept.
 1. **Frame absence.**
    - On a fixture world with secrets in canon and in another `knows:` frame, no value outside the
      view appears in `known`.
-   - `present` holds only the keys `kind`, `in` and `look`, and `look` holds only declared aspects.
+   - `present` holds only the keys `kind`, `in`, `address` and `look`, and `look` holds only
+     declared aspects.
    - No canonical id of an unperceived thing appears anywhere in the document's text.
+   - *(r2, pbr 1)* A declared entity-valued aspect (`made_by -> person:secret`), a structured
+     value, and an entity-valued `slot`, `address` or `kind` are all omitted. The secret person's
+     id appears nowhere in the document's text.
 2. **Persons.** A person hidden in a known room, and a gun in their coat, appear nowhere. A person
    is never descended into.
 3. **No key, no canon.** `present` is `null`; the cursor is unsigned; the same doc byte-for-byte
@@ -244,7 +307,26 @@ log holds now and adds no recipe concept.
      frame, scope or world, its head is in the future, or it is unsigned with a future `at`.
    - A classifier verdict change after `c` is answered with `clear`, through the digest.
 6. **Reveal.** Opening the drawer (the view gains the key) yields `reveal` → `put`. A client that
-   applies the answer has the key known and the handle gone.
+   applies the answer has the key known and the handle gone, with no `del` for that handle.
+6a. **Both layers** *(r2, pbr 2)*. These cases each produce the named op, and the defining property
+    holds after each:
+    - a known subject whose last view row is retracted gives `del known`;
+    - a known subject whose fact changes gives `put known`;
+    - a new item in a covered drawer gives `put present`;
+    - a present item whose look changes gives `put present`;
+    - a present item that canon moves out of the covered places gives `del present`.
+6b. **`present_on`** *(r2, pbr 3)*. Every answer carries it: a reset, an empty answer and a diff.
+    A keyed document fed by a keyless service (and the reverse) is reset, and `apply` gives
+    `present: null` (or `{}`) to match.
+6c. **Handles back in** *(r2, holo-emitter a)*.
+    - `unhandle` maps a current present handle to its id.
+    - It answers `None` for a stale handle (the item since perceived or moved away), a forged one,
+      another key's, or one for a person.
+    - A standalone `record` naming a current handle writes the event, and the next feed reveals the
+      item.
+    - A batch with one bad handle is `refused` and writes nothing.
+6d. **Slot and address** *(r2, holo-emitter b, d)*. A canon literal `slot` and `address` on a
+    drawer item cross; absent ones are omitted.
 7. **Handles.**
    - The same key gives the same handle across exports.
    - A different key gives different handles.
