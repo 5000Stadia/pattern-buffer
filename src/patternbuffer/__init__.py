@@ -43,6 +43,7 @@ from patternbuffer.salience import SalienceIndex
 from patternbuffer.semantics import AttributeSemantics
 from patternbuffer.thunks import (
     INVENT_UNDER_CANON,
+    MINTING_ASPECTS,
     OBSERVE_OR_UNKNOWN,
     POLICIES,
     UNKNOWN,
@@ -492,15 +493,22 @@ class World:
     def _mirror(self, rows: list, aspect: str, frame: str, perceive_in: str,
                 when: float | None) -> list:
         """Mirror resolved rows into ``perceive_in`` as the observer's
-        perception (WORLD-SERVICE-V1 §4). Contents mint entities whose `kind`
-        and `name` are rows of their own, so those are mirrored with the
-        containment edge — without them the observer would perceive an
-        unnamed thing."""
+        perception (WORLD-SERVICE-V1 §4). A minting aspect (`contents`,
+        `attire`) mints entities whose `kind`, `name` and generated look rows
+        are rows of their own, so those are mirrored with the edge — without
+        them the observer would perceive an unnamed, unlooked thing
+        (WORN-OBJECTS-V1 §3)."""
         sources = list(rows)
-        if aspect == "contents":
+        if aspect in MINTING_ASPECTS:
+            have = {r.id for r in rows}
             for edge in rows:
-                sources += [r for r in self.buffer.visible(entity=edge.entity, frame=frame)
-                            if r.status == "generated" and r.attribute in ("kind", "name")]
+                looks = self._look_attributes(edge.entity, frame)
+                for r in self.buffer.visible(entity=edge.entity, frame=frame):
+                    if (r.status == "generated" and r.id not in have
+                            and (r.attribute in ("kind", "name")
+                                 or (r.attribute in looks and r.value_type == "literal"))):
+                        have.add(r.id)
+                        sources.append(r)
         perceived: list = []
         items: list[dict] = []
         for src in sources:
@@ -523,6 +531,18 @@ class World:
                           if r.frame == perceive_in and r.attribute not in META_ATTRIBUTES
                           and not r.entity.startswith("a:")]
         return perceived
+
+    def _look_attributes(self, item: str, frame: str) -> frozenset[str]:
+        """The aspects declared ``resolvable_for`` the item's folded kind: the
+        attributes a minted item's generated look rows can carry
+        (WORN-OBJECTS-V1 §2)."""
+        winner = self.indexes.fold_key(item, "kind", frame).winner
+        kind = winner.value if winner is not None else None
+        if not isinstance(kind, str):
+            return frozenset()
+        names = {r.entity[len(ATTR_PREFIX):] for r in self.buffer.visible(
+            entity_prefix=ATTR_PREFIX, attribute="resolvable_for")}
+        return frozenset(n for n in names if kind in self.semantics.resolvable_kinds(n))
 
     def snapshot(self) -> "World":
         """A read-only World over an in-memory copy of this one (WORLD-SERVICE-V1
