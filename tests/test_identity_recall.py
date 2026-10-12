@@ -188,7 +188,7 @@ def test_reconcile_writes_only_identity_machinery(world):
     ])
     head = world.buffer.head()
     world.registry.reconcile()
-    allowed = {"same_as", "maybe_same_as", "kind", "evidence", "caused_by"}
+    allowed = {"same_as", "maybe_same_as", "kind", "evidence", "caused_by", "decided_by"}
     new_rows = [r for r in world.buffer.visible() if r.seq > head]
     assert new_rows  # it did something
     assert all(r.attribute in allowed for r in new_rows)

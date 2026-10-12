@@ -471,6 +471,9 @@ class Ingestor:
         self.last_skipped: list[SkipRecord] = []
         # INGEST-LATENCY-V2 Win 3: cursor governs valid_from for this ingest call.
         self._cursor_authoritative: bool = False
+        # IDENTITY-ROOT-CAUSES-V1 §3: whether this call's items came from prose
+        # extraction (a merge statement then also records `extracted · true`).
+        self._extracted: bool = False
         self._alias_map: dict[str, str] = {}
         self._rebuild_alias_map()
 
@@ -826,6 +829,8 @@ class Ingestor:
         self._classify_collect = collect
         prev_cursor_auth = self._cursor_authoritative
         self._cursor_authoritative = cursor_authoritative
+        prev_extracted = self._extracted
+        self._extracted = extracted
         try:
             # MOVED-EVENT-V1 §B.3: in extracted (prose) mode the ENGINE authors
             # movement timestamps — the model is untrusted for timing. The
@@ -849,6 +854,7 @@ class Ingestor:
             self.classify_inline = prev_inline
             self._classify_collect = prev_collect
             self._cursor_authoritative = prev_cursor_auth
+            self._extracted = prev_extracted
             self.last_skipped = list(self._skipped or [])
             self._skipped = None
 
@@ -975,6 +981,8 @@ class Ingestor:
         self._classify_collect = collect
         prev_cursor_auth = self._cursor_authoritative
         self._cursor_authoritative = cursor_authoritative
+        prev_extracted = self._extracted
+        self._extracted = False          # a commit_set is authored, never prose
         try:
             appended: list[Assertion] = []
             for op in ops:
@@ -991,6 +999,7 @@ class Ingestor:
             self.classify_inline = prev_inline
             self._classify_collect = prev_collect
             self._cursor_authoritative = prev_cursor_auth
+            self._extracted = prev_extracted
             self.last_skipped = list(self._skipped or [])
             self._skipped = None
 
@@ -1644,7 +1653,8 @@ class Ingestor:
             self._record_skip(entity, "same_as", value, "same_as_not_canon",
                               detail={"field": "frame", "value": frame})
             return None
-        receipt, rows = self._registry._guarded_merge(entity, value, "same_as item")
+        receipt, rows = self._registry._guarded_merge(
+            entity, value, "same_as item", "statement", self._extracted)
         if receipt["outcome"] == "vetoed":
             self._record_skip(entity, "same_as", value, "merge_vetoed",
                               detail={"veto": receipt["reason"],
