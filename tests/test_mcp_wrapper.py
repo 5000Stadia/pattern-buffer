@@ -193,6 +193,8 @@ def test_every_v1_tool_makes_zero_model_calls(spy_world, tmp_path):
         "correlation_conflicts": {},
         "typing_conflicts": {},
         "identity_conflicts": {},                # FRAME-SCOPED-IDENTITY-V1 §4
+        "closure": {"entity": "obj:coin"},       # CLOSURE-READ-V1
+        "distinct_between": {"a": "obj:coin", "b": "place:room"},
         "canonical_attribute": {"name": "Located In"},   # READ-SURFACE-V1 §3/§11
         "refer": {"description": "the coin", "scope": "place:room"},  # §9/§11
         "ingest_structured": {"items": [
