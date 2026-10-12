@@ -1,6 +1,7 @@
 # MERGE-GATE-V1: a yes/no check on lexical merge candidates (roadmap R25, part A)
 
-**Status:** r2 (2026-10-12). It answers pbr's r1 RED with two additions: the exact call
+**Status:** r2.1 (2026-10-12). A `same` verdict's `keep` is a **vote** for the component's
+representative, and pass mark 7 follows the election (pbr r2). r2: It answers pbr's r1 RED with two additions: the exact call
 envelope and its validation, and one deterministic way to apply overlapping `same` verdicts with
 no repoints (marked *(r2)*). r1 was for pbr's spec review. The monitor approved specifying R25 for Kabe
 (gate g90c34b, note ndfbe02): spec it through pbr, fix the pass mark on what is free to measure, and
@@ -120,7 +121,9 @@ Candidates are sorted by `(a, b)` and sent in batches of `batch_size` (default 2
   component was judged `different`, nothing in it is written, and it is reported as
   `conflicting_component` with its pairs. This is the vault-chain case: `a` same as `c`, `b` same
   as `c`, while `a` is different from `b`.
-- **One representative per component**, chosen in this order:
+- **One representative per component.** *(r2.1)* A `same` verdict's `keep` is a **vote** for its
+  component's representative, not an instruction for that pair alone. The representative is chosen
+  in this order:
   1. the id the most `keep` votes in the component name;
   2. on a tie, the one whose longest name is longest;
   3. on a further tie, the smallest id.
@@ -196,8 +199,13 @@ All on the five stored registries, through the shared path, with no model calls:
      witness.
    - A `same` verdict that the engine vetoes writes nothing, and is reported with the veto's
      reason.
-7. **`keep` is honoured.** The merged closure is served under the id `keep` names
-   (IDENTITY-REPRESENTATIVE-V1).
+7. *(r2.1)* **`keep` is a vote, and the election is honoured.**
+   - The merged closure is served under the component's elected representative
+     (IDENTITY-REPRESENTATIVE-V1), which is not necessarily the `keep` of every pair.
+   - A component of one `same` pair honours that pair's `keep` exactly.
+   - The 4a overlap fixture includes a tie: two `keep` votes for different members, so the
+     longest name elects. It asserts that the elected id, which may be a third member, serves the
+     closure.
 
 ## Pass mark, part 2: the metered measurement, for Kabe's yes (not run by this spec)
 
