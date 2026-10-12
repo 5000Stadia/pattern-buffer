@@ -836,6 +836,84 @@ Every write returns a per-assertion Receipt; every fact carries
 (`entity`, `literal`, `unresolved` or `delta`; a derived accrue total is
 `literal` — READ-SURFACE-V1 §4).
 
+## HOSTING A WORLD WITH THE SERVICE (`patternbuffer.service`)
+
+One host per world, every other module a client (WORLD-SERVICE-V1). The engine
+core never imports the service; a host that does not construct one sees
+nothing new. Whoever opens the world hosts it:
+
+```python
+from patternbuffer import World
+from patternbuffer.service import WorldService, RateCap
+
+world = World("play.world", world_id="w:play", model=engine_callable)
+svc = WorldService(model_route=route, rate=RateCap(max_calls=6, per_seconds=60))
+svc.attach(world, view_frame="knows:person:mara", perceptible=can_perceive)
+...
+svc.pump()                 # at every pump point, on the thread that attached
+svc.set_now(turn_time(n))  # as each turn commits
+svc.set_view_frame("knows:person:ines")   # "play as X"
+...
+svc.detach()               # BEFORE any close, swap or copy of the file
+world.close()
+```
+
+- **Attach and pump on one thread.** A `World` is bound to the thread that
+  opened it and a second connection to its file raises `SecondWriter`, so the
+  service never touches the World off that thread: every job that needs it
+  (a viewer's `resolve`, a `record`) is queued and runs inside `pump()`. Pump
+  where the session waits for player input, which is most of the wall clock,
+  and after the settle. `pump()` and `detach()` raise off the attaching thread.
+- **Viewer reads never wait on a turn.** At `attach`, and at a `pump()` only
+  when the committed log head or the classifier's `verdict_version` moved, the
+  service makes an in-memory `World.snapshot()` and hands it to its reader
+  thread. A viewer sees the world as of the last pump (the last committed turn
+  or settle); an idle session's pumps copy nothing.
+- **Clients** open a door with `svc.session("holo-emitter")` and
+  `call(verb, **args)`. A viewer may use the `VIEWER_READS` allowlist (state,
+  locate, contents, facts, refer tier 1, ... the reads that take one frame),
+  `resolve` and `now`. Every read is of the view frame: a caller naming any
+  `frame` (or `frame_scope`) is refused, never ignored, and the cross-frame and
+  canon diagnostics (`frame_diff`, `who_knows`, `proposals`, `axis_heads`, ...)
+  are excluded. A porcelain verb added later is excluded until it is classified
+  in `service.py`.
+- **The `perceptible` hook** is `hook(world, entity, aspect) -> bool`, a host
+  closure over the live World. A viewer's `resolve(entity, aspect)` is allowed
+  only where the entity exists in the view frame and the hook agrees; with no
+  hook, existing in the view frame is enough. Make it say what the player could
+  actually perceive: construct's reads the player's current place and nothing
+  more (the entity sits transitively in it, not inside a closed container, and
+  `(entity, aspect)` is not one of the arc's protected keys). A raising hook
+  refuses. The answers are `resolved` (the view frame's facts only),
+  `not_perceptible`, `deferred` (with `retry_after`: the pump did not run it in
+  the call's `wait`, or the rate cap is spent), `no_model`, `detached`.
+- **A viewer's resolve is one unit.** The service always calls
+  `resolve(frame="canon", perceive_in=<view frame>)`: the plant, the force (or
+  memo) and the mirror of what resolved into the view frame as `observed` rows,
+  at `now`, are all-or-none, and a repeat ask writes nothing new. Use the same
+  `perceive_in` for your own `furnish_scene`, so both paths agree.
+- **Rate cap.** `RateCap` counts only the model calls your `model_route(schema)
+  -> "code" | "model"` sends to the model, and only inside viewer resolves; over
+  the cap a resolve answers `deferred` and writes nothing. Author work is never
+  capped.
+- **`now`.** `set_now(t)` is your coordinate; viewer writes land there. With no
+  author, `now` is the log's valid-time head.
+- **Detach before close, swap or copy.** After `detach()` the reader thread is
+  stopped and every call answers `{"status": "detached"}`; attach again to the
+  new World afterwards.
+- **No author: the standalone runner.** `python -m patternbuffer.service --world
+  play.world --world-id w:play --view-frame knows:person:mara [--port 8787]
+  [--generator MODULE:FN] [--recorder NAME]` (or `patternbuffer-service`) opens
+  the World, attaches and pumps on its own thread and serves
+  `POST /call {session, verb, args}` and `GET /now` on **127.0.0.1 only**, with
+  the standard library. `--generator` is a code route `(prompt, schema) ->
+  json` that reads `task_request(schema)`; without it model-routed resolves
+  answer `no_model`. Only a `--recorder` session may call
+  `record(items, at=)`, which writes each item as an `observed` row to canon
+  and to the view frame in one unit (an item naming its own `frame` or `status`
+  is refused and the whole call writes nothing). Under an author, play events go
+  to the author. Wider hosting is not built.
+
 ## THE MCP SERVER (non-Python hosts)
 
 `pip install pbuffer[mcp]` →

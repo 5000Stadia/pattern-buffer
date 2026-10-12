@@ -592,6 +592,9 @@ def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
     params = set(inspect.signature(getattr(Porcelain, verb)).parameters)
     takes_frame = "frame" in params
     forced = {p: v for (v_, p), v in _VIEWER_FORCED.items() if v_ == verb}
+    # MCP's `dispatch` fills FORCED_PARAMS itself (and refuses a caller's); the
+    # service adds only what MCP does not force
+    inject = {p: v for p, v in forced.items() if (verb, p) not in FORCED_PARAMS}
 
     def adapter(world: World, view_frame: str, args: dict) -> Any:
         for name in _REFUSED_ARGS:
@@ -602,7 +605,7 @@ def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
         for name in forced:
             if name in args:
                 raise Refused(f"{verb}: {name!r} is forced by the service")
-        call = {**args, **forced}
+        call = {**args, **inject}
         if takes_frame:
             call["frame"] = view_frame
         return dispatch(world, verb, call)["result"]
