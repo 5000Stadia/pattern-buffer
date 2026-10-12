@@ -19,6 +19,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 from patternbuffer.codec import decode_value, encode_out
+from patternbuffer import model as _model
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
@@ -120,6 +121,14 @@ def _finite_time(value: Any) -> bool:
     plan's `as_of` through it)."""
     return (isinstance(value, (int, float)) and not isinstance(value, bool)
             and math.isfinite(value))
+
+
+def _bookkeeping_attributes() -> frozenset[str]:
+    """The bookkeeping attributes (FACTS-BOOKKEEPING-V1): every name in
+    `META_ATTRIBUTES | MECHANISM_ATTRIBUTES`, looked up on the defining model
+    module at each call, so a later addition to either set is honoured here
+    with no change. `durability` is in neither: it is a domain word too."""
+    return frozenset(_model.META_ATTRIBUTES | _model.MECHANISM_ATTRIBUTES)
 
 
 class Porcelain:
@@ -784,7 +793,7 @@ class Porcelain:
               attribute: str | None = None, prefix: str | None = None,
               as_of: float | None = None, include_meta: bool = False,
               asserted_as_of: int | None = None,
-              frame_scope: str = "exact") -> list[dict]:
+              frame_scope: str = "exact", bookkeeping: bool = True) -> list[dict]:
         """The frame-scan read (BOUNDED-READS-V1): the visible rows OF one
         frame as Fact payloads — RAW log reads for audited scans (receipt
         trails, knowledge digests, marker rows), NOT folds (folded truth is
@@ -793,7 +802,12 @@ class Porcelain:
         chains — always served); frame/prefix-wide listings exclude meta rows
         unless `include_meta=True`. `frame_scope` is `exact` unless the caller
         widens it (see `state`); every fact says its stored frame in
-        `provenance.frame`, so a scan can act on the rows of one frame."""
+        `provenance.frame`, so a scan can act on the rows of one frame.
+        `bookkeeping=False` leaves out every row whose attribute is a
+        bookkeeping attribute (identity edges, receipts, retractions,
+        provenance; FACTS-BOOKKEEPING-V1), so a host scanning a frame for
+        evidence holds no list of its own; it composes with `include_meta`,
+        which filters by subject."""
         if not frame:
             raise ValueError("facts() requires a frame — every read fixes perspective")
         if attribute is not None:
@@ -819,6 +833,9 @@ class Porcelain:
         if prefix is not None:
             rows = [r for r in rows
                     if self._w.registry.resolve(r.entity).startswith(prefix)]
+        if not bookkeeping:
+            dropped = _bookkeeping_attributes()
+            rows = [r for r in rows if r.attribute not in dropped]
         return encode_out([self._fact(r, asserted_as_of=aao).to_dict() for r in rows])
 
     def locate(self, entity: str, as_of: float | None = None, frame: str = CANON,
