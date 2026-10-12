@@ -50,6 +50,7 @@ _Last reconciled: 2026-10-09 (the October self-audit's holds fix and batches Aâ€
 | ALIAS-INDEX-V1 | Roadmap R24 Part A (harness only, engine unchanged): a deterministic alias index between pass-0 and pass-1 reporting ambiguous strings, a kinship/address stoplist, escape candidates, distinctness evidence and merge candidates; `Pipeline(alias_slice=)` off by default. Part B (identity rows) waits on gate g3bf5da |
 | BUILD-TIMINGS-V1 | Roadmap R26 (harness only): per-stage build timings; `Pipeline.pass0(parallel=, glean=)`, both off by default. Measured: parallel pass-0 is ~2.7x faster but fragments the registry; stays off until the merge gate (R25) |
 | SECOND-WRITER guard (fix) | One live World per file, enforced: a buffer that sees SQLite's `data_version` move (another connection committed) raises `SecondWriter`, latching; the unit authorizer admits only that read-only pragma. Not multi-writer support. pbr GREEN 2026-10-10 |
+| RESOLVE-REQUEST-V1 | A `patternbuffer_resolve` call carries a `ResolveRequest` (entity, aspect, kind, inherited and declared constraints, as_of, frame, policy) on its schema object (`TaskSchema`, byte-identical JSON); code generators read it with `task_request()`. E2 of the unified world access structure. pbr GREEN 2026-10-12 |
 | MCP-WRAPPER-V1 | The porcelain over MCP: 39 deterministic tools (37 at authoring; `in_transit` and `commit_set` added by the two tracks below), `[mcp]` extra, `patternbuffer-mcp` stdio server (engine-independence beyond Python) |
 
 ## Ratified RFCs â€” decisions in effect
