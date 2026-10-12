@@ -509,7 +509,7 @@ class Porcelain:
         return receipt
 
     def resolve(self, entity: str, aspect: str, frame: str = CANON,
-                at: float | None = None) -> dict:
+                at: float | None = None, perceive_in: str | None = None) -> dict:
         """Force an aspect (whitepaper §8). A planted placeholder is forced as
         ever; a declared (``resolvable_for``) aspect nobody planted is planted
         and forced in one unit, and the result says `"planted": true`
@@ -517,12 +517,25 @@ class Porcelain:
         ``ingest_structured(at=)`` does, on every path: it is where a planted
         placeholder sits, and a call that raises with the head unmoved
         restores it. In a world that declares any aspect resolvable, an aspect
-        nobody may invent answers `{"status": "undeclared", …, "reason"}`."""
+        nobody may invent answers `{"status": "undeclared", …, "reason"}`.
+
+        ``perceive_in`` (WORLD-SERVICE-V1 §7b) names a frame that perceives the
+        result: the plant, the force (or memo) and a mirror of what resolved
+        into that frame (`observed` rows through the gate, at `at` or the
+        cursor, only rows the frame does not hold) run in ONE unit, and any
+        failure, a mirror refused at the gate included, rolls back all of it.
+        The result then also carries `"perceived": {"frame", "facts",
+        "receipt"}`, the frame's own rows for what resolved."""
         aspect = self._attr(aspect)
         resolver = self._w.resolver
+        perceived: list | None = None
         with self._posed(at):
             try:
-                out, planted = resolver.resolve_planted(entity, aspect, frame)
+                if perceive_in is None:
+                    out, planted = resolver.resolve_planted(entity, aspect, frame)
+                else:
+                    out, planted, perceived = self._w._resolve_perceived(
+                        entity, aspect, frame, at, perceive_in)
             except ResolutionDenied as exc:
                 return {"status": "denied", "facts": [],
                         "receipt": self._receipt([]).to_dict(), "reason": str(exc)}
@@ -540,6 +553,12 @@ class Porcelain:
                   "receipt": self._receipt(rows).to_dict()}
         if planted:
             result["planted"] = True
+        if perceived is not None:
+            result["perceived"] = {
+                "frame": perceive_in,
+                "facts": [self._fact(r).to_dict() for r in perceived],
+                "receipt": self._receipt(perceived).to_dict(),
+            }
         return encode_out(result)
 
     def retract(self, assertion_id: str, reason: str) -> Receipt:

@@ -127,6 +127,10 @@ class Classifier:
         # sidecar itself.
         self._memo: dict[str, Classification | None] = {}
         self._memo_key: tuple[int, int] | None = None
+        # WORLD-SERVICE-V1 §7c: moves at every verdict write (and sidecar
+        # rebuild), so a holder can tell a sidecar-only change from no change.
+        # In memory only, never stored; meaningful within this instance.
+        self._verdict_version = 0
         conn = buffer.raw_connection()
         conn.executescript(_SIDECAR_SCHEMA)
         conn.execute(
@@ -237,7 +241,15 @@ class Classifier:
 
     # ------------------------------------------------------------- sidecar
 
+    @property
+    def verdict_version(self) -> int:
+        """A counter that moves at each verdict write and each sidecar rebuild
+        (WORLD-SERVICE-V1 §7c). Never stored; the stored ``version`` is the
+        salience cache's key, this one is a holder's cheap change signal."""
+        return self._verdict_version
+
     def _store(self, c: Classification) -> None:
+        self._verdict_version += 1
         conn = self._buffer.raw_connection()
         conn.execute(
             "INSERT OR REPLACE INTO sidecar_classification"
@@ -423,6 +435,7 @@ class Classifier:
 
     def rebuild(self) -> int:
         """Drop the sidecar and re-derive it from the untouched log."""
+        self._verdict_version += 1
         conn = self._buffer.raw_connection()
         conn.execute("DELETE FROM sidecar_classification")
         conn.commit()

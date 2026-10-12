@@ -17,6 +17,7 @@ mcp = ["mcp>=1.28,<2"]
 
 [project.scripts]
 patternbuffer-mcp = "patternbuffer.mcp:main"
+patternbuffer-service = "patternbuffer.service:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
