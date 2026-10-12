@@ -10,7 +10,6 @@ import pytest
 
 from patternbuffer import World
 from patternbuffer.model import TASK_RESOLVE
-from patternbuffer.roles import RoleViolation
 
 
 class Recorder:
@@ -52,6 +51,7 @@ def _seed(w):
         {"entity": "person:barmaid", "attribute": "kind", "value": "person", "timeless": True},
         {"entity": "person:barmaid", "attribute": "in", "value": "place:tavern",
          "value_type": "entity", "valid_from": 1.0},
+        {"entity": "place:cellar", "attribute": "kind", "value": "cellar", "timeless": True},
         {"entity": "obj:anvil", "attribute": "kind", "value": "object", "timeless": True},
     ], classify="rules")
 
@@ -358,14 +358,14 @@ def test_check3_contents_mint_objects_in_the_entity_once(tmp_path):
     w = _world(tmp_path, model)
     try:
         _seed(w)
-        _declare(w, "contents", "tavern")
-        out = w.porcelain.resolve("place:tavern", "contents")
+        _declare(w, "contents", "cellar")
+        out = w.porcelain.resolve("place:cellar", "contents")
         assert out["planted"] is True and len(out["facts"]) == 2
-        held = w.contents("place:tavern")
+        held = w.contents("place:cellar")
         assert len(held) == 2 and all(h.startswith("obj:gen_") for h in held)
-        again = w.porcelain.resolve("place:tavern", "contents")
+        again = w.porcelain.resolve("place:cellar", "contents")
         assert "planted" not in again and len(model.resolves) == 1
-        assert w.contents("place:tavern") == held
+        assert w.contents("place:cellar") == held
     finally:
         w.close()
 
@@ -375,10 +375,10 @@ def test_check3_contents_never_plant_over_something_already_held(tmp_path):
     w = _world(tmp_path, model)
     try:
         _seed(w)
-        _declare(w, "contents", "tavern")
-        w.ingest_structured([{"entity": "obj:keg", "attribute": "in", "value": "place:tavern",
+        _declare(w, "contents", "cellar")
+        w.ingest_structured([{"entity": "obj:keg", "attribute": "in", "value": "place:cellar",
                               "value_type": "entity", "valid_from": 1.0}], classify="rules")
-        out = w.porcelain.resolve("place:tavern", "contents")
+        out = w.porcelain.resolve("place:cellar", "contents")
         assert out["status"] == "resolved" and out["facts"] == []
         assert "planted" not in out and model.resolves == []
     finally:
@@ -445,11 +445,11 @@ def test_check5_a_model_failure_in_contents_leaves_nothing(tmp_path):
     w = _world(tmp_path, model)
     try:
         _seed(w)
-        _declare(w, "contents", "tavern")
+        _declare(w, "contents", "cellar")
         head = w.buffer.head()
         with pytest.raises(RuntimeError):
-            w.porcelain.resolve("place:tavern", "contents")
-        assert w.buffer.head() == head and w.contents("place:tavern") == []
+            w.porcelain.resolve("place:cellar", "contents")
+        assert w.buffer.head() == head and w.contents("place:cellar") == []
     finally:
         w.close()
 
@@ -461,7 +461,7 @@ def test_check6_a_forged_generated_placeholder_is_refused_at_the_gate(tmp_path):
     try:
         _seed(w)
         head = w.buffer.head()
-        with pytest.raises(RoleViolation, match="letter 029"):
+        with pytest.raises(ValueError, match="letter 029"):
             w.ingest_structured([{
                 "entity": "person:barmaid", "attribute": "wears",
                 "value": {"policy": "invent_under_canon", "planted": "resolve"},
