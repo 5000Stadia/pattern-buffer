@@ -867,8 +867,8 @@ nothing new. Whoever opens the world hosts it:
 from patternbuffer import World
 from patternbuffer.service import WorldService, RateCap
 
-world = World("play.world", world_id="w:play", model=engine_callable)
 svc = WorldService(model_route=route, rate=RateCap(max_calls=6, per_seconds=60))
+world = World("play.world", world_id="w:play", model=svc.gated(engine_callable))
 svc.attach(world, view_frame="knows:person:mara", perceptible=can_perceive)
 ...
 svc.pump()                 # at every pump point, on the thread that attached
@@ -900,23 +900,43 @@ world.close()
   in `service.py`.
 - **The `perceptible` hook** is `hook(world, entity, aspect) -> bool`, a host
   closure over the live World. A viewer's `resolve(entity, aspect)` is allowed
-  only where the entity exists in the view frame and the hook agrees; with no
-  hook, existing in the view frame is enough. Make it say what the player could
-  actually perceive: construct's reads the player's current place and nothing
-  more (the entity sits transitively in it, not inside a closed container, and
-  `(entity, aspect)` is not one of the arc's protected keys). A raising hook
-  refuses. The answers are `resolved` (the view frame's facts only),
-  `not_perceptible`, `deferred` (with `retry_after`: the pump did not run it in
-  the call's `wait`, or the rate cap is spent), `no_model`, `detached`.
+  only where the entity exists in the view frame and the hook agrees. **With no
+  hook a viewer may only invent**: E1's plant-and-force, or forcing a placeholder
+  that has no memo yet. A key that already holds a concrete canon value, or a
+  spent memo whose rows the view frame does not hold yet, answers
+  `not_perceptible` unless a hook is installed and says yes: with no host
+  judging perception, the facts canon already holds are exactly the secrets.
+  Make the hook say what the player could actually perceive: construct's reads
+  the player's current place and nothing more (the entity sits transitively in
+  it, not inside a closed container, and `(entity, aspect)` is not one of the
+  arc's protected keys). A raising hook refuses. The answers are `resolved` (the
+  view frame's facts only), `not_perceptible`, `deferred` (with `retry_after`:
+  the pump did not run it in the call's `wait`, or the rate cap is spent),
+  `no_model`, `no_rate_cap`, `detached`.
+- **Existence is perspectival.** Through the viewer adapter an id with no row in
+  the view frame answers exactly as an id that exists nowhere: `snapshot` is
+  normalized in the adapter (the engine counts a canon-only id as known); every
+  other allowlisted read already answers alike. `frame_scope`
+  (FRAME-CONTINUITY-V1) is the host's: `attach(..., frame_scope="exact")` sets
+  the scope for viewers' `state`, `state_union` and `facts`, and a viewer naming
+  one is refused.
 - **A viewer's resolve is one unit.** The service always calls
   `resolve(frame="canon", perceive_in=<view frame>)`: the plant, the force (or
   memo) and the mirror of what resolved into the view frame as `observed` rows,
   at `now`, are all-or-none, and a repeat ask writes nothing new. Use the same
   `perceive_in` for your own `furnish_scene`, so both paths agree.
-- **Rate cap.** `RateCap` counts only the model calls your `model_route(schema)
-  -> "code" | "model"` sends to the model, and only inside viewer resolves; over
-  the cap a resolve answers `deferred` and writes nothing. Author work is never
-  capped.
+- **Rate cap: build the World with `svc.gated(...)`.** `svc.gated(callable)`
+  returns a pass-through for the model callable you inject
+  (`World(model=svc.gated(engine_callable))`). It is transparent to everything
+  you do yourself and applies `RateCap` only while a viewer job runs on the
+  owner thread, counting just the calls your `model_route(schema) -> "code" |
+  "model"` sends to the model; over the cap a viewer's resolve answers
+  `deferred` (with `retry_after`) and writes nothing. The service never touches
+  the engine's model handles. `attach` checks whether the World's model is
+  gated: if not, the cap is inactive, a warning is logged, and a service
+  constructed with `rate=` answers a model-bound viewer resolve (one that would
+  invent, routed to the model) with `no_rate_cap`, writing nothing; a service
+  without `rate=` proceeds uncapped. Author work is never capped.
 - **`now`.** `set_now(t)` is your coordinate; viewer writes land there. With no
   author, `now` is the log's valid-time head.
 - **Detach before close, swap or copy.** After `detach()` the reader thread is
@@ -927,7 +947,7 @@ world.close()
   [--generator MODULE:FN] [--recorder NAME]` (or `patternbuffer-service`) opens
   the World, attaches and pumps on its own thread and serves
   `POST /call {session, verb, args}` and `GET /now` on **127.0.0.1 only**, with
-  the standard library. `--generator` is a code route `(prompt, schema) ->
+  the standard library. `--generator` (the runner gates its model itself) is a code route `(prompt, schema) ->
   json` that reads `task_request(schema)`; without it model-routed resolves
   answer `no_model`. Only a `--recorder` session may call
   `record(items, at=)`, which writes each item as an `observed` row to canon

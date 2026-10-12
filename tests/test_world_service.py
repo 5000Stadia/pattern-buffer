@@ -737,6 +737,48 @@ def test_the_service_never_writes_the_engines_model_handles():
     assert not re.search(r"\._model\s*(,[^=\n]*)?=[^=]", src), "a write to a ._model handle"
 
 
+# ------------------------------------------------ FRAME-CONTINUITY-V1 §5
+
+
+@pytest.mark.parametrize("verb", ["state", "state_union", "facts"])
+@pytest.mark.parametrize("scope", ["exact", "continued", "merged", "bogus"])
+def test_a_viewer_cannot_name_a_frame_scope_on_the_three_widenable_reads(hosted, verb, scope):
+    _, _, sess, _ = hosted
+    with pytest.raises(Refused):
+        sess.call(verb, **SAMPLE_CALLS[verb], frame_scope=scope)
+
+
+def test_the_hosts_frame_scope_is_the_one_the_service_uses(tmp_path):
+    w = build_world(tmp_path)
+    w.ingest_structured([{"entity": "person:barmaid", "attribute": "hat", "value": "felt",
+                          "valid_from": 2.0}], frame="knows:person:daniel", classify="rules")
+    w.porcelain.continue_frame("person:daniel", "person:mara", "the same man; host decision")
+    try:
+        for scope, expect_daniel in (("exact", False), ("continued", True)):
+            svc = WorldService(read_timeout=10)
+            svc.attach(w, VF, frame_scope=scope)
+            try:
+                sess = svc.session("x")
+                frames = {f["provenance"]["frame"] for f in sess.call("facts")}
+                assert ("knows:person:daniel" in frames) is expect_daniel
+                assert (sess.call("state", entity="person:barmaid",
+                                  attribute="hat")["status"] == "known") is expect_daniel
+            finally:
+                svc.detach()
+        with pytest.raises(ValueError):
+            WorldService().attach(w, VF, frame_scope="all")
+    finally:
+        w.close()
+
+
+def test_continue_frame_is_excluded_and_served_facts_carry_the_view_frame(hosted):
+    _, _, sess, _ = hosted
+    assert "continue_frame" in VIEWER_EXCLUDED
+    with pytest.raises(Refused):
+        sess.call("continue_frame", source="person:a", into="person:b", evidence="x")
+    assert {f["provenance"]["frame"] for f in sess.call("facts")} == {VF}
+
+
 # --------------------------------------------------------------- (5) now
 
 

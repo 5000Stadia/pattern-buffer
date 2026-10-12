@@ -81,7 +81,7 @@ VIEWER_EXCLUDED: dict[str, str] = {
     "reconcile": "a write", "adjudicate_deferred": "a write", "confirm": "a write",
     "merge": "a write", "reject": "a write", "correlate": "a write",
     "retype": "a write", "begin_build": "a write", "seal_build": "a write",
-    "abort_build": "a write", "build": "a write",
+    "abort_build": "a write", "build": "a write", "continue_frame": "a write",
     "extract": "reaches the model", "ingest": "a write that reaches the model",
     "ask": "reaches the model",
 }
@@ -92,8 +92,8 @@ _VIEWER_FORCED: dict[tuple[str, str], Any] = {
     ("facts", "include_meta"): False,
 }
 
-# Arguments no viewer may name on any verb. `frame_scope` is a later spec's
-# parameter: refused now so no caller depends on it early.
+# Arguments no viewer may name on any verb. `frame_scope` (FRAME-CONTINUITY-V1
+# §5) is the host's, set at `attach`: a viewer cannot widen its own view.
 _REFUSED_ARGS = ("frame", "frame_scope")
 
 DEFAULT_WAIT = 2.0
@@ -229,6 +229,7 @@ class WorldService:
         self._world: World | None = None
         self._owner: int | None = None
         self._view_frame: str | None = None
+        self._frame_scope = "exact"
         self._perceptible: Callable[[World, str, str], bool] | None = None
         self._now: float | None = None
         self._valid_head: float | None = None
@@ -255,9 +256,15 @@ class WorldService:
         return self._view_frame
 
     def attach(self, world: World, view_frame: str,
-               perceptible: Callable[[World, str, str], bool] | None = None) -> None:
+               perceptible: Callable[[World, str, str], bool] | None = None,
+               frame_scope: str = "exact") -> None:
         """Bind to a World the host opened, on the host's thread (the pump
-        thread). Takes the first snapshot at once. One world per service."""
+        thread). Takes the first snapshot at once. One world per service.
+        ``frame_scope`` (FRAME-CONTINUITY-V1 §5) is the scope the host
+        configures for its viewers' `state`, `state_union` and `facts`
+        (default `exact`); a viewer can never name its own."""
+        if frame_scope not in ("exact", "continued", "merged"):
+            raise ValueError(f"unknown frame_scope {frame_scope!r}")
         if self._world is not None:
             raise RuntimeError("this service is already attached; detach first")
         if world.buffer.sealed:
@@ -270,6 +277,7 @@ class WorldService:
             logger.warning(
                 "this World's model is not svc.gated(...): the rate cap is inactive, "
                 "and a model-bound viewer resolve answers no_rate_cap")
+        self._frame_scope = frame_scope
         self._world = world
         self._owner = threading.get_ident()
         self._view_frame = view_frame
@@ -474,7 +482,8 @@ class WorldService:
                 if snap is None or self._view_frame is None:
                     req.result = _detached()
                 else:
-                    req.result = _run_read(snap, self._view_frame, req.verb, req.args)
+                    req.result = _run_read(snap, self._view_frame, req.verb, req.args,
+                                       self._frame_scope)
             except BaseException as exc:       # noqa: BLE001 - handed to the caller
                 req.error = exc
             finally:
@@ -640,17 +649,19 @@ def _snapshot_perspectival(world: World, view_frame: str, call: dict) -> Any:
                               "(use ask for references)", "bad": bad}
 
 
-def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
+def _make_adapter(verb: str) -> Callable[..., Any]:
     """The per-verb adapter: refuse a caller frame, force the pinned
     parameters, inject the view frame, then MCP's `dispatch`."""
     params = set(inspect.signature(getattr(Porcelain, verb)).parameters)
     takes_frame = "frame" in params
+    takes_scope = "frame_scope" in params     # state, state_union, facts
     forced = {p: v for (v_, p), v in _VIEWER_FORCED.items() if v_ == verb}
     # MCP's `dispatch` fills FORCED_PARAMS itself (and refuses a caller's); the
     # service adds only what MCP does not force
     inject = {p: v for p, v in forced.items() if (verb, p) not in FORCED_PARAMS}
 
-    def adapter(world: World, view_frame: str, args: dict) -> Any:
+    def adapter(world: World, view_frame: str, args: dict,
+                frame_scope: str = "exact") -> Any:
         for name in _REFUSED_ARGS:
             if name in args:
                 raise Refused(
@@ -662,6 +673,8 @@ def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
         call = {**args, **inject}
         if takes_frame:
             call["frame"] = view_frame
+        if takes_scope:
+            call["frame_scope"] = frame_scope        # the host's, never the caller's
         if verb == "snapshot":
             return _snapshot_perspectival(world, view_frame, call)
         return dispatch(world, verb, call)["result"]
@@ -670,14 +683,15 @@ def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
     return adapter
 
 
-ADAPTERS: dict[str, Callable[[World, str, dict], Any]] = {
+ADAPTERS: dict[str, Callable[..., Any]] = {
     verb: _make_adapter(verb) for verb in VIEWER_READS}
 
 assert set(VIEWER_READS) <= set(V1_READS)       # the allowlist is a subset of MCP's
 
 
-def _run_read(snap: World, view_frame: str, verb: str, args: dict) -> Any:
-    return ADAPTERS[verb](snap, view_frame, args)
+def _run_read(snap: World, view_frame: str, verb: str, args: dict,
+              frame_scope: str = "exact") -> Any:
+    return ADAPTERS[verb](snap, view_frame, args, frame_scope)
 
 
 # ------------------------------------------------------------------ session
