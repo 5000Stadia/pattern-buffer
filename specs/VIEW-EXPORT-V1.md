@@ -3,7 +3,9 @@
 **Status:** r2. It answers pbr's r1 RED (m e8f8c102): the look values are literal-only, `del` and
 `put` cover both layers, and every answer says `present_on`. It also folds in holo-emitter's shape
 read (m095e7d): handles can come back in, containment slots, the birth address, and the §7 wording.
-Changes are marked *(r2)*. Author: pb, 2026-10-12.
+Changes are marked *(r2)*. r3 answers pbr's r2 RED (m 46bceec1): the standalone `record` result
+leaked the id it had just unhandled. Its public answer is now a bare acknowledgement (§5, marked
+*(r3)*). Author: pb, 2026-10-12.
 **Source:** roadmap R40, S2 of `specs/proposals/UNIFIED-WORLD-ACCESS.md` §7, approved by Kabe on
 2026-10-12 (gate gde97f3), including its point 5: *unopened contents can sit on the device, without
 their meaning; accepted*. The monitor started this item for Kabe (note n662076).
@@ -255,9 +257,29 @@ log holds now and adds no recipe concept.
     nothing is written.
   - A recorded play event about the thing writes it into the view frame, as `record` already does.
     So the next feed answers `reveal` → `put`, and the device's knowledge and the world's agree.
-  - Neither door leaks: a handle the device holds already names a thing in its present layer, and
-    the answer to a bad handle is the same `None` or `refused` whether or not the thing exists
-    elsewhere.
+  - **The public `record` answer is a bare acknowledgement** *(r3, pbr)*. Today
+    `_do_record` returns the commit receipt, whose rows carry each committed row's `entity` and
+    `frame`. After a handle has been mapped, that would hand the device the canonical id
+    (`obj:murder_weapon`) the handle exists to hide. So a recorder session's `record` answers only
+    one of two things, with nothing else:
+    - `{"status": "recorded"}`;
+    - `{"status": "refused"}`.
+
+    There are no receipt rows, frames, canonicalization receipts, skips, causes or error text. This
+    holds for every batch, with or without a handle, so the answer's shape gives nothing away.
+    - The full outcome (receipt or `AtomicAbort` cause, and `unknown_handle`) is logged on the
+      service side, at `INFO` for a commit and `WARNING` for a refusal.
+    - It is also kept as `WorldService.last_record_outcome` for the trusted host. It never goes over
+      the wire.
+    - An unknown handle is therefore indistinguishable at the wire from any other refusal.
+    - This narrows S1's `record` answer, which was the receipt. Its tests move to the bare shape
+      and read the logged outcome. No client depends on the receipt yet; the standalone runner has
+      no consumer.
+  - Neither door then leaks:
+    - `unhandle` is the host's own method;
+    - `record` answers `recorded` or `refused` alone;
+    - the id becomes the device's only through the next feed's `reveal`. By then the recorded play
+      event has put the thing in the view, so the player has perceived it.
 
 ### 6. For a static build
 
@@ -325,6 +347,11 @@ log holds now and adds no recipe concept.
     - A standalone `record` naming a current handle writes the event, and the next feed reveals the
       item.
     - A batch with one bad handle is `refused` and writes nothing.
+    - *(r3, pbr)* A `POST /call` `record` with `entity: h` answers exactly `{"result":
+      {"status": "recorded"}}`. The response bytes contain neither the canonical id nor any row,
+      frame or receipt detail. The next feed then answers `reveal` → `put`.
+    - A batch refused for a bad handle and one refused for a barred attribute give byte-identical
+      HTTP responses.
 6d. **Slot and address** *(r2, holo-emitter b, d)*. A canon literal `slot` and `address` on a
     drawer item cross; absent ones are omitted.
 7. **Handles.**
