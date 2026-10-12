@@ -1,6 +1,6 @@
 # CLOSURE-READ-V1: a host's read of identity closures
 
-**Status:** r1, queued for pbr's spec review after VIEW-EXPORT-V1 merges. Author: pb, 2026-10-12.
+**Status:** r2. It answers pbr's r1 RED: the shared row helper takes a frame, as `distinct_block` already does for `correlation_conflicts`, and the as-of test spans a retraction. Marked *(r2)*. Author: pb, 2026-10-12.
 **Source:** roadmap R42. Construct asked on 2026-10-12 (mfc2084, m92b797), and the monitor approved
 it for Kabe (gate gc857b5, note ne26319): "build it right after S2 … host-only, outside the viewer
 allowlist; distinct_between only if construct's swap needs it". Construct confirmed that it needs it.
@@ -45,8 +45,14 @@ distinct_between(a: str, b: str, asserted_as_of: int | None = None) -> list[str]
     - construct's stop uses the answer as a bool;
     - the ids let its error name what holds a pair apart;
     - the ids are what a repair would retract.
-  - The registry gains `distinct_rows(a, b, asserted_as_of=None) -> list[str]`, and
-    `distinct_block` is rebuilt on it, so the predicate exists once.
+  - *(r2)* The registry gains
+    `distinct_rows(a, b, asserted_as_of=None, *, frame=CANON) -> list[str]`, the one row-selection
+    predicate.
+    - `distinct_block(a, b, asserted_as_of, frame)` is rebuilt on it. It still answers descriptors,
+      so legacy callers are unchanged.
+    - `distinct_block` keeps its `frame` argument, which `correlation_conflicts` needs: a
+      contradiction is two edges in one observer frame (FRAME-SCOPED-IDENTITY-V1 §3(b)).
+    - The porcelain `distinct_between` always calls the canon default and takes no `frame`.
   - When `a` and `b` share a closure, a `distinct_from` inside it is still reported, as
     `identity_conflicts` already does. The read answers what the log holds and decides nothing.
 - **Canon only.** Neither verb takes a frame. Identity is global, and a canon merge veto reads
@@ -73,7 +79,13 @@ distinct_between(a: str, b: str, asserted_as_of: int | None = None) -> list[str]
      member, and the reverse);
    - it is empty with no row;
    - a retracted `distinct_from` drops out;
-   - as-of, before the row it is empty.
+   - *(r2)* as-of is a historical read across the row's life: empty before the row is asserted,
+     the row's id at a position after it and before its retraction, and empty at and after the
+     retraction.
+3a. *(r2)* **The frame stays the caller's.** A non-canon `distinct_from` in a frame F, with a
+   canon `distinct_from` as a decoy, shows that `distinct_block(..., frame=F)` and
+   `correlation_conflicts` read only F, exactly as before. `distinct_between` reads only canon, and
+   offers no way to name F.
 4. `distinct_block`'s answers are unchanged: the existing identity suites pass untouched.
 5. MCP has 45 tools; both verbs dispatch.
 6. A viewer session's `closure` and `distinct_between` calls are refused with the excluded reason,
