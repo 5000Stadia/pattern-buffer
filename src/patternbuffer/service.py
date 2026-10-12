@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import collections
-import contextlib
 import importlib
 import inspect
 import json
@@ -41,6 +40,7 @@ from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
     CANON_IDENTITY_EDGES,
+    ID_RE,
     MECHANISM_ATTRIBUTES,
     META_ATTRIBUTES,
     POLICIES,
@@ -218,6 +218,10 @@ class WorldService:
                  read_timeout: float = 30.0) -> None:
         self._model_route = model_route
         self._rate = rate
+        # r5: the cap is applied by the gated callable the host injected into
+        # its World, only while a viewer job runs on the owner thread
+        self._job = threading.local()
+        self._gated = False
         self._standalone = standalone
         self._retry_after = retry_after
         self._read_timeout = read_timeout
@@ -260,6 +264,12 @@ class WorldService:
             raise ValueError("a read-only snapshot cannot be hosted")
         if not isinstance(view_frame, str) or not view_frame:
             raise ValueError("attach needs a view_frame")
+        self._gated = (getattr(world.resolver._model, "_patternbuffer_gated_by", None)
+                       is self)             # a read: the service writes no handle
+        if not self._gated and self._rate is not None:
+            logger.warning(
+                "this World's model is not svc.gated(...): the rate cap is inactive, "
+                "and a model-bound viewer resolve answers no_rate_cap")
         self._world = world
         self._owner = threading.get_ident()
         self._view_frame = view_frame
@@ -491,33 +501,33 @@ class WorldService:
         return any(not r.entity.startswith(("a:", ATTR_PREFIX))
                    for r in world.buffer.visible(entity_in=members, frame=view_frame))
 
-    @contextlib.contextmanager
-    def _capped(self, world: World):
-        """Gate the model callable for the span of one viewer resolve job:
-        calls the host's `model_route` sends to the model spend the rate cap;
-        over it, `_CapExceeded` unwinds the job's unit. The job runs on the
-        owner thread inside `pump()`, so no author work shares the swap."""
-        rate = self._rate
-        if rate is None:
-            yield
-            return
-        route = self._model_route
+    def gated(self, model: Callable[[str, dict], Any]) -> Callable[[str, dict], Any]:
+        """The callable a host injects into its World:
+        ``World(model=svc.gated(host_callable))``. A pass-through, transparent
+        to everything the host does itself, except while a viewer job runs on
+        the owner thread: then a call the host's `model_route` sends to the
+        model spends the `RateCap`, and over it `_CapExceeded` unwinds the
+        job's unit (the job answers `deferred`)."""
+        if not callable(model):
+            raise TypeError("gated() wraps the host's model callable")
+        svc = self
 
-        def gate(fn: Callable[[str, dict], Any]) -> Callable[[str, dict], Any]:
-            def gated(prompt: str, schema: dict) -> Any:
+        def gated_model(prompt: str, schema: dict) -> Any:
+            if getattr(svc._job, "viewer", False) and svc._rate is not None:
+                route = svc._model_route
                 if route is None or route(schema) == "model":
-                    if not rate.try_acquire():
-                        raise _CapExceeded(rate.retry_after())
-                return fn(prompt, schema)
-            return gated
+                    if not svc._rate.try_acquire():
+                        raise _CapExceeded(svc._rate.retry_after())
+            return model(prompt, schema)
 
-        resolver, classifier = world.resolver, world.classifier
-        saved = (resolver._model, classifier._model)
-        resolver._model, classifier._model = gate(saved[0]), gate(saved[1])
-        try:
-            yield
-        finally:
-            resolver._model, classifier._model = saved
+        gated_model._patternbuffer_gated_by = svc            # type: ignore[attr-defined]
+        return gated_model
+
+    def _held(self, world: World, row: Any, view_frame: str) -> bool:
+        return any(r.value_type == row.value_type and r.value == row.value
+                   for r in world.buffer.visible(entity=row.entity,
+                                                 attribute=row.attribute,
+                                                 frame=view_frame))
 
     def _do_resolve(self, entity: str, aspect: str) -> dict:
         world, view_frame = self._world, self._view_frame
@@ -534,10 +544,22 @@ class WorldService:
             if not allowed:
                 return {"status": "not_perceptible",
                         "reason": "the host says the player could not perceive it"}
+        kind, standing = world.resolver.preview(
+            entity, world.canonical_attribute(aspect), CANON)
+        if self._perceptible is None and kind == "served" and not all(
+                self._held(world, row, view_frame) for row in standing):
+            # r5: with no host judging perception, the facts canon already
+            # holds are exactly the secrets; only inventing is open
+            return {"status": "not_perceptible",
+                    "reason": "no host judges what the player could perceive"}
+        if (kind == "invent" and self._rate is not None and not self._gated
+                and (self._model_route is None
+                     or self._model_route({"title": TASK_RESOLVE}) == "model")):
+            return {"status": "no_rate_cap"}
+        self._job.viewer = True
         try:
-            with self._capped(world):
-                out = world.porcelain.resolve(entity, aspect, frame=CANON,
-                                              at=self.now(), perceive_in=view_frame)
+            out = world.porcelain.resolve(entity, aspect, frame=CANON,
+                                          at=self.now(), perceive_in=view_frame)
         except _CapExceeded as cap:
             return {"status": "deferred",
                     "retry_after": max(cap.retry_after, self._retry_after)}
@@ -549,6 +571,8 @@ class WorldService:
         except Exception as exc:
             logger.exception("viewer resolve failed")
             return {"status": "failed", "reason": type(exc).__name__}
+        finally:
+            self._job.viewer = False
         perceived = out.get("perceived")
         if out["status"] == "resolved" and perceived is not None:
             # the view frame's facts only: the canon rows and their receipt
@@ -586,6 +610,36 @@ class WorldService:
 # ------------------------------------------------------------- viewer reads
 
 
+def _exists_in_view(world: World, ident: str, view_frame: str,
+                    asserted_as_of: Any) -> bool:
+    """Whether some row about a member of the id's identity closure lives in
+    the view frame (existence is perspectival, WORLD-SERVICE-V1 §3 r5)."""
+    members = sorted(world.registry.closure(ident))
+    return any(not r.entity.startswith(("a:", ATTR_PREFIX))
+               for r in world.buffer.visible(entity_in=members, frame=view_frame,
+                                             asserted_as_of=asserted_as_of))
+
+
+def _snapshot_perspectival(world: World, view_frame: str, call: dict) -> Any:
+    """`snapshot(scope)` treats an id as known when it lives in the frame OR in
+    canon, so its error shape would tell a viewer which ids canon holds. Here an
+    id with no row in the view frame is `bad` exactly as an id that exists
+    nowhere (the engine's own error text, from a probe of an absent id)."""
+    scope = call.get("scope")
+    roots = [scope] if isinstance(scope, str) else scope
+    if not isinstance(roots, list) or not all(isinstance(r, str) for r in roots):
+        return dispatch(world, "snapshot", call)["result"]      # engine's own error
+    aao = call.get("asserted_as_of")
+    bad = [r for r in roots
+           if not ID_RE.fullmatch(r) or not _exists_in_view(world, r, view_frame, aao)]
+    if not bad:
+        return dispatch(world, "snapshot", call)["result"]
+    probe = dispatch(world, "snapshot", {**call, "scope": ["zz:absent_probe"]})["result"]
+    error = probe.get("error") if isinstance(probe, dict) else None
+    return {"error": error or "snapshot scope must be KNOWN entity ids "
+                              "(use ask for references)", "bad": bad}
+
+
 def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
     """The per-verb adapter: refuse a caller frame, force the pinned
     parameters, inject the view frame, then MCP's `dispatch`."""
@@ -608,6 +662,8 @@ def _make_adapter(verb: str) -> Callable[[World, str, dict], Any]:
         call = {**args, **inject}
         if takes_frame:
             call["frame"] = view_frame
+        if verb == "snapshot":
+            return _snapshot_perspectival(world, view_frame, call)
         return dispatch(world, verb, call)["result"]
 
     adapter.__name__ = f"viewer_{verb}"
@@ -756,12 +812,13 @@ class Runner:
     ``standalone=True`` and pumps it on its own thread, serving sessions over
     localhost HTTP + JSON (standard library only)."""
 
-    def __init__(self, open_world: Callable[[], World], view_frame: str, *,
+    def __init__(self, open_world: Callable[[Callable], World], view_frame: str, *,
                  port: int = 0, recorders: tuple[str, ...] = (),
                  rate: RateCap | None = None,
                  model_route: Callable[[dict], str] | None = None) -> None:
         # A World is bound to the thread that opened it, so the runner opens
         # it ON its pump thread (the owner thread) and closes it there.
+        # `open_world(gated)` builds it with `model=gated(host_callable)`.
         self._open_world = open_world
         self.world: World | None = None
         self.recorders = frozenset(recorders)
@@ -786,7 +843,7 @@ class Runner:
     # pump thread attaches, pumps and detaches, so it is the owner thread.
     def _pump_main(self) -> None:
         try:
-            self.world = self._open_world()
+            self.world = self._open_world(self.service.gated)
             self.service.attach(self.world, self._view_frame)
         except BaseException as exc:           # noqa: BLE001
             self._startup_error = exc
@@ -937,8 +994,8 @@ def main(argv: list[str] | None = None) -> int:
 
     generator = _load_generator(args.generator) if args.generator else None
     model, route = make_runner_callable(generator)
-    runner = Runner(lambda: World(args.world, world_id=args.world_id, model=model,
-                                  policy=args.policy),
+    runner = Runner(lambda gated: World(args.world, world_id=args.world_id,
+                                        model=gated(model), policy=args.policy),
                     args.view_frame, port=args.port,
                     recorders=tuple(args.recorder),
                     rate=RateCap(args.rate) if args.rate is not None else None,

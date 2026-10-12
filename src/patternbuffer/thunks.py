@@ -191,6 +191,29 @@ class Resolver:
             return UNKNOWN, False  # never invents; only observation resolves
         return self._invent(thunk, spec, frame), False
 
+    def preview(self, entity: str, aspect: str, frame: str = CANON
+                ) -> tuple[str, list[Assertion]]:
+        """What `resolve` would do, without doing it (WORLD-SERVICE-V1 §4, r5):
+        ``("served", rows)`` when it would answer from what already stands (a
+        spent memo's rows, or the key's concrete value), ``("invent", [])``
+        when it would plant and/or force (the model or a code generator is
+        reached), ``("nothing", [])`` otherwise (not declared, ``deny``,
+        ``observe_or_unknown``). A read: it writes nothing."""
+        thunk = self._find_thunk_row(entity, aspect, frame)
+        if thunk is not None:
+            marker = self._resolved_marker(thunk)
+            if marker is not None:
+                ids = marker.value if isinstance(marker.value, list) else [marker.value]
+                return "served", [r for r in (self._buffer.get(i) for i in ids) if r]
+        fold = self._indexes.fold_key(entity, aspect, frame)
+        if fold.winner is not None and fold.winner.value_type != "unresolved":
+            return "served", [fold.winner]
+        if thunk is None:
+            return ("invent", []) if self._may_plant(entity, aspect, frame) else ("nothing", [])
+        spec = thunk.value if isinstance(thunk.value, dict) else {}
+        policy = spec.get("policy", self._world_policy)
+        return ("nothing", []) if policy in (DENY, OBSERVE_OR_UNKNOWN) else ("invent", [])
+
     # ------------------------------------------- the unmarked (RESOLVE-UNMARKED-V1)
 
     def undeclared_reason(self, entity: str, aspect: str, frame: str = CANON) -> str | None:

@@ -471,10 +471,11 @@ def _resolve_route(schema) -> str:
 
 def test_the_rate_cap_defers_model_routed_viewer_resolves_and_writes_nothing(tmp_path):
     model = Recorder()
-    w = build_world(tmp_path, model=model)
     clock = _Clock()
     svc = WorldService(model_route=_resolve_route, rate=RateCap(1, 60.0, clock),
                        read_timeout=10)
+    w = build_world(tmp_path, model=svc.gated(model))
+    handle = w.resolver._model
     svc.attach(w, VF)
     sess = svc.session("x")
     try:
@@ -485,8 +486,9 @@ def test_the_rate_cap_defers_model_routed_viewer_resolves_and_writes_nothing(tmp
         assert w.buffer.head() == head                      # nothing written
         assert w.buffer.visible(entity="person:mara", attribute="wears") == []
         assert len(model.resolves) == 1                     # the second never reached it
-        # the model callable is the host's again after every job
-        assert w.resolver._model is model and w.classifier._model is model
+        # the service never swaps the engine's handles: the gated callable the
+        # host injected is the one in place, before, during and after
+        assert w.resolver._model is handle and w.classifier._model is handle
         # a memoized resolve is never capped
         assert _resolve(svc, sess, entity="person:barmaid")["status"] == "resolved"
         # author work is never capped
@@ -501,10 +503,9 @@ def test_the_rate_cap_defers_model_routed_viewer_resolves_and_writes_nothing(tmp
 
 
 def test_a_code_route_is_never_capped(tmp_path):
-    model = Recorder()
-    w = build_world(tmp_path, model=model)
     svc = WorldService(model_route=lambda schema: "code", rate=RateCap(0, 60.0),
                        read_timeout=10)
+    w = build_world(tmp_path, model=svc.gated(Recorder()))
     svc.attach(w, VF)
     sess = svc.session("x")
     try:
@@ -516,14 +517,224 @@ def test_a_code_route_is_never_capped(tmp_path):
 
 
 def test_no_model_route_means_every_call_counts(tmp_path):
-    w = build_world(tmp_path, model=Recorder())
     svc = WorldService(rate=RateCap(0, 60.0), read_timeout=10)
+    w = build_world(tmp_path, model=svc.gated(Recorder()))
     svc.attach(w, VF)
     try:
         assert _resolve(svc, svc.session("x"))["status"] == "deferred"
     finally:
         svc.detach()
         w.close()
+
+
+# ------------------------------------------- r5: no hook, only inventing
+
+def _with_hook(tmp_path, hook, name="h.world", model=None):
+    w = build_world(tmp_path, model=model or Recorder(), name=name)
+    svc = WorldService(read_timeout=10)
+    svc.attach(w, VF, perceptible=hook)
+    return w, svc, svc.session("x")
+
+
+def test_without_a_hook_a_viewer_cannot_read_a_canon_concrete_value(hosted):
+    w, svc, sess, model = hosted
+    head = w.buffer.head()
+    out = _resolve(svc, sess, aspect="secret")          # canon: "owes a debt"
+    assert out["status"] == "not_perceptible"
+    assert w.buffer.head() == head and not model.resolves
+    assert w.buffer.visible(entity="person:barmaid", attribute="secret", frame=VF) == []
+
+
+def test_with_a_hook_that_says_yes_the_canon_value_is_served_and_mirrored(tmp_path):
+    w, svc, sess = _with_hook(tmp_path, lambda world, e, a: True)
+    try:
+        out = _resolve(svc, sess, aspect="secret")
+        assert out["status"] == "resolved"
+        assert [f["value"] for f in out["facts"]] == ["owes a debt"]
+        assert [f["provenance"]["status"] for f in out["facts"]] == ["observed"]
+        mirrored = w.buffer.visible(entity="person:barmaid", attribute="secret", frame=VF)
+        assert [r.status for r in mirrored] == ["observed"]
+    finally:
+        svc.detach()
+        w.close()
+
+
+def test_a_spent_memo_not_yet_in_the_view_needs_a_hook(tmp_path):
+    w, svc, sess = _with_hook(tmp_path, None)
+    try:
+        # the author resolved it in canon; the player has not perceived it
+        w.porcelain.resolve("person:barmaid", "wears")
+        head = w.buffer.head()
+        assert _resolve(svc, sess)["status"] == "not_perceptible"
+        assert w.buffer.head() == head
+        # a host that says yes serves and mirrors it ...
+        svc._perceptible = lambda world, e, a: True
+        assert _resolve(svc, sess)["status"] == "resolved"
+        # ... after which the view holds it, and a no-hook repeat ask is plain memo
+        svc._perceptible = None
+        again = _resolve(svc, sess)
+        assert again["status"] == "resolved" and again["facts"][0]["value"] == "a red wool kirtle"
+    finally:
+        svc.detach()
+        w.close()
+
+
+def test_without_a_hook_a_viewer_may_still_plant_and_force_or_force_an_unspent_placeholder(
+        tmp_path):
+    model = Recorder()
+    w, svc, sess = _with_hook(tmp_path, None, model=model)
+    try:
+        assert _resolve(svc, sess)["status"] == "resolved"              # E1 plant-and-force
+        w.ingest_structured([{"entity": "person:mara", "attribute": "wears",
+                              "value": {"policy": "invent_under_canon"},
+                              "value_type": "unresolved", "valid_from": 1.0}],
+                            classify="rules")                           # a host-planted one
+        assert _resolve(svc, sess, entity="person:mara")["status"] == "resolved"
+        assert len(model.resolves) == 2
+    finally:
+        svc.detach()
+        w.close()
+
+
+def test_resolver_preview_agrees_with_resolve(tmp_path):
+    model = Recorder()
+    w = build_world(tmp_path, model=model)
+    try:
+        r = w.resolver
+        assert r.preview("person:barmaid", "wears")[0] == "invent"
+        assert r.preview("person:barmaid", "haircolour")[0] == "nothing"
+        kind, rows = r.preview("person:barmaid", "secret")
+        assert kind == "served" and [x.value for x in rows] == ["owes a debt"]
+        assert not model.resolves and w.buffer.head() == w.buffer.head()
+        w.porcelain.resolve("person:barmaid", "wears")
+        kind, rows = r.preview("person:barmaid", "wears")
+        assert kind == "served" and [x.value for x in rows] == ["a red wool kirtle"]
+    finally:
+        w.close()
+
+
+# ------------------------------------------- r5: existence is perspectival
+
+
+def _bytes(x) -> str:
+    return json.dumps(x)
+
+
+def test_a_canon_only_id_and_a_nonexistent_id_answer_identically_on_snapshot(hosted):
+    _, _, sess, _ = hosted
+    for canon_only, nowhere in (("person:stranger", "person:nobody"),
+                                ("place:cellar", "place:nowhere")):
+        a = sess.call("snapshot", scope=[canon_only])
+        b = sess.call("snapshot", scope=[nowhere])
+        assert "error" in a and "error" in b
+        assert _bytes(a).replace(canon_only, "<ID>") == _bytes(b).replace(nowhere, "<ID>")
+        a = sess.call("snapshot", scope=canon_only)
+        b = sess.call("snapshot", scope=nowhere)
+        assert _bytes(a).replace(canon_only, "<ID>") == _bytes(b).replace(nowhere, "<ID>")
+        # mixed with a real one: only the bad id is listed, as for a nonexistent
+        mixed_a = sess.call("snapshot", scope=["person:mara", canon_only])
+        mixed_b = sess.call("snapshot", scope=["person:mara", nowhere])
+        assert mixed_a["bad"] == [canon_only] and mixed_b["bad"] == [nowhere]
+    # an id the view frame holds is served
+    ok = sess.call("snapshot", scope=["person:mara"])
+    assert "error" not in ok and ok["facts"]
+    # the engine's own error text is the one used
+    assert sess.call("snapshot", scope=["person:nobody"])["error"].startswith(
+        "snapshot scope must be KNOWN entity ids")
+
+
+def test_every_other_viewer_read_already_answers_canon_only_like_nowhere(hosted):
+    """The walk: for each allowlisted verb that takes an id, a canon-only id and
+    a nonexistent one differ in nothing but the echoed id. Only `snapshot`
+    needed the adapter's normalization."""
+    _, _, sess, _ = hosted
+    arg_names = {"state": ["entity"], "state_union": ["entity"], "confidence": ["entity"],
+                 "locate": ["entity"], "contents": ["container"],
+                 "composition": ["entity"], "features": ["place"], "neighborhood": ["entity"],
+                 "salience": ["entity"], "in_transit": ["agent"], "facts": ["entity"],
+                 "aggregate": ["container"]}
+    pairs = (("person:stranger", "person:nobody"), ("place:cellar", "place:nowhere"))
+    for verb, names in arg_names.items():
+        for canon_only, nowhere in pairs:
+            outs = []
+            for ident in (canon_only, nowhere):
+                args = {**SAMPLE_CALLS[verb], **{n: ident for n in names}}
+                outs.append(_bytes(sess.call(verb, **args)).replace(ident, "<ID>"))
+            assert outs[0] == outs[1], (verb, canon_only)
+    for verb, key in (("path", "a"), ("route", "a")):
+        for canon_only, nowhere in pairs:
+            outs = [_bytes(sess.call(verb, **{**SAMPLE_CALLS[verb], key: i})).replace(i, "<ID>")
+                    for i in (canon_only, nowhere)]
+            assert outs[0] == outs[1], verb
+    for canon_only, nowhere in pairs:
+        for mk in (lambda i: {"description": "the person", "scope": i},
+                   lambda i: {"description": "the thing", "constraints": [["contains", i]]}):
+            outs = [_bytes(sess.call("refer", **mk(i))).replace(i, "<ID>")
+                    for i in (canon_only, nowhere)]
+            assert outs[0] == outs[1]
+
+
+# ------------------------------------------------- r5: the gated model
+
+
+def test_gated_is_transparent_to_the_host_and_applies_the_cap_only_in_viewer_jobs(tmp_path):
+    model = Recorder()
+    svc = WorldService(model_route=_resolve_route, rate=RateCap(0, 60.0), read_timeout=10)
+    handle = svc.gated(model)
+    assert handle("p", {"title": TASK_RESOLVE}) == model("p", {"title": TASK_RESOLVE})
+    w = build_world(tmp_path, model=handle)
+    svc.attach(w, VF)
+    sess = svc.session("x")
+    try:
+        # the cap is zero: a viewer job is deferred; the author's resolve is not
+        assert _resolve(svc, sess)["status"] == "deferred"
+        assert w.porcelain.resolve("person:barmaid", "wears")["status"] == "resolved"
+        assert not getattr(svc._job, "viewer", False)          # the flag never leaks
+        # and a failing job clears it too
+        svc.set_now(float("inf"))
+        assert _resolve(svc, sess, entity="person:mara")["status"] in ("failed", "deferred")
+        assert not getattr(svc._job, "viewer", False)
+    finally:
+        svc.detach()
+        w.close()
+    with pytest.raises(TypeError):
+        svc.gated(None)
+
+
+def test_an_ungated_world_with_rate_logs_and_answers_no_rate_cap(tmp_path, caplog):
+    model = Recorder()
+    w = build_world(tmp_path, model=model)                    # NOT svc.gated(...)
+    svc = WorldService(rate=RateCap(5, 60.0), read_timeout=10)
+    with caplog.at_level("WARNING", logger="patternbuffer.service"):
+        svc.attach(w, VF)
+    assert any("rate cap is inactive" in r.message for r in caplog.records)
+    sess = svc.session("x")
+    try:
+        head = w.buffer.head()
+        assert _resolve(svc, sess)["status"] == "no_rate_cap"
+        assert w.buffer.head() == head and not model.resolves
+        # what never reaches the model is unaffected
+        assert _resolve(svc, sess, aspect="haircolour")["status"] == "undeclared"
+        # a code route is not a model call
+        svc._model_route = lambda schema: "code"
+        assert _resolve(svc, sess)["status"] == "resolved"
+    finally:
+        svc.detach()
+        w.close()
+
+
+def test_an_ungated_world_without_rate_proceeds_uncapped(hosted):
+    w, svc, sess, model = hosted
+    assert not svc._gated
+    assert _resolve(svc, sess)["status"] == "resolved" and len(model.resolves) == 1
+
+
+def test_the_service_never_writes_the_engines_model_handles():
+    import pathlib
+    import re
+    src = (pathlib.Path(__file__).parent.parent / "src" / "patternbuffer" / "service.py"
+           ).read_text()
+    assert not re.search(r"\._model\s*(,[^=\n]*)?=[^=]", src), "a write to a ._model handle"
 
 
 # --------------------------------------------------------------- (5) now
@@ -684,7 +895,7 @@ def _generator(prompt, schema):
 def runner(tmp_path):
     build_world(tmp_path, name="run.world").close()          # a world file to host
     model, route = make_runner_callable(_generator)
-    r = Runner(lambda: World(tmp_path / "run.world", "w:svc", model=model), VF,
+    r = Runner(lambda gated: World(tmp_path / "run.world", "w:svc", model=gated(model)), VF,
                port=0, recorders=("holo-emitter",), model_route=route).start()
     try:
         yield r
@@ -766,7 +977,8 @@ def test_the_runner_rejects_cross_origin_shaped_requests(runner):
 def test_without_a_generator_model_routed_resolves_answer_no_model(tmp_path):
     build_world(tmp_path, name="nm.world").close()
     model, route = make_runner_callable(None)
-    r = Runner(lambda: World(tmp_path / "nm.world", "w:svc", model=model), VF, port=0,
+    r = Runner(lambda gated: World(tmp_path / "nm.world", "w:svc", model=gated(model)),
+               VF, port=0,
                model_route=route).start()
     try:
         code, body = _http(r.port, "POST", "/call", {
