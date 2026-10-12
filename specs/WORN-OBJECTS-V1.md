@@ -4,7 +4,9 @@
 evidence site; an *effective* `worn_by` reading at `at`). It also folds in Photonic's shape read
 (m2f52dc), which drops the "nothing worn" guard: a stated hat must not leave her undressed. And it
 folds in construct's (me79b81): no reliance on generated names, and the containment read already
-serves the narrator. Changes are marked *(r2)*. Author: pb, 2026-10-12.
+serves the narrator. Changes are marked *(r2)*. r3 makes `existing` total and deterministic
+(pbr r2): its exact type, its ordering, what is given when a value is missing, and one time scope
+for every field. Marked *(r3)*. Author: pb, 2026-10-12.
 **Source:** roadmap R41, E3 of `specs/proposals/UNIFIED-WORLD-ACCESS.md`, which Kabe approved
 (gde97f3). It was sequenced after the identity gate g3bf5da (decided, P1–P3) and R35 (merged). The
 monitor queued it after R42a (note n7052ef).
@@ -63,9 +65,20 @@ monitor queued it after R42a (note n7052ef).
     disagree.
   - **What replaces it: the request carries what she already wears.** `ResolveRequest` gains
     `existing: tuple = ()` (RESOLVE-REQUEST-V1.2). For a minting aspect it holds the items already
-    joined to the entity by that aspect's relation, as `(id, kind, name)` sorted by id. The
-    generator answers the **complement**: the dress goes with the stated hat, and nothing
-    duplicates or contradicts a stated garment.
+    joined to the entity by that aspect's relation. The generator answers the **complement**: the
+    dress goes with the stated hat, and nothing duplicates or contradicts a stated garment.
+  - *(r3)* **Its exact shape.** It is a tuple of `(id, kind, names)`, sorted by `id`.
+    - **One frame and one time for every field.** All three are read in the resolve's frame, at
+      `valid_as_of = placeholder.valid_from`, the same scope as the containment check below. A
+      name or kind written later, or valid only after that time, never leaks into the request.
+    - `id: str`: the item's canonical id.
+    - `kind: str | None`: the folded `kind` of the item when its status is `known` and its value is
+      a string; otherwise `None` (no kind, unresolved, conflicted, or not a string).
+    - `names: tuple[str, ...]`: every distinct string value of the visible `name` rows on the
+      item's identity closure, sorted. A name is set-valued, so all are given and the code chooses
+      none. It is `()` for an unnamed item. Generated names are included: the generator needs to
+      know what was already invented.
+    - A code generator can therefore read `existing` with no policy of its own.
   - **Read effectively, at the placeholder's time** *(r2, pbr)*. `existing` is computed at the
     placeholder's `valid_from` (the resolve's `at`), threaded through. An item counts only when
     the winner of its folded containment-family key, as of that time, is a row whose attribute is
@@ -165,6 +178,12 @@ monitor queued it after R42a (note n7052ef).
    - A `worn_by` edge with `valid_from` after `at` is not in `existing` for a resolve at `at`: the
      resolve mints, and the future edge is not counted.
    - `contents` still plants only into an empty place.
+   - *(r3)* **Shape witnesses.**
+     - A stated worn item with no kind and no name appears as `(id, None, ())`.
+     - One with two names appears with both, sorted.
+     - A `name` and a `kind` written after `at`, or valid only from a later time, do not appear in
+       a resolve at `at`; a second world resolved at the later time does show them.
+     - The order is by id, whatever order the edges were written in.
 3. **Taking it off.**
    - A stated `obj:gen_N · carried_by · person:thief` after the resolve moves the coat;
    - `locate` and `contents` follow it;
@@ -201,8 +220,9 @@ monitor queued it after R42a (note n7052ef).
 ## Lexicon (added with the build)
 
 - **`existing`** (on `ResolveRequest`, V1.2): for a minting aspect, the items already joined to
-  the entity by its relation at the placeholder's time, as `(id, kind, name)`; the generator answers
-  the complement.
+  the entity by its relation at the placeholder's time, as `(id, kind-or-None, sorted names)`
+  sorted by id, every field read at that time in the resolve's frame; the generator answers the
+  complement.
 - **minting aspect**: an aspect whose resolution mints entities joined to the resolved entity by a
   containment relation (`contents` → `in`, `attire` → `worn_by`), instead of writing literal rows
   on one key.
