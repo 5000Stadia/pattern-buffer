@@ -1,6 +1,15 @@
 # ALIAS-INDEX-V1: a deterministic alias pass between pass-0 and pass-1 (roadmap R24)
 
-**Status:** r3 (2026-10-12): it answers pbr's r2 RED. Commit reads a durable source, and a
+**Status:** r4 (2026-10-12): it answers pbr's code RED.
+- **A different finalization.** The grader's seeded measure ran `reconcile`; `Pipeline.commit`
+  never does. So the r2 table measured a finalization that real book commits do not run.
+- **What re-measuring showed.** Without `reconcile`, no registry fuses the vaults and none merges
+  the Ilsa pair.
+- **The fix.** r4 gives commit and grader one shared finalization that **adds `reconcile` to the
+  book commit**, with Part B before it. It re-states the pass mark on that shared path, and it
+  rejects an empty source (marked *(r4)*).
+
+r3: it answered pbr's r2 RED. Commit reads a durable source, and a
 fresh `Pipeline` reproduces the same commit (marked *(r3)*). r2: Part B specified. r1 (2026-10-10): Part A built
 and merged to local main (evals only). Part B was unblocked by g3bf5da P3 and R35, and the
 monitor started it for Kabe (note nd86f34). Research note technique 1
@@ -78,6 +87,43 @@ The findings:
 - **The parallel registries' fragmentation (4 and 7) is untouched.** That is R25's work, not this
   pass's.
 
+### *(r4)* What real commits do, and the finalization this spec gives them
+
+- **What `Pipeline.commit` does today.** It finalizes identity with `promote_identity_proposals()`
+  and `confirm_frame_owners` only. It never runs the engine's `reconcile`, the global
+  shared-anchor pass.
+- **What R23 assumed.** The "seeded" grade, `grade_registry.seeded_registry`, also ran
+  `reconcile`. R23 read that as identity after commit; it is not what a book commit does.
+- **The same five registries, measured both ways** (B3 F1 / fused / fragmented):
+
+| Registry | commit today (no reconcile) | + reconcile | + reconcile + Part B |
+|---|---|---|---|
+| R23 run1 | 0.7517 / 0 / 1 (Ilsa split) | 0.7471 / 1 (vaults) / 0 | **0.7517 / 0 / 0** |
+| R23 run2 | 0.7347 / 0 / 1 | 0.7303 / 1 / 0 | **0.7347 / 0 / 0** |
+| R26 seq | 0.7517 / 0 / 0 | 0.7517 / 0 / 0 | **0.7517 / 0 / 0** |
+| R26 par1b | 0.8320 / 0 / 13 | 0.8264 / 1 / 4 | **0.8320 / 0 / 4** |
+| R26 par2b | 0.7961 / 0 / 13 | 0.7910 / 1 / 7 | **0.7961 / 0 / 7** |
+
+- **`reconcile` alone** merges what should merge (Ilsa; 13 → 4 and 7 split entities in the
+  parallel registries, the fragmentation that kept R26's parallel pass-0 off). It also fuses the
+  vaults.
+- **Part B before `reconcile`** keeps every one of those merges and removes the fusion. F1 equals
+  today's commit in every registry. The gain is structural (fragmentation 1 → 0 and 13 → 4 / 7,
+  fusion 0), not in F1.
+- **Without `reconcile`,** Part B has nothing to prevent: its rows are written, but no merge path
+  would have joined the vaults.
+
+**The change.**
+- **One shared finalization.** `pipeline.finalize_identity(w, *, reconcile: bool)` runs
+  `promote_identity_proposals()`, then `reconcile()` when asked, then `confirm_frame_owners(w)`.
+- **Both paths use it.** `Pipeline.commit` and `grade_registry.seeded_registry` both call
+  `seed_world`, then `alias_distinct_pass` (when on, with a source), then, in commit only, the
+  pass-1 replay and classification, then `finalize_identity`. Nothing else differs.
+- **`Pipeline(reconcile=True)` by default.** Book commits now reconcile. `reconcile=False,
+  alias_distinct=False` is today's commit, byte-identical.
+- **Why default-on for both.** Reconcile without Part B fuses the vaults; Part B without reconcile
+  does nothing. They are on together, and each can be turned off for measurement.
+
 ### The shape
 
 - **Where.** In the harness's `Pipeline.commit`, right after the registry is seeded
@@ -135,17 +181,25 @@ The findings:
   - The chapter test is re-run with it on, and must stay green.
   - `alias_distinct=False` restores today's commit exactly.
 
-### Pass mark (fixed before the build)
+### Pass mark (fixed before the build; restated in r4)
 
-On the five stored registries (R23 run1 and run2; R26 seq, par1b and par2b), each seeded with Part
-B exactly as `Pipeline.commit` does, under the same engine as main:
+On the five stored registries (R23 run1 and run2; R26 seq, par1b and par2b), each run through the
+**shared** path above, which is exactly what `Pipeline.commit` runs minus the pass-1 replay. It is
+compared with the same path with `alias_distinct=False` (reconcile on), and with **today's commit**
+(both off). The engine is main's:
 
 1. **Fused ids: 0** in all five. The vault fusion is gone wherever it occurred (four registries).
 2. **The Ilsa pair is merged** in every registry where main merges it (run1, run2).
 3. **No new fusion and no new fragmentation** in any registry: the fused-id and fragmented-entity
    sets are subsets of main's.
-4. **F1 is not lower than main's** in any registry. A gain is reported, not claimed: the measured
-   +0.005 is under the noise floor.
+4. **F1 is not lower than today's commit** in any registry *(r4)*. It is measured equal.
+4a. *(r4)* **Fragmentation is not higher than today's commit** in any registry, and is lower where
+    `reconcile` merges (R23: 1 → 0; par1b: 13 → 4; par2b: 13 → 7).
+4b. *(r4)* **A real commit is tested.** A fixture `run_dir` with staged chunks is committed through
+    `Pipeline.commit` with both flags on, with Part B off, and with both off. The world logs show:
+    - the vault-style fusion only with Part B off and reconcile on;
+    - no fusion with both on;
+    - today's log byte-for-byte with both off.
 5. **No person pair gets a `distinct_from`.** A fixture with two person cards that have different
    proper names and share an alias gets no row, and a later `correlate` between them still
    succeeds.
@@ -158,6 +212,8 @@ B exactly as `Pipeline.commit` does, under the same engine as main:
    - A `run_dir` with no `source_segments.json`, and no `segments` argument, commits exactly as
      today, and its report says `skipped: no_source`.
    - A tampered `source_segments.json` raises before anything is written.
+   - *(r4)* An **empty** segment list is not a source. A file holding `[]`, even with a matching
+     digest, raises before any write, and so does an explicit `segments=[]`.
    - A registry changed by `repair_escapes` is the registry the report reads: its
      `registry_sha256` matches the saved `registry.json`.
 
