@@ -111,7 +111,7 @@ measures reading, not recall.
 Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that service and adopting the unified methods discussed in the round robin." The agreed structure is `specs/proposals/UNIFIED-WORLD-ACCESS.md`. construct, holo-emitter and Photonic build their own sides.
 
 - [x] R37 E2: the generator receives a structured resolve request (`entity`, `kind`, `aspect`, `constraints`, `as_of`) beside the prompt — pbr GREEN, merged 2026-10-12 (`specs/RESOLVE-REQUEST-V1.md`; `ResolveRequest` on a byte-identical `TaskSchema`, read with `task_request()`)
-- [~] R38 E1: resolve the unmarked. In an opted-in story world, `resolve()` on a declared aspect with nothing known plants and forces it in one call; anything undeclared is refused
+- [x] R38 E1: resolve the unmarked. In an opted-in story world, `resolve()` on a declared aspect with nothing known plants and forces it in one call; anything undeclared is refused — pbr GREEN, merged 2026-10-12 (`specs/RESOLVE-UNMARKED-V1.md`; whitepaper A26)
 - [ ] R39 S1: the WorldService library (one handle, a serialized write queue, reads and resolve for every module, a rate cap) and an optional standalone runner with a `record` door
 - [ ] R40 S2: the player's-view export plus a change feed, for offline mirrors
 - [ ] R41 E3: worn things are objects (`worn_by`), promoted like furniture, after R35
