@@ -1,0 +1,28 @@
+{
+  "default": {
+    "b3_f1": 0.7517,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0,
+    "merge_candidates_merged": []
+  },
+  "reconcile": {
+    "b3_f1": 0.7517,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0,
+    "merge_candidates_merged": []
+  },
+  "report_only": [],
+  "today": {
+    "b3_f1": 0.7517,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0,
+    "merge_candidates_merged": []
+  },
+  "written": []
+}

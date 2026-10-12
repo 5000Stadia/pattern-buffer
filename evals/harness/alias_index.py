@@ -18,8 +18,10 @@ with no model call and no engine change:
    another card of the same kind, unless strong evidence says the two differ.
 
 Ids are repaired as ``registry._norm_id`` repairs them (``person:/x`` becomes
-``person:x``); the mapping is reported as ``id_repairs``. This is Part A only:
-nothing here writes identity, merges, or touches the engine.
+``person:x``); the mapping is reported as ``id_repairs``. ``build_report`` is
+Part A and writes nothing. ``apply_distinctness`` is Part B (ALIAS-INDEX-V1): the
+host's ``distinct_from`` for strong non-person pairs, called by
+``Pipeline.commit`` through the porcelain; it never merges.
 
 CLI (the story is segmented exactly as ``run_pass0_baseline.story_segments``):
 
@@ -603,6 +605,68 @@ def slice_ids(registry: Any, text: str) -> set[str]:
         if ids & hit:
             keep |= ids
     return keep
+
+
+# ------------------------------------------------- Part B: writing distinctness
+
+
+def _is_person(w: Any, registry: Any, eid: str) -> str | None:
+    """Why ``eid`` counts as a person (ALIAS-INDEX-V1 Part B, r3), or None.
+
+    Any one of three makes it a person: its id is in the ``person:`` namespace,
+    its seeded card's ``kind`` is ``person``, or the canon ``kind`` folded in
+    the world after seeding is ``person``. Kinds compare case-insensitively
+    and trimmed; a wider net only ever keeps a pair report-only."""
+    if _norm_id(eid).startswith("person:"):
+        return "person_namespace"
+    card = registry.entities.get(eid)
+    if card is not None and str(card.kind).strip().lower() == "person":
+        return "person_card_kind"
+    fold = w.state(eid, "kind")
+    winner = getattr(fold, "winner", None)
+    if winner is not None and str(winner.value).strip().lower() == "person":
+        return "person_folded_kind"
+    return None
+
+
+def apply_distinctness(w: Any, registry: Any, report: Mapping[str, Any]) -> dict[str, Any]:
+    """Write the host's ``distinct_from`` for ``report``'s strong distinctness
+    pairs (ALIAS-INDEX-V1 Part B). The world ``w`` holds the seeded registry
+    and nothing else; the call goes through ``w.porcelain.reject``.
+
+    A pair is written only when both ids are seeded (keys of
+    ``registry.entities``) and neither is a person (see ``_is_person``). Every
+    other strong pair is returned under ``report_only`` with its reason. A
+    ``conflict_*`` receipt wrote nothing and is listed as written-with-that-
+    outcome; nothing is ever retracted. Returns ``{"written", "report_only"}``,
+    in report order (deterministic)."""
+    written: list[dict[str, Any]] = []
+    report_only: list[dict[str, Any]] = []
+    for p in report["distinctness_evidence"]:
+        if p["strength"] != "strong":
+            continue
+        a, b = p["ids"]
+        strong = [{"type": e["type"], "evidence": e["evidence"]}
+                  for e in p["evidence"] if e["strength"] == "strong"]
+        entry = {"ids": [a, b], "evidence": strong[0]["evidence"] if strong else "",
+                 "evidence_all": strong}
+        missing = [i for i in (a, b) if i not in registry.entities]
+        if missing:
+            report_only.append({**entry, "reason": "not_seeded", "detail": missing})
+            continue
+        why = {i: r for i in (a, b) if (r := _is_person(w, registry, i))}
+        if why:
+            report_only.append({**entry, "reason": "person", "detail": why})
+            continue
+        try:
+            outcome = w.porcelain.reject(a, b).get("outcome")
+        except ValueError as exc:  # the gate refused the pair; nothing was written
+            written.append({**entry, "outcome": f"error: {exc}"})
+            logger.warning("alias distinctness: reject(%s, %s) refused: %s", a, b, exc)
+            continue
+        written.append({**entry, "outcome": outcome})
+    logger.info("alias distinctness: %d written, %d report-only", len(written), len(report_only))
+    return {"written": written, "report_only": report_only}
 
 
 # --------------------------------------------------------------- rendering

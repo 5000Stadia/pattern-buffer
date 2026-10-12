@@ -142,7 +142,8 @@ def test_seeded_registry_counts_the_engines_own_merges() -> None:
     }
     gold = {"ilsa": ["Ilsa Renn", "the clerk with the tin ear"], "pell": ["Pell"]}
     before = grade(reg, gold)
-    seeded = seeded_registry(reg)
+    assert grade(seeded_registry(reg), gold)["fragmentation_count"] == 1  # today's commit: split
+    seeded = seeded_registry(reg, reconcile=True)  # the engine's reconcile closes it
     after = grade(seeded, gold)
     assert all(":/" not in eid for eid in seeded["entities"])  # ids repaired
     assert before["fragmentation_count"] == 1

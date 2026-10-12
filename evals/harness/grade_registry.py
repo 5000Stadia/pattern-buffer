@@ -136,25 +136,42 @@ def grade(registry: Any, gold: Mapping[str, list[str]] | None = None) -> dict[st
     }
 
 
-def seeded_registry(registry: Any) -> dict[str, Any]:
-    """The registry as the engine leaves it: seed it into a scratch world
-    (stub model, no pass-1), run identity promotion and ``reconcile``, and
-    fold each merged group into one card under its surviving id. Grading this
-    measures identity after commit, where the engine's own merges count.
+def seeded_registry(registry: Any, segments: list[str] | None = None, *,
+                    alias_distinct: bool = True, reconcile: Any = "auto") -> dict[str, Any]:
+    """The registry as a commit leaves it: seed it into a scratch world (stub
+    model, no pass-1), finalize identity, and fold each merged group into one
+    card under its surviving id. Grading this measures identity after commit,
+    where the engine's own merges count.
 
     Ids are first repaired as ``registry.parse_registry_lines`` repairs them
     (a stored registry from before that fix may carry ``person:/x`` ids,
-    which the gate would refuse)."""
+    which the gate would refuse).
+
+    This is ``Pipeline.commit`` minus the pass-1 replay (ALIAS-INDEX-V1 r4):
+    ``seed_world``, then ``alias_distinct_pass`` when ``alias_distinct`` is on
+    and ``segments`` (the story text pass-0 read) are given, then
+    ``finalize_identity``; all shared with the commit. ``reconcile`` takes
+    ``"auto"`` (the default: exactly when Part B runs), ``True`` or ``False``,
+    as ``Pipeline(reconcile=...)`` does, so ``seeded_registry(reg)`` with no
+    segments is today's commit's identity. The pass's report is returned under
+    ``"alias_report"``. An empty ``segments`` raises ``ValueError``."""
     import tempfile
 
     from patternbuffer import World
 
     try:
-        from registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id, seed_items
+        from pipeline import (alias_distinct_pass, finalize_identity, require_source,
+                              resolve_reconcile, seed_world)
+        from registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id
     except ImportError:
-        from evals.harness.registry import (EntityCard, TimelineSpec, WorldRegistry,
-                                            _norm_id, seed_items)
+        from evals.harness.pipeline import (alias_distinct_pass, finalize_identity,
+                                            require_source, resolve_reconcile, seed_world)
+        from evals.harness.registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id
 
+    if segments is not None and alias_distinct:
+        require_source(segments)
+    part_b = alias_distinct and segments is not None
+    do_reconcile = resolve_reconcile(reconcile, part_b)
     if isinstance(registry, (str, Path)):
         registry = json.loads(Path(registry).read_text())
     if not isinstance(registry, Mapping):
@@ -172,22 +189,61 @@ def seeded_registry(registry: Any) -> dict[str, Any]:
         w = World(Path(tmp) / "seeded.world", world_id=reg.world_id,
                   model=lambda prompt, schema: {})
         w.ingestor.classify_inline = False
-        for alias, canonical in sorted(reg.attributes.items()):
-            try:
-                w.ingestor.add_attribute_alias(alias, canonical)
-            except ValueError:  # refused by the engine (e.g. `holds`), as at commit
-                pass
-        w.ingest_structured(seed_items(reg))
-        w.registry.promote_identity_proposals()
-        w.registry.reconcile()
+        seed_world(w, reg)
+        alias_report = alias_distinct_pass(w, reg, segments) if part_b else None
+        finalize_identity(w, reconcile=do_reconcile)
         entities: dict[str, dict[str, list[str]]] = {}
+        merged_into: dict[str, str] = {}
         for eid, card in sorted(reg.entities.items()):
             root = w.registry.resolve(eid)
+            if root != eid:
+                merged_into[eid] = root
             merged = entities.setdefault(root, {"names": [], "aliases": []})
             merged["names"] += [n for n in card.names if n not in merged["names"]]
             merged["aliases"] += [a for a in card.aliases if a not in merged["aliases"]]
         w.close()
-    return {"world_id": reg.world_id, "entities": entities}
+    out: dict[str, Any] = {"world_id": reg.world_id, "entities": entities,
+                           "merged_into": merged_into}
+    if alias_report is not None:
+        out["alias_report"] = alias_report
+    return out
+
+
+def part_b_effect(registry: Any, segments: list[str]) -> dict[str, Any]:
+    """What ALIAS-INDEX-V1 Part B changes on one registry (no model call), in
+    three columns, each the shared commit path (``seeded_registry``) graded:
+
+    - ``today``: ``alias_distinct=False, reconcile=False``, today's commit;
+    - ``reconcile``: ``alias_distinct=False, reconcile=True``, the measurement
+      mode that fuses the vaults;
+    - ``default``: both defaults (Part B, then ``reconcile`` under ``"auto"``).
+
+    Per column: B3 F1, fused ids, fragmented gold entities, and the Part A merge
+    candidates that ended as one id. Plus what Part B ``written`` and kept
+    ``report_only`` (``default`` column)."""
+    modes = {"today": dict(alias_distinct=False, reconcile=False),
+             "reconcile": dict(alias_distinct=False, reconcile=True),
+             "default": {}}
+    seeded = {k: seeded_registry(registry, segments=segments, **kw) for k, kw in modes.items()}
+    report = seeded["default"]["alias_report"]
+    candidates = report["merge_candidates"] + report["merge_excluded"]
+    out: dict[str, Any] = {}
+    for label, s in seeded.items():
+        g, into = grade(s), s["merged_into"]
+        root = lambda i: into.get(i, i)  # noqa: E731
+        out[label] = {
+            "b3_f1": g["b3_f1"],
+            "fusion_count": g["fusion_count"],
+            "fusion": g["fusion"],
+            "fragmentation_count": g["fragmentation_count"],
+            "fragmentation": sorted(g["fragmentation"]),
+            "merge_candidates_merged": sorted(
+                f"{c['holder']} + {c['named']}" for c in candidates
+                if root(c["holder"]) == root(c["named"])),
+        }
+    out["written"] = report["written"]
+    out["report_only"] = report["report_only"]
+    return out
 
 
 def scorecard_md(result: Mapping[str, Any], title: str = "Pass-0 registry scorecard") -> str:
@@ -234,10 +290,22 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("registry", help="path to registry.json")
     ap.add_argument("--out", required=True, help="directory for scorecard.md/.json")
+    ap.add_argument("--part-b", action="store_true",
+                    help="also write part_b_effect.json: this registry seeded without and with "
+                         "ALIAS-INDEX-V1 Part B over the chapter-test story (needs PYTHONPATH=src)")
     args = ap.parse_args(argv)
     result = grade(args.registry)
     md, js = write_scorecard(result, args.out)
     print(f"{md}\n{js}")
+    if args.part_b:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent))
+        import run_pass0_baseline  # the segmentation lives there
+
+        effect = part_b_effect(args.registry, run_pass0_baseline.story_segments())
+        path = Path(args.out) / "part_b_effect.json"
+        path.write_text(json.dumps(effect, indent=2, sort_keys=True) + "\n")
+        print(path)
     return 0
 
 
