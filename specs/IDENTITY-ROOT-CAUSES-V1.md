@@ -225,7 +225,9 @@ derivation. Ordinary state, alias, `refer` and frame reads are unchanged *(pbr r
      shift they cause, and the build shows this with a row-level diff of old and new fixtures.
    - `test_s2_a_passing_raw_same_as_writes_the_merge_verbs_rows`: a raw `same_as` and `p.merge`
      still write the same rows except `decided_by`, which is `statement` for the raw item and `host`
-     for the verb. The test compares every other row byte for byte and asserts those two values.
+     for the verb. The test compares every other row byte for byte and asserts those two values. In the
+     same test, the expected `r.rows` list gains `("event:merge_7", "decided_by")` and the later
+     `r.rows[4:]` slice becomes `r.rows[5:]`. Both are the same extra row.
    - `test_s2_commit_set_carries_the_merge_or_aborts`: the expected attribute list gains
      `decided_by` after `evidence`.
    - `test_identity_recall::test_reconcile_writes_only_identity_machinery`: the allowed attribute
