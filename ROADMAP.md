@@ -116,7 +116,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 - [x] R40 S2: the player's-view export plus a change feed, for offline mirrors
 - [ ] R41 E3: worn things are objects (`worn_by`), promoted like furniture, after R35
 - [x] R42 A host-only `closure(entity, asserted_as_of=None)` read (plus `distinct_between` if construct's swap needs it), so construct stops copying the engine's identity walk; after R40 merges. *Monitor's call for Kabe (gate gc857b5, note ne26319).*
-- [~] R42a `facts(..., bookkeeping=False)`: a frame scan without the engine's bookkeeping rows, so construct holds no copy of `META_ATTRIBUTES` (cr's boundary finding). *Monitor's call for Kabe (gate g4d7cf0, note n7052ef).*
+- [x] R42a `facts(..., bookkeeping=False)`: a frame scan without the engine's bookkeeping rows, so construct holds no copy of `META_ATTRIBUTES` (cr's boundary finding). *Monitor's call for Kabe (gate g4d7cf0, note n7052ef).*
 
 ## Later
 
