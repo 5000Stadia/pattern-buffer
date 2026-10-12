@@ -104,7 +104,7 @@ measures reading, not recall.
 - [~] R24 A deterministic alias-index pass between pass-0 and pass-1: global name propagation, a kinship/address stoplist, `distinct_from` proposals from coordination and co-presence (research note, technique 1) — Part A done 2026-10-10 (`evals/harness/alias_index.py`; `specs/ALIAS-INDEX-V1.md`): on R23's registries it finds the vault pair as distinct and the Ilsa pair as a merge candidate. Part B (writing identity rows) waits on g3bf5da P3
 - [ ] R25 Handle-based incremental `extend` with a verified merge gate: the harness mints the ids, and merges are checked by a yes/no call (research note, technique 2)
 - [~] R26 Per-stage build timings, then parallel map-reduce pass-0 plus gleaning (research note, technique 3) — measured 2026-10-10 (`evals/results/2026-10-10-r26-build-timings/REPORT.md`, 4 runs): a build is 32 min, pass-0 46%, pass-1 29%, classification 13%, audit 10%, engine work <1%. Parallel pass-0 cuts pass-0 to 449-517 s and meets the pass mark by the letter, but fragments the registry (13 split entities vs 0), so it stays off until R24 Part B and R25. Gleaning not run (cap)
-- [ ] R27 A whole book end to end, Alice as the standing example: time, cost and fidelity receipts (vision "Hand it a book and walk in")
+- [ ] R27 A whole book end to end, Alice as the standing example: time, cost and fidelity receipts (vision "Hand it a book and walk in"). Kabe (g6cee1d, 2026-10-12): run the original and a counterfeit edition (renamed characters plus scripted state edits), each twice, and report a run-to-run noise floor
 
 ## M4 — One world for every module
 
