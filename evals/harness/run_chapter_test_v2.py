@@ -73,9 +73,11 @@ def write_registry_reports(registry, segments: list[str], run_dir: Path) -> dict
     raw = grade(registry)
     write_scorecard(raw, run_dir, stem="registry_scorecard",
                     title=f"Pass-0 registry scorecard ({run_dir.name})")
-    seeded = grade(seeded_registry(registry))
+    # ALIAS-INDEX-V1 r4.2: graded as the commit finalizes it (Part B, then
+    # reconcile), from the same segments pass-0 read
+    seeded = grade(seeded_registry(registry, segments=segments))
     write_scorecard(seeded, run_dir, stem="registry_scorecard_seeded",
-                    title=f"Pass-0 identity after seeding and reconcile ({run_dir.name})")
+                    title=f"Pass-0 identity as the commit finalizes it ({run_dir.name})")
     alias_index.write_report(alias_index.build_report(registry, segments), run_dir,
                              title=f"Alias index ({run_dir.name})")
     return {"raw_b3_f1": raw["b3_f1"], "seeded_b3_f1": seeded["b3_f1"],

@@ -56,8 +56,11 @@ def run_once(run_dir: Path, segments: list[str]) -> dict:
         pass
     result = grade(registry)
     write_scorecard(result, run_dir, title=f"Pass-0 registry scorecard ({run_dir.name})")
-    write_scorecard(grade(seeded_registry(registry)), run_dir, stem="scorecard_seeded",
-                    title=f"Pass-0 identity after seeding and reconcile ({run_dir.name})")
+    # ALIAS-INDEX-V1 r4.2: graded as the commit finalizes it (Part B, then
+    # reconcile), from the same segments pass-0 read
+    write_scorecard(grade(seeded_registry(registry, segments=segments)), run_dir,
+                    stem="scorecard_seeded",
+                    title=f"Pass-0 identity as the commit finalizes it ({run_dir.name})")
     meta = {"date": date.today().isoformat(), "model": MODEL, "segments": len(segments),
             "wall_s": wall, "registry_ids": len(registry.entities)}
     (run_dir / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
