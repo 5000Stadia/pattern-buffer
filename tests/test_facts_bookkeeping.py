@@ -13,7 +13,7 @@ from patternbuffer.roles import _make_engine_roles
 from patternbuffer.service import WorldService
 from patternbuffer.testing import StubModel, rule_classifier_fallback
 
-F = "knows:person:bea"
+F = "knows:person:bo"
 INGESTOR = _make_engine_roles()["ingestor"]
 
 
@@ -22,7 +22,7 @@ def world(tmp_path):
     w = World(tmp_path / "bk.world", world_id="w:bk",
               model=StubModel(fallback=rule_classifier_fallback()))
     w.ingest_structured([
-        {"entity": "person:bea", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "person:bo", "attribute": "kind", "value": "person", "timeless": True},
         {"entity": "person:ann", "attribute": "kind", "value": "person", "timeless": True},
         {"entity": "obj:lamp", "attribute": "colour", "value": "brass", "frame": F,
          "valid_from": 1.0},
@@ -31,7 +31,7 @@ def world(tmp_path):
         {"entity": "obj:lamp", "attribute": "durability", "value": "fragile", "frame": F,
          "valid_from": 1.0},
     ])
-    for attribute, value in (("aka", "person:bea"), ("same_as", "person:bea"),
+    for attribute, value in (("aka", "person:bo"), ("same_as", "person:bo"),
                              ("source", "doc:letter")):
         w.buffer.append(entity="person:ann", attribute=attribute, value=value,
                         value_type="entity", status="stated", role=INGESTOR, frame=F)

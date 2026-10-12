@@ -105,30 +105,30 @@ def test_adjudicate_idempotent_and_reconcile_unchanged(world):
 # ------------------------------------- Win 4: durable-contradiction veto
 
 def test_contradictory_roles_block_auto_merge(world):
-    # HD 089: pavel_orra (retrieval lead) fused into tom_apprentice despite
+    # HD 089: dorn_vale (supply lead) fused into ash_apprentice despite
     # contradictory standing role rows — the veto keeps them a proposal
-    _person(world, "person:pavel", name="pavel",
-            extra=[{"entity": "person:pavel", "attribute": "role",
-                    "value": "retrieval lead", "valid_from": 1.0}])
-    _person(world, "person:pavel_orra", name="pavel orra",
-            extra=[{"entity": "person:pavel_orra", "attribute": "role",
-                    "value": "defense apprentice", "valid_from": 1.0}])
+    _person(world, "person:dorn", name="dorn",
+            extra=[{"entity": "person:dorn", "attribute": "role",
+                    "value": "supply lead", "valid_from": 1.0}])
+    _person(world, "person:dorn_vale", name="dorn vale",
+            extra=[{"entity": "person:dorn_vale", "attribute": "role",
+                    "value": "ward apprentice", "valid_from": 1.0}])
     world.classifier.set(
         world.buffer.visible(attribute="role")[0].id, "DISPOSITIONAL")
     world.classifier.set(
         world.buffer.visible(attribute="role")[1].id, "DISPOSITIONAL")
     assert world.registry.durable_contradictions(
-        "person:pavel", "person:pavel_orra")
-    world.registry.maybe_same_as("person:pavel", "person:pavel_orra", evidence="t")
+        "person:dorn", "person:dorn_vale")
+    world.registry.maybe_same_as("person:dorn", "person:dorn_vale", evidence="t")
     out = world.porcelain.adjudicate_deferred()
     assert out["merged"] == []
-    assert world.registry.resolve("person:pavel") != world.registry.resolve("person:pavel_orra")
+    assert world.registry.resolve("person:dorn") != world.registry.resolve("person:dorn_vale")
     assert world.registry.reconcile() == 0     # _mergeable declines too
-    assert world.registry.resolve("person:pavel") != world.registry.resolve("person:pavel_orra")
+    assert world.registry.resolve("person:dorn") != world.registry.resolve("person:dorn_vale")
     # the (C) bundle names the contradiction for the host
     props = world.porcelain.proposals()
     pair = [p for p in props
-            if {p["a"], p["b"]} == {"person:pavel", "person:pavel_orra"}]
+            if {p["a"], p["b"]} == {"person:dorn", "person:dorn_vale"}]
     assert pair and pair[0]["auto_decline"]["code"] == "durable_contradiction"
     assert "role" in pair[0]["auto_decline"]["durable_contradictions"][0]
 

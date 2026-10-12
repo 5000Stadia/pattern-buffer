@@ -67,7 +67,7 @@ def _edge_id(w, a: str, b: str) -> str:
 def test_anchor_words_are_raw():
     assert _anchor_words("The Cafe de la Digue") == ["the", "cafe", "de", "la", "digue"]
     assert _anchor_words("received corin in the guild hall") == [
-        "received", "corin", "in", "the", "union", "hall"]
+        "received", "corin", "in", "the", "guild", "hall"]
     assert _anchor_words("Kit's  key--ring_x") == ["kit's", "key", "ring", "x"]
     assert _anchor_words("") == []
 
@@ -104,7 +104,7 @@ def test_six_people_sharing_a_sentence_are_proposals_not_a_fusion(world):
 
 
 def test_a_clause_as_a_name_is_declined_too(world):
-    """Names are held to the rule as aliases are: 'received corin in the union
+    """Names are held to the rule as aliases are: 'received corin in the guild
     hall' (six words) fused anselm_varo with corin."""
     clause = "received corin in the guild hall"
     _thing(world, "person:anselm_varo", name=clause)
@@ -123,10 +123,10 @@ def test_a_title_sentence_fuses_nothing(world):
 
 def test_speaker_relative_anchors_do_not_fuse_the_protagonist(world):
     """'my apprentice' names a different person for every speaker."""
-    for eid in ("person:tamsin", "person:ash_apprentice", "person:dorn_vale"):
+    for eid in ("person:wren", "person:ash_apprentice", "person:dorn_vale"):
         _thing(world, eid)
     world.ingest_structured([
-        {"entity": "person:tamsin", "attribute": "alias", "value": "my apprentice",
+        {"entity": "person:wren", "attribute": "alias", "value": "my apprentice",
          "timeless": True},
         {"entity": "person:ash_apprentice", "attribute": "alias", "value": "my apprentice",
          "timeless": True},
@@ -137,9 +137,9 @@ def test_speaker_relative_anchors_do_not_fuse_the_protagonist(world):
     ])
     assert world.registry.reconcile() == 0
     props = _proposals(world)
-    assert props[frozenset(("person:tamsin", "person:ash_apprentice"))] == NOT_NAME_LIKE
+    assert props[frozenset(("person:wren", "person:ash_apprentice"))] == NOT_NAME_LIKE
     assert props[frozenset(("person:dorn_vale", "person:ash_apprentice"))] == NOT_NAME_LIKE
-    assert len({_R(world, e) for e in ("person:tamsin", "person:ash_apprentice",
+    assert len({_R(world, e) for e in ("person:wren", "person:ash_apprentice",
                                        "person:dorn_vale")}) == 3
 
 

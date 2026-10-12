@@ -254,6 +254,6 @@ The reviewer's tested patch for findings 1–2 is
    - `"timeless": "false"` as a string, and a bad `at=` poisoning the cursor,
      go to GATE-AUTHORITY-V1's item normalization.
 5. **Ship notice.** It must also list construct's played worlds: 12 `locate()`
-   answers change (thedeep 8, ironhold 2, emberroad2 1, live_telegram 1), all
+   answers change (thedeep 8, ironhold 2, emberroad2 1, a live world 1), all
    correct §1/§3 fixes. With r3, the reviewer measured no other changes to
    construct's worlds beyond the intended §1–§4.

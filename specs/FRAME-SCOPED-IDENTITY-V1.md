@@ -572,20 +572,20 @@ engine, and `who_knows` reports stored names.
 Why it is held. An internal pre-review measured on copies of construct's live
 worlds that following merges leaks knowledge, because automatic `reconcile`
 merges on garbage aliases had fused characters:
-- **"Minutes Before Bullets"** (`live_telegram_8786956263_2`): the merged closure
-  {mara, pavel, pavel_orra, tom_apprentice} includes the protagonist. Under r1
+- **"World B"** (`world B file 1`): the merged closure
+  {wren, dorn, dorn_vale, ash_apprentice} includes the protagonist. Under r1
   the protagonist's frame serves 58 rows instead of its own 19, including the 4
-  clues seeded into NPC Pavel's frame (3 genuine, 1 red herring).
-- **"The Quiet Shelf at Gullwick"** (`live_telegram_8897888758_1`, 4 files):
-  Lillian's 2 clues and Pearl's 1 become readable through the frames of may,
-  nora, annie and rose, merged on the alias "laughing into weather that had
-  tried and failed to erase them".
-- **"The Crate at Quay Seven"** (`live_telegram_8786956263_1`):
-  `person:baptiste_orsini` (the dock-union president) was merged with
-  `person:lucien`, a fragment of the protagonist, on the alias "received lucien
-  in the union hall"; their knowledge frames would fuse.
+  clues seeded into NPC Dorn's frame (3 genuine, 1 red herring).
+- **"World C"** (`world C file 1` and 3 more):
+  Lena's 2 clues and Opal's 1 become readable through the frames of mae,
+  nell, ida and rue, merged on the alias "singing into a wind that had
+  tried and failed to quiet them".
+- **"World A"** (`world A file 1`):
+  `person:anselm_varo` (the dock-guild president) was merged with
+  `person:corin`, a fragment of the protagonist, on the alias "received corin
+  in the guild hall"; their knowledge frames would fuse.
 - **Retraction alone does not repair.** `reconcile()` re-merges at once (2
-  merges for pavel, 5 for annie). A durable repair retracts the anchor alias
+  merges for dorn, 5 for ida). A durable repair retracts the anchor alias
   rows too, or retracts and rejects every pair.
 - **The write path** (pre-review MINOR): construct's frame-clearing loop scans
   `facts(knows:X)` and retracts what it finds; under r1 it retracts a merged
@@ -677,10 +677,10 @@ g698a80), not to this build. r1's text follows, unchanged, for reference.
   `knows:person:jonas_vale`.
 - **Two of those observer frames sit on bad canon merges**, so the people
   wrongly merged now share one knowledge frame:
-  - In `live_telegram_8897888758_1*`, `reconcile` merged
-    `annie/lillian/may/nora/pearl/rose` on the garbage alias "laughing into
-    weather that had tried and failed to erase them".
-  - In `live_telegram_8786956263_2`, it merged `mara/pavel/tom_apprentice` on
+  - In `world C files`, `reconcile` merged
+    `ida/lena/mae/nell/opal/rue` on the garbage alias "singing into
+    a wind that had tried and failed to quiet them".
+  - In `world B file 1`, it merged `wren/dorn/ash_apprentice` on
     "my apprentice"/"his apprentice".
   - Today the bad merge corrupts their canon facts. After, it also fuses their
     knowledge frames. Retracting those `same_as` rows splits both again, since
@@ -991,7 +991,7 @@ canon). It loses §7's canonical names and fused frames.
   proposals, `typing_conflicts`, `fidelity_audit`, `identity_conflicts`), base
   `dddbb64` against r2:
   - 0 snapshots flip between ok and error.
-  - "Minutes Before Bullets": `knows:person:tom_apprentice` serves its own 19
+  - "World B": `knows:person:ash_apprentice` serves its own 19
     rows (base 19; r1 with §7: 58, 39 of them from merged frames).
   - `emberroad2`'s frame-clearing loop for `person:caldus` retracts 0 partner
     rows (above).
@@ -1004,9 +1004,9 @@ canon). It loses §7's canonical names and fused frames.
     collision changes. No other frame read changes anywhere.
   - `by_alias`, outside `thedeep`: two texts stop resolving in canon because
     only a `knows:` frame carries them (§2): "mara_thist"
-    (`emberroad.preset.play`, in `knows:person:mara_thist`) and "tom
-    apprentice" (`live_telegram_8786956263_2`, an alias of
-    `person:pavel_orra` in `knows:person:tom_apprentice`).
+    (`emberroad.preset.play`, in `knows:person:mara_thist`) and "ash
+    apprentice" (`world B file 1`, an alias of
+    `person:dorn_vale` in `knows:person:ash_apprentice`).
   - `typing_conflicts` (26 files): the slip signature reads canon only (§2).
     No pair is lost; 7 are gained, slips a non-canon row had masked ("saint
     orven's step" twice, "san pedro" in the 5 `thedeep` files); 92 pairs'

@@ -13,8 +13,8 @@ from patternbuffer.roles import _make_engine_roles
 from patternbuffer.service import VIEWER_EXCLUDED, Refused, WorldService
 from patternbuffer.testing import StubModel, rule_classifier_fallback
 
-A, B, C, D = "person:ann", "person:ann_reed", "person:a_reed", "person:bea"
-F = "knows:person:bea"
+A, B, C, D = "person:ann", "person:ann_reed", "person:a_reed", "person:bo"
+F = "knows:person:bo"
 INGESTOR = _make_engine_roles()["ingestor"]
 
 
