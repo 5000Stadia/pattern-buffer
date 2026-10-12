@@ -1,7 +1,10 @@
 # WORN-OBJECTS-V1: what a person wears is things, invented like a room's contents
 
-**Status:** r1, for pbr's spec review and shape reads from Photonic and construct. Author: pb,
-2026-10-12.
+**Status:** r2. It answers pbr's r1 RED (one status-aware anchor predicate at every identity
+evidence site; an *effective* `worn_by` reading at `at`). It also folds in Photonic's shape read
+(m2f52dc), which drops the "nothing worn" guard: a stated hat must not leave her undressed. And it
+folds in construct's (me79b81): no reliance on generated names, and the containment read already
+serves the narrator. Changes are marked *(r2)*. Author: pb, 2026-10-12.
 **Source:** roadmap R41, E3 of `specs/proposals/UNIFIED-WORLD-ACCESS.md`, which Kabe approved
 (gde97f3). It was sequenced after the identity gate g3bf5da (decided, P1–P3) and R35 (merged). The
 monitor queued it after R42a (note n7052ef).
@@ -52,12 +55,29 @@ monitor queued it after R42a (note n7052ef).
   collide with the `wearing → worn_by` inverse alias at the gate.
   - A world opts in as with any E1 aspect: `attr:attire · resolvable_for · person`.
   - Photonic's people aspect list would include it.
-- **The guard** extends `_may_plant`'s contents rule: `attire` plants only when nothing is
-  `worn_by` the entity, as of the placeholder's time.
-  - If the story already dressed the person, the stated garments stand, and nothing is invented
-    around them.
-  - The time check matters because what someone wears is state: the guard reads as of `at`, not
-    head time.
+- **No "nothing worn" guard** *(r2, Photonic)*. `attire` plants whenever it is declared and not
+  yet resolved, in the usual E1 way.
+  - **Why not r1's guard.** r1 planted only when nothing was `worn_by` the person. A story that
+    states only a hat would then block every other garment. A renderer never draws anyone
+    undressed, so it would invent clothes off the record, and the picture and the log would
+    disagree.
+  - **What replaces it: the request carries what she already wears.** `ResolveRequest` gains
+    `existing: tuple = ()` (RESOLVE-REQUEST-V1.2). For a minting aspect it holds the items already
+    joined to the entity by that aspect's relation, as `(id, kind, name)` sorted by id. The
+    generator answers the **complement**: the dress goes with the stated hat, and nothing
+    duplicates or contradicts a stated garment.
+  - **Read effectively, at the placeholder's time** *(r2, pbr)*. `existing` is computed at the
+    placeholder's `valid_from` (the resolve's `at`), threaded through. An item counts only when
+    the winner of its folded containment-family key, as of that time, is a row whose attribute is
+    the aspect's relation (`worn_by`) and whose value resolves to the entity. So:
+    - a `held_by` or `carried_by` child is not worn, and is not in `existing`;
+    - an old `worn_by` edge superseded by `in` (taken off) is not in `existing`;
+    - an edge whose `valid_from` is after `at` (worn later) is not in `existing` at `at`.
+  - **`contents` keeps its E1 guard** (plant only when the place holds nothing), with its
+    `existing` always `()`. Unifying contents onto the complement rule is a later choice, not this
+    spec's.
+- **The literal `wears` stays as it was.** Photonic will move to `attire` and leave `wears`
+  undeclared. Stated `wears` words from the story still reach generators through `current`.
 - **Taking it off.** Once minted, a garment is an ordinary entity. The story moves it by writing a
   new containment edge (`in place:hall`, `carried_by person:thief`). The fold already serves the
   latest edge.
@@ -94,8 +114,22 @@ monitor queued it after R42a (note n7052ef).
 
 ### 4. Invention is not identity evidence
 
-- `reconcile()` and the within-chunk anchor collection skip `name` and `alias` rows whose status is
-  `generated`. A generated word never makes two closures candidates for a merge.
+- *(r2, pbr)* **One status-aware anchor predicate**, `IdentityRegistry._is_anchor_row(row)`,
+  holds when the row's attribute is `name` or `alias`, its value is a string, and its status is
+  not `generated`. Every identity-evidence collector uses it:
+  - `typed_name_anchors`, and with it `_mergeable`, promotion, `retype`'s slip check and
+    triage;
+  - reconcile's direct text map;
+  - `name_collisions`;
+  - `typing_conflicts`.
+
+  A generated word therefore never makes two closures candidates for a merge, a proposal, a
+  collision, a typing slip or a retype slip witness.
+- **What it leaves alone.**
+  - The vocabulary lookup (`by_alias`, `refer`) is unchanged, so an invented thing stays
+    referable by its name ("the red wool dress").
+  - The nearby durable and outgoing-domain scans are not anchor collectors, and are not
+    touched.
 - **What still merges them:**
   - a stated or observed name: once the story names the dress "the red dress", that row is
     evidence like any other;
@@ -123,8 +157,14 @@ monitor queued it after R42a (note n7052ef).
      a name;
    - the second resolve serves the memo, with no new rows;
    - `contents(person)` includes them (the containment family).
-2. **The guard.** A person with a stated garment `worn_by` them at `at` does not plant `attire`.
-   A person who wore something only earlier, and has since changed, does plant it at `at`.
+2. **`existing` at `at`** *(r2)*.
+   - A person with a stated hat `worn_by` them still plants `attire`, and the request's
+     `existing` is exactly the hat.
+   - A `held_by` and a `carried_by` decoy are not in `existing`.
+   - A garment worn earlier and since put `in` a chest is not in `existing`.
+   - A `worn_by` edge with `valid_from` after `at` is not in `existing` for a resolve at `at`: the
+     resolve mints, and the future edge is not counted.
+   - `contents` still plants only into an empty place.
 3. **Taking it off.**
    - A stated `obj:gen_N · carried_by · person:thief` after the resolve moves the coat;
    - `locate` and `contents` follow it;
@@ -137,14 +177,18 @@ monitor queued it after R42a (note n7052ef).
    - A later stated colour overrides the generated one.
 5. **Mirror.** `resolve(perceive_in=F)` writes the edge, kind, name and look rows into F as
    `observed`, in one unit; a gate refusal rolls back everything.
-6. **Identity.**
-   - Two women each minted a garment named "red wool dress": `reconcile()` merges nothing.
-   - A stated `name` "red wool dress" on both still behaves as before R41.
-   - Contents minted in two rooms with the same name also stay apart.
+6. **Identity** *(r2: every collector)*.
+   - Two women each have a minted garment named "red wool dress", and contents minted in two
+     rooms share a name. For these generated names, each collector produces nothing:
+     `reconcile()` (no merge), the within-chunk proposal path (no `maybe_same_as`),
+     `name_collisions`, `typing_conflicts`, and the `retype` slip witness.
+   - The same names **stated** on both still produce exactly what they produced before R41.
+   - `refer("the red wool dress")` still finds the invented dress (the vocabulary is unchanged).
 7. **Corpus.** The §4 measurement on construct's world copies: merges before and after, any
    difference listed, and book grading unchanged or better.
 8. **E2 request.** The resolve request for `attire` carries `aspect="attire"`, the person's
-   `kind` and the `current` facts (V1.1). Photonic's route needs nothing else.
+   `kind`, the `current` facts (V1.1) and `existing` (V1.2). The prompt is unchanged apart from
+   §2's sentence, and the request for a non-minting aspect has `existing == ()`.
 
 ## Not in this spec
 
@@ -156,6 +200,9 @@ monitor queued it after R42a (note n7052ef).
 
 ## Lexicon (added with the build)
 
+- **`existing`** (on `ResolveRequest`, V1.2): for a minting aspect, the items already joined to
+  the entity by its relation at the placeholder's time, as `(id, kind, name)`; the generator answers
+  the complement.
 - **minting aspect**: an aspect whose resolution mints entities joined to the resolved entity by a
   containment relation (`contents` → `in`, `attire` → `worn_by`), instead of writing literal rows
   on one key.
