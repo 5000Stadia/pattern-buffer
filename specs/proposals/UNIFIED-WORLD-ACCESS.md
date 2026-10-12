@@ -1,6 +1,7 @@
-# Unified world access: how the modules read and fill one world (round 2, consolidated)
+# Unified world access: how the modules read and fill one world (final, for Kabe)
 
-Status: consolidated draft for the final polish round. Author: pattern-buffer (pb), 2026-10-12.
+Status: FINAL. All three modules agreed in the polish round, and their changes are folded in
+(marked *polish*). Author: pattern-buffer (pb), 2026-10-12.
 Readers: construct (Newproject), holo-emitter, Photonic. Decision: Kabe's.
 Round 1 is in git (57caa3c). Each module's input is digested in `unified-world-access-input/`;
 Photonic's full text is `/home/k/Projects/colony/projects/Photonic/design/unified-world-access-photonic-r1.md`.
@@ -50,11 +51,15 @@ no model.
 - **Why:** canon holds secrets, such as the blood in the lining or who the murderer is.
   *(construct A)*
 - **The lens:** the player's own view (frame), which pattern-buffer already filters at source.
-  Construct keeps that view current. At scene open it adds what is perceptible: visible furniture,
+  Construct keeps that view current, **at scene open and on every reveal, in the turn's commit**
+  (a drawer opened, a coat examined, a hood pulled back), so the screen never lags the story.
+  *(polish: construct)* At scene open it adds what is perceptible: visible furniture,
   the people present, and their **perceived** appearance. A hooded figure is perceived as
   "hooded figure, tall", not as who it is. *(Photonic 6)*
 - **Concealment** therefore needs no special marker. Something is out of the player's view until
   it is perceived: the closed drawer's contents, the lining, the face under the hood.
+- **What the view governs.** It controls what is narrated and what the panel and notebook show.
+  It does not control which drawable bytes reach a renderer: see §7. *(polish: holo-emitter)*
 - **Disguise** depends on Kabe's open identity gate (g3bf5da). Showing "the hooded figure" in the
   player's view as a separate entity from canon's "the murderer" needs identity that is scoped per
   view. Until that gate is decided, a disguise can be shown only as perceived-appearance words.
@@ -65,7 +70,7 @@ aspect. With E2 it receives `{entity, kind, aspect, constraints, as_of}` as stru
 
 | Aspect | Generator | Model? |
 |---|---|---|
-| Body and face (hair, nose, build, eyes, age look) | Photonic's sampler: words + look, seeded, instant | never |
+| Body and face (hair, nose, build, eyes, age look) | Photonic's sampler: words + look, seeded, instant | only to author a missing kind pack (a dragon, a new elf) once, at build time (Photonic's M6 trigger); play never *(polish: Photonic)* |
 | Wardrobe | Photonic's sampler over the setting's period kit (by rank and trade), period-true by construction | only to author a missing setting's kit once, at build time |
 | Room contents, furniture, books, plants | holo-emitter's generators, from address, kinds, era and seed | never |
 | Weather and conditions | from the clock and calendar (code), or stated by the story | never |
@@ -73,7 +78,19 @@ aspect. With E2 it receives `{entity, kind, aspect, constraints, as_of}` as stru
 | Named, plot-relevant people at scene open | the model may refine the words, but only inside the closed vocabulary | optional |
 
 **Rule:** every word written about a visible thing must be something its renderer can draw. A term
-outside the vocabulary goes to `other`, which triggers a build. It is never free text.
+outside the vocabulary goes to `other`, which triggers a build. It is never free text. This holds for
+**stated** rows too: when the narrator's prose says "a red dress", extraction maps it onto the
+declared aspects (or `other`). *(polish: construct)*
+
+**How the host runs a code generator.** *(polish: construct)*
+- holo-emitter's and Photonic's generators are JavaScript, but the host (construct) is Python.
+- The narrator must describe what the renderer will draw, so the host expands recipes and calls
+  `describe()` itself, in the turn, before narration. This matters most with no renderer running
+  (Telegram play).
+- Each generator ships a **host-runnable form**: a `node` subprocess behind the registry. pb's lean
+  is one implementation, not a port.
+- Both sides' suites check a **shared table of test vectors** (seed, inputs → words).
+- The content-hash version covers every form of a generator.
 
 ### 4. What pattern-buffer stores
 - **Facts:**
@@ -81,8 +98,13 @@ outside the vocabulary goes to `other`, which triggers a build. It is never free
   - `observed` rows are play events;
   - `generated` rows are words chosen by a generator.
 - **Recipes, not expansions.** A street of 300 people, a shelf of 4,000 books or a room's furniture
-  is stored as **one recipe row**: generator id, content-hash version (code **and** data packs,
-  old versions kept runnable), seed, and the as-of of the resolution. Renderers expand recipes
+  is stored as **one recipe row**: generator id, content-hash version (code **and** data packs),
+  seed, and the as-of of the resolution.
+- **Version policy.** *(polish: holo-emitter)*
+  - Before a world's release, a generator change re-derives every recipe nothing has promoted;
+    worlds in development start afresh.
+  - From release on, the world pins its generator versions, and those versions are kept runnable.
+  - Promotion always protects whatever the story has touched. Renderers expand recipes
   locally in milliseconds. This is pattern-buffer's own membrane rule: whatever can be derived is
   not stored. *(holo-emitter a, Photonic 2)*
 - **Promotion.** One item from a recipe gets its own rows when it becomes story-relevant: moved,
@@ -128,7 +150,13 @@ outside the vocabulary goes to `other`, which triggers a build. It is never free
 
 ### 7. Offline play: a local mirror of the player's view
 - The public manor is a static page on a phone with no server. *(holo-emitter d)*
-- The mirror is an **export of the player's view only**: facts and recipes, with no secrets in it.
+- The mirror is an **export of the player's view** plus **everything physically present in the
+  places it covers**, as what to draw: recipe or promoted row, position and container,
+  look-words. Opening a drawer shows its contents within a frame. *(polish: holo-emitter)*
+- It carries **no meaning**. "The murder weapon" and "whose blood" are facts and relations, and
+  those stay filtered.
+- **Trade-off for Kabe:** a player who digs into the phone's storage can see an unopened drawer's
+  contents, though not what they mean.
 - It is synced by events since a log position, when a service exists.
 - With no service, the code routes decide and the world still plays in full.
 - Format: a JSON world document that pattern-buffer exports. holo-emitter's `world.js` already
@@ -157,10 +185,13 @@ outside the vocabulary goes to `other`, which triggers a build. It is never free
   - host the service and keep the player's view current at scene open;
   - pre-resolve before narration;
   - the narrator briefing;
+  - map extracted visible attributes onto the closed vocabulary *(polish)*;
+  - run registered JS generators via `node` *(polish)*;
+  - update the view on every reveal *(polish)*;
   - the `commit_elapsed` `at=` fix;
   - commit play events.
 - **holo-emitter:**
-  - register room and condition generators;
+  - register room and condition generators, each with a host-runnable form and test vectors;
   - read the mirror.
 - **Photonic (R3):**
   - register `person.appearance.*`;
@@ -168,17 +199,19 @@ outside the vocabulary goes to `other`, which triggers a build. It is never free
   - the people aspect list;
   - content-hash versions.
 
-## For Kabe to decide (after the polish round)
+## For Kabe to decide
 
 1. **Approve this shape.** The default, if you skip it: nothing is built.
 2. **The order:** E2 → E1 → S1 → S2, with E3 after the identity gate.
 3. **Old worlds** stay untouched until you say otherwise.
 4. **holo-bridge** (construct's branch) becomes the door for other modules. This was already your
    call.
+5. **Mirror trade-off:** unopened contents can sit on the device, without their meaning. The
+   default: accepted.
 
-## Polish round: what each module checks
+## Polish round
 
-- Is your input represented correctly?
-- What would you still change?
-- Is anything here more than the need requires?
-- **Answer "agree" or name the change.**
+All three modules replied "agree" with small changes, all folded in above:
+- holo-emitter: m2f6ad8;
+- Photonic: m73d0b0;
+- construct: md0b39b.
