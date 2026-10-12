@@ -1,6 +1,7 @@
 # IDENTITY-ROOT-CAUSES-V1: automatic merges that the evidence can't support
 
-**Status:** r1, spec for pbr review. Author: pb, 2026-10-12.
+**Status:** r2, pbr GREEN on r1 (2026-10-12), with its three clarifications folded in (§2, §3,
+§4). r2 also corrects one word-count ambiguity in §1(a). Author: pb.
 **Decision:** Kabe accepted gate g3bf5da's point P3 on 2026-10-12 (relayed by the monitor, note n02620e).
 P1 and P2 were also accepted; P4 is still open. Consult: ccab80f (two outside views, Claude and Codex).
 
@@ -51,7 +52,9 @@ current behaviour.
 **Rule.** In `_mergeable` (the gate for promotion and reconcile), a shared name-class anchor (`name`
 or `alias`) counts as merge evidence only if it is **name-like**. An anchor is name-like when both
 hold:
-- (a) it has at most **5 tokens**; a sentence or clause is not a name;
+- (a) it has at most **5 words**; a sentence or clause is not a name. Words are counted **raw**
+  (`_anchor_words`: lowercase, split on anything that isn't a letter, a digit or an apostrophe, with
+  every word kept, articles included);
 - (b) its first token is **not a speaker-relative possessive** (`_RELATIVE_POSSESSIVES`: `my`, `our`,
   `your`, `his`, `her`, `their`, `its`). "My apprentice" names a different person for every
   speaker.
@@ -60,8 +63,11 @@ hold:
 anchors it compares.
 
 **Notes on the rule:**
-- **Tokens** use the same tokenizer as `_content_tokens` (`identity.py:56`), so there is one notion
-  of a word.
+- **Counting.** Words are not counted with `_content_tokens` (`identity.py:56`). That tokenizer
+  drops articles and honorifics, which is right for comparing names but wrong for spotting a
+  sentence. Measured: under `_content_tokens`, "received corin in the guild hall" counts 5 and "the
+  true tale of the crown" counts 4. Both would still merge, leaving 12 of the 14 pairs caught instead
+  of 14. The raw count is the rule.
 - **The existing alias rule stands.** Today an alias needs ≥2 content tokens with an equal kind.
   That lower bound is unchanged; (a) is an upper bound on the whole anchor.
 - **Considered and dropped: a content-token cap.** "At most 3 content tokens" caught nothing that (a)
@@ -99,6 +105,9 @@ silently reversed.
   still decide them:
   - `merge` and `confirm` still merge such a pair; the host has re-judged.
   - `reject` still writes `distinct_from`.
+- **Only the edge counts** *(pbr r1)*. Retracting the `identity_merge` event alone does **not**
+  settle a pair. Only a marked retraction of the `same_as` edge changes the closure, so that is the
+  durable "apart" decision. `_same_as_path_ids` already names the edge first.
 - **Retracting a proposal** (`maybe_same_as`) is not covered here. Today's behaviour is unchanged:
   `reject` is the host's verb for "never again".
 - **One reader.** Retracted rows are invisible to `visible()`, so the registry gets one new
@@ -124,7 +133,7 @@ evidence begins "confirmed proposal: reconcile: …".
 | Value | Written by |
 |---|---|
 | `host` | the porcelain `merge` verb (`guarded_merge`), `confirm`, `retype(absorb=)` |
-| `statement` | a `same_as` submitted through the ingest gate as an item, raw or as an item's `same_as` key. The row also carries `extracted · true` when the item came from prose extraction (`ingest(text)` or `ingest_structured(extracted=True)`) |
+| `statement` | a `same_as` submitted through the ingest gate as an item, raw or as an item's `same_as` key. The row also carries `extracted · true` when the item came from prose extraction (`ingest(text)` or `ingest_structured(extracted=True)`). It is one value, *(pbr r1)*: the route (through the gate) and the origin (extracted or authored) are orthogonal, so the origin stays its own bit |
 | `engine` | `reconcile`, `promote_identity_proposals`, `adjudicate_deferred` |
 
 - **`decided_by` is a mechanism attribute** (GATE-AUTHORITY-V1 §1). It is added to
@@ -173,6 +182,9 @@ evidence begins "confirmed proposal: reconcile: …".
 - Many are right (soren_vale = vale), and construct confirms those. The proposals arrive already
   deduplicated, one per pair.
 
+**This rule lives in the engine, not as a host knob** *(pbr r1)*. Merging two points of view is a
+truth and identity safety boundary. A host that wants such a merge says so with `confirm`.
+
 **Book worlds have no host** (consult point 3):
 - The eval pipeline is the host of a book world. It decides frame-owner proposals with an explicit
   step that calls `confirm` on each one that passes `_mergeable` without §4. That is
@@ -180,6 +192,9 @@ evidence begins "confirmed proposal: reconcile: …".
 - So a book run reaches the same merges as before, but each one is visibly a decision rather than a
   silent engine act.
 - The engine keeps no book-specific switch.
+
+**The only read-surface change.** Merge-event reporting gains `decided_by`, with the legacy
+derivation. Ordinary state, alias, `refer` and frame reads are unchanged *(pbr r1)*.
 
 ## §5 Checks
 
