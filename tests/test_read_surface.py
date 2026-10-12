@@ -857,7 +857,7 @@ def test_s4_known_functional_key_byte_identical_but_value_type(wm):
     assert fact["entity"] == "person:ann" and fact["value"] == "place:hall"
     assert fact["valid"] == [1.0, None]
     assert fact["divergent"] is False and fact["b_value"] is None
-    assert set(fact["provenance"]) == {"status", "source_chain", "assertion_id"}
+    assert set(fact["provenance"]) == {"status", "source_chain", "assertion_id", "frame"}
 
 
 def test_s4_value_type_appended_after_b_value(wm):
@@ -1842,7 +1842,8 @@ def test_s11_registry_declares_refer_and_canonical_attribute():
     assert {"refer", "canonical_attribute"} <= set(V1_READS)
     # AMBIGUOUS: the count depends on whether batch C's identity_conflicts has
     # landed; both stated counts are accepted.
-    assert len(reg) == (42 if "identity_conflicts" in reg else 41)
+    # 43 with FRAME-CONTINUITY-V1's continue_frame mutation
+    assert len(reg) == (43 if "identity_conflicts" in reg else 41)
 
 
 def test_s11_completeness_still_classifies_every_verb():

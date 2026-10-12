@@ -35,6 +35,7 @@ from patternbuffer.model import (
     VALUE_TYPES,
     WORLD_PHYSICS_SUBJECT,
     Assertion,
+    FrameSel,
 )
 from patternbuffer.roles import RoleViolation, WriterRole
 
@@ -573,7 +574,7 @@ class PatternBuffer:
         attribute_in: list[str] | None = None,
         value: Any | None = None,
         value_type: str | None = None,
-        frame: str | None = None,
+        frame: FrameSel | None = None,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> list[Assertion]:
@@ -587,6 +588,10 @@ class PatternBuffer:
         on the asserted axis — honored only with truth maintenance's mark,
         status ``retracted`` (GATE-AUTHORITY-V1 §1): a ``retracts`` row
         forged under any other status hides nothing.
+
+        ``frame`` is one stored frame name (``=``) or a tuple of them (``IN``,
+        FRAME-CONTINUITY-V1 §2: the stored frames a wider ``frame_scope``
+        resolved to; an empty tuple selects nothing).
         """
         aao = self.head() if asserted_as_of is None else asserted_as_of
         clauses = ["a.asserted_at <= ?", "a.status != 'retracted'"]
@@ -616,9 +621,12 @@ class PatternBuffer:
         if value_type is not None:
             clauses.append("a.value_type = ?")
             params.append(value_type)
-        if frame is not None:
+        if isinstance(frame, str):
             clauses.append("a.frame = ?")
             params.append(frame)
+        elif frame is not None:
+            clauses.append(f"a.frame IN ({','.join('?' * len(frame))})")
+            params.extend(frame)
         if valid_as_of is not None:
             clauses.append("(a.valid_from IS NULL OR a.valid_from <= ?)")
             params.append(valid_as_of)

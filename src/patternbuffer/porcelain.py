@@ -22,9 +22,13 @@ from patternbuffer.codec import decode_value, encode_out
 from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
+    FRAME_CONTINUES_AS,
+    FRAME_SCOPES,
     ID_RE,
+    KNOWS_PREFIX,
     META_ATTRIBUTES,
     TASK_ASK_PLAN,
+    FrameSel,
     task_schema,
 )
 from patternbuffer.thunks import UNKNOWN, ResolutionDenied
@@ -181,7 +185,7 @@ class Porcelain:
             entity=row.entity, attribute=row.attribute, value=row.value,
             valid=[row.valid_from, row.valid_to],
             provenance={"status": row.status, "source_chain": chain,
-                        "assertion_id": row.id},
+                        "assertion_id": row.id, "frame": row.frame},
             divergent=divergent, b_value=b_value, value_type=row.value_type,
         )
 
@@ -201,7 +205,7 @@ class Porcelain:
             entity=entity or row.entity, attribute=attribute or row.attribute,
             value=quantity, valid=[row.valid_from, row.valid_to],
             provenance={"status": row.status, "source_chain": chain,
-                        "assertion_id": row.id},
+                        "assertion_id": row.id, "frame": row.frame},
             divergent=divergent, b_value=b_value,
             value_type="literal",    # a derived total (READ-SURFACE-V1 §4)
         )
@@ -276,6 +280,51 @@ class Porcelain:
         every porcelain argument that names an attribute passes through here
         first. A non-string argument passes through unchanged."""
         return self._w.canonical_attribute(name) if isinstance(name, str) else name
+
+    def _scoped_frames(self, frame: str, frame_scope: str,
+                       asserted_as_of: int | None) -> FrameSel:
+        """The stored frames a read of `frame` covers under `frame_scope`
+        (FRAME-CONTINUITY-V1 §2), resolved once per call as of the read's log
+        position. `exact` returns the plain frame string untouched, so its
+        code path is today's. A wider scope applies to `knows:` frames only
+        (`ValueError` otherwise) and returns the frame itself first, then the
+        others sorted; a scope that adds nothing returns the plain string.
+
+        - `continued`: the frames the host declared continue into this one
+          (canon `frame_continues_as` rows, retraction honoured), transitively.
+          Edges are exact observer names: no identity closure is applied, so
+          a merge never widens a frame (FRAME-SCOPED-IDENTITY-V1 P1).
+        - `merged`: the frames of every member of the observer's canon
+          `same_as` closure. Never `aka`."""
+        if frame_scope not in FRAME_SCOPES:
+            raise ValueError(
+                f"frame_scope must be one of {FRAME_SCOPES}, got {frame_scope!r}")
+        if frame_scope == "exact":
+            return frame
+        if not (isinstance(frame, str) and frame.startswith(KNOWS_PREFIX)
+                and len(frame) > len(KNOWS_PREFIX)):
+            raise ValueError(
+                f"frame_scope={frame_scope!r} widens a knows:<observer> frame only "
+                f"(got {frame!r}); canon, plot:* and every other frame read exactly")
+        observer = frame[len(KNOWS_PREFIX):]
+        if frame_scope == "merged":
+            members = self._w.registry.closure(observer, asserted_as_of)
+        else:
+            sources: dict[str, list[str]] = {}
+            for row in self._w.buffer.visible(
+                    attribute=FRAME_CONTINUES_AS, frame=CANON,
+                    asserted_as_of=asserted_as_of):
+                if row.value_type == "entity" and isinstance(row.value, str):
+                    sources.setdefault(row.value, []).append(row.entity)
+            members = {observer}
+            frontier = [observer]
+            while frontier:
+                for source in sources.get(frontier.pop(), ()):
+                    if source not in members:
+                        members.add(source)
+                        frontier.append(source)
+        others = sorted(KNOWS_PREFIX + m for m in members if m != observer)
+        return (frame, *others) if others else frame
 
     # ------------------------------------------------- BUILD-SESSION-V1
 
@@ -600,7 +649,8 @@ class Porcelain:
 
     def state(self, entity: str, attribute: str, frame: str = CANON,
               as_of: float | None = None, value: Any = None,
-              asserted_as_of: int | None = None) -> dict:
+              asserted_as_of: int | None = None,
+              frame_scope: str = "exact") -> dict:
         """The folded value of one (entity, attribute) key in a frame as of a valid
         time: {"status": "unknown"} when nothing is recorded, else "known",
         "conflicted" or "unresolved" (the served row is an unresolved
@@ -616,9 +666,18 @@ class Porcelain:
         (EVENTS-ONE-READER-V1 §4): `kind` and the movement keys answer exactly
         what `events()` reports (conflicted when two top-rank rows disagree at
         one stamp); a description key with several rows lists them in
-        `values`; an event that has not occurred by `as_of` is unknown."""
+        `values`; an event that has not occurred by `as_of` is unknown.
+
+        `frame_scope` (FRAME-CONTINUITY-V1 §2) is `exact` (default: the rows
+        stored under `frame`), `continued` (plus the frames the host declared
+        continue into it, `continue_frame`) or `merged` (plus the frames of the
+        observer's `same_as` closure); the latter two take a `knows:` frame
+        only. The fold runs over the union as one row set and every served
+        fact says its stored frame in `provenance.frame`."""
         return self._key_payload(
-            self._point_read(entity, self._attr(attribute), frame, as_of, asserted_as_of),
+            self._point_read(entity, self._attr(attribute),
+                             self._scoped_frames(frame, frame_scope, asserted_as_of),
+                             as_of, asserted_as_of),
             value, asserted_as_of)
 
     def where(self, attribute: str, op: str, value, frame: str = CANON,
@@ -705,19 +764,23 @@ class Porcelain:
     def facts(self, frame: str, entity: str | None = None,
               attribute: str | None = None, prefix: str | None = None,
               as_of: float | None = None, include_meta: bool = False,
-              asserted_as_of: int | None = None) -> list[dict]:
+              asserted_as_of: int | None = None,
+              frame_scope: str = "exact") -> list[dict]:
         """The frame-scan read (BOUNDED-READS-V1): the visible rows OF one
         frame as Fact payloads — RAW log reads for audited scans (receipt
         trails, knowledge digests, marker rows), NOT folds (folded truth is
         `state`/`snapshot`). `frame` is required (the bound). `entity` targets
         one id (identity-closure for world entities; exact for `a:<n>` receipt
         chains — always served); frame/prefix-wide listings exclude meta rows
-        unless `include_meta=True`."""
+        unless `include_meta=True`. `frame_scope` is `exact` unless the caller
+        widens it (see `state`); every fact says its stored frame in
+        `provenance.frame`, so a scan can act on the rows of one frame."""
         if not frame:
             raise ValueError("facts() requires a frame — every read fixes perspective")
         if attribute is not None:
             attribute = self._attr(attribute)
         aao = asserted_as_of
+        frame = self._scoped_frames(frame, frame_scope, aao)
         if entity is not None and not entity.startswith("a:"):
             clos = sorted(self._w.registry.closure(entity))
             rows = self._w.buffer.visible(entity_in=clos, frame=frame,
@@ -824,6 +887,51 @@ class Porcelain:
         is written: FRAME-SCOPED-IDENTITY-V1 §3(d))."""
         return self._w.registry.reject(a, b)
 
+    # ------------------------------------ FRAME-CONTINUITY-V1 (the host's event)
+
+    def continue_frame(self, source: str, into: str, evidence: str) -> Receipt:
+        """Declare that what `source` knew is part of what `into` knows
+        (FRAME-CONTINUITY-V1 §3): `continue_frame("person:daniel", "person:dan",
+        "the same man; host decision")`. Both are observer ids, kept exactly as
+        given (a frame's name is never resolved through identity). Writes one
+        timeless canon row, `source · frame_continues_as · into` (`stated`),
+        and its `evidence`, and returns a Receipt; a read of `knows:<into>`
+        with `frame_scope="continued"` then also reads `knows:<source>`. One
+        way: `source` gains nothing. Retract the row to end it. Declaring an
+        edge that already stands writes nothing (a warning in the Receipt)."""
+        for label, observer in (("source", source), ("into", into)):
+            if not (isinstance(observer, str) and ID_RE.fullmatch(observer)):
+                raise ValueError(f"continue_frame {label} must be an observer id, "
+                                 f"got {observer!r}")
+        if source == into:
+            raise ValueError("continue_frame source and into are the same observer")
+        if not (isinstance(evidence, str) and evidence.strip()):
+            raise ValueError("continue_frame needs a non-empty evidence string")
+        for row in self._w.buffer.visible(attribute=FRAME_CONTINUES_AS, frame=CANON,
+                                          entity=source):
+            if row.value == into:
+                receipt = self._receipt([])
+                receipt.warnings.append(
+                    f"already declared by {row.id}; nothing written")
+                return receipt
+        ingestor = self._w.ingestor
+        with self._posed(None):
+            rows = self._w.ingest_structured([{
+                "entity": source, "attribute": FRAME_CONTINUES_AS, "value": into,
+                "value_type": "entity", "status": "stated", "frame": CANON,
+                "timeless": True}], classify="rules")
+            skipped = [sk.to_dict() for sk in ingestor.last_skipped]
+            edge = next((r for r in rows if r.attribute == FRAME_CONTINUES_AS), None)
+            if edge is not None:          # else the gate refused it: `skipped` says why
+                rows += self._w.ingest_structured([{
+                    "entity": edge.id, "attribute": "evidence", "value": evidence,
+                    "status": "stated", "frame": CANON, "timeless": True}],
+                    classify="rules")
+                skipped += [sk.to_dict() for sk in ingestor.last_skipped]
+        receipt = self._receipt(rows)
+        receipt.skipped = skipped
+        return receipt
+
     # -------------------------------------------- SHAPE-FIX-V1 (identity shape)
 
     def adjudicate_deferred(self) -> dict:
@@ -892,15 +1000,19 @@ class Porcelain:
 
     def state_union(self, entity: str, attribute: str, frame: str = CANON,
                     as_of: float | None = None, value: Any = None,
-                    asserted_as_of: int | None = None) -> dict:
+                    asserted_as_of: int | None = None,
+                    frame_scope: str = "exact") -> dict:
         """The explicit correlated read: fold `attribute` over `entity` ∪ its
         correlated facets, as-of. Same shape as `state`. NOT a default read —
         `state`/`snapshot`/`ask` never union. As-of-before a reveal returns the
         uncorrelated view (no leak). An event's own attributes are read from
-        the records of the union (EVENTS-ONE-READER-V1 §4)."""
+        the records of the union (EVENTS-ONE-READER-V1 §4). `frame_scope` is
+        `state`'s (FRAME-CONTINUITY-V1 §2): under a wider scope the `aka` edges
+        are read from the same union of stored frames."""
         return self._key_payload(
-            self._point_read(entity, self._attr(attribute), frame, as_of, asserted_as_of,
-                             correlated=True),
+            self._point_read(entity, self._attr(attribute),
+                             self._scoped_frames(frame, frame_scope, asserted_as_of),
+                             as_of, asserted_as_of, correlated=True),
             value, asserted_as_of)
 
     def correlation_conflicts(self, as_of: float | None = None,
