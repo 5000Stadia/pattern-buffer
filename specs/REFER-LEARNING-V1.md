@@ -268,7 +268,7 @@ Location: the `identity.py` `by_alias` alias branch (1107–1109) compares
 - **Non-string values** never match (unchanged).
 
 **Measured on construct's 52 live worlds:** 4 alias rows are stored
-un-normalized. One text (`boy from veyrac fils`, in a `live_telegram` world)
+un-normalized. One text (`boy from marlet fils`, in a live world)
 gains its only referent.
 
 **Oracle:**

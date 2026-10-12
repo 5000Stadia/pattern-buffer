@@ -6,8 +6,8 @@
 - Construct's play path (`p.ingest` over narration) reaches it whenever the
   extractor writes `holds` or `wearing`.
 - 10 of 165 construct world files carry the inverted receipt. Live example:
-  `person:callum held_by doc:school_archive_folder` puts Callum inside the
-  folder, and `place:historical_rooms held_by` four different objects puts the
+  `person:cole held_by doc:school_folder` puts Cole inside the
+  folder, and `place:archive_rooms held_by` four different objects puts the
   room inside each of them.
 
 It waits on Kabe's go-ahead, then pbr.

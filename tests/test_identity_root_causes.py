@@ -67,8 +67,8 @@ def _edge_id(w, a: str, b: str) -> str:
 def test_anchor_words_are_raw():
     assert _anchor_words("The Cafe de la Digue") == ["the", "cafe", "de", "la", "digue"]
     assert _anchor_words("received corin in the guild hall") == [
-        "received", "corin", "in", "the", "union", "hall"]
-    assert _anchor_words("Kit's  key--ring_x") == ["kit's", "key", "ring", "x"]
+        "received", "corin", "in", "the", "guild", "hall"]
+    assert _anchor_words("Tam's  key--ring_x") == ["tam's", "key", "ring", "x"]
     assert _anchor_words("") == []
 
 
@@ -104,7 +104,7 @@ def test_six_people_sharing_a_sentence_are_proposals_not_a_fusion(world):
 
 
 def test_a_clause_as_a_name_is_declined_too(world):
-    """Names are held to the rule as aliases are: 'received corin in the union
+    """Names are held to the rule as aliases are: 'received corin in the guild
     hall' (six words) fused anselm_varo with corin."""
     clause = "received corin in the guild hall"
     _thing(world, "person:anselm_varo", name=clause)

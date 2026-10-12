@@ -120,8 +120,8 @@ must not block a *typing correction*. Two cases, one verb:
   substring search false-passes on look-alike words).
 
 ## Win 4 — the durable-contradiction veto (HD 089: the fused-protagonist incident)
-Live failure: reconcile fused `person:pavel_orra` (role: retrieval lead) into
-`person:tom_apprentice` (defense apprentice) as `same_as` — the value-rewrite
+Live failure: reconcile fused `person:dorn_vale` (role: supply lead) into
+`person:ash_apprentice` (ward apprentice) as `same_as` — the value-rewrite
 repointed `arc:main.protagonist` and bound the player to the wrong character. Only
 `kind` was consulted; both sides held CONTRADICTORY standing `role` rows. The
 engine-true generalization (not a hardcoded role list): **shared attributes where
@@ -132,7 +132,7 @@ the host's guarded `merge` remains available (soft, not hard). Transient STATE
 differences (mood, position) never trigger it. Surfaces as decline code
 `durable_contradiction` with the contradicting descriptors on the (C) bundle.
 Registry reads folds + durability via late-bound providers (the kind-provider
-idiom). Tests: the pavel/tom pair stays a proposal; a same-role fragment pair
+idiom). Tests: the dorn/ash pair stays a proposal; a same-role fragment pair
 still merges; decline context carries the descriptors.
 
 ## Non-goals (the over-complication line)

@@ -632,8 +632,8 @@ changes on its next call.
     warehouse matter, body, rockfall, summons and walk. None has a kind that
     construct's reads filter on (no live world's metadata sets
     `result_events`);
-  - two stored ids collapse into their resolved id: `event:joss_sends_mara`
-    into `event:mara_enters_radio_cabin`, in `live_telegram_8786956263_3` and
+  - two stored ids collapse into their resolved id: `event:kit_sends_tamsin`
+    into `event:tamsin_enters_signal_hut`, in a live world file and
     its critic copy;
   - `event:quake`, in `thedeep.critic.ep.checkpoint`, gains `t: 0.0`;
   - no live world holds a pseudo-event, so game.py ~2449's
@@ -843,7 +843,7 @@ file. Confirmed as stated:
   `in_transit()`: 0 differ (356 distinct calls; 360 with repeats).
 - Missed events: 171 in 71 files, 42 in 18 live; pseudo-events: 61 in 13
   files, none live; merged stored ids: 17 in 13 files, 2 live
-  (`event:joss_sends_mara`); `event:quake` gains `t: 0.0`; the listing order
+  (`event:kit_sends_tamsin`); `event:quake` gains `t: 0.0`; the listing order
   differs in 8 of 348 frames, all attic or retired; 61 live events carry a
   timeless kind beside stamped rows.
 - `contents()`: 4 events leave, in 3 live files. Rule C's build-time view:
@@ -877,9 +877,9 @@ Beyond the spec's figures (each from a rule as written):
   its subtree and loses `event:wet_trail`'s 8 facts too (7–9 each). Those 5
   scopes are also the situation floor changes. `establishing_set` changes in
   7: the same 4 places, `place:orpheus` (the alcove's establishing chain),
-  and `place:sanction_line` in live_telegram_8786956263_3 and its critic
-  copy, where the classified `event:burning_four` (`in` the place) held
-  `obj:yellow_button_cap`: its 5 facts leave the establishing view, which now
+  and `place:tally_line` in a live world file and its critic
+  copy, where the classified `event:kindling_four` (`in` the place) held
+  `obj:blue_button_cap`: its 5 facts leave the establishing view, which now
   agrees with `contents()` and `current_state`.
 - `events(since=)`: in 10 windows (the two live ironhold files, one retired)
   events with equal `t` change order, because an event's earlier and timeless
