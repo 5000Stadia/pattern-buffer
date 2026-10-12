@@ -836,3 +836,53 @@ def test_pass_mark_3_without_a_gate_seeded_registry_is_unchanged(story_segments)
     gated = seeded_registry(reg, segments=story_segments, gate=all_unsure)
     assert gated.pop("gate_report")["counts"]["merges"] == {}
     assert gated == base
+
+
+# ------------------------------------- the metered runner (never called here)
+
+
+def test_dry_run_counts_the_metered_run_without_a_model(story_segments, monkeypatch, capsys):
+    import run_merge_gate_metered as rm
+    monkeypatch.setitem(sys.modules, "model_shim", None)   # importing the real model would fail
+    out = rm.dry_run({"r26-par2b": rm.REGISTRIES["r26-par2b"]}, 2, 25, story_segments)
+    c = out["per_registry"]["r26-par2b"]
+    assert (c["candidates"], c["batches"], c["calls"]) == (284, 12, 12)
+    assert out["total"]["calls"] == 24 and out["est_tokens_total"] > 0
+    assert "DRY RUN (no model is called)" in capsys.readouterr().out
+
+
+def test_metered_run_and_scoring_with_the_oracle_standing_in_for_the_model(tmp_path, story_segments):
+    import run_merge_gate_metered as rm
+    only = {"r26-par2b": rm.REGISTRIES["r26-par2b"]}
+    scoring = rm.run(tmp_path / "out", gold_oracle_gate(), "gold-oracle", reps=2,
+                     registries=only, segments=story_segments)
+    assert scoring["complete"] is False                       # one registry is not the pass mark
+    r1, r2 = scoring["per_rep"]
+    for r in (r1, r2):
+        assert r["precision_ok"] and r["f1_ok"] and r["recall_joined"] == r["recall_of"] == 7
+        assert r["unlabelled_same"] == 0
+    assert scoring["run_to_run_differing_pairs"] == [] and scoring["sample"] == []
+    meta = json.loads((tmp_path / "out" / "meta.json").read_text())
+    assert meta["calls"] == 24 and meta["model"] == "gold-oracle"      # 12 batches x 2 reps
+    rep = json.loads((tmp_path / "out" / "rep1" / "r26-par2b.json").read_text())
+    assert rep["gate_report"]["model"] == "gold-oracle"
+    assert (tmp_path / "out" / "SCORING.md").exists()
+
+
+def test_scoring_flags_a_wrong_same_and_run_to_run_disagreement():
+    import run_merge_gate_metered as rm
+
+    def effect(verdict_p1, label_p1="different"):
+        pairs = [{"pair_id": "p0001", "a": "x:a", "b": "x:b", "a_names": ["A"], "b_names": ["B"],
+                  "verdict": verdict_p1, "keep_id": "x:a", "reason": "r"}]
+        return {"pair_labels": {"p0001": label_p1}, "gate_report": {"pairs": pairs},
+                "split_pairs_joined": 0, "split_pairs": [], "statuses": {}, "verdicts": {},
+                "default": {"b3_f1": 0.8}, "gated": {"b3_f1": 0.79}}
+    s = rm.score([{"r": effect("same")}, {"r": effect("unsure")}])
+    r1, r2 = s["per_rep"]
+    assert not r1["precision_ok"] and r2["precision_ok"]
+    assert not r1["f1_ok"] and s["pass"] is False
+    assert s["run_to_run_differing_pairs"] == [
+        {"registry": "r", "a": "x:a", "b": "x:b", "verdicts": ["same", "unsure"]}]
+    s = rm.score([{"r": effect("same", "unknown")}, {"r": effect("same", "unknown")}])
+    assert s["unlabelled_same_pairs"] == 1 and len(s["sample"]) == 1

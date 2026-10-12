@@ -24,6 +24,7 @@ CLI: python evals/harness/grade_registry.py RUN_DIR/registry.json --out DIR
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 from collections import Counter
@@ -139,7 +140,8 @@ def grade(registry: Any, gold: Mapping[str, list[str]] | None = None) -> dict[st
 
 def seeded_registry(registry: Any, segments: list[str] | None = None, *,
                     alias_distinct: bool = True, reconcile: Any = "auto",
-                    gate: Any = None, gate_batch_size: int = 25) -> dict[str, Any]:
+                    gate: Any = None, gate_batch_size: int = 25,
+                    with_log: bool = False) -> dict[str, Any]:
     """The registry as a commit leaves it: seed it into a scratch world (stub
     model, no pass-1), finalize identity, and fold each merged group into one
     card under its surviving id. Grading this measures identity after commit,
@@ -160,6 +162,7 @@ def seeded_registry(registry: Any, segments: list[str] | None = None, *,
     import tempfile
 
     from patternbuffer import World
+    from patternbuffer.dump import dump
 
     try:
         from pipeline import (alias_distinct_pass, finalize_identity, require_source,
@@ -197,6 +200,7 @@ def seeded_registry(registry: Any, segments: list[str] | None = None, *,
             w, reconcile=do_reconcile, gate=gate, segments=segments or None,
             gate_batch_size=gate_batch_size,
             gate_source="explicit" if segments else None)
+        log_sha = hashlib.sha256(dump(w.buffer).encode("utf-8")).hexdigest() if with_log else None
         entities: dict[str, dict[str, list[str]]] = {}
         merged_into: dict[str, str] = {}
         for eid, card in sorted(reg.entities.items()):
@@ -213,6 +217,8 @@ def seeded_registry(registry: Any, segments: list[str] | None = None, *,
         out["alias_report"] = alias_report
     if gate_report is not None:
         out["gate_report"] = gate_report
+    if log_sha is not None:
+        out["log_sha256"] = log_sha
     return out
 
 
@@ -349,6 +355,10 @@ def merge_gate_effect(registry: Any, segments: list[str], gate: Any, *,
         requests.append(batch_request(schema))
         return gate(prompt, schema)
 
+    ident = getattr(gate, "identity", None)
+    if isinstance(ident, str):
+        spy.identity = ident  # type: ignore[attr-defined]
+
     base = seeded_registry(registry, segments=segments)
     g0 = grade(base, gold)
     spy_out = seeded_registry(registry, segments=segments, gate=spy, gate_batch_size=batch_size)
@@ -375,6 +385,7 @@ def merge_gate_effect(registry: Any, segments: list[str], gate: Any, *,
         "recall": {"found": sum(1 for p in frag0 if p in cands), "of": len(frag0),
                    "missed": [list(p) for p in frag0 if p not in cands]},
         "labels": dict(sorted(Counter(labelled.values()).items())),
+        "pair_labels": labelled,
         "same_by_label": dict(sorted(same_by_label.items())),
         "split_pairs_joined": sum(1 for a, b in frag0 if root(a) == root(b)),
         "verdicts": report["counts"]["verdicts"],

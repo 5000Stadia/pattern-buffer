@@ -1,0 +1,74 @@
+{
+  "all_unsure_log_identical": true,
+  "batches": 12,
+  "candidates": 286,
+  "default": {
+    "b3_f1": 0.832,
+    "fragmentation": [
+      "desk",
+      "ilsa",
+      "vial_crate",
+      "wellhead"
+    ],
+    "fragmentation_count": 4,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "labels": {
+    "different": 15,
+    "same": 4,
+    "unknown": 267
+  },
+  "log_sha256": "1b5950d74a9ac6bc755eb586d8f5085ef8bfe91be00b65e2a1b35755d8ed91ac",
+  "oracle": {
+    "b3_f1": 0.8483,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "oracle_merges": {
+    "merged": 4
+  },
+  "oracle_report_counts": {
+    "batches": 12,
+    "candidates": 286,
+    "components": 4,
+    "conflicting_components": 0,
+    "merges": {
+      "merged": 4
+    },
+    "statuses": {
+      "answered": 286
+    },
+    "stray": 0,
+    "verdicts": {
+      "same": 4,
+      "unsure": 282
+    }
+  },
+  "recall": {
+    "found": 4,
+    "missed": [],
+    "of": 4
+  },
+  "registry": "r26-par1b",
+  "split_pairs": [
+    [
+      "obj:ilsa_desk",
+      "obj:ilsa_renns_desk"
+    ],
+    [
+      "obj:sample_vials",
+      "obj:wooden_crate_vials"
+    ],
+    [
+      "org:wellhead",
+      "place:wellhead"
+    ],
+    [
+      "person:ilsa_renn",
+      "person:tin_ear_clerk"
+    ]
+  ]
+}
