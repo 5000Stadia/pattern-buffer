@@ -1,0 +1,1872 @@
+{
+ "about": "Replay each sequence: start from `start`, apply every step's `answer` in order, and compare the document to `expect` after each. Documents compare as JSON values (object key order is free). Cursors are opaque: carry them, never read them.",
+ "schema": "patternbuffer.view/1",
+ "sequences": [
+  {
+   "name": "keyed: every op",
+   "start": {
+    "at": null,
+    "cursor": null,
+    "known": {},
+    "present": null,
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:manor"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": null,
+      "cursor": "eyJkIjoiODIxYjdlMjc2YjdkYTZmYzc5ZDZhNGRkZTQwYzQ5ZGZkZGEyNzc4ZjZiOTNmY2Q1NWIwMDU0ODFkNDE0N2Y4MiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjU3LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.c-DSAGG4T8o5Muii4Zq5g1mVgxWBqt-btatCnYfGjtY",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "obj:vase",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "vase",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "h:48fda402f8b829ba4900",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "h:e6b6fe5203ef7ec00816"
+         ],
+         "kind": "amulet",
+         "look": []
+        }
+       },
+       {
+        "key": "h:6f83dec2a9aeb1d6422a",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "h:e6b6fe5203ef7ec00816"
+         ],
+         "kind": "ring",
+         "look": [
+          [
+           "material",
+           "gold"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "h:dd5b36584b771c510d9d",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "h:e6b6fe5203ef7ec00816"
+         ],
+         "look": []
+        }
+       },
+       {
+        "key": "h:e6b6fe5203ef7ec00816",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "place:study"
+         ],
+         "kind": "safe",
+         "look": []
+        }
+       },
+       {
+        "key": "h:ea43854aec077f8bd302",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "address": "manor/study/desk:0",
+         "in": [
+          "in",
+          "obj:desk",
+          "top drawer"
+         ],
+         "kind": "key",
+         "look": [
+          [
+           "material",
+           "iron"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": null,
+      "cursor": "eyJkIjoiODIxYjdlMjc2YjdkYTZmYzc5ZDZhNGRkZTQwYzQ5ZGZkZGEyNzc4ZjZiOTNmY2Q1NWIwMDU0ODFkNDE0N2Y4MiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjU3LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.c-DSAGG4T8o5Muii4Zq5g1mVgxWBqt-btatCnYfGjtY",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "gold"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       },
+       "h:ea43854aec077f8bd302": {
+        "address": "manor/study/desk:0",
+        "in": [
+         "in",
+         "obj:desk",
+         "top drawer"
+        ],
+        "kind": "key",
+        "look": [
+         [
+          "material",
+          "iron"
+         ]
+        ]
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "reset from nothing (no cursor)"
+    },
+    {
+     "answer": {
+      "at": null,
+      "cursor": "eyJkIjoiODIxYjdlMjc2YjdkYTZmYzc5ZDZhNGRkZTQwYzQ5ZGZkZGEyNzc4ZjZiOTNmY2Q1NWIwMDU0ODFkNDE0N2Y4MiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjU3LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.c-DSAGG4T8o5Muii4Zq5g1mVgxWBqt-btatCnYfGjtY",
+      "ops": [],
+      "present_on": true
+     },
+     "expect": {
+      "at": null,
+      "cursor": "eyJkIjoiODIxYjdlMjc2YjdkYTZmYzc5ZDZhNGRkZTQwYzQ5ZGZkZGEyNzc4ZjZiOTNmY2Q1NWIwMDU0ODFkNDE0N2Y4MiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjU3LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.c-DSAGG4T8o5Muii4Zq5g1mVgxWBqt-btatCnYfGjtY",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "gold"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       },
+       "h:ea43854aec077f8bd302": {
+        "address": "manor/study/desk:0",
+        "in": [
+         "in",
+         "obj:desk",
+         "top drawer"
+        ],
+        "kind": "key",
+        "look": [
+         [
+          "material",
+          "iron"
+         ]
+        ]
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "nothing changed: empty ops"
+    },
+    {
+     "answer": {
+      "at": null,
+      "cursor": "eyJkIjoiODFmNmNjOThlOTk5MjZiMWZkZmE1YzQ5OWNlNzUyMWMyMWU5ODM1OGFhNTQyYzkxYzY3Mjc0NDU4MGE2Y2U1NiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjU4LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.CLEqZ9Ij1s6EYre2hFy7r-WgaOdCvOlqrpC_GbsinBo",
+      "ops": [
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": null,
+      "cursor": "eyJkIjoiODFmNmNjOThlOTk5MjZiMWZkZmE1YzQ5OWNlNzUyMWMyMWU5ODM1OGFhNTQyYzkxYzY3Mjc0NDU4MGE2Y2U1NiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjU4LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.CLEqZ9Ij1s6EYre2hFy7r-WgaOdCvOlqrpC_GbsinBo",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "gold"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       },
+       "h:ea43854aec077f8bd302": {
+        "address": "manor/study/desk:0",
+        "in": [
+         "in",
+         "obj:desk",
+         "top drawer"
+        ],
+        "kind": "key",
+        "look": [
+         [
+          "material",
+          "iron"
+         ]
+        ]
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "the view gains a fact: put known"
+    },
+    {
+     "answer": {
+      "at": null,
+      "cursor": "eyJkIjoiNzJmYjRkYjVkMzgxNWZkNmMxNDdmMGIxMTIzMDVlZDI3MTRlMWJiMmFiMjU5ZDQ1M2VjOGI0ODI2YjgxMGU3MSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjYxLCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.2ayihM8py1DvGRV3xRrWJCAryttP7nOGS0UMmpx2qLg",
+      "ops": [
+       {
+        "key": "h:210504cbab65539d18b3",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "obj:desk",
+          "left drawer"
+         ],
+         "kind": "coin",
+         "look": []
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": null,
+      "cursor": "eyJkIjoiNzJmYjRkYjVkMzgxNWZkNmMxNDdmMGIxMTIzMDVlZDI3MTRlMWJiMmFiMjU5ZDQ1M2VjOGI0ODI2YjgxMGU3MSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjYxLCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0IjpudWxsLCJ2IjoxLCJ3IjoidzptYW5vciJ9.2ayihM8py1DvGRV3xRrWJCAryttP7nOGS0UMmpx2qLg",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:210504cbab65539d18b3": {
+        "in": [
+         "in",
+         "obj:desk",
+         "left drawer"
+        ],
+        "kind": "coin",
+        "look": []
+       },
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "gold"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       },
+       "h:ea43854aec077f8bd302": {
+        "address": "manor/study/desk:0",
+        "in": [
+         "in",
+         "obj:desk",
+         "top drawer"
+        ],
+        "kind": "key",
+        "look": [
+         [
+          "material",
+          "iron"
+         ]
+        ]
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "a new item in the drawer: put present"
+    },
+    {
+     "answer": {
+      "at": 5.0,
+      "cursor": "eyJkIjoiMTY4NmZmZTFiZGY3NDZhZTg1NGIzYWZhYmYzZTMwM2JjNTRkYmMwZjA2ZGViNGY5YzUwNDA4ZGYzOTJkYWYyOSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjYyLCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo1LjAsInYiOjEsInciOiJ3Om1hbm9yIn0.-2cYiVXB0RJqhojjmdk0-ci1QWtTj9IPnoD50TvikiA",
+      "ops": [
+       {
+        "key": "h:6f83dec2a9aeb1d6422a",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "h:e6b6fe5203ef7ec00816"
+         ],
+         "kind": "ring",
+         "look": [
+          [
+           "material",
+           "silver"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": 5.0,
+      "cursor": "eyJkIjoiMTY4NmZmZTFiZGY3NDZhZTg1NGIzYWZhYmYzZTMwM2JjNTRkYmMwZjA2ZGViNGY5YzUwNDA4ZGYzOTJkYWYyOSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjYyLCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo1LjAsInYiOjEsInciOiJ3Om1hbm9yIn0.-2cYiVXB0RJqhojjmdk0-ci1QWtTj9IPnoD50TvikiA",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:210504cbab65539d18b3": {
+        "in": [
+         "in",
+         "obj:desk",
+         "left drawer"
+        ],
+        "kind": "coin",
+        "look": []
+       },
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "silver"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       },
+       "h:ea43854aec077f8bd302": {
+        "address": "manor/study/desk:0",
+        "in": [
+         "in",
+         "obj:desk",
+         "top drawer"
+        ],
+        "kind": "key",
+        "look": [
+         [
+          "material",
+          "iron"
+         ]
+        ]
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "a look changes: put present"
+    },
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiNmVhMWRiYjUyMWI2ZDc1YzFjYThlODc5YWY0NDBiZTAzZTkzYTdjZjE3OGY1YjE3ZmQxNWNhNThkYzU3NTU1YyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjYzLCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0.heMqg2sSXAmDtqamNKHUqtxRiiNcFcJXzlfeE54PZE8",
+      "ops": [
+       {
+        "key": "h:210504cbab65539d18b3",
+        "layer": "present",
+        "op": "del"
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiNmVhMWRiYjUyMWI2ZDc1YzFjYThlODc5YWY0NDBiZTAzZTkzYTdjZjE3OGY1YjE3ZmQxNWNhNThkYzU3NTU1YyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjYzLCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0.heMqg2sSXAmDtqamNKHUqtxRiiNcFcJXzlfeE54PZE8",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "silver"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       },
+       "h:ea43854aec077f8bd302": {
+        "address": "manor/study/desk:0",
+        "in": [
+         "in",
+         "obj:desk",
+         "top drawer"
+        ],
+        "kind": "key",
+        "look": [
+         [
+          "material",
+          "iron"
+         ]
+        ]
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "canon moves the coin out of the covered places: del present"
+    },
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiYTA1MjVjOGI3ZWIzNDlmN2NkNDU3ZDg0ZTRhZDQ4MTY4NjdlNDQzZGU1YjYwZWFhODBiNTcxZDkxOWJhNWYzZiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY1LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0.e2BzO9Ff_pFHZgsq2-kKXFi-NdFylVreWrdeoK9L3eM",
+      "ops": [
+       {
+        "handle": "h:ea43854aec077f8bd302",
+        "id": "obj:key",
+        "op": "reveal"
+       },
+       {
+        "key": "obj:key",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "obj:desk",
+           "id"
+          ],
+          [
+           "kind",
+           "key",
+           "lit"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiYTA1MjVjOGI3ZWIzNDlmN2NkNDU3ZDg0ZTRhZDQ4MTY4NjdlNDQzZGU1YjYwZWFhODBiNTcxZDkxOWJhNWYzZiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY1LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0.e2BzO9Ff_pFHZgsq2-kKXFi-NdFylVreWrdeoK9L3eM",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:key": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "obj:desk",
+          "id"
+         ],
+         [
+          "kind",
+          "key",
+          "lit"
+         ]
+        ]
+       },
+       "obj:vase": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "vase",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "silver"
+         ]
+        ]
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "the player opens the drawer: reveal, then put known (no del for the handle)"
+    },
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiZjc1Y2NjYjU4N2Q4MWQ4YjdjYzdiMTdmMTQ0MWZkZjI5OTkwODUyNzg2ODViMGY1OGEzODI0NzYyMDYxNWJjMCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0._A0e8e63PJtgAEiXSdXzMLkcnnMw4dE8oBg0ul56jgM",
+      "ops": [
+       {
+        "key": "obj:vase",
+        "layer": "known",
+        "op": "del"
+       },
+       {
+        "key": "h:90a9576a8d1a4ff4333d",
+        "layer": "present",
+        "op": "put",
+        "value": {
+         "in": [
+          "in",
+          "place:study"
+         ],
+         "kind": "vase",
+         "look": []
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiZjc1Y2NjYjU4N2Q4MWQ4YjdjYzdiMTdmMTQ0MWZkZjI5OTkwODUyNzg2ODViMGY1OGEzODI0NzYyMDYxNWJjMCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0._A0e8e63PJtgAEiXSdXzMLkcnnMw4dE8oBg0ul56jgM",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:key": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "obj:desk",
+          "id"
+         ],
+         [
+          "kind",
+          "key",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {
+       "h:48fda402f8b829ba4900": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "amulet",
+        "look": []
+       },
+       "h:6f83dec2a9aeb1d6422a": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "kind": "ring",
+        "look": [
+         [
+          "material",
+          "silver"
+         ]
+        ]
+       },
+       "h:90a9576a8d1a4ff4333d": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "vase",
+        "look": []
+       },
+       "h:dd5b36584b771c510d9d": {
+        "in": [
+         "in",
+         "h:e6b6fe5203ef7ec00816"
+        ],
+        "look": []
+       },
+       "h:e6b6fe5203ef7ec00816": {
+        "in": [
+         "in",
+         "place:study"
+        ],
+        "kind": "safe",
+        "look": []
+       }
+      },
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "the view's last row for a subject is retracted: del known"
+    }
+   ]
+  },
+  {
+   "name": "mode change: keyed document, keyless feed",
+   "start": {
+    "at": 6.0,
+    "cursor": "eyJkIjoiZjc1Y2NjYjU4N2Q4MWQ4YjdjYzdiMTdmMTQ0MWZkZjI5OTkwODUyNzg2ODViMGY1OGEzODI0NzYyMDYxNWJjMCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo2LjAsInYiOjEsInciOiJ3Om1hbm9yIn0._A0e8e63PJtgAEiXSdXzMLkcnnMw4dE8oBg0ul56jgM",
+    "known": {
+     "obj:desk": {
+      "conflicted": [],
+      "facts": [
+       [
+        "colour",
+        "oak",
+        "lit"
+       ],
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "desk",
+        "lit"
+       ]
+      ]
+     },
+     "obj:key": {
+      "conflicted": [],
+      "facts": [
+       [
+        "in",
+        "obj:desk",
+        "id"
+       ],
+       [
+        "kind",
+        "key",
+        "lit"
+       ]
+      ]
+     },
+     "person:mara": {
+      "conflicted": [],
+      "facts": [
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "person",
+        "lit"
+       ]
+      ]
+     },
+     "place:study": {
+      "conflicted": [],
+      "facts": [
+       [
+        "kind",
+        "room",
+        "lit"
+       ]
+      ]
+     }
+    },
+    "present": {
+     "h:48fda402f8b829ba4900": {
+      "in": [
+       "in",
+       "h:e6b6fe5203ef7ec00816"
+      ],
+      "kind": "amulet",
+      "look": []
+     },
+     "h:6f83dec2a9aeb1d6422a": {
+      "in": [
+       "in",
+       "h:e6b6fe5203ef7ec00816"
+      ],
+      "kind": "ring",
+      "look": [
+       [
+        "material",
+        "silver"
+       ]
+      ]
+     },
+     "h:90a9576a8d1a4ff4333d": {
+      "in": [
+       "in",
+       "place:study"
+      ],
+      "kind": "vase",
+      "look": []
+     },
+     "h:dd5b36584b771c510d9d": {
+      "in": [
+       "in",
+       "h:e6b6fe5203ef7ec00816"
+      ],
+      "look": []
+     },
+     "h:e6b6fe5203ef7ec00816": {
+      "in": [
+       "in",
+       "place:study"
+      ],
+      "kind": "safe",
+      "look": []
+     }
+    },
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:manor"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiNDRlMjhkOGJjZWZkMDQ0ZWNiYzI1MzhhZDI0YmJjOTNiZGQ3M2E2OTcyOGQ0NmFhZjZhZDhjYjIyZDdlZGM2OCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjpmYWxzZSwicyI6ImV4YWN0IiwidCI6Ni4wLCJ2IjoxLCJ3IjoidzptYW5vciJ9.",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "obj:key",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "obj:desk",
+           "id"
+          ],
+          [
+           "kind",
+           "key",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": false
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiNDRlMjhkOGJjZWZkMDQ0ZWNiYzI1MzhhZDI0YmJjOTNiZGQ3M2E2OTcyOGQ0NmFhZjZhZDhjYjIyZDdlZGM2OCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjpmYWxzZSwicyI6ImV4YWN0IiwidCI6Ni4wLCJ2IjoxLCJ3IjoidzptYW5vciJ9.",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:key": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "obj:desk",
+          "id"
+         ],
+         [
+          "kind",
+          "key",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": null,
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "reset, present becomes null"
+    }
+   ]
+  },
+  {
+   "name": "keyless: present stays null",
+   "start": {
+    "at": null,
+    "cursor": null,
+    "known": {},
+    "present": null,
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:manor"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiNDRlMjhkOGJjZWZkMDQ0ZWNiYzI1MzhhZDI0YmJjOTNiZGQ3M2E2OTcyOGQ0NmFhZjZhZDhjYjIyZDdlZGM2OCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjpmYWxzZSwicyI6ImV4YWN0IiwidCI6Ni4wLCJ2IjoxLCJ3IjoidzptYW5vciJ9.",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "obj:key",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "obj:desk",
+           "id"
+          ],
+          [
+           "kind",
+           "key",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": false
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiNDRlMjhkOGJjZWZkMDQ0ZWNiYzI1MzhhZDI0YmJjOTNiZGQ3M2E2OTcyOGQ0NmFhZjZhZDhjYjIyZDdlZGM2OCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY2LCJwIjpmYWxzZSwicyI6ImV4YWN0IiwidCI6Ni4wLCJ2IjoxLCJ3IjoidzptYW5vciJ9.",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:key": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "obj:desk",
+          "id"
+         ],
+         [
+          "kind",
+          "key",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": null,
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "reset from nothing"
+    },
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiMWM0ZDBhYzQxMjZiNDU4NzJkNWYzY2JlZWE2YTY4ZjMyYTQ0ZGU5MTlkNDVjMWExMDczY2JhM2I2MWMzMTljMyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY3LCJwIjpmYWxzZSwicyI6ImV4YWN0IiwidCI6Ni4wLCJ2IjoxLCJ3IjoidzptYW5vciJ9.",
+      "ops": [
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "finish",
+           "waxed",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": false
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiMWM0ZDBhYzQxMjZiNDU4NzJkNWYzY2JlZWE2YTY4ZjMyYTQ0ZGU5MTlkNDVjMWExMDczY2JhM2I2MWMzMTljMyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjY3LCJwIjpmYWxzZSwicyI6ImV4YWN0IiwidCI6Ni4wLCJ2IjoxLCJ3IjoidzptYW5vciJ9.",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "finish",
+          "waxed",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "obj:key": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "obj:desk",
+          "id"
+         ],
+         [
+          "kind",
+          "key",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": null,
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:manor"
+     },
+     "name": "the view gains a fact: put known"
+    }
+   ]
+  }
+ ],
+ "view_frame": "knows:person:mara",
+ "world_id": "w:manor"
+}

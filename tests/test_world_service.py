@@ -841,7 +841,9 @@ def test_record_writes_observed_rows_to_canon_and_the_view_in_one_unit(tmp_path)
         head = w.buffer.head()
         out = _record(svc, sess, [{"entity": "person:mara", "attribute": "mood",
                                    "value": "angry"}], at=9.0)
-        assert out["status"] == "recorded" and len(units) == 1
+        assert out == {"status": "recorded"} and len(units) == 1
+        receipt = svc.last_record_outcome["receipt"]                 # the host's, not the wire's
+        assert {row["frame"] for row in receipt["rows"]} == {"canon", VF}
         canon = w.buffer.visible(entity="person:mara", attribute="mood", frame="canon")
         view = w.buffer.visible(entity="person:mara", attribute="mood", frame=VF)
         assert [(r.status, r.valid_from, r.value) for r in canon] == [("observed", 9.0, "angry")]
@@ -867,8 +869,9 @@ def test_record_refuses_item_keys_the_service_sets_itself_and_writes_nothing(tmp
     try:
         head = w.buffer.head()
         good = {"entity": "person:mara", "attribute": "mood", "value": "angry"}
-        with pytest.raises(Refused):
-            sess.call("record", items=[good, {**good, "attribute": "tone", **bad}])
+        out = sess.call("record", items=[good, {**good, "attribute": "tone", **bad}])
+        assert out == {"status": "refused"}                 # the bare answer (S2 §5 r3)
+        assert svc.last_record_outcome["status"] == "refused"
         assert w.buffer.head() == head                      # the whole call, nothing
     finally:
         svc.detach()
@@ -887,8 +890,8 @@ def test_record_is_for_play_events_not_bookkeeping(tmp_path, item):
     sess = svc.session("holo", role="recorder")
     try:
         head = w.buffer.head()
-        with pytest.raises(Refused):
-            sess.call("record", items=[item])
+        assert sess.call("record", items=[item]) == {"status": "refused"}
+        assert svc.last_record_outcome["cause"] == "invalid"
         assert w.buffer.head() == head
     finally:
         svc.detach()
@@ -904,7 +907,8 @@ def test_record_is_all_or_none_when_the_gate_refuses_an_item(tmp_path):
             {"entity": "person:mara", "attribute": "mood", "value": "angry"},
             {"entity": "person:mara", "attribute": "in", "value": 7, "value_type": "entity"},
         ])
-        assert out["status"] == "refused" and out["cause"] == "gate_skip"
+        assert out == {"status": "refused"}
+        assert svc.last_record_outcome["cause"] == "gate_skip"
         assert w.buffer.head() == head
     finally:
         svc.detach()
@@ -964,7 +968,7 @@ def test_the_runner_binds_loopback_only_and_serves_a_round_trip(runner):
         "session": "holo-emitter", "verb": "record",
         "args": {"items": [{"entity": "person:mara", "attribute": "mood",
                             "value": "wary"}], "at": 4.5}})
-    assert code == 200 and body["result"]["status"] == "recorded"
+    assert code == 200 and body["result"] == {"status": "recorded"}
     for _ in range(100):
         code, body = _http(port, "POST", "/call", {
             "session": "holo-emitter", "verb": "state",
@@ -976,8 +980,8 @@ def test_the_runner_binds_loopback_only_and_serves_a_round_trip(runner):
     # /now
     code, body = _http(port, "GET", "/now")
     assert code == 200 and body["now"] == 4.5
-    # S2's feed is not built here
-    assert _http(port, "GET", "/changes?since=0")[0] == 501
+    # the feed goes through POST /call; the old placeholder door is gone (S2)
+    assert _http(port, "GET", "/changes?since=0")[0] == 404
 
 
 def test_the_runner_refuses_frames_and_non_recorders_over_the_wire(runner):
@@ -994,7 +998,7 @@ def test_the_runner_refuses_frames_and_non_recorders_over_the_wire(runner):
         "session": "holo-emitter", "verb": "record",
         "args": {"items": [{"entity": "person:mara", "attribute": "mood", "value": "x",
                             "frame": "canon"}]}})
-    assert code == 400 and body["error"]["type"] == "refused"
+    assert code == 200 and body == {"result": {"status": "refused"}}    # S2 §5 r3
     code, body = _http(port, "POST", "/call", {
         "session": "renderer", "verb": "resolve",
         "args": {"entity": "person:barmaid", "aspect": "wears", "frame": "canon"}})

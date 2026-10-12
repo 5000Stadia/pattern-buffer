@@ -13,7 +13,10 @@ through the player's view, never raw canon.
   log head or the classifier's `verdict_version` moved.
 - A viewer's `resolve` is an owner job: it plants, forces (or serves the memo)
   and mirrors what the player perceives into the view frame in ONE unit.
-- `record` exists on the standalone runner only (a world with no author).
+- `record` exists on the standalone runner only (a world with no author). Its
+  public answer is a bare `recorded` / `refused` (VIEW-EXPORT-V1 §5).
+- `export` and `feed` (VIEW-EXPORT-V1) are viewer service verbs, also served
+  from the snapshot; `unhandle` is the host's own method.
 
 `python -m patternbuffer.service` is that runner (localhost HTTP + JSON,
 standard library only).
@@ -32,9 +35,10 @@ import signal
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any, Callable
 
-from patternbuffer import AtomicAbort, World
+from patternbuffer import AtomicAbort, World, mirror
 from patternbuffer.mcp import FORCED_PARAMS, V1_READS, dispatch
 from patternbuffer.model import (
     ATTR_PREFIX,
@@ -85,6 +89,11 @@ VIEWER_EXCLUDED: dict[str, str] = {
     "extract": "reaches the model", "ingest": "a write that reaches the model",
     "ask": "reaches the model",
 }
+
+# The service's own viewer reads (VIEW-EXPORT-V1 §5): served on the reader
+# thread from the snapshot by `patternbuffer.mirror`, never by the porcelain,
+# and so not in VIEWER_READS (which stays porcelain verbs only).
+VIEWER_SERVICE_READS = ("export", "feed")
 
 # What a viewer's reads force, beyond MCP's FORCED_PARAMS (refer's model/learn).
 _VIEWER_FORCED: dict[tuple[str, str], Any] = {
@@ -215,7 +224,14 @@ class WorldService:
     def __init__(self, model_route: Callable[[dict], str] | None = None,
                  rate: RateCap | None = None, *, standalone: bool = False,
                  retry_after: float = DEFAULT_RETRY_AFTER,
-                 read_timeout: float = 30.0) -> None:
+                 read_timeout: float = 30.0,
+                 mirror_key: bytes | None = None) -> None:
+        # the host's key for the offline mirror's present layer and cursors
+        # (VIEW-EXPORT-V1 §5); it never reaches a client
+        self._mirror_key = mirror._check_key(mirror_key)
+        # The full outcome of the latest `record` call, for the trusted host. The
+        # wire carries only `recorded` / `refused` (VIEW-EXPORT-V1 §5 r3).
+        self.last_record_outcome: dict[str, Any] | None = None
         self._model_route = model_route
         self._rate = rate
         # r5: the cap is applied by the gated callable the host injected into
@@ -483,7 +499,8 @@ class WorldService:
                     req.result = _detached()
                 else:
                     req.result = _run_read(snap, self._view_frame, req.verb, req.args,
-                                       self._frame_scope)
+                                           self._frame_scope, now=self.now(),
+                                           key=self._mirror_key)
             except BaseException as exc:       # noqa: BLE001 - handed to the caller
                 req.error = exc
             finally:
@@ -594,9 +611,80 @@ class WorldService:
 
     # --------------------------------------------------- owner job: record
 
+    def _note_record(self, outcome: dict[str, Any]) -> dict[str, str]:
+        """Keep the full outcome for the host and log it; answer the bare
+        public result. `INFO` for a commit, `WARNING` for a refusal."""
+        self.last_record_outcome = outcome
+        if outcome["status"] == "recorded":
+            logger.info("record committed: %s", outcome.get("receipt"))
+            return {"status": "recorded"}
+        logger.warning("record refused: %s", {k: v for k, v in outcome.items()
+                                              if k != "status"})
+        return {"status": "refused"}
+
+    def unhandle(self, handle: str) -> str | None:
+        """The canonical id a present-layer handle stands for, or None
+        (VIEW-EXPORT-V1 §5). A host method, not a viewer verb: call it on the
+        owner thread, against the live World, with the service's key. It answers
+        only for a handle in the present layer as of now: in the view's places,
+        not a person, not already known. A stale, foreign, forged or person
+        handle, or any handle when the service has no key, maps to None."""
+        self._require_owner()
+        if not (isinstance(handle, str) and mirror.HANDLE_RE.fullmatch(handle)):
+            return None
+        return self._handle_map().get(handle)
+
+    def _handle_map(self) -> dict[str, str]:
+        world, view_frame = self._world, self._view_frame
+        if world is None or view_frame is None or self._mirror_key is None:
+            return {}
+        return mirror.present_handles(world, view_frame, at=self.now(),
+                                      key=self._mirror_key,
+                                      frame_scope=self._frame_scope)
+
+    def _map_handles(self, items: list[dict]) -> tuple[list[dict], list[str]]:
+        """Each item with its handles (as `entity`, or as `value` of an entity
+        value) replaced by the canonical id; and the handles that map to
+        nothing."""
+        def is_handle(x: Any) -> bool:
+            return isinstance(x, str) and mirror.HANDLE_RE.fullmatch(x) is not None
+
+        if not any(is_handle(i.get("entity"))
+                   or (i.get("value_type") == "entity" and is_handle(i.get("value")))
+                   for i in items):
+            return items, []
+        table = self._handle_map()
+        out: list[dict] = []
+        unknown: list[str] = []
+        for item in items:
+            item = dict(item)
+            if is_handle(item.get("entity")):
+                mapped = table.get(item["entity"])
+                if mapped is None:
+                    unknown.append(item["entity"])
+                else:
+                    item["entity"] = mapped
+            if item.get("value_type") == "entity" and is_handle(item.get("value")):
+                mapped = table.get(item["value"])
+                if mapped is None:
+                    unknown.append(item["value"])
+                else:
+                    item["value"] = mapped
+            out.append(item)
+        return out, unknown
+
     def _do_record(self, items: list[dict], at: float | None) -> dict:
         world, view_frame = self._world, self._view_frame
         assert world is not None and view_frame is not None
+        try:
+            items, unknown = self._map_handles(items)
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            logger.exception("mapping record handles failed")
+            return self._note_record({"status": "refused", "cause": "error",
+                                      "error": f"{type(exc).__name__}: {exc}"})
+        if unknown:
+            return self._note_record({"status": "refused", "cause": "unknown_handle",
+                                      "handles": unknown})
         when = at if at is not None else self.now()
         ops: list[dict] = []
         for item in items:
@@ -611,9 +699,15 @@ class WorldService:
         try:
             receipt = world.porcelain.commit_set(ops, classify="rules")
         except AtomicAbort as abort:
-            return {"status": "refused", "cause": abort.cause,
-                    "skipped": abort.skipped, "error": abort.error}
-        return {"status": "recorded", "receipt": receipt.to_dict()}
+            return self._note_record({"status": "refused", "cause": abort.cause,
+                                      "skipped": abort.skipped, "error": abort.error})
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            # any other failure's text may name an id a handle was mapped to:
+            # it stays with the host, like every other refusal's detail
+            logger.exception("record failed")
+            return self._note_record({"status": "refused", "cause": "error",
+                                      "error": f"{type(exc).__name__}: {exc}"})
+        return self._note_record({"status": "recorded", "receipt": receipt.to_dict()})
 
 
 # ------------------------------------------------------------- viewer reads
@@ -690,7 +784,13 @@ assert set(VIEWER_READS) <= set(V1_READS)       # the allowlist is a subset of M
 
 
 def _run_read(snap: World, view_frame: str, verb: str, args: dict,
-              frame_scope: str = "exact") -> Any:
+              frame_scope: str = "exact", *, now: float | None = None,
+              key: bytes | None = None) -> Any:
+    if verb == "export":
+        return mirror.export(snap, view_frame, at=now, key=key, frame_scope=frame_scope)
+    if verb == "feed":
+        return mirror.feed(snap, view_frame, args.get("since"), at=now, key=key,
+                           frame_scope=frame_scope)
     return ADAPTERS[verb](snap, view_frame, args, frame_scope)
 
 
@@ -701,6 +801,8 @@ class Session:
     """A client's door onto the service. ``call(verb, **args)``:
 
     - a `VIEWER_READS` verb, served from the snapshot, always in the view frame;
+    - `export()` and `feed(since=)` (`VIEWER_SERVICE_READS`), the offline
+      mirror's document and its changes, also from the snapshot;
     - `resolve(entity, aspect, wait=)`, pinned to canon for the plant and the
       view frame for the perception;
     - `now()`;
@@ -720,6 +822,14 @@ class Session:
                     raise Refused(
                         f"{verb}: a viewer cannot name {refused!r}; reads are of the "
                         "player's view only")
+            return svc._read(verb, args)
+        if verb in VIEWER_SERVICE_READS:
+            if verb == "feed":
+                _only(args, verb, {"since"})
+                if args.get("since") is not None and not isinstance(args["since"], str):
+                    raise Refused("feed: since is the cursor string a feed answered with")
+            else:
+                _only(args, verb, set())
             return svc._read(verb, args)
         if verb == "resolve":
             return self._resolve(**_only(args, "resolve", {"entity", "aspect", "wait"},
@@ -745,6 +855,29 @@ class Session:
                                     float(wait))
 
     def _record(self, items: Any, at: Any = None) -> dict:
+        try:
+            clean = self._clean_items(items, at)
+        except Refused as exc:
+            # a batch the caller shaped wrongly is refused like any other: the
+            # wire answers the bare `refused`, the reason stays with the host
+            return self.service._note_record({"status": "refused", "cause": "invalid",
+                                              "reason": str(exc)})
+        try:
+            result = self.service._submit(
+                "record", {"items": clean, "at": at}, DEFAULT_WAIT)
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            logger.exception("record job failed")
+            return self.service._note_record({"status": "refused", "cause": "error",
+                                              "error": f"{type(exc).__name__}: {exc}"})
+        if result.get("status") in ("recorded", "refused") and set(result) == {"status"}:
+            return result
+        # deferred (no pump in time; the job was cancelled, nothing written) or
+        # detached: the wire still answers only the bare `refused`
+        return self.service._note_record({"status": "refused",
+                                          "cause": result.get("status"), "detail": result})
+
+    @staticmethod
+    def _clean_items(items: Any, at: Any) -> list[dict]:
         if not isinstance(items, list) or not items:
             raise Refused("record needs a non-empty list of items")
         if at is not None and (isinstance(at, bool) or not isinstance(at, (int, float))):
@@ -771,8 +904,7 @@ class Session:
                 raise Refused(f"record item {i}: value_type must be one of "
                               f"{sorted(_RECORD_VALUE_TYPES)}")
             clean.append(dict(item))
-        return self.service._submit(
-            "record", {"items": clean, "at": at}, DEFAULT_WAIT)
+        return clean
 
 
 def _only(args: dict, verb: str, allowed: set[str], required: set[str] = frozenset()) -> dict:
@@ -829,7 +961,8 @@ class Runner:
     def __init__(self, open_world: Callable[[Callable], World], view_frame: str, *,
                  port: int = 0, recorders: tuple[str, ...] = (),
                  rate: RateCap | None = None,
-                 model_route: Callable[[dict], str] | None = None) -> None:
+                 model_route: Callable[[dict], str] | None = None,
+                 mirror_key: bytes | None = None) -> None:
         # A World is bound to the thread that opened it, so the runner opens
         # it ON its pump thread (the owner thread) and closes it there.
         # `open_world(gated)` builds it with `model=gated(host_callable)`.
@@ -837,7 +970,7 @@ class Runner:
         self.world: World | None = None
         self.recorders = frozenset(recorders)
         self.service = WorldService(model_route=model_route, rate=rate,
-                                    standalone=True)
+                                    standalone=True, mirror_key=mirror_key)
         self._view_frame = view_frame
         self._stop = threading.Event()
         self._sessions: dict[str, Session] = {}
@@ -932,9 +1065,6 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
             path = self.path.split("?", 1)[0]
             if path == "/now":
                 return self._send(200, {"now": runner.service.now()})
-            if path == "/changes":
-                return self._send(501, {"error": {"type": "not_implemented",
-                                                  "message": "the changes feed is S2"}})
             self._send(404, {"error": {"type": "not_found", "message": self.path}})
 
         def do_POST(self) -> None:                               # noqa: N802
@@ -1002,18 +1132,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--recorder", action="append", default=[], metavar="NAME",
                         help="a session name that may `record` (repeatable)")
     parser.add_argument("--policy", choices=sorted(POLICIES), default=None)
+    parser.add_argument("--mirror-key-file", default=None, metavar="PATH",
+                        help="a file of raw key bytes (at least 16): turns on the "
+                             "offline mirror's present layer and signs its cursors")
     parser.add_argument("--rate", type=int, default=None, metavar="N",
                         help="cap model-routed viewer resolves at N per minute")
     args = parser.parse_args(argv)
 
     generator = _load_generator(args.generator) if args.generator else None
+    mirror_key = Path(args.mirror_key_file).read_bytes() if args.mirror_key_file else None
     model, route = make_runner_callable(generator)
     runner = Runner(lambda gated: World(args.world, world_id=args.world_id,
                                         model=gated(model), policy=args.policy),
                     args.view_frame, port=args.port,
                     recorders=tuple(args.recorder),
                     rate=RateCap(args.rate) if args.rate is not None else None,
-                    model_route=route)
+                    model_route=route, mirror_key=mirror_key)
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
