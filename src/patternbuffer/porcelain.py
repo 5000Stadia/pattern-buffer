@@ -980,6 +980,27 @@ class Porcelain:
         these; adjudicate each with `retype(...)` or leave it. Zero writes."""
         return self._w.registry.typing_conflicts()
 
+    def closure(self, entity: str, asserted_as_of: int | None = None) -> list[str]:
+        """Read-only, for a host: the sorted members of the entity's identity
+        closure, itself included (`[entity]` with no `same_as`), as the log
+        stood at `asserted_as_of` (CLOSURE-READ-V1). Canon only (identity is
+        canon's); no frame. Zero writes."""
+        if not (isinstance(entity, str) and ID_RE.fullmatch(entity)):
+            raise ValueError(f"closure needs an entity id, got {entity!r}")
+        return sorted(self._w.registry.closure(entity, asserted_as_of))
+
+    def distinct_between(self, a: str, b: str,
+                         asserted_as_of: int | None = None) -> list[str]:
+        """Read-only, for a host: the ids (`a:N`, log order) of the canon
+        `distinct_from` rows holding a's closure apart from b's, as the log
+        stood at `asserted_as_of`; empty when none does (CLOSURE-READ-V1). A
+        row inside one shared closure is reported too (what
+        `identity_conflicts` flags). Canon only; no frame. Zero writes."""
+        for name, ident in (("a", a), ("b", b)):
+            if not (isinstance(ident, str) and ID_RE.fullmatch(ident)):
+                raise ValueError(f"distinct_between needs entity ids, got {name}={ident!r}")
+        return self._w.registry.distinct_rows(a, b, asserted_as_of)
+
     def identity_conflicts(self) -> list[dict]:
         """Read-only: merged canon closures that hold a pair the guarded merge
         would veto (a containment-family or `distinct_from` row with both

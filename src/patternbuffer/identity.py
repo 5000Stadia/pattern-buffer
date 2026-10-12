@@ -233,16 +233,28 @@ class IdentityRegistry:
         Read in canon (FRAME-SCOPED-IDENTITY-V1 §2: a canon merge veto reads
         canon only). `frame` exists for `correlation_conflicts` alone (§3(b)):
         a contradiction is two edges in ONE frame."""
+        return [f"{row.entity}·distinct_from·{row.value}"
+                for row in self._distinct_rows(a, b, asserted_as_of, frame)]
+
+    def distinct_rows(self, a: str, b: str, asserted_as_of: int | None = None, *,
+                      frame: str = CANON) -> list[str]:
+        """The ids (log order) of the `distinct_from` rows in `frame` with one
+        endpoint in a's closure and the other in b's (CLOSURE-READ-V1): the
+        one row predicate `distinct_block` is built on."""
+        return [row.id for row in self._distinct_rows(a, b, asserted_as_of, frame)]
+
+    def _distinct_rows(self, a: str, b: str, asserted_as_of: int | None,
+                       frame: str) -> list:
         clos_a = self.closure(a, asserted_as_of)
         clos_b = self.closure(b, asserted_as_of)
-        out: list[str] = []
+        out = []
         for row in self._buffer.visible(attribute="distinct_from",
                                         asserted_as_of=asserted_as_of, frame=frame):
             if row.value_type != "entity" or not isinstance(row.value, str):
                 continue
             e, v = row.entity, row.value
             if (e in clos_a and v in clos_b) or (e in clos_b and v in clos_a):
-                out.append(f"{e}·distinct_from·{v}")
+                out.append(row)
         return out
 
     def relating_edges_between(self, a: str, b: str, asserted_as_of: int | None = None) -> list[str]:

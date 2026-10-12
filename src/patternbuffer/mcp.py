@@ -33,7 +33,7 @@ from patternbuffer.model import POLICIES
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------- the registry
-# Explicit and exhaustive (Cx 521 #2): the 43 deterministic tools. A porcelain
+# Explicit and exhaustive (Cx 521 #2): the 45 deterministic tools. A porcelain
 # addition CANNOT appear here by reflection — it must be classified V1/V1.1 and
 # added deliberately (the registry-completeness test enforces this).
 
@@ -45,6 +45,7 @@ V1_READS = (
     "entities", "facts", "fidelity_audit", "axis_heads", "proposals",
     "correlations", "correlation_conflicts", "typing_conflicts",
     "identity_conflicts",                                # FRAME-SCOPED-IDENTITY-V1 §4
+    "closure", "distinct_between",                       # CLOSURE-READ-V1
     "canonical_attribute",                               # READ-SURFACE-V1 §3
     # READ-SURFACE-V1 §9/§11: refer, served deterministic — tier 1 is V1 and
     # tier 2 stays V1.1 (MCP sampling). FORCED_PARAMS pins model=False and

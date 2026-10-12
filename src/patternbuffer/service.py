@@ -73,6 +73,8 @@ VIEWER_EXCLUDED: dict[str, str] = {
     "who_knows": "reports every knows:* frame",
     "proposals": "a canon identity diagnostic",
     "identity_conflicts": "a canon identity diagnostic",
+    "closure": "a canon identity diagnostic",
+    "distinct_between": "a canon identity diagnostic",
     "typing_conflicts": "a canon identity diagnostic",
     "correlations": "a canon identity diagnostic",
     "correlation_conflicts": "a canon identity diagnostic",
