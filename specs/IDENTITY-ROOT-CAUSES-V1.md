@@ -1,7 +1,8 @@
 # IDENTITY-ROOT-CAUSES-V1: automatic merges that the evidence can't support
 
-**Status:** r2, pbr GREEN on r1 (2026-10-12), with its three clarifications folded in (§2, §3,
-§4). r2 also corrects one word-count ambiguity in §1(a). Author: pb.
+**Status:** r3. pbr GREEN on r1 (2026-10-12), with its three clarifications folded in (§2, §3,
+§4). r2 corrected one word-count ambiguity in §1(a). r3 records what the build found: §3's read
+surface and the existing tests that §3's new row changes (§5.4). Author: pb.
 **Decision:** Kabe accepted gate g3bf5da's point P3 on 2026-10-12 (relayed by the monitor, note n02620e).
 P1 and P2 were also accepted; P4 is still open. Consult: ccab80f (two outside views, Claude and Codex).
 
@@ -133,7 +134,7 @@ evidence begins "confirmed proposal: reconcile: …".
 | Value | Written by |
 |---|---|
 | `host` | the porcelain `merge` verb (`guarded_merge`), `confirm`, `retype(absorb=)` |
-| `statement` | a `same_as` submitted through the ingest gate as an item, raw or as an item's `same_as` key. The row also carries `extracted · true` when the item came from prose extraction (`ingest(text)` or `ingest_structured(extracted=True)`). It is one value, *(pbr r1)*: the route (through the gate) and the origin (extracted or authored) are orthogonal, so the origin stays its own bit |
+| `statement` | a raw `same_as` item through the ingest gate *(r3: an item's `same_as` key never merges; the gate makes it a `maybe_same_as` proposal, and its later promotion is `engine`)*. The row also carries `extracted · true` when the item came from prose extraction (`ingest(text)` or `ingest_structured(extracted=True)`). It is one value, *(pbr r1)*: the route (through the gate) and the origin (extracted or authored) are orthogonal, so the origin stays its own bit |
 | `engine` | `reconcile`, `promote_identity_proposals`, `adjudicate_deferred` |
 
 - **`decided_by` is a mechanism attribute** (GATE-AUTHORITY-V1 §1). It is added to
@@ -142,8 +143,9 @@ evidence begins "confirmed proposal: reconcile: …".
   - readers honor it only on a `kind · identity_merge` event that has the identity component's mark.
 
   So a forged row decides nothing.
-- **The read.** `identity_conflicts()` and the merge listing `proposals` already return merge events.
-  Each merge they report gains `decided_by`. It is read from the row, or for merges written before
+- **The read.** `merge_decided_by(event_id)` answers for any merge event. `identity_conflicts()`
+  entries gain `decided_by` where they carry a merge event *(r3: `proposals` returns no merge
+  events, and receipts stay unchanged to keep exact-equality hosts byte-stable)*. It is read from the row, or for merges written before
   this spec, **derived** from the evidence:
 
 | Evidence prefix | Derived value |
@@ -215,10 +217,35 @@ derivation. Ordinary state, alias, `refer` and frame reads are unchanged *(pbr r
    `confirm_frame_owners` step. B3 F1 must stay within R23's noise floor (about 0.02) of today's
    seeded scores (0.826 / 0.791 on the R26 registries; the R23 runs as recorded). The Ilsa Renn merge
    must still happen.
-4. **The full suite** stays green. Existing tests that assert an automatic merge of a sentence-like
-   or frame-owner pair are listed and updated in this spec's r2, each with its reason. None is
-   expected; checked at build.
+4. **The full suite** stays green. *(r3)* §3's `decided_by` row is new on every merge, so five
+   existing tests that pin merge rows change. No test changes because of §1, §2 or §4.
+   - `test_gate_authority::test_s0_well_formed_corpus_dumps_byte_identically` and
+     `test_s8_rules_mode_sidecar_is_byte_identical`: the committed corpus and sidecar fixtures are
+     regenerated. The only differences allowed are the added `decided_by` rows and the sequence
+     shift they cause, and the build shows this with a row-level diff of old and new fixtures.
+   - `test_s2_a_passing_raw_same_as_writes_the_merge_verbs_rows`: a raw `same_as` and `p.merge`
+     still write the same rows except `decided_by`, which is `statement` for the raw item and `host`
+     for the verb. The test compares every other row byte for byte and asserts those two values.
+   - `test_s2_commit_set_carries_the_merge_or_aborts`: the expected attribute list gains
+     `decided_by` after `evidence`.
+   - `test_identity_recall::test_reconcile_writes_only_identity_machinery`: the allowed attribute
+     set gains `decided_by`, which is identity machinery.
 5. **Construct's suite** runs on the branch before merge, as for batches A–E.
+
+## Measured at build (r3)
+
+**Corpus.** `reconcile()` on fresh copies of the 52 worlds:
+- **Main's engine:** 24 merges in 13 worlds.
+- **This engine:** 12 merges in 7 worlds, and no merge main didn't make. It declined these 12 pairs:
+  - 4 not name-like, on "her hands", "her barrow" and "your coat". "Her hands" fused two different
+    women.
+  - 4 frame owner.
+  - 4 knock-on pairs, whose only shared anchor appeared through an earlier declined merge.
+- 39 worlds merged nothing either way, and `locate`/`state(kind)` matched on all 1,099 sampled
+  entities.
+
+**Book side.** The seeded grade matches main exactly (run1 F1 0.7471, run2 0.7303), and the Ilsa
+Renn merge still happens in both runs.
 
 ## Whitepaper
 
