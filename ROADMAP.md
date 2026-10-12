@@ -121,6 +121,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 ## Later
 
 - [ ] R43 A containment read that says each item's edge (`worn_by`, `held_by`, `in`), so a narrator can say "wearing the grey coat" rather than "on your person". Construct's nice-to-have from E3's shape read (me79b81), not a blocker.
+- [ ] R44 A repeated `attr:*` declaration after data exists: an identical one becomes a no-op receipt and a conflicting one a skip, instead of raising and dropping the host's whole batch (construct run 7, mfbd59d: a re-sent `attr:keeps arity set_valued` dropped a turn's ingest)
 - [ ] R28 Simplify the connection facade to a small gated API; back through pbr (`docs/AUDIT-2026-10.md` decision 6)
 - [ ] R29 Undeclared-origin pooling, decided on merit (`specs/STATUS.md` open questions; `specs/SOURCE-IDENTITY-V1.md` §6)
 - [ ] R30 The pbeo take-back: take 3 / adapt 3 / add 1, including the corroboration gradient (`specs/STATUS.md` open questions)
