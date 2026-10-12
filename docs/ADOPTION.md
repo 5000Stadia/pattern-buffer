@@ -712,8 +712,19 @@ p.proposals() -> [{a, b, evidence, auto_decline_reason, auto_decline}]
    # code "durable_contradiction" names contradictory standing facts (SHAPE-FIX-V1 Win 4);
    # code "correlated" a proposal between aka facets, code "distinct_group" one whose
    # correlation groups a canon distinct_from separates (FRAME-SCOPED-IDENTITY-V1 §3)
-p.confirm(a, b) / p.merge(a, b, evidence) / p.reject(a, b)
+p.confirm(a, b, representative=None) / p.merge(a, b, evidence, representative=None) / p.reject(a, b)
    -> {outcome, canonical_id, merge_event_id, reason, blocking_edges}   # an identity receipt
+   # IDENTITY-REPRESENTATIVE-V1: PASS representative= WHEN YOUR ARC NAMES THE SURVIVOR
+   # (merge("person:elias", "person:elias_venn", ..., representative="person:elias")), and
+   # ASSERT receipt["canonical_id"] == your arc id before writing plot rows. Without it the
+   # closure is served under its first-seen member, which may be the fragment: frames do not
+   # follow merges (P1), so knowledge keyed to your arc id would split from the id the
+   # engine serves. representative must be a or b or a member of either closure (ValueError
+   # before any write). The latest honoured designation wins and a later undesignated
+   # merge keeps it. On a pair ALREADY merged, a designated merge/confirm (and
+   # retype(absorb=target), which designates target) writes a re-point event and the
+   # receipt reads outcome noop_already_merged with repointed: true; undesignated no-ops
+   # write nothing. retype(absorb=target) always keeps the target as the representative.
    # confirm = promote a proposal; merge = assert (guarded, hard vetoes absolute);
    # reject = distinct_from (sticky anti-merge). reject of two facets of one canon
    # correlation group returns conflict_already_correlated (reason already_correlated,
