@@ -459,19 +459,39 @@ class Porcelain:
         receipt.skipped = [s.to_dict() for s in self._w.ingestor.last_skipped]
         return receipt
 
-    def resolve(self, entity: str, aspect: str, frame: str = CANON) -> dict:
-        try:
-            out = self._w.resolve(entity, self._attr(aspect), frame)
-        except ResolutionDenied as exc:
-            return {"status": "denied", "facts": [],
-                    "receipt": self._receipt([]).to_dict(), "reason": str(exc)}
+    def resolve(self, entity: str, aspect: str, frame: str = CANON,
+                at: float | None = None) -> dict:
+        """Force an aspect (whitepaper §8). A planted placeholder is forced as
+        ever; a declared (``resolvable_for``) aspect nobody planted is planted
+        and forced in one unit, and the result says `"planted": true`
+        (RESOLVE-UNMARKED-V1). `at` poses the scene cursor exactly as
+        ``ingest_structured(at=)`` does, on every path: it is where a planted
+        placeholder sits, and a call that raises with the head unmoved
+        restores it. In a world that declares any aspect resolvable, an aspect
+        nobody may invent answers `{"status": "undeclared", …, "reason"}`."""
+        aspect = self._attr(aspect)
+        resolver = self._w.resolver
+        with self._posed(at):
+            try:
+                out, planted = resolver.resolve_planted(entity, aspect, frame)
+            except ResolutionDenied as exc:
+                return {"status": "denied", "facts": [],
+                        "receipt": self._receipt([]).to_dict(), "reason": str(exc)}
         if out is UNKNOWN:
             return {"status": "unknown", "facts": [],
                     "receipt": self._receipt([]).to_dict()}
         rows = [r for r in out if r is not None]
-        return encode_out({"status": "resolved",
-                           "facts": [self._fact(r).to_dict() for r in rows],
-                           "receipt": self._receipt(rows).to_dict()})
+        if not rows and not planted and resolver.opted_in():
+            reason = resolver.undeclared_reason(entity, aspect, frame)
+            if reason is not None and not resolver.has_thunk(entity, aspect, frame):
+                return {"status": "undeclared", "facts": [],
+                        "receipt": self._receipt([]).to_dict(), "reason": reason}
+        result = {"status": "resolved",
+                  "facts": [self._fact(r).to_dict() for r in rows],
+                  "receipt": self._receipt(rows).to_dict()}
+        if planted:
+            result["planted"] = True
+        return encode_out(result)
 
     def retract(self, assertion_id: str, reason: str) -> Receipt:
         """Withdraw one assertion by id with a reason: an appended retraction
