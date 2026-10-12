@@ -625,8 +625,10 @@ class IdentityRegistry:
 
     def _check_representative(self, a: str, b: str, representative: str) -> None:
         """A designation must name `a`, `b` or a member of either's closure;
-        anything else raises before any write (IDENTITY-REPRESENTATIVE-V1 §1)."""
-        if representative not in self.closure(a) | self.closure(b):
+        anything else raises before any write (IDENTITY-REPRESENTATIVE-V1 §1).
+        A non-string (a list, a dict off the wire) is outside every closure."""
+        if (not isinstance(representative, str)
+                or representative not in self.closure(a) | self.closure(b)):
             raise ValueError(
                 f"representative {representative!r} is not a member of the "
                 f"closure of {a!r} or {b!r}")

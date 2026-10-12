@@ -408,6 +408,22 @@ def test_5_a_nonmember_raises_before_any_write(world):
     assert _R(world, ELIAS) == ELIAS
 
 
+@pytest.mark.parametrize("bad", [[], {}, [ELIAS], {"id": ELIAS}, 1])
+def test_5_a_non_string_raises_value_error_before_any_write(world, bad):
+    """Wire-shaped junk (MCP/HTTP) is outside every closure: ValueError, not
+    TypeError, and the head never moves — on merge and on confirm (pbr)."""
+    _seen(world, VENN, ELIAS)
+    head = world.buffer.head()
+    with pytest.raises(ValueError):
+        world.porcelain.merge(ELIAS, VENN, "x", representative=bad)
+    assert world.buffer.head() == head
+    world.registry.maybe_same_as(ELIAS, VENN, "anchor")
+    head = world.buffer.head()
+    with pytest.raises(ValueError):
+        world.porcelain.confirm(ELIAS, VENN, representative=bad)
+    assert world.buffer.head() == head
+
+
 def test_5_a_member_of_either_closure_is_valid(world):
     _seen(world, VENN, ELIAS, THIRD, "person:f")
     world.porcelain.merge(ELIAS, VENN, "x")
