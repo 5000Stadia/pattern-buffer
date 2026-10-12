@@ -1,7 +1,8 @@
 # WORLD-SERVICE-V1: one world, every module
 
-**Status:** r3. It answers pbr's r2 RED on three contract gaps (§3, §4, §7) and folds in the
-snapshot cadence (§2). Earlier rounds folded in construct's shape read (m53b6e8). Author: pb,
+**Status:** r4. It closes pbr's r3 RED, the one remaining authorization gap: a frame supplied by
+the caller on `resolve` and `record` (§4, §5), plus joining narrowed to the `perceive_in` path
+(§7b). r3 answered pbr's r2 RED (§3, §4, §7) and folded in the snapshot cadence (§2). Earlier rounds folded in construct's shape read (m53b6e8). Author: pb,
 2026-10-12.
 **Source:** roadmap R39, S1 of `specs/proposals/UNIFIED-WORLD-ACCESS.md`, approved by Kabe on
 2026-10-12 (gate gde97f3).
@@ -110,6 +111,10 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
        arc's protected keys (`construct/arc/concealment.py`). A viewer must never invent what the
        hidden arc turns on.
      - With no hook supplied, the entity existing in the view frame is enough.
+   - **No caller frame** *(r4)*. A viewer's `resolve` takes `entity`, `aspect` and an optional
+     wait, and nothing else. A caller-supplied `frame` or `perceive_in` is **refused**, not
+     ignored. The service always calls exactly `frame=CANON, perceive_in=<current view_frame>`, so
+     no caller can force a hidden frame's placeholder or constraint, or mirror it into the view.
    - **The job** calls the engine's resolve with **`perceive_in=view_frame`** (§7b). In **one**
      atomic unit, it:
      - plants if needed (E1);
@@ -128,7 +133,13 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
        for example, mid-turn, until the next pump. That should be rare, because construct
        pre-resolves at scene open.
 5. **The recorder's `record(items, at=)`** exists only on the standalone runner (no author). It
-   writes play events as `observed` rows through the gate, in canon and in the view frame. Under an
+   writes play events as `observed` rows through the gate, in canon and in the view frame.
+   - *(r4)* An item carrying its own `frame` key is **refused**, and the whole call writes nothing.
+     The gate treats `frame=` as a default that item keys override, so stripping alone would hide a
+     malicious caller.
+   - A caller-supplied `status` is refused the same way.
+   - The service writes each item twice, both times with the frame and status it sets itself: once
+     in canon, once in `view_frame`. Both writes are one atomic unit. Under an
    author, play events go to the author (construct), as agreed. A world has exactly one writer of
    play.
 6. **One "now", and the view frame.**
@@ -159,10 +170,12 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
    **(b) The resolve seam: `resolve(entity, aspect, frame=CANON, at=None, perceive_in=None)`** on
    the porcelain and the World.
    - With `perceive_in` set, the plant, the force (or memo) and the mirror run in **one** unit.
-   - The resolver's own `atomic_unit` (E1's plant-and-force) **joins** an enclosing unit instead of
-     being rejected as nested. Joining only happens on the same buffer and thread. The outer unit
-     owns the commit and the rollback.
-   - Without `perceive_in`, behaviour is byte-identical to E1.
+   - **Joining is exclusive to this path** *(r4)*. Only the `perceive_in` call opens the outer unit,
+     and only inside it does the resolver's plant-and-force run as part of that unit, through an
+     explicit internal flag. It does not use a general rule that units nest.
+   - The outer unit owns the commit and the rollback.
+   - Everywhere else, a nested `atomic_unit` is still refused exactly as before. Without
+     `perceive_in`, behaviour is byte-identical to E1, including that refusal.
 
    **(c)** The classifier's in-memory `verdict_version` counter (§2). It is additive and never
    stored.
@@ -230,10 +243,17 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
    - plants, forces and mirrors in one unit, and a mirror refused at the gate rolls back the plant
      and the force (pbr r2);
    - a memoized resolve mirrors nothing it already holds;
+   - **malicious frames** *(r4)*: a viewer `resolve` with `frame="canon"`, a second `knows:` frame
+     or `perceive_in=` is refused and writes nothing. A placeholder planted only in a hidden frame is
+     never forced through a viewer;
    - is memoized;
    - is rate-capped (deferred, with nothing written);
    - is never capped for a code route.
-4. `record` exists only with `author=False`, and writes `observed` rows to canon and the view frame.
+4. `record` exists only on the standalone runner, and writes `observed` rows to canon and the view
+   frame in one unit. *(r4)* An item with its own `frame` or `status` key is refused, and the whole
+   call writes nothing.
+4a. A nested `atomic_unit` outside `perceive_in` is still refused (the existing test stands
+    unchanged).
 5. `now`: viewer writes land at the author's coordinate.
 6. The runner: a localhost-only bind, with an HTTP round trip for read, resolve and record.
 7. With no service in use, the suite is byte-identical.
