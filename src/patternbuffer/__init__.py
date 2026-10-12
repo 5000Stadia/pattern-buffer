@@ -242,7 +242,7 @@ class World:
             valid_to = ev["valid_to"]
             if valid_to is not None and (as_of is None or as_of >= valid_to):
                 continue
-            agent_row = indexes._event_pick([r for r in record if r.attribute == "agent"])
+            agent_row = indexes.event_pick([r for r in record if r.attribute == "agent"])
             agent_val = agent_row.value if agent_row is not None else None
             if wanted is not None and (agent_val is None
                                        or self.registry.resolve(agent_val) != wanted):
