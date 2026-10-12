@@ -106,7 +106,7 @@ class SalienceIndex:
     def _visible_entity_rows(
         self, entity: str, frame: str, as_of: float | None
     ) -> list[Assertion]:
-        closure = sorted(self._indexes._closure_of(entity))
+        closure = sorted(self._indexes.closure_of(entity))
         if not closure:
             return []
         return [

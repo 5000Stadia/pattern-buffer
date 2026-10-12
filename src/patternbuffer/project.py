@@ -122,12 +122,12 @@ class Projector:
                 if r.value_type == "entity"
                 and (
                     self._classifier.durability(r.id) != STATE
-                    or not self._indexes._is_event_effect(r, asserted_as_of)
+                    or not self._indexes.is_event_effect(r, asserted_as_of)
                 )
             ]
             if qualifying:
                 # FOLD-CORRECTNESS-V1 §1: the fold's own recency key (0.0 is a time).
-                first = min(qualifying, key=self._indexes._recency_key)
+                first = min(qualifying, key=self._indexes.recency_key)
                 parent[entity] = self._indexes.resolve_entity(first.value)
         out, ordering = set(roots), list(roots)
         changed = True
@@ -303,11 +303,11 @@ class Projector:
             ))
             if pinned:
                 return r
-            if not self._indexes._is_event_effect(r, m.asserted_as_of):
+            if not self._indexes.is_event_effect(r, m.asserted_as_of):
                 qualifying.append(r)
         if not qualifying:
             return None
-        return min(qualifying, key=self._indexes._recency_key)  # FOLD-CORRECTNESS-V1 §1
+        return min(qualifying, key=self._indexes.recency_key)  # FOLD-CORRECTNESS-V1 §1
 
     def _lens_situation(
         self, m: Materialization, entities: list[str], budget: int | None,
@@ -353,7 +353,7 @@ class Projector:
                 m.frame, ids=sorted(live_events), valid_as_of=m.as_of,
                 asserted_as_of=m.asserted_as_of).values()
              for row in record),
-            key=self._indexes._recency_key,
+            key=self._indexes.recency_key,
         )
         if budget is not None:
             # The floor is never truncated; the live-events bucket yields to
@@ -385,7 +385,7 @@ class Projector:
                     and resolve(row.value) in in_scope for row in record):
                 continue
             if since is not None:
-                t = self._indexes._event_time(record)
+                t = self._indexes.event_time(record)
                 if t is None or t < since:
                     continue
             m.assertions.extend(record)
