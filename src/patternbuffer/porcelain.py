@@ -884,17 +884,28 @@ class Porcelain:
         with a recomputed `auto_decline_reason` (the kind-pair on conflict)."""
         return self._w.registry.enumerate_proposals()
 
-    def confirm(self, a: str, b: str) -> dict:
+    def confirm(self, a: str, b: str, representative: str | None = None) -> dict:
         """Promote an existing proposal through the guarded path. Returns a
-        Receipt; `no_proposal` if none relates them."""
-        return self._w.registry.confirm(a, b)
+        Receipt; `no_proposal` if none relates them. `representative` names the
+        id the merged closure is served under (a member of a's or b's closure,
+        else `ValueError` before any write); on a pair already merged it
+        re-points the closure (`repointed: true`). Assert
+        `receipt["canonical_id"]` to confirm the survivor."""
+        return self._w.registry.confirm(a, b, representative=representative)
 
-    def merge(self, a: str, b: str, evidence: str) -> dict:
+    def merge(self, a: str, b: str, evidence: str,
+              representative: str | None = None) -> dict:
         """Assert a merge (no proposal required) through the guarded path.
         Host-authoritative past the soft heuristic, but the hard vetoes
         (containment, distinct_from) are absolute (a `vetoed` Receipt names the
-        blocking edge)."""
-        return self._w.registry.guarded_merge(a, b, evidence)
+        blocking edge). `representative` names the id the merged closure is
+        served under (a member of a's or b's closure, else `ValueError` before
+        any write); without it the first-seen member is served. On a pair
+        already merged it re-points the closure (`noop_already_merged`,
+        `repointed: true`). Assert `receipt["canonical_id"]` to confirm the
+        survivor."""
+        return self._w.registry.guarded_merge(
+            a, b, evidence, representative=representative)
 
     def reject(self, a: str, b: str) -> dict:
         """Assert these are definitively different (`distinct_from`) — the

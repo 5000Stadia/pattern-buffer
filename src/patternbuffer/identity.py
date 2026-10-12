@@ -20,6 +20,7 @@ from patternbuffer.model import (
     ATTR_PREFIX,
     CANON,
     CONTAINMENT_FAMILY,
+    MECHANISM_STATUS,
     META_ATTRIBUTES,
     Assertion,
 )
@@ -149,6 +150,10 @@ class IdentityRegistry:
         self._component_of: dict[str, frozenset[str]] = {}
         self._representative: dict[frozenset[str], str] = {}
         self._first_seen: dict[str, int] | None = None
+        # IDENTITY-REPRESENTATIVE-V1 §2: the honoured host designations at
+        # head, (seq, id) ascending, scanned once per log version on the first
+        # multi-member election and never stored.
+        self._designations: list[tuple[int, str]] | None = None
         # IDENTITY-ROOT-CAUSES-V1 §2/§4: two more head-time views, derived per
         # log version and never stored — the retracted-merge edges, and which
         # entities own a `knows:` frame.
@@ -340,7 +345,8 @@ class IdentityRegistry:
         return bool(self.containment_block(a, b, asserted_as_of))
 
     def merge(self, a: str, b: str, evidence: str,
-              decided_by: str = "engine") -> str | None:
+              decided_by: str = "engine",
+              representative: str | None = None) -> str | None:
         """Identity merge, logged as an event (auditable, reversible by
         retraction). Returns the merge event's entity id, or None if vetoed.
 
@@ -354,20 +360,28 @@ class IdentityRegistry:
         ``decided_by`` records who decided the merge (IDENTITY-ROOT-CAUSES-V1
         §3): the caller says, nothing is inferred from the evidence text. A
         bare ``merge`` is the engine's own act unless the caller is a host."""
-        rows = self._merge_rows(a, b, evidence, decided_by)
+        rows = self._merge_rows(a, b, evidence, decided_by,
+                                representative=representative)
         return None if rows is None else rows[0].entity
 
     def _merge_rows(self, a: str, b: str, evidence: str, decided_by: str,
-                    extracted: bool = False) -> list[Assertion] | None:
+                    extracted: bool = False,
+                    representative: str | None = None) -> list[Assertion] | None:
         """`merge`'s body: re-check both hard vetoes, then append the merge's
         rows — the `identity_merge` event, the `same_as` edge (`inferred`,
         timeless), its `caused_by`, the evidence, who decided it
         (``decided_by``: host | statement | engine) and, for a statement that
         came from prose extraction, `extracted · true` — and return them in
-        append order (None when vetoed)."""
+        append order (None when vetoed). A host merge may also name the
+        closure's ``representative`` (IDENTITY-REPRESENTATIVE-V1 §1): one more
+        row on the event, written last."""
         if decided_by not in DECIDED_BY_VALUES:
             raise ValueError(
                 f"decided_by must be one of {DECIDED_BY_VALUES}, got {decided_by!r}")
+        if representative is not None:
+            if decided_by != "host":
+                raise ValueError("only a host merge may name a representative")
+            self._check_representative(a, b, representative)
         if self.containment_related(a, b):
             logger.warning(
                 "merge vetoed: %s and %s are containment-related (a thing is "
@@ -407,6 +421,11 @@ class IdentityRegistry:
                 entity=event_id, attribute="extracted", value=True,
                 status="inferred", role=self._ingestor,
             ))
+        if representative is not None:
+            rows.append(self._buffer.append(
+                entity=event_id, attribute="representative", value=representative,
+                status="inferred", role=self._ingestor,
+            ))
         logger.info("merge %s == %s (%s; decided by %s)", a, b, evidence, decided_by)
         return rows
 
@@ -425,25 +444,35 @@ class IdentityRegistry:
     # ---------------------------------------------------------------- read
 
     def resolve(self, entity: str, asserted_as_of: int | None = None) -> str:
-        """Canonical representative: the first-seen member of the entity's
-        same_as closure (stable across instances — first-seen is log order)."""
+        """Canonical representative of the entity's same_as closure: the id the
+        latest honoured host designation names (IDENTITY-REPRESENTATIVE-V1 §2),
+        else the first-seen member (stable across instances — both are log
+        order)."""
         if not self._at_head(asserted_as_of):
             closure = self.closure(entity, asserted_as_of)
             if len(closure) == 1:
                 return entity
+            designated = self._designated(closure, self._honoured_designations(asserted_as_of))
+            if designated is not None:
+                return designated
             return self._elect(closure, self._first_seen_scan(closure, asserted_as_of))
         members = self._components().get(entity)
         if members is None or len(members) == 1:
             return entity
         rep = self._representative.get(members)
         if rep is None:
-            if self._first_seen is None:
-                merged = set()
-                for component in self._component_of.values():
-                    if len(component) > 1:
-                        merged |= component
-                self._first_seen = self._first_seen_scan(merged, None)
-            rep = self._representative[members] = self._elect(members, self._first_seen)
+            if self._designations is None:
+                self._designations = self._honoured_designations(None)
+            rep = self._designated(members, self._designations)
+            if rep is None:
+                if self._first_seen is None:
+                    merged = set()
+                    for component in self._component_of.values():
+                        if len(component) > 1:
+                            merged |= component
+                    self._first_seen = self._first_seen_scan(merged, None)
+                rep = self._elect(members, self._first_seen)
+            self._representative[members] = rep
         return rep
 
     def closure(self, entity: str, asserted_as_of: int | None = None) -> set[str]:
@@ -479,6 +508,7 @@ class IdentityRegistry:
             self._component_of = component_of
             self._representative = {}
             self._first_seen = None
+            self._designations = None
             self._view_version = version
         return self._component_of
 
@@ -524,6 +554,103 @@ class IdentityRegistry:
             ):
                 first_seen[row.value] = row.seq
         return first_seen
+
+    def _honoured_designations(self, asserted_as_of: int | None) -> list[tuple[int, str]]:
+        """Every honoured representative designation visible at the read, as
+        (seq, id) in log order (IDENTITY-REPRESENTATIVE-V1 §2a). One visible
+        `representative` row per designation; it is honoured when it carries
+        the mechanism mark, and its event has a visible `kind · identity_merge`,
+        a visible marked `decided_by · host`, and — for an edge-producing
+        merge — a visible `same_as` edge named by a visible `caused_by`. An
+        event no `caused_by` ever names is a re-point event and needs no edge.
+        Membership of the closure is the caller's test. A world with no
+        designation costs one query, which returns nothing."""
+        buf = self._buffer
+        rows = [r for r in buf.visible(attribute="representative", frame=CANON,
+                                       asserted_as_of=asserted_as_of)
+                if r.status == MECHANISM_STATUS["representative"]
+                and isinstance(r.value, str)]
+        if not rows:
+            return []
+        events = sorted({r.entity for r in rows})
+
+        def per_event(attribute: str) -> list[Assertion]:
+            out: list[Assertion] = []
+            for i in range(0, len(events), 500):
+                out.extend(buf.visible(entity_in=events[i:i + 500],
+                                       attribute=attribute, frame=CANON,
+                                       asserted_as_of=asserted_as_of))
+            return out
+
+        merges = {r.entity for r in per_event("kind") if r.value == "identity_merge"}
+        host: set[str] = set()
+        seen: set[str] = set()
+        for r in per_event("decided_by"):
+            if (r.entity not in seen and r.status == MECHANISM_STATUS["decided_by"]
+                    and r.value in DECIDED_BY_VALUES):
+                seen.add(r.entity)
+                if r.value == "host":
+                    host.add(r.entity)
+        live_edges = {r.id for r in buf.visible(attribute="same_as", frame=CANON,
+                                                asserted_as_of=asserted_as_of)}
+        dead_edges = {r.id for r in buf.retracted_targets(
+            attribute="same_as", frame=CANON, asserted_as_of=asserted_as_of)}
+        # event -> whether a live edge names it. Only a `caused_by` on a
+        # `same_as` row counts (any other row naming the event is not its edge),
+        # and a link or edge a retraction hides still marks the event as
+        # edge-producing, so it is withdrawn rather than read as a re-point.
+        named: dict[str, bool] = {}
+        for r in buf.visible(attribute="caused_by", value_type="entity",
+                             frame=CANON, asserted_as_of=asserted_as_of):
+            if r.value in host and r.entity in live_edges:
+                named[r.value] = True
+            elif r.value in host and r.entity in dead_edges:
+                named.setdefault(r.value, False)
+        for r in buf.retracted_targets(attribute="caused_by", frame=CANON,
+                                       asserted_as_of=asserted_as_of):
+            if r.value in host and (r.entity in live_edges or r.entity in dead_edges):
+                named.setdefault(r.value, False)
+        return [(r.seq, r.value) for r in rows
+                if r.entity in merges and r.entity in host
+                and named.get(r.entity, True)]
+
+    @staticmethod
+    def _designated(closure, designations: list[tuple[int, str]]) -> str | None:
+        """The id named by the latest honoured designation that is a member of
+        `closure`, or None (first-seen then elects)."""
+        for _seq, ident in reversed(designations):
+            if ident in closure:
+                return ident
+        return None
+
+    def _check_representative(self, a: str, b: str, representative: str) -> None:
+        """A designation must name `a`, `b` or a member of either's closure;
+        anything else raises before any write (IDENTITY-REPRESENTATIVE-V1 §1)."""
+        if representative not in self.closure(a) | self.closure(b):
+            raise ValueError(
+                f"representative {representative!r} is not a member of the "
+                f"closure of {a!r} or {b!r}")
+
+    def _repoint(self, a: str, evidence: str, representative: str) -> dict:
+        """The re-point event (IDENTITY-REPRESENTATIVE-V1 §1a): on a pair
+        already one closure, exactly four timeless `inferred` canon rows and
+        no `same_as`, no `caused_by` — the event's kind, evidence, `decided_by
+        · host` and the `representative`. Returns the Receipt: the outcome
+        stays `noop_already_merged`, `canonical_id` is the closure's elected
+        representative after the write, `repointed` is true."""
+        event_id = f"event:merge_{self._buffer.head() + 1}"
+        for attribute, value in (("kind", "identity_merge"), ("evidence", evidence),
+                                 ("decided_by", "host"),
+                                 ("representative", representative)):
+            self._buffer.append(
+                entity=event_id, attribute=attribute, value=value,
+                status="inferred", role=self._ingestor,
+            )
+        logger.info("re-point %s -> %s (%s)", a, representative, evidence)
+        receipt = self._receipt("noop_already_merged", self.resolve(a),
+                                merge_event_id=event_id)
+        receipt["repointed"] = True
+        return receipt
 
     @staticmethod
     def _elect(closure, first_seen: dict[str, int]) -> str:
@@ -909,24 +1036,38 @@ class IdentityRegistry:
     # ------------------------------------ host reconciliation surface (#31)
 
     def guarded_merge(self, a: str, b: str, evidence: str,
-                      decided_by: str = "host") -> dict:
+                      decided_by: str = "host",
+                      representative: str | None = None) -> dict:
         """Host-authoritative merge through the guarded path (MERGE-RECONCILE-
         VERB-V1/V2). Skips the soft discriminativeness heuristic (the host has
         judged) but NOT the hard vetoes — containment AND `distinct_from`. It
         likewise skips the automatic paths' own restraints: a pair a retracted
         merge settled apart, or whose closure owns a frame, merges here
         (IDENTITY-ROOT-CAUSES-V1 §2, §4). Records `decided_by` (host unless
-        the caller is the gate). Returns a Receipt."""
-        return self._guarded_merge(a, b, evidence, decided_by)[0]
+        the caller is the gate). ``representative`` names the id the merged
+        closure is served under (IDENTITY-REPRESENTATIVE-V1): it must be a
+        member of a's or b's closure (``ValueError`` before any write), it rides
+        the merge event, and on a pair already merged it writes a re-point
+        event instead. Returns a Receipt."""
+        return self._guarded_merge(a, b, evidence, decided_by,
+                                   representative=representative)[0]
 
     def _guarded_merge(self, a: str, b: str, evidence: str, decided_by: str,
-                       extracted: bool = False) -> tuple[dict, list[Assertion]]:
+                       extracted: bool = False,
+                       representative: str | None = None,
+                       ) -> tuple[dict, list[Assertion]]:
         """The one guarded-merge body (GATE-AUTHORITY-V1 §2): the Receipt plus
         the rows the merge appended, in append order (none unless `merged`).
         Shared by the porcelain `merge` verb (through `guarded_merge`) and the
         ingest gate's raw `same_as` — no veto logic is copied anywhere."""
+        if representative is not None:
+            if decided_by != "host":
+                raise ValueError("only a host merge may name a representative")
+            self._check_representative(a, b, representative)
         ra = self.resolve(a)
         if ra == self.resolve(b):
+            if representative is not None:
+                return self._repoint(a, evidence, representative), []
             return self._receipt("noop_already_merged", ra), []
         blocks = self.containment_block(a, b)
         if blocks:
@@ -936,7 +1077,7 @@ class IdentityRegistry:
         if dblocks:
             return self._receipt(
                 "vetoed", ra, reason="distinct_from", blocking_edges=dblocks), []
-        rows = self._merge_rows(a, b, evidence, decided_by, extracted)
+        rows = self._merge_rows(a, b, evidence, decided_by, extracted, representative)
         if rows is None:  # defensive: _merge_rows re-checks both hard vetoes
             return self._receipt(
                 "vetoed", ra, reason="containment_or_distinct",
@@ -997,13 +1138,20 @@ class IdentityRegistry:
                         out.append(m.value)
         return out
 
-    def confirm(self, a: str, b: str) -> dict:
+    def confirm(self, a: str, b: str, representative: str | None = None) -> dict:
         """Promote an existing maybe_same_as proposal through the guarded path.
+        ``representative`` names the id the merged closure is served under
+        (IDENTITY-REPRESENTATIVE-V1); given on an already-merged pair it
+        writes a re-point event, and it never writes on `no_proposal`.
         Already merged => `noop_already_merged`; otherwise a missing live
         proposal => `no_proposal` (never a silent merge — keeps confirm=
         promote-judged honest vs merge=assert-new). C-014 / Codex post-impl."""
+        if representative is not None:
+            self._check_representative(a, b, representative)
         ra = self.resolve(a)
         if ra == self.resolve(b):
+            if representative is not None:
+                return self._repoint(a, "re-point: confirm", representative)
             return self._receipt("noop_already_merged", ra)
         if not self._has_proposal(a, b):
             return self._receipt("no_proposal", ra)
@@ -1021,7 +1169,7 @@ class IdentityRegistry:
                 break
         return self.guarded_merge(
             a, b, evidence=f"confirmed proposal: {ev or '(no evidence)'}",
-            decided_by="host")
+            decided_by="host", representative=representative)
 
     # ------------------------------------------ SHAPE-FIX-V1 (buckets 1 + 2)
 
@@ -1283,7 +1431,9 @@ class IdentityRegistry:
 
         rt = self.resolve(absorb)
         if re_ == rt:
-            receipt = self._receipt("noop_already_merged", re_)
+            # IDENTITY-REPRESENTATIVE-V1 §1b: absorb designates the target, so
+            # on a pair already merged it re-points the closure to it.
+            receipt = self._repoint(entity, f"retype absorb: {evidence}", absorb)
             receipt["retracted"] = []
             return receipt
         if self.distinct_block(re_, rt):
@@ -1314,7 +1464,7 @@ class IdentityRegistry:
             self._retract(row.id, f"retype artifact edge: {evidence}")
             retracted.append(row.id)
         result = self.guarded_merge(re_, rt, evidence=f"retype absorb: {evidence}",
-                                    decided_by="host")
+                                    decided_by="host", representative=absorb)
         result["retracted"] = retracted
         return result
 
