@@ -896,6 +896,20 @@ class Ingestor:
                 "exception", [],
                 {"type": type(exc).__name__, "message": str(exc)}) from exc
 
+    def run_unit(self, body):
+        """Run ``body`` in the buffer's unit of work with the in-memory views
+        restored on rollback (§B4), and the body's OWN error propagating raw
+        (WORLD-SERVICE-V1 §7b: the `perceive_in` resolve keeps E1's raw-error
+        contract, so a model failure stays a model failure). The caller raises
+        ``AtomicAbort`` itself for a gate skip it must not tolerate."""
+        snap = self._snapshot_views()
+        try:
+            return self._buffer.atomic_unit(body)
+        except BaseException:
+            if not (self._buffer.poisoned or self._buffer.unit_committed):
+                self._restore_views(snap)
+            raise
+
     def _snapshot_views(self) -> dict[str, Any]:
         """In-memory mutable views SQLite rollback does NOT restore (§B4)."""
         return {

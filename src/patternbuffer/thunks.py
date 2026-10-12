@@ -155,9 +155,15 @@ class Resolver:
         aspect: str,
         frame: str = CANON,
         access: object | None = None,
+        *,
+        joined: bool = False,
     ) -> tuple[list[Assertion] | object, bool]:
         """`resolve`, and whether this call planted the placeholder it forced
-        (RESOLVE-UNMARKED-V1)."""
+        (RESOLVE-UNMARKED-V1). ``joined`` (WORLD-SERVICE-V1 §7b) is the one
+        internal flag that lets the plant-and-force run inside a unit its
+        caller already opened (the `perceive_in` path); it is never a general
+        rule that units nest, and a nested ``atomic_unit`` elsewhere is
+        refused as ever."""
         thunk = self._find_thunk_row(entity, aspect, frame)
 
         # Memoized: a spent thunk serves its cache, forever, identically.
@@ -174,7 +180,7 @@ class Resolver:
 
         if thunk is None:
             if self._may_plant(entity, aspect, frame):
-                return self._plant_and_force(entity, aspect, frame), True
+                return self._plant_and_force(entity, aspect, frame, joined), True
             return (UNKNOWN if self._world_policy == OBSERVE_OR_UNKNOWN else []), False
 
         spec = thunk.value if isinstance(thunk.value, dict) else {}
@@ -222,7 +228,8 @@ class Resolver:
             return False
         return not (aspect == "contents" and self._indexes.contents(entity, frame=frame))
 
-    def _plant_and_force(self, entity: str, aspect: str, frame: str) -> list[Assertion]:
+    def _plant_and_force(self, entity: str, aspect: str, frame: str,
+                         joined: bool = False) -> list[Assertion]:
         """Plant the resolver's own `generated` placeholder and force it in ONE
         atomic unit (ATOMIC-ACTIVATION-V1): a failure anywhere, the model
         included, leaves neither the placeholder nor any row. The placeholder
@@ -242,7 +249,9 @@ class Resolver:
             self._classifier.classify(placeholder)  # guardrail: STATE
             return self._invent(placeholder, spec, frame)
 
-        out = self._buffer.atomic_unit(body)
+        if joined and not self._buffer.unit_open:
+            raise RuntimeError("a joined plant-and-force needs the caller's open unit")
+        out = body() if joined else self._buffer.atomic_unit(body)
         logger.info("planted and resolved %s·%s", subject, aspect)
         return out
 

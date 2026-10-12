@@ -10,11 +10,17 @@ model callable ``(prompt, schema) -> json``. See docs/WHITEPAPER.md.
 
 from __future__ import annotations
 
+import sqlite3
 import time
 from pathlib import Path
 from typing import Any, Callable
 
-from patternbuffer.buffer import PatternBuffer, SecondWriter, WorldPhysicsMismatch
+from patternbuffer.buffer import (
+    PatternBuffer,
+    ReadOnlyWorld,
+    SecondWriter,
+    WorldPhysicsMismatch,
+)
 from patternbuffer.classify import Classifier
 from patternbuffer.identity import IdentityRegistry
 from patternbuffer.indexes import MOVEMENT_KEYS, Indexes
@@ -29,6 +35,7 @@ from patternbuffer.model import (
     task_request,
 )
 from patternbuffer.project import Materialization, Projector
+from patternbuffer.codec import encode_out
 from patternbuffer.refer import Refer, Resolution
 from patternbuffer.roles import _make_engine_roles
 from patternbuffer.salience import SalienceIndex
@@ -37,6 +44,7 @@ from patternbuffer.thunks import (
     INVENT_UNDER_CANON,
     OBSERVE_OR_UNKNOWN,
     POLICIES,
+    UNKNOWN,
     Resolver,
 )
 from patternbuffer.tmaint import AtomicAbort, TruthMaintenance
@@ -50,8 +58,8 @@ __version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
 __all__ = ["World", "Materialization", "Resolution", "AtomicAbort",
-           "SecondWriter", "WorldPhysicsMismatch", "ResolveRequest",
-           "task_request", "__version__"]
+           "SecondWriter", "ReadOnlyWorld", "WorldPhysicsMismatch",
+           "ResolveRequest", "task_request", "__version__"]
 
 
 class World:
@@ -80,13 +88,17 @@ class World:
         title: str = "",
         description: str = "",
         attribute_default: Callable[[str], dict | None] | None = None,
+        _connection: sqlite3.Connection | None = None,
     ) -> None:
         if policy is not None and policy not in POLICIES:
             raise ValueError(f"unknown policy {policy!r}")
         if stance not in STANCES:
             raise ValueError(f"unknown stance {stance!r} (fixed enum; letter 026)")
         self.world_id = world_id
-        self.buffer = PatternBuffer(path, world_id)
+        self._clock = clock
+        # `_connection` is private: `snapshot()` constructs a World normally
+        # over the in-memory copy it made (WORLD-SERVICE-V1 §7a).
+        self.buffer = PatternBuffer(path, world_id, connection=_connection)
         # READ-SURFACE-V1 §7: the stored physics, if the world records any.
         # The physics row is immutable (the buffer refuses a second one or a
         # retraction of it), so the visible row is the only one.
@@ -406,6 +418,7 @@ class World:
     def ingest(self, text: str, context: str = "", frame: str | None = None,
                classify: str = "inline", extract: str = "full",
                cursor_authoritative: bool = False, pov: str | None = None) -> list:
+        self.buffer.require_writable()
         return self.ingestor.ingest(text, context, frame=frame, classify=classify,
                                     extract=extract,
                                     cursor_authoritative=cursor_authoritative,
@@ -426,6 +439,7 @@ class World:
         # authors movement timestamps (the moved-event coordinate pass). Default
         # False keeps structured callers byte-identical; World.ingest sets it.
         # `atomic` (ATOMIC-ACTIVATION-V1 §A): all-or-none visibility, default off.
+        self.buffer.require_writable()
         return self.ingestor.ingest_structured(
             items, frame=frame, classify=classify,
             cursor_authoritative=cursor_authoritative, extracted=extracted,
@@ -435,12 +449,106 @@ class World:
                    frame: str = CANON, cursor_authoritative: bool = False) -> list:
         # The typed activation door (ATOMIC-ACTIVATION-V1 §C): ordered
         # assert/retract ops applied as one all-or-none unit of work.
+        self.buffer.require_writable()
         return self.ingestor.commit_set(
             ops, self.truth, classify=classify, frame=frame,
             cursor_authoritative=cursor_authoritative)
 
-    def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None):
-        return self.resolver.resolve(entity, aspect, frame, access)
+    def resolve(self, entity: str, aspect: str, frame: str = CANON, access=None,
+                at: float | None = None, perceive_in: str | None = None):
+        """Force an aspect (whitepaper §8). With ``perceive_in`` set
+        (WORLD-SERVICE-V1 §7b) the plant, the force (or memo) and the mirror
+        into that frame run in ONE atomic unit; ``at`` is the mirror's valid
+        time (the scene cursor when omitted). Without it, E1's behavior."""
+        if perceive_in is None:
+            return self.resolver.resolve(entity, aspect, frame, access)
+        return self._resolve_perceived(entity, aspect, frame, at, perceive_in)[0]
+
+    def _resolve_perceived(self, entity: str, aspect: str, frame: str,
+                           at: float | None, perceive_in: str):
+        """``resolve(perceive_in=)``'s one unit: plant (if declared), force or
+        serve the memo, then mirror what resolved into ``perceive_in`` as
+        ``observed`` rows through the gate, at ``at`` or the scene cursor, only
+        the rows that frame does not already hold. Returns
+        ``(out, planted, perceived)`` where ``perceived`` is the frame's own
+        rows for what resolved (new and already held). The unit owns commit and
+        rollback: a failure anywhere, a gate refusal of the mirror included,
+        leaves no placeholder, no generated row and no mirror."""
+        if not isinstance(perceive_in, str) or not perceive_in:
+            raise ValueError("perceive_in must name a frame")
+        if perceive_in == frame:
+            raise ValueError("perceive_in must differ from the frame being resolved")
+        when = at if at is not None else self.ingestor.cursor.position
+
+        def body():
+            out, planted = self.resolver.resolve_planted(
+                entity, aspect, frame, joined=True)
+            rows = [] if out is UNKNOWN else [r for r in out if r is not None]
+            return out, planted, self._mirror(rows, aspect, frame, perceive_in, when)
+
+        return self.ingestor.run_unit(body)
+
+    def _mirror(self, rows: list, aspect: str, frame: str, perceive_in: str,
+                when: float | None) -> list:
+        """Mirror resolved rows into ``perceive_in`` as the observer's
+        perception (WORLD-SERVICE-V1 §4). Contents mint entities whose `kind`
+        and `name` are rows of their own, so those are mirrored with the
+        containment edge — without them the observer would perceive an
+        unnamed thing."""
+        sources = list(rows)
+        if aspect == "contents":
+            for edge in rows:
+                sources += [r for r in self.buffer.visible(entity=edge.entity, frame=frame)
+                            if r.status == "generated" and r.attribute in ("kind", "name")]
+        perceived: list = []
+        items: list[dict] = []
+        for src in sources:
+            held = [r for r in self.buffer.visible(
+                        entity=src.entity, attribute=src.attribute, frame=perceive_in)
+                    if r.value_type == src.value_type and r.value == src.value]
+            if held:
+                perceived.append(held[-1])
+                continue
+            items.append({"entity": src.entity, "attribute": src.attribute,
+                          "value": encode_out(src.value), "value_type": src.value_type,
+                          "status": "observed", "valid_from": when})
+        if items:
+            written = self.ingestor.ingest_structured(
+                items, frame=perceive_in, classify="rules")
+            if self.ingestor.last_skipped:
+                raise AtomicAbort(
+                    "gate_skip", [s.to_dict() for s in self.ingestor.last_skipped], None)
+            perceived += [r for r in written
+                          if r.frame == perceive_in and r.attribute not in META_ATTRIBUTES
+                          and not r.entity.startswith("a:")]
+        return perceived
+
+    def snapshot(self) -> "World":
+        """A read-only World over an in-memory copy of this one (WORLD-SERVICE-V1
+        §7a): the owner connection is backed up into a fresh in-memory
+        database (opened for use from another thread), a World is constructed
+        normally over the copy, and only then is the copy's log sealed — every
+        append, the gate, retraction and every unit raise ``ReadOnlyWorld``.
+        The copy's derived sidecars stay writable (its own disposable layer).
+        The source's file and ``data_version`` are not touched. Call it on the
+        owner's thread, outside any atomic unit; hand the copy to ONE other
+        thread."""
+        if self.buffer.unit_open:
+            raise RuntimeError("World.snapshot() cannot run inside an atomic unit")
+        source = self.buffer._live_conn()   # poison / second-writer guard
+        copy = sqlite3.connect(":memory:", check_same_thread=False)
+        try:
+            source.backup(copy)
+            snap = World(self.buffer.path, self.world_id, clock=self._clock,
+                         _connection=copy)
+        except BaseException:
+            copy.close()
+            raise
+        if snap.buffer.head() != self.buffer.head():
+            snap.buffer.close()
+            raise RuntimeError("snapshot construction wrote to the copy's log")
+        snap.buffer.seal_log()
+        return snap
 
     @property
     def porcelain(self):

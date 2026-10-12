@@ -99,6 +99,12 @@ class SecondWriter(RuntimeError):
     reopen the world, and route all writers and readers through one World."""
 
 
+class ReadOnlyWorld(RuntimeError):
+    """A write to the log was attempted on a sealed World — a `World.snapshot()`
+    copy (WORLD-SERVICE-V1 §7a). The log (append, the gate, retraction, every
+    atomic unit) is read-only there; the derived sidecars stay writable."""
+
+
 class PoisonedConnection(RuntimeError):
     """Raised by every later operation after a rollback-unconfirmable abort
     poisons the connection (ATOMIC-ACTIVATION-V1 §B1) — uncertain transaction
@@ -313,7 +319,8 @@ class _ConnectionFacade:
 class PatternBuffer:
     """The append-only store. Holds exactly one world's log, forever."""
 
-    def __init__(self, path: str | Path, world_id: str) -> None:
+    def __init__(self, path: str | Path, world_id: str, *,
+                 connection: sqlite3.Connection | None = None) -> None:
         self.path = Path(path)
         # The poison gate is armed BEFORE the connection exists: `_live_conn()`
         # is now the single database entry point (§B6 fail-closed), and it is
@@ -324,7 +331,11 @@ class PatternBuffer:
         # disposable: a reopen starts from None/0.
         self._head: int | None = None
         self._log_version = 0
-        self._conn = sqlite3.connect(self.path)
+        # `connection` (WORLD-SERVICE-V1 §7a): a snapshot hands in the in-memory
+        # copy it made; the buffer then owns that connection exactly as it owns
+        # a file's. Absent, the file at `path` is opened as ever.
+        self._sealed = False
+        self._conn = connection if connection is not None else sqlite3.connect(self.path)
         self._conn.executescript(_SCHEMA)
         # SQLite's data_version moves only when ANOTHER connection commits to
         # the file; `_live_conn()` compares it on every operation (the
@@ -362,6 +373,26 @@ class PatternBuffer:
         ).fetchone()
         return row[0] if row else None
 
+    # ---------------------------------------------------------------- seal
+
+    def seal_log(self) -> None:
+        """Seal the log (WORLD-SERVICE-V1 §7a): from here every append, the
+        gate, retraction and every atomic unit raise ``ReadOnlyWorld``. One-way
+        for this buffer; the derived sidecar tables stay writable (they are the
+        holder's own disposable layer, not the log)."""
+        self._sealed = True
+
+    @property
+    def sealed(self) -> bool:
+        """Whether the log is sealed (a ``World.snapshot()`` copy)."""
+        return self._sealed
+
+    def require_writable(self) -> None:
+        """Raise ``ReadOnlyWorld`` when the log is sealed."""
+        if self._sealed:
+            raise ReadOnlyWorld(
+                "this World is a read-only snapshot: its log accepts no write")
+
     # ---------------------------------------------------------------- write
 
     def append(
@@ -379,6 +410,7 @@ class PatternBuffer:
         confidence: float | None = None,
     ) -> Assertion:
         """Append one assertion. The only write path that exists."""
+        self.require_writable()
         role.check(status)
         # GATE-AUTHORITY-V1 §1: a mechanism row is written only with its
         # owner's mark. Checked here, not in `_insert`, so `dump.build` still
@@ -413,6 +445,7 @@ class PatternBuffer:
         return row
 
     def _insert(self, row: Assertion) -> None:
+        self.require_writable()
         if row.world_id != self.world_id:
             raise WorldMismatch(
                 f"assertion stamped for world {row.world_id!r} cannot enter "
@@ -775,6 +808,11 @@ class PatternBuffer:
                 pass
 
     @property
+    def unit_open(self) -> bool:
+        """Whether an atomic unit is open on this buffer."""
+        return self._unit_open
+
+    @property
     def poisoned(self) -> bool:
         return self._poisoned
 
@@ -800,6 +838,7 @@ class PatternBuffer:
         **poisons** the connection and propagates the raw error unwrapped (§B6).
         Once COMMIT succeeds, any later fault is the ambiguous post-commit outcome
         (raw, never ``AtomicAbort``). Nested entry is rejected."""
+        self.require_writable()
         if self._unit_open:
             raise RuntimeError("nested atomic unit entry is rejected")
         self._live_conn()
