@@ -1,6 +1,7 @@
 # WORLD-SERVICE-V1: one world, every module
 
-**Status:** r2. It folds in construct's shape read (m53b6e8) and goes to pbr for spec review. Author: pb,
+**Status:** r3. It answers pbr's r2 RED on three contract gaps (§3, §4, §7) and folds in the
+snapshot cadence (§2). Earlier rounds folded in construct's shape read (m53b6e8). Author: pb,
 2026-10-12.
 **Source:** roadmap R39, S1 of `specs/proposals/UNIFIED-WORLD-ACCESS.md`, approved by Kabe on
 2026-10-12 (gate gde97f3).
@@ -56,8 +57,18 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
 2. **Viewer reads never wait on a turn** (construct, change 1). A turn's engine work is interleaved
    with model calls, and run 5 measured 41–209 s player-felt per turn. So viewer reads are not owner
    jobs:
-   - At every `pump()` that follows a commit, the owner thread makes an **in-memory snapshot** of
-     the world with SQLite's backup API (§7) and hands it to the service's **reader thread**.
+   - At `attach`, and then at a `pump()` only when the **committed log head** has moved since the
+     last snapshot, the owner thread makes an **in-memory snapshot** of the world with SQLite's
+     backup API (§7) and hands it to the service's **reader thread**.
+     - *(r3, pbr)* The key is the committed head, not `log_version`, which also moves on a rollback
+       or a cache invalidation and would recopy an unchanged log.
+     - Sidecar-only changes (a later classification of an existing row, e.g. a deferred batch)
+       also trigger a snapshot. The classifier gains an in-memory `verdict_version` counter,
+       bumped at each of its verdict-write sites, never stored. The refresh key is
+       `(committed head, verdict_version)`. Without it, a viewer could read a stale class until the
+       next commit.
+     - Construct's play worlds are 1.5–4 MB, so a snapshot is cheap, and an idle session's pumps
+       copy nothing.
    - Viewer reads run on the reader thread against the newest snapshot. They never touch the file,
      never block a writer, and never trip `SecondWriter`: the snapshot is another database, not
      another connection to the file.
@@ -69,10 +80,24 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
      breaks construct's file copies and atomic swaps.
 3. **The client door: `session(name, role)`.** A session exposes `call(verb, **args)`, validated
    through MCP-WRAPPER-V1's registry and its `dispatch`, with one rule set per role:
-   - **viewer**:
-     - It may use the read verbs only (MCP's `V1_READS`), served from the snapshot. Every
-       frame-taking read is **forced to the current `view_frame`**; a viewer that names a frame is
-       refused. So a viewer never reads canon.
+   - **viewer** *(r3: an explicit allowlist, not MCP's `V1_READS`)*:
+     - **`VIEWER_READS`**, served from the snapshot, each through a per-verb adapter. The adapter
+       **refuses** a caller-supplied `frame` and **injects** the current `view_frame`:
+       - `snapshot`, `state`, `state_union`, `where`, `aggregate`, `confidence`;
+       - `locate`, `contents`, `composition`, `features`, `path`, `route`;
+       - `neighborhood`, `salience`, `events`, `in_transit`, `entities`;
+       - `facts`, with `include_meta` forced False;
+       - `refer`, with `model` and `learn` forced False, as over MCP;
+       - `canonical_attribute`, which reads vocabulary only and takes no frame.
+     - **Excluded**, because each reads across frames or reports canon or global identity state:
+       - `frame_diff`, which takes two arbitrary frames;
+       - `who_knows`, which reports every `knows:*` frame;
+       - `proposals`, `identity_conflicts`, `typing_conflicts`, `correlations` and
+         `correlation_conflicts`, which are canon identity diagnostics;
+       - `fidelity_audit`, a diagnostic;
+       - `axis_heads`, which reports global log positions; a viewer gets `now` instead.
+     - A verb added to the porcelain later is excluded until it is classified here. The allowlist is
+       explicit, never reflected.
      - It may use `resolve` (§4), `now`, and `changes(since)` once S2 builds it.
    - **recorder**: a viewer that may also use `record(items, at=)` (§5), on the standalone runner
      only.
@@ -85,10 +110,17 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
        arc's protected keys (`construct/arc/concealment.py`). A viewer must never invent what the
        hidden arc turns on.
      - With no hook supplied, the entity existing in the view frame is enough.
-   - **The job** resolves in **canon** (invention is canon's), then **mirrors the generated rows
-     into the view frame** as the player's perception: `observed`, at `now`. Construct switches
-     `furnish_scene` to `observed` in the same change (answer 3), so both paths agree. The plant,
-     force and mirror run as one atomic unit.
+   - **The job** calls the engine's resolve with **`perceive_in=view_frame`** (§7b). In **one**
+     atomic unit, it:
+     - plants if needed (E1);
+     - forces the placeholder, or serves the memo;
+     - mirrors the resolved rows into the view frame as the player's perception: `observed`, at
+       `now`, through the gate.
+
+     A failure anywhere, including a mirror refused at the gate, rolls back everything: no
+     placeholder, no generated row, no mirror. A memoized resolve mirrors only the rows the view
+     frame does not already hold, so repeated asks write nothing new. Construct switches
+     `furnish_scene` to `observed` in the same change (answer 3), so both paths agree.
    - **The viewer receives** the view-frame facts only.
    - **Refusals:**
      - `{"status": "not_perceptible", "reason": ...}` when the hook or the view frame refuses;
@@ -105,14 +137,35 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
    - With no author, `now` is `axis_heads()["valid_head"]`.
    - `view_frame` is given at `attach` and changed with `set_view_frame` (construct, change 2). The
      protagonist differs per world and per "play as X", so there is no constant default.
-7. **The one engine addition: `World.snapshot()`.** It returns a **read-only World over an
-   in-memory copy** of this world, made with SQLite's backup API from the owner's connection, on the
-   owner's thread.
-   - The copy's buffer refuses every append and commit (`ReadOnlyWorld`).
-   - Its derived caches are its own, built on first use.
-   - It may be handed to one other thread (`check_same_thread=False`, used by one thread at a time).
-   - Nothing about the source World changes.
-   - A host can also use it directly for any off-thread read.
+7. **Three engine additions** *(r3: r2 claimed one)*.
+
+   **(a) `World.snapshot()`: a read-only World over an in-memory copy.**
+   - The owner thread backs the source up into a fresh in-memory connection opened with
+     `check_same_thread=False`.
+   - A `World` is then **constructed normally over that copy**. Construction runs schema setup, the
+     classifier's sidecar `INSERT OR IGNORE` and its commits. All of those land in the **copy**,
+     never the source.
+   - Only then is the copy's **log sealed**: the buffer's append, the gate, retraction and every
+     unit refuse with `ReadOnlyWorld`.
+   - Derived sidecar tables in the copy (classification, salience) stay writable. They are the
+     snapshot's own disposable derived layer, like its in-memory caches. The salience read, for one,
+     writes its sidecar on demand.
+   - The invariant is about the log. After construction and any reads:
+     - the copy's `assertions` and `world_meta` tables are row-for-row identical to the source's at
+       backup time;
+     - the source's file and `data_version` are untouched.
+   - The snapshot is handed to one other thread and used by that thread only.
+
+   **(b) The resolve seam: `resolve(entity, aspect, frame=CANON, at=None, perceive_in=None)`** on
+   the porcelain and the World.
+   - With `perceive_in` set, the plant, the force (or memo) and the mirror run in **one** unit.
+   - The resolver's own `atomic_unit` (E1's plant-and-force) **joins** an enclosing unit instead of
+     being rejected as nested. Joining only happens on the same buffer and thread. The outer unit
+     owns the commit and the rollback.
+   - Without `perceive_in`, behaviour is byte-identical to E1.
+
+   **(c)** The classifier's in-memory `verdict_version` counter (§2). It is additive and never
+   stored.
 8. **The rate cap.** `RateCap` wraps the model callable for viewer-initiated resolve jobs only.
    - It counts only calls the host's `model_route(schema) -> "code" | "model"` sends to the model.
      Construct's `engine_callable` already sees the schema before any transform, so it can read
@@ -130,8 +183,8 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
 
 ## What does not change
 
-- No existing engine verb, row shape or read answer changes. The one engine addition is
-  `World.snapshot()` (§7), which is additive.
+- No existing engine verb, row shape or read answer changes. The engine additions in §7 are all
+  additive: `World.snapshot()`, `resolve(perceive_in=)` with a joining unit, and `verdict_version`.
 - A host that never constructs a `WorldService` or calls `snapshot()` sees nothing new.
 - MCP-WRAPPER-V1's server is untouched. Its registry and `dispatch` are reused, not copied.
 
@@ -156,14 +209,27 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
 
 1. Every owner job runs inside `pump()` on the attaching thread, so one connection writes. After
    `detach`, jobs return `detached`.
-1a. `World.snapshot()` is read-only: every write raises `ReadOnlyWorld`. It answers reads
-    identically to its source at the moment it was taken, verified on copies of construct's worlds.
-    The source sees no second connection, and `SecondWriter` never trips.
+1a. `World.snapshot()`:
+    - every log write raises `ReadOnlyWorld`;
+    - construction and first reads (including `salience`) leave the copy's `assertions` and
+      `world_meta` identical to the source's, and leave the source untouched (file bytes and
+      `data_version`);
+    - it answers every `VIEWER_READS` verb identically to its source at backup time, on copies of
+      construct's worlds;
+    - `SecondWriter` never trips.
+1c. Snapshot cadence: no copy when the committed head and the sidecar version are unchanged, and a
+    copy after a commit or a sidecar change.
 1b. A viewer read during a long author job returns at once from the last snapshot.
-2. A viewer cannot read canon: every frame-taking read is forced, and naming a frame is refused.
+2. A viewer cannot read canon or another frame:
+   - naming `frame="canon"` or a second `knows:` frame is refused on every `VIEWER_READS` verb;
+   - every excluded verb is refused;
+   - a test walks the porcelain's verbs and fails on any verb that is neither allowlisted nor
+     excluded, so a new verb cannot slip through.
 3. A viewer's resolve:
    - is refused when the entity is absent from the view frame;
-   - plants, forces and mirrors in one unit;
+   - plants, forces and mirrors in one unit, and a mirror refused at the gate rolls back the plant
+     and the force (pbr r2);
+   - a memoized resolve mirrors nothing it already holds;
    - is memoized;
    - is rate-capped (deferred, with nothing written);
    - is never capped for a code route.
