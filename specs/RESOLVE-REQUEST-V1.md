@@ -62,3 +62,30 @@ prompt wording is not a contract. A code generator would have to parse sentences
 - deep copies keep the request, and rebuilds drop it.
 
 Plus the full suite.
+
+## V1.1: `current`, the entity's own state now (2026-10-12)
+
+**Need (Photonic, m6b231f and m956978).** A code generator reads the story's facts about a person
+through `inherited`, which carries CONSTITUTIVE and DISPOSITIONAL facts only (whitepaper §8). Age is
+STATE by doctrine, since it is true at the cursor, and so is a description that can change, such as
+a haircut. So neither reaches the generator. Pinning them DISPOSITIONAL would be wrong, because a
+time skip would leave a 30-year-old at 30.
+
+**Rule.** `ResolveRequest` gains a last field, `current: tuple[tuple[str, Any], ...] = ()`:
+- **What it holds:** the entity's **own** folded facts whose served row is STATE, as of the
+  placeholder's `valid_from` (at head for a timeless placeholder), as `(attribute, value)` sorted by
+  attribute.
+- **What it excludes:** ancestors and placeholders. The aspect being forced is always excluded,
+  because its fold winner is its own placeholder.
+- **Accrue keys:** an accrue key gives its running total.
+- **Code generators only:** the prompt is byte-identical, and the existing fields don't change.
+- **Not added:** ancestors' state (lighting, weather) is render-side, and Photonic doesn't need it.
+
+**Checks.** `tests/test_resolve_request_current.py`:
+- `current` holds the entity's own state as of the placeholder's time, which a later change does
+  not affect;
+- a later placeholder sees the later value;
+- DISPOSITIONAL facts stay in `inherited` and never appear in `current`;
+- an ancestor's state never appears;
+- the prompt is unchanged.
+

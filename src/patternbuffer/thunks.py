@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from patternbuffer.buffer import PatternBuffer
-from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, Classifier
+from patternbuffer.classify import CONSTITUTIVE, DISPOSITIONAL, STATE, Classifier
 from patternbuffer.codec import json_default
 from patternbuffer.indexes import Indexes
 from patternbuffer.model import (  # noqa: F401 — the policies are re-exported
@@ -314,6 +314,7 @@ class Resolver:
             as_of=thunk_row.valid_from,
             frame=frame,
             policy=spec.get("policy", self._world_policy),
+            current=self._current_facts(thunk_row, frame),
         )
         out = self._model(prompt, task_schema(_RESOLVE_SCHEMA, request))
         appended: list[Assertion] = []
@@ -369,6 +370,27 @@ class Resolver:
             thunk_row.entity, thunk_row.attribute, len(appended),
         )
         return appended
+
+    def _current_facts(self, thunk_row: Assertion, frame: str) -> tuple[tuple[str, Any], ...]:
+        """The entity's own folded STATE facts as of the placeholder's time
+        (RESOLVE-REQUEST-V1.1): what is true of it now — an age, a haircut —
+        which constraint inheritance (CONSTITUTIVE/DISPOSITIONAL only) never
+        carries. No ancestors and no placeholders (so never the aspect being
+        forced, whose fold winner is its placeholder);
+        an accrue key gives its running total. Request data only: the prompt
+        is unchanged."""
+        out: list[tuple[str, Any]] = []
+        state = self._indexes.current_state(
+            thunk_row.entity, frame=frame, valid_as_of=thunk_row.valid_from)
+        for attr, result in state.items():
+            row = result.winner
+            if row is None or row.value_type == "unresolved":
+                continue  # the placeholder being forced is one of these
+            if self._classifier.durability(row.id) != STATE:
+                continue
+            value = result.quantity if result.quantity is not None else row.value
+            out.append((attr, value))
+        return tuple(sorted(out, key=lambda kv: kv[0]))
 
     def _inherited_facts(self, entity: str, frame: str) -> list[tuple[str, str, Any]]:
         """Constraint inheritance: CONSTITUTIVE + DISPOSITIONAL rows of the
