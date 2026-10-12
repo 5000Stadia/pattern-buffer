@@ -141,14 +141,14 @@ def promote_corrections(world: World) -> int:
         proposals = world.buffer.visible(entity=row.id, attribute="correction_proposal")
         if not proposals:
             continue
-        my_class = world.indexes._source_class(row, None)
+        my_class = world.indexes.source_class(row, None)
         priors = [
             r for r in world.buffer.visible(
                 entity=row.entity, attribute=row.attribute, frame=row.frame
             )
             if r.id != row.id
             and r.asserted_at < row.asserted_at
-            and world.indexes._source_class(r, None) == my_class
+            and world.indexes.source_class(r, None) == my_class
         ]
         if not priors:
             logger.warning("corr proposal %s: no eligible prior; left standing", row.id)

@@ -25,6 +25,8 @@ from patternbuffer.model import (
     META_ATTRIBUTES,
     RESOLUTION_POLICY,
     WORLD_PHYSICS_SUBJECT,
+    ResolveRequest,
+    task_request,
 )
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.refer import Refer, Resolution
@@ -48,7 +50,8 @@ __version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
 __all__ = ["World", "Materialization", "Resolution", "AtomicAbort",
-           "SecondWriter", "WorldPhysicsMismatch", "__version__"]
+           "SecondWriter", "WorldPhysicsMismatch", "ResolveRequest",
+           "task_request", "__version__"]
 
 
 class World:
@@ -239,7 +242,7 @@ class World:
             valid_to = ev["valid_to"]
             if valid_to is not None and (as_of is None or as_of >= valid_to):
                 continue
-            agent_row = indexes._event_pick([r for r in record if r.attribute == "agent"])
+            agent_row = indexes.event_pick([r for r in record if r.attribute == "agent"])
             agent_val = agent_row.value if agent_row is not None else None
             if wanted is not None and (agent_val is None
                                        or self.registry.resolve(agent_val) != wanted):
