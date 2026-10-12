@@ -1,6 +1,7 @@
 # FRAME-CONTINUITY-V1: widening a frame is an explicit choice, and every row says where it lives
 
-**Status:** r1, spec for pbr review before code. Author: pb, 2026-10-12. Roadmap R36.
+**Status:** r2: answers pbr's r1 RED (§2: widening only where every row is a labelled Fact; the
+existing explicit-union reads named as exceptions; event reads never widen). Author: pb, 2026-10-12. Roadmap R36.
 
 **Decisions.** Gate g3bf5da (consult ccab80f):
 - **P2:** accepted by Kabe on 2026-10-12.
@@ -36,8 +37,17 @@ cross, both explicit, and the labelling P4 requires before either ships.
 
 ## §2 Frame scope: exact by default, wider only on request
 
-Every porcelain read that takes `frame` gains **`frame_scope`**: `"exact"` (default) |
-`"continued"` | `"merged"`.
+*(r2)* **`frame_scope`** is offered on exactly three reads, the ones whose every served row is a
+`Fact` carrying `provenance.frame` (§1): **`state`**, **`state_union`** and **`facts`**. The scope
+is `"exact"` (default) | `"continued"` | `"merged"`.
+- **Every other read takes no `frame_scope`, and reads exactly its one frame, as today.** That
+  covers reads returning ids or derived values (`locate`, `contents`, `where`, `path`, `entities`,
+  `correlations`, `salience`, `route`, `neighborhood`, `aggregate`, `snapshot`, `fidelity_audit`,
+  `refer`), and the event reads (`events`, `in_transit`, whose `event_payload` records are built
+  from many assertions with no per-field provenance). Widening a read whose payload can't say each
+  row's stored frame would break P4, so those reads never widen.
+- A read can move into the widenable set later only once its whole payload carries stored-frame
+  provenance. That takes a spec change.
 
 | Scope | Rows read for frame `knows:X` |
 |---|---|
@@ -50,15 +60,33 @@ Every porcelain read that takes `frame` gains **`frame_scope`**: `"exact"` (defa
 - **Labelled.** Under `continued` or `merged`, folds run over the union of the selected stored
   frames as one row set, by the ordinary fold rules. Every served fact carries its stored frame
   (§1), so a reader can tell which character's knowledge each row came from.
-- **Scans never widen silently.** `facts()` and `entities()` take `frame_scope` like every other
-  read and default to `exact`. A scan widens only when the caller says so, and then every row says
-  its stored frame.
+- **Scans never widen silently.** `facts()` defaults to `exact`; it widens only when the caller
+  says so, and then every row says its stored frame. `entities()` never widens.
 - **Writes never widen.** Every write lands in exactly the frame it names. `frame_scope` exists on
   reads only.
 - **Implementation.** The porcelain resolves the scope to a tuple of stored frames once per call.
   The indexes and `buffer.visible(frame=...)` accept that tuple, as an `IN` clause, wherever they
   accept a frame name today. Caches key on the tuple. The `exact` scope passes the plain string, so
   its code path and caches are unchanged.
+
+## §2a The existing explicit-union reads (r2)
+
+Two reads already take several frames from the caller. Each frame is named explicitly, and that
+choice is logged by the call itself, never implied by identity. They stay **named exceptions, with
+unchanged semantics**:
+- `confidence(frame: str | list[str])` folds the frames the caller lists;
+- `frame_diff(a, b, ...)` compares two caller-named frames, or two lists.
+
+For both:
+- no `frame_scope` is offered, and the frames they read are exactly the ones named;
+- validation is unchanged;
+- every `Fact` they return carries `provenance.frame` (§1);
+- any non-Fact field they return is computed over the named frames only, which the caller already
+  knows.
+
+They are not a third widening mechanism: nothing is added to the caller's list. Tests pin their
+answers byte-identical to main apart from the new label, and assert that `frame_scope` is refused on
+both.
 
 ## §3 The host's continuity event (P2)
 
@@ -103,11 +131,16 @@ host configured at `attach` (default `exact`), so a viewer cannot widen its own 
    payloads are compared against main.
 2. **§2:**
    - `exact` equals today on every read.
+   - `frame_scope` is accepted only by `state`, `state_union` and `facts`; every other read refuses
+     it (a test walks the porcelain).
+   - `events` and `in_transit` never widen.
    - `continued` follows declared edges transitively and stops at a retraction.
    - `merged` follows the canon closure only, never `aka`.
    - Non-`knows:` frames refuse a non-exact scope.
    - `facts()` and `entities()` default to exact.
    - Under a wide scope, each fact's `provenance.frame` names its stored frame.
+2a. **§2a:** `confidence` and `frame_diff` answer byte-identically to main apart from
+    `provenance.frame`, and refuse `frame_scope`.
 3. **§3:** the verb writes canon only. An extracted `frame_continues_as` item skips
    `host_only_predicate`, and one outside canon is refused. Retraction ends the continuity, and
    pinned reads honour it.
