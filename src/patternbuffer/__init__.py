@@ -25,6 +25,8 @@ from patternbuffer.model import (
     META_ATTRIBUTES,
     RESOLUTION_POLICY,
     WORLD_PHYSICS_SUBJECT,
+    ResolveRequest,
+    task_request,
 )
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.refer import Refer, Resolution
@@ -48,7 +50,8 @@ __version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
 __all__ = ["World", "Materialization", "Resolution", "AtomicAbort",
-           "SecondWriter", "WorldPhysicsMismatch", "__version__"]
+           "SecondWriter", "WorldPhysicsMismatch", "ResolveRequest",
+           "task_request", "__version__"]
 
 
 class World:

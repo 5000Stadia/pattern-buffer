@@ -175,11 +175,55 @@ MODEL_TASKS = frozenset({TASK_EXTRACT, TASK_CLASSIFY, TASK_CLASSIFY_BATCH,
                          TASK_RESOLVE, TASK_REFER, TASK_ASK_PLAN})
 
 
-def task_schema(schema: dict[str, Any]) -> dict[str, Any]:
+@dataclass(frozen=True, slots=True)
+class ResolveRequest:
+    """What a `patternbuffer_resolve` call is for, as data (RESOLVE-REQUEST-V1).
+
+    A generator that answers by code (a seeded sampler, a layout generator)
+    reads this instead of parsing the prompt. ``inherited`` holds the standing
+    facts of the entity and its containment ancestors, as
+    ``(holder, attribute, value)``; ``declared`` holds the placeholder's own
+    constraint strings. Together they are exactly the prompt's constraint
+    lines, in the same order."""
+
+    world_id: str
+    entity: str
+    aspect: str
+    kind: Any
+    inherited: tuple[tuple[str, str, Any], ...]
+    declared: tuple[str, ...]
+    as_of: float | None
+    frame: str
+    policy: str
+
+
+class TaskSchema(dict):
+    """A task schema that also carries its call's structured request
+    (RESOLVE-REQUEST-V1). It is a dict with the same keys and values as the
+    plain schema, so it serializes byte-identically and every adapter that
+    forwards it to a model sends exactly what it sent before. Only a generator
+    that asks for ``task_request(schema)`` sees the request."""
+
+    request: Any = None
+
+
+def task_schema(schema: dict[str, Any], request: Any = None) -> dict[str, Any]:
     """A private copy of a task schema for one model call: an adapter that
     edits the schema in place (strict-mode rewrites) cannot corrupt the
-    engine's shared definition for every later call."""
-    return copy.deepcopy(schema)
+    engine's shared definition for every later call. With ``request``, the
+    copy is a `TaskSchema` carrying it."""
+    if request is None:
+        return copy.deepcopy(schema)
+    out = TaskSchema(copy.deepcopy(schema))
+    out.request = request
+    return out
+
+
+def task_request(schema: Any) -> Any:
+    """The structured request a model call carries, or None
+    (RESOLVE-REQUEST-V1): a `ResolveRequest` on a `patternbuffer_resolve`
+    call, None on every other call and on a schema an adapter rebuilt."""
+    return getattr(schema, "request", None) if isinstance(schema, TaskSchema) else None
 
 
 @dataclass(frozen=True, slots=True)

@@ -29,6 +29,7 @@ from patternbuffer.model import (  # noqa: F401 — the policies are re-exported
     POLICIES,
     TASK_RESOLVE,
     Assertion,
+    ResolveRequest,
     task_schema,
 )
 from patternbuffer.roles import WriterRole
@@ -174,8 +175,12 @@ class Resolver:
         return rows[-1] if rows else None
 
     def _invent(self, thunk_row: Assertion, spec: dict, frame: str) -> list[Assertion]:
-        constraints = self._inherited_constraints(thunk_row.entity, frame)
-        constraints += [str(c) for c in spec.get("constraints", ())]
+        inherited = self._inherited_facts(thunk_row.entity, frame)
+        declared = [str(c) for c in spec.get("constraints", ())]
+        constraints = [
+            f"{holder} · {attr} · {json.dumps(value, default=json_default)}"
+            for holder, attr, value in inherited
+        ] + declared
         prompt = (
             f"Resolve an unestablished aspect of a fictional world: the "
             f"{thunk_row.attribute} of {thunk_row.entity}.\n"
@@ -183,7 +188,20 @@ class Resolver:
             "nothing that contradicts them. Plain, concrete items only.\n\n"
             "Constraints (canon, in force):\n- " + "\n- ".join(constraints or ["(none)"])
         )
-        out = self._model(prompt, task_schema(_RESOLVE_SCHEMA))
+        # RESOLVE-REQUEST-V1: the same call, its purpose also carried as data.
+        kind = self._indexes.fold_key(thunk_row.entity, "kind", frame).winner
+        request = ResolveRequest(
+            world_id=self._buffer.world_id,
+            entity=thunk_row.entity,
+            aspect=thunk_row.attribute,
+            kind=None if kind is None or kind.value_type == "unresolved" else kind.value,
+            inherited=tuple(inherited),
+            declared=tuple(declared),
+            as_of=thunk_row.valid_from,
+            frame=frame,
+            policy=spec.get("policy", self._world_policy),
+        )
+        out = self._model(prompt, task_schema(_RESOLVE_SCHEMA, request))
         appended: list[Assertion] = []
         if thunk_row.attribute == "contents":
             # Contents are never literal rows on one key (P2: emptiness and
@@ -238,10 +256,11 @@ class Resolver:
         )
         return appended
 
-    def _inherited_constraints(self, entity: str, frame: str) -> list[str]:
+    def _inherited_facts(self, entity: str, frame: str) -> list[tuple[str, str, Any]]:
         """Constraint inheritance: CONSTITUTIVE + DISPOSITIONAL rows of the
-        entity and every containment ancestor (whitepaper §8)."""
-        constraints: list[str] = []
+        entity and every containment ancestor (whitepaper §8), as
+        ``(holder, attribute, value)`` in prompt order (RESOLVE-REQUEST-V1)."""
+        constraints: list[tuple[str, str, Any]] = []
         scope = [entity, *self._indexes.locate(entity, frame=frame)]
         for holder in scope:
             for attr, result in self._indexes.current_state(holder, frame=frame).items():
@@ -253,7 +272,5 @@ class Resolver:
                               # constraint, and its winner is a delta row, never
                               # the value (never inherit a delta as a constraint)
                 if self._classifier.durability(row.id) in {CONSTITUTIVE, DISPOSITIONAL}:
-                    constraints.append(
-                        f"{holder} · {attr} · {json.dumps(row.value, default=json_default)}"
-                    )
+                    constraints.append((holder, attr, row.value))
         return constraints
