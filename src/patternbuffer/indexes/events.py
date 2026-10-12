@@ -13,6 +13,7 @@ from patternbuffer.model import (
     EVENT_PREFIX,
     META_ATTRIBUTES,
     Assertion,
+    FrameSel,
     is_event_row,
 )
 
@@ -40,7 +41,7 @@ class EventsMixin:
 
     def event_records(
         self,
-        frame: str = CANON,
+        frame: FrameSel = CANON,
         *,
         ids: Iterable[str] | None = None,
         valid_as_of: float | None = None,
@@ -181,7 +182,7 @@ class EventsMixin:
         self,
         entity: str,
         attribute: str,
-        frame: str = CANON,
+        frame: FrameSel = CANON,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
         *,

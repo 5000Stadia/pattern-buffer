@@ -17,6 +17,7 @@ from patternbuffer.model import (
     MECHANISM_STATUS,
     META_ATTRIBUTES,
     Assertion,
+    FrameSel,
     is_event_row,
 )
 
@@ -51,11 +52,14 @@ class FoldMixin:
         self,
         entity: str,
         attribute: str,
-        frame: str = CANON,
+        frame: FrameSel = CANON,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> FoldResult:
-        """Serve one (entity, attribute, frame) key per the per-class rules."""
+        """Serve one (entity, attribute, frame) key per the per-class rules.
+        ``frame`` is one stored frame, or the tuple a wider ``frame_scope``
+        resolved to (FRAME-CONTINUITY-V1 §2): the fold then runs over the
+        union of those stored frames as one row set."""
         entity = self._resolve(entity)
         fa = self.fold_attribute(attribute)
         closure = sorted(self._closure_of(entity))
@@ -68,7 +72,7 @@ class FoldMixin:
         closure: list[str],
         attribute: str,
         fa: str,
-        frame: str,
+        frame: FrameSel,
         valid_as_of: float | None,
         asserted_as_of: int | None,
     ) -> FoldResult:
@@ -185,7 +189,7 @@ class FoldMixin:
         self,
         entity: str,
         attribute: str,
-        frame: str = CANON,
+        frame: FrameSel = CANON,
         valid_as_of: float | None = None,
         asserted_as_of: int | None = None,
     ) -> FoldResult:

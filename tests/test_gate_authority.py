@@ -254,6 +254,8 @@ def test_s0_skip_vocabulary(skip_reason_is_code):
         "same_as_not_canon", "merge_vetoed", "invalid_semantics_declaration",
         # FRAME-SCOPED-IDENTITY-V1 §1: a canon identity edge outside canon.
         "identity_edge_outside_canon",
+        # FRAME-CONTINUITY-V1 §3: prose extraction may not write frame_continues_as.
+        "host_only_predicate",
     })
     for code in SKIP_REASONS:
         assert skip_reason_is_code(code)

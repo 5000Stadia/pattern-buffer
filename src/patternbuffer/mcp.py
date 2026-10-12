@@ -33,7 +33,7 @@ from patternbuffer.model import POLICIES
 logger = logging.getLogger(__name__)
 
 # ------------------------------------------------------------- the registry
-# Explicit and exhaustive (Cx 521 #2): the 42 deterministic tools. A porcelain
+# Explicit and exhaustive (Cx 521 #2): the 43 deterministic tools. A porcelain
 # addition CANNOT appear here by reflection — it must be classified V1/V1.1 and
 # added deliberately (the registry-completeness test enforces this).
 
@@ -55,6 +55,7 @@ V1_MUTATIONS = (
     "ingest_structured", "commit_set", "retract", "reconcile",
     "adjudicate_deferred", "confirm", "merge", "reject", "correlate", "retype",
     "begin_build", "seal_build", "abort_build",
+    "continue_frame",                                    # FRAME-CONTINUITY-V1 §3
 )
 V1_TOOLS = V1_READS + V1_MUTATIONS
 
@@ -68,7 +69,8 @@ DESTRUCTIVE = frozenset({
     "reconcile", "seal_build",
 })
 # Retry-safe mutations only (reads are all idempotent).
-IDEMPOTENT_MUTATIONS = frozenset({"abort_build", "reject", "correlate"})
+IDEMPOTENT_MUTATIONS = frozenset({"abort_build", "reject", "correlate",
+                                  "continue_frame"})
 
 # Declared schema overrides (Cx 521 #2): exactly the parameters whose frozen
 # signatures don't carry a sufficient annotation, plus the model-free domain

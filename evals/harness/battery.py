@@ -316,21 +316,25 @@ def run_battery(w: World) -> list[Verdict]:
     telling = Verdict(16, "telling scene: frame transfer, canon unchanged (feature 5)",
                       "FAIL", "extraction", "no door-log row in Sela's frame")
     if sela:
-        sela_frames = [f for f in frames if w.registry.resolve(f.removeprefix("knows:")) == sela]
-        for f in sela_frames:
-            frows = [r for r in w.buffer.visible(frame=f)
-                     if re.search(r"door|2340|badge|log", str(r.entity) + str(r.attribute) + str(r.value), re.I)]
-            if frows:
-                fr = frows[0]
-                canon_earlier = [r for r in w.buffer.visible(frame="canon")
-                                 if re.search(r"door_log|2340|badge", str(r.entity) + str(r.attribute) + str(r.value), re.I)
-                                 and r.asserted_at < fr.asserted_at]
-                if canon_earlier:
-                    telling = Verdict(16, telling.title, "PASS",
-                                      detail=f"frame row {fr.id} after canon rows; provenance retained")
-                else:
-                    telling = Verdict(16, telling.title, "FAIL", "extraction",
-                                      "frame row exists but no earlier canon door-log rows found")
+        # FRAME-CONTINUITY-V1 §4: the grade reads Sela's point of view through
+        # the engine (every `knows:` frame of an id merged into her, via
+        # `frame_scope="merged"`) and grades what it serves, not a union the
+        # harness builds by hand. Each fact says its stored frame.
+        sela_facts = w.porcelain.facts(f"knows:{sela}", frame_scope="merged")
+        frows = [f for f in sela_facts
+                 if re.search(r"door|2340|badge|log",
+                              str(f["entity"]) + str(f["attribute"]) + str(f["value"]), re.I)]
+        if frows:
+            fr = w.buffer.get(frows[0]["provenance"]["assertion_id"])
+            canon_earlier = [r for r in w.buffer.visible(frame="canon")
+                             if re.search(r"door_log|2340|badge", str(r.entity) + str(r.attribute) + str(r.value), re.I)
+                             and r.asserted_at < fr.asserted_at]
+            if canon_earlier:
+                telling = Verdict(16, telling.title, "PASS",
+                                  detail=f"frame row {fr.id} ({fr.frame}) after canon rows; provenance retained")
+            else:
+                telling = Verdict(16, telling.title, "FAIL", "extraction",
+                                  "frame row exists but no earlier canon door-log rows found")
     add(telling)
 
     official = [r for r in w.buffer.all_rows()

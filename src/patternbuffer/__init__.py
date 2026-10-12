@@ -25,6 +25,7 @@ from patternbuffer.model import (
     META_ATTRIBUTES,
     RESOLUTION_POLICY,
     WORLD_PHYSICS_SUBJECT,
+    FrameSel,
     ResolveRequest,
     task_request,
 )
@@ -275,7 +276,7 @@ class World:
                         "last_known_containment": last_known})
         return sorted(out, key=lambda d: (str(d["agent"]), str(d["destination"])))
 
-    def state(self, entity: str, attribute: str, frame: str = CANON, **kw):
+    def state(self, entity: str, attribute: str, frame: FrameSel = CANON, **kw):
         return self.indexes.fold_key(entity, attribute, frame, **kw)
 
     def _kind_read(self, entity: str):
@@ -292,7 +293,7 @@ class World:
         return fold
 
     # AKA-CORRELATION-V1 — the explicit, opt-in correlated identity surface.
-    def state_union(self, entity: str, attribute: str, frame: str = CANON, **kw):
+    def state_union(self, entity: str, attribute: str, frame: FrameSel = CANON, **kw):
         return self.indexes.state_union(entity, attribute, frame, **kw)
 
     def correlations(self, entity: str, **kw) -> list[str]:
