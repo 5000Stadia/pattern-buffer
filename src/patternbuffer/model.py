@@ -211,7 +211,10 @@ class ResolveRequest:
     facts of the entity and its containment ancestors, as
     ``(holder, attribute, value)``; ``declared`` holds the placeholder's own
     constraint strings. Together they are exactly the prompt's constraint
-    lines, in the same order."""
+    lines, in the same order. ``current`` (RESOLVE-REQUEST-V1.1) holds the
+    entity's OWN folded STATE facts as of ``as_of`` — age, hair as cut today —
+    as ``(attribute, value)`` sorted by attribute; it is for code generators
+    only and never reaches the prompt."""
 
     world_id: str
     entity: str
@@ -222,6 +225,7 @@ class ResolveRequest:
     as_of: float | None
     frame: str
     policy: str
+    current: tuple[tuple[str, Any], ...] = ()
 
 
 class TaskSchema(dict):
