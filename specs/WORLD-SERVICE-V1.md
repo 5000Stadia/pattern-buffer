@@ -1,6 +1,6 @@
 # WORLD-SERVICE-V1: one world, every module
 
-**Status:** r4. It closes pbr's r3 RED, the one remaining authorization gap: a frame supplied by
+**Status:** r5. Build findings tightened two canon-leak paths and replaced the rate cap's mechanism: §4, §3 and §8, each marked *(r5)*. r4: It closes pbr's r3 RED, the one remaining authorization gap: a frame supplied by
 the caller on `resolve` and `record` (§4, §5), plus joining narrowed to the `perceive_in` path
 (§7b). r3 answered pbr's r2 RED (§3, §4, §7) and folded in the snapshot cadence (§2). Earlier rounds folded in construct's shape read (m53b6e8). Author: pb,
 2026-10-12.
@@ -97,6 +97,9 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
          `correlation_conflicts`, which are canon identity diagnostics;
        - `fidelity_audit`, a diagnostic;
        - `axis_heads`, which reports global log positions; a viewer gets `now` instead.
+     - **Existence is perspectival** *(r5)*. Through the viewer adapter, an id with no visible
+       row in the view frame answers exactly as an id that exists nowhere, byte for byte, on every
+       `VIEWER_READS` verb. A viewer cannot probe canon existence through an error shape.
      - A verb added to the porcelain later is excluded until it is classified here. The allowlist is
        explicit, never reflected.
      - It may use `resolve` (§4), `now`, and `changes(since)` once S2 builds it.
@@ -110,7 +113,11 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
        current place, it is not inside a closed container, and `(entity, aspect)` is not among the
        arc's protected keys (`construct/arc/concealment.py`). A viewer must never invent what the
        hidden arc turns on.
-     - With no hook supplied, the entity existing in the view frame is enough.
+     - With no hook supplied, the entity existing in the view frame is enough **to invent**
+       *(r5)*. A viewer may then plant-and-force (E1), or force a placeholder with no memo.
+       Serving a key that already holds a concrete canon value, or a spent memo not yet in the view
+       frame, requires a hook that says yes. Without a host judging perception, existing canon facts
+       are exactly the secrets.
    - **No caller frame** *(r4)*. A viewer's `resolve` takes `entity`, `aspect` and an optional
      wait, and nothing else. A caller-supplied `frame` or `perceive_in` is **refused**, not
      ignored. The service always calls exactly `frame=CANON, perceive_in=<current view_frame>`, so
@@ -179,7 +186,13 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
 
    **(c)** The classifier's in-memory `verdict_version` counter (§2). It is additive and never
    stored.
-8. **The rate cap.** `RateCap` wraps the model callable for viewer-initiated resolve jobs only.
+8. **The rate cap.** *(r5)* `WorldService.gated(model)` returns the callable the host injects into
+   its World (`World(model=svc.gated(host_callable))`). It is a pass-through, except while a viewer
+   job runs on the owner thread, when it applies `RateCap` and `model_route`.
+   - The service never swaps the engine's private model handles.
+   - `attach` detects an ungated World and logs that the cap is inactive. A service constructed
+     with `rate=` then answers a model-bound viewer resolve with `no_rate_cap`.
+   - `RateCap` applies to viewer-initiated resolve jobs only.
    - It counts only calls the host's `model_route(schema) -> "code" | "model"` sends to the model.
      Construct's `engine_callable` already sees the schema before any transform, so it can read
      `task_request(schema)` there.
