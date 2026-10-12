@@ -31,6 +31,7 @@ from patternbuffer.model import (
     CANON,
     CANON_IDENTITY_EDGES,
     COMPOSITION_FAMILY,
+    FRAME_CONTINUES_AS,
     ID_RE,
     ID_SHAPED_RE,
     MECHANISM_ATTRIBUTES,
@@ -309,7 +310,10 @@ SKIP_REASONS = frozenset({
     "merge_vetoed",                          # GATE-AUTHORITY-V1 §2
     "invalid_semantics_declaration",         # GATE-AUTHORITY-V1 §5
     "identity_edge_outside_canon",           # FRAME-SCOPED-IDENTITY-V1 §1 (maybe_same_as,
-                                             # distinct_from; same_as is same_as_not_canon)
+                                             # distinct_from; same_as is same_as_not_canon;
+                                             # FRAME-CONTINUITY-V1 §3: frame_continues_as)
+    "host_only_predicate",                   # FRAME-CONTINUITY-V1 §3 (prose extraction may
+                                             # not write frame_continues_as)
 })
 
 
@@ -1370,17 +1374,37 @@ class Ingestor:
         # (`same_as_not_canon`, after its value check) — one refusal path for
         # it, never two — so this check covers the other two edges. A
         # perspectival identity belief is an `aka` row in its frame (§1(d)).
+        # FRAME-CONTINUITY-V1 §3 rides the same step: `frame_continues_as` is a
+        # host's declaration, so prose extraction may not write it
+        # (`host_only_predicate`, checked first: the refusal does not depend on
+        # the frame), and it is canon-only like the identity edges, and
+        # entity-valued (a well-formed observer id; `malformed_id` otherwise).
+        if attribute == FRAME_CONTINUES_AS:
+            if self._extracted:
+                self._record_skip(entity, attribute, value, "host_only_predicate")
+                return out
+            if frame != CANON:
+                self._record_skip(entity, attribute, value,
+                                  "identity_edge_outside_canon")
+                return out
+            if not (value_type == "entity" and isinstance(value, str)):
+                self._record_skip(entity, attribute, value, "malformed_id")
+                return out
         if (attribute in CANON_IDENTITY_EDGES and attribute != "same_as"
-                and frame != CANON):
+                and attribute != FRAME_CONTINUES_AS and frame != CANON):
             self._record_skip(entity, attribute, value, "identity_edge_outside_canon")
             return out
 
         # 9. Identity resolution, the decay half-life, time values, interval
         # invariants and the per-edge structural skips (existing).
         raw_entity, raw_value = entity, value
-        entity = self._registry.resolve(entity)
-        if value_type == "entity" and isinstance(value, str):
-            value = self._registry.resolve(value)
+        if attribute != FRAME_CONTINUES_AS:
+            # A frame's name is the exact observer id the host used (P1: a
+            # merge never widens a frame), so `frame_continues_as` keeps both
+            # ids as authored; every other id resolves to its canonical head.
+            entity = self._registry.resolve(entity)
+            if value_type == "entity" and isinstance(value, str):
+                value = self._registry.resolve(value)
         identity_subject = self._registry.resolve(identity_subject)
 
         # Decay-policy declarations must be valid physics (TRACKING-MODE-V1

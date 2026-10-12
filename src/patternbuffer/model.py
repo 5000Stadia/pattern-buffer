@@ -51,7 +51,19 @@ SEMANTICS_PREDICATES = frozenset(
     {"arity", "relation_family", "fold_policy", "structural", "durability",
      "resolvable_for"}
 )
-INVIOLABLE_CORE = STRUCTURAL_PREDICATES | {"same_as", "maybe_same_as", "distinct_from", "aka"}
+# FRAME-CONTINUITY-V1 §3: the host's declaration that one observer's knowledge
+# is part of another's, written only by `continue_frame` (or a host's structured
+# canon item) and never by prose extraction. A host cannot redeclare it.
+FRAME_CONTINUES_AS = "frame_continues_as"
+INVIOLABLE_CORE = (STRUCTURAL_PREDICATES
+                   | {"same_as", "maybe_same_as", "distinct_from", "aka",
+                      FRAME_CONTINUES_AS})
+
+# FRAME-CONTINUITY-V1 §2: a frame selector is one stored frame name, or the
+# tuple of stored frames a wider `frame_scope` resolved to (read as an `IN`).
+FrameSel = str | tuple[str, ...]
+FRAME_SCOPES = ("exact", "continued", "merged")
+KNOWS_PREFIX = "knows:"
 
 # The resolution policies — the world's one switch (whitepaper §8). Defined
 # here so the buffer can validate the physics row without importing the
@@ -74,7 +86,8 @@ RESOLUTION_POLICY = "resolution_policy"
 # one fact about the world, not a belief — so these are written and read in
 # canon only. `aka` is not among them: a perspectival identity belief ("Alice
 # thinks the masked man is Bob") stays an `aka` row in its own frame.
-CANON_IDENTITY_EDGES = frozenset({"same_as", "maybe_same_as", "distinct_from"})
+CANON_IDENTITY_EDGES = frozenset({"same_as", "maybe_same_as", "distinct_from",
+                                  FRAME_CONTINUES_AS})
 
 # The engine's own meta-attributes (subjects of these rows are assertion
 # ids or carry engine semantics).
@@ -87,6 +100,7 @@ META_ATTRIBUTES = frozenset(
         "maybe_same_as",
         "distinct_from",
         "aka",
+        FRAME_CONTINUES_AS,  # FRAME-CONTINUITY-V1 §3: identity-adjacent canon structure
         "canonicalized_from",
         "resolved_by",
         "justified_by",

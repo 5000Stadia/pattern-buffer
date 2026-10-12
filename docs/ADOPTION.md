@@ -602,7 +602,7 @@ p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, 
    #   as-of-before a reveal returns the uncorrelated view (no leak). The scene-wide state_union.
    # features=True: inline each scope place's `part_of`-feature children (the burrow under the
    #   hillside) one level. Both opt-in, orthogonal to `lens`; default off = unchanged.
-p.state(entity, attribute, frame=, as_of=, value=None, asserted_as_of=None)
+p.state(entity, attribute, frame=, as_of=, value=None, asserted_as_of=None, frame_scope="exact")
    -> {status: unknown|known|conflicted|unresolved, fact, quantity?, conflicting?,
        conflicting_facts?, values?, matches?}
    # READ-SURFACE-V1 §4: the whole key. status: nothing served -> unknown; the fold flags ->
@@ -622,6 +622,13 @@ p.state(entity, attribute, frame=, as_of=, value=None, asserted_as_of=None)
    #   the event has occurred (its first stamped row <= as_of). state_union reads the
    #   records of the aka union. where/aggregate/who_knows/confidence/frame_diff stay
    #   standing-only.
+   # frame_scope (FRAME-CONTINUITY-V1 §2) — "exact" (default, byte-identical to before: the
+   #   rows stored under `frame`) | "continued" (plus the frames the host declared continue
+   #   into this one with continue_frame, transitively, as of the read) | "merged" (plus the
+   #   frames of the observer's canon same_as closure; never aka). Wider scopes take a
+   #   `knows:` frame only (ValueError otherwise) and fold the union as ONE row set; every
+   #   served fact says which stored frame it came from (provenance.frame). Offered on
+   #   state, state_union and facts ONLY — every other read refuses it.
 p.canonical_attribute(name) -> str
    # READ-SURFACE-V1 §3: the gate's name for an attribute ("Located In" -> "in", "type" ->
    # "kind"; holds/wearing stay as they are). Every attribute argument already passes
@@ -683,7 +690,8 @@ p.correlate(a, b, evidence, at=None) -> Receipt
 p.correlations(entity, as_of=None, frame="canon", asserted_as_of=None) -> [entity_id]
    # the facets correlated with entity as-of (first-seen ordered). Empty before a
    # reveal's valid_from — the mystery is intact. Zero writes.
-p.state_union(entity, attribute, frame="canon", as_of=None, value=None, asserted_as_of=None)
+p.state_union(entity, attribute, frame="canon", as_of=None, value=None, asserted_as_of=None,
+              frame_scope="exact")
    -> {status, fact, quantity?, conflicting?, conflicting_facts?, values?, matches?}
    # the EXPLICIT correlated read: fold attribute over entity ∪ its aka facets, as-of.
    # Same shape as p.state. Returns the SAME view whether facts were on one entity or
@@ -742,11 +750,24 @@ p.entities(frame, prefix=None, as_of=None, asserted_as_of=None) -> [entity_id]
    # sorted. frame REQUIRED (a prefix-only enumeration leaks cross-frame existence; every
    # read fixes perspective). Your place roster is entities("canon", prefix="place:").
 p.facts(frame, entity=None, attribute=None, prefix=None, as_of=None, include_meta=False,
-        asserted_as_of=None) -> [Fact]
+        asserted_as_of=None, frame_scope="exact") -> [Fact]
    # BOUNDED-READS-V1: the frame-scan — ONE frame's visible rows as Fact dicts (provenance
    # included). RAW log reads for AUDITED scans (receipt trails, knowledge digests, marker
    # rows), NOT folds (folded truth = state/snapshot). frame REQUIRED. An exact a:<n>
    # receipt-chain target is always served; wide scans exclude a:*/attr:* unless include_meta.
+   # frame_scope (FRAME-CONTINUITY-V1) defaults to "exact" — a scan never widens unless you
+   #   say so. Under "continued"/"merged" the scan serves rows from several stored frames:
+   #   KEY ANY WRITE OFF provenance.frame (see "Scanning then retracting" below).
+p.continue_frame(source, into, evidence) -> Receipt
+   # FRAME-CONTINUITY-V1 §3: declare that what `source` knew is part of what `into` knows —
+   #   p.continue_frame("person:daniel", "person:dan", "the same man; host decision"). Both
+   #   are observer ids, kept exactly as given (never resolved through identity). Writes one
+   #   timeless canon row `source · frame_continues_as · into` (stated) plus its evidence;
+   #   read with frame_scope="continued" on knows:<into>. One way (source gains nothing).
+   #   Retract the row to end it (asserted_as_of reads see it as it stood). Already declared
+   #   -> nothing written, a Receipt warning. Host-only: prose extraction cannot write it
+   #   (skip host_only_predicate), nor a non-canon item (identity_edge_outside_canon). No
+   #   merge/confirm/reconcile/aka/retype writes or reads it: identity never widens a frame.
 p.begin_build(at=None) / p.seal_build(model=False, scope="session"|"all") / p.abort_build() -> dict
    # BUILD-SESSION-V1: a build session defers durability classification for everything
    # ingested inside it (the session wins over per-call classify=), then seal runs ONE pass
@@ -922,7 +943,7 @@ world.close()
 (the 1:1 invariant; multi-world = multiple servers). `--policy` (env
 `PATTERNBUFFER_POLICY`) names the world's physics: a fresh world records it;
 absent, the world's stored physics apply; a mismatch fails startup
-(`WorldPhysicsMismatch`, READ-SURFACE-V1 §7). The 42 deterministic
+(`WorldPhysicsMismatch`, READ-SURFACE-V1 §7). The 43 deterministic
 porcelain verbs are MCP tools; results arrive as
 `structuredContent = {"result": <the porcelain return>}` (Receipts as dicts;
 exact-decimals as `{"$decimal": …}` tags) with the same object serialized in
@@ -940,6 +961,29 @@ ambiguous reference returns its `candidates` for the client to judge
 connected MCP client is a **fully trusted world principal** — it can name any
 frame; tool annotations are hints, never authorization. Put untrusted consumers (players, NPCs) behind YOUR
 host-mediated surface; frame entitlement is a host concern.
+
+## SCANNING THEN RETRACTING (`provenance.frame`, FRAME-CONTINUITY-V1)
+
+Every Fact, from every read, carries `provenance.frame`: the frame the row is
+**stored** under. A host that scans and then retracts (a scrub, a re-ingest, a
+dedupe) keys the retraction on it:
+
+```python
+FRAME = "knows:person:sela"
+for f in p.facts(FRAME, frame_scope=scope):            # exact, continued or merged
+    if f["provenance"]["frame"] == FRAME:              # the rule: only rows stored HERE
+        p.retract(f["provenance"]["assertion_id"], "scrub")
+```
+
+`facts()` defaults to `exact`, so the unkeyed loop is safe by default; the rule
+is what keeps it safe when a caller (or you, later) widens the scan.
+Retractions are permanent log rows, and a scan that spans frames hands the
+loop rows from frames it never meant to touch: the emberroad2 measurement was
+72 retractions written into another character's frame that way. Without the
+key, `merged` and `continued` return exactly those rows. A host that only needs to
+*read* a widened view never needs the rule; one that *writes* from a scan always
+does. Check `provenance.frame` against the frame you meant to change, not
+against the one you asked for.
 
 ## ATOMIC ACTIVATION SETS (`commit_set` / `atomic=True`)
 
