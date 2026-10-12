@@ -346,6 +346,36 @@ class Pipeline:
 
     # ------------------------------------------------------------- commit
 
+    @staticmethod
+    def confirm_frame_owners(w: World) -> int:
+        """The book pipeline's host decision (IDENTITY-ROOT-CAUSES-V1 §4): the
+        engine never auto-merges a closure that owns a `knows:` frame, so such
+        a pair waits as a proposal with auto-decline code `frame_owner` — a
+        pair that passes the automatic gate in every other respect. A book
+        world has no host, so the pipeline is it: it `confirm`s each one,
+        logged as `decided_by · host`. A book run reaches the same merges as
+        before, each now a visible decision instead of a silent engine act.
+        Proposals are re-read after every merge, because a merge changes what
+        the next pair relates to. Returns the merges made."""
+        merged = 0
+        tried: set[tuple[str, str]] = set()
+        while True:
+            pending = [
+                p for p in w.registry.enumerate_proposals()
+                if p["auto_decline"]["code"] == "frame_owner"
+                and (p["a"], p["b"]) not in tried
+            ]
+            if not pending:
+                break
+            p = pending[0]
+            tried.add((p["a"], p["b"]))
+            receipt = w.registry.confirm(p["a"], p["b"])
+            if receipt["outcome"] == "merged":
+                merged += 1
+        if merged:
+            logger.info("confirm_frame_owners: %d merge(s)", merged)
+        return merged
+
     def commit(self, world_path: str | Path, registry: WorldRegistry) -> World:
         """The single commit (spec §3.3): seed registry -> replay chunks in
         order. Refuses if any chunk failed or still carries orphans."""
@@ -415,6 +445,9 @@ class Pipeline:
         # whole world is in view (shared name anchors promote; title-only
         # candidates stay proposals for tier-2/confirmation).
         w.registry.promote_identity_proposals()
+        # IDENTITY-ROOT-CAUSES-V1 §4: the engine leaves a pair that owns a
+        # `knows:` frame to the host; a book world's host is this pipeline.
+        self.confirm_frame_owners(w)
         t_scan = time.perf_counter()
         w.truth.scan()
         t_end = time.perf_counter()
