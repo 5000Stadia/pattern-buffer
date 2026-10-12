@@ -6,7 +6,8 @@ evidence site; an *effective* `worn_by` reading at `at`). It also folds in Photo
 folds in construct's (me79b81): no reliance on generated names, and the containment read already
 serves the narrator. Changes are marked *(r2)*. r3 makes `existing` total and deterministic
 (pbr r2): its exact type, its ordering, what is given when a value is missing, and one time scope
-for every field. Marked *(r3)*. Author: pb, 2026-10-12.
+for every field. Marked *(r3)*. r3.1 settles the time contract (pbr r3): `existing` reads the log
+as it stands when the placeholder is forced, at valid time `at`. Author: pb, 2026-10-12.
 **Source:** roadmap R41, E3 of `specs/proposals/UNIFIED-WORLD-ACCESS.md`, which Kabe approved
 (gde97f3). It was sequenced after the identity gate g3bf5da (decided, P1–P3) and R35 (merged). The
 monitor queued it after R42a (note n7052ef).
@@ -68,9 +69,15 @@ monitor queued it after R42a (note n7052ef).
     joined to the entity by that aspect's relation. The generator answers the **complement**: the
     dress goes with the stated hat, and nothing duplicates or contradicts a stated garment.
   - *(r3)* **Its exact shape.** It is a tuple of `(id, kind, names)`, sorted by `id`.
-    - **One frame and one time for every field.** All three are read in the resolve's frame, at
-      `valid_as_of = placeholder.valid_from`, the same scope as the containment check below. A
-      name or kind written later, or valid only after that time, never leaks into the request.
+    - **One frame and one time for every field** *(r3.1)*.
+      - All three fields are read in the resolve's frame, at
+        `valid_as_of = placeholder.valid_from`, the same scope as the containment check below.
+      - They read the log **as it stands when the placeholder is forced**: the current head at
+        force time, with no `asserted_as_of` bound. A garment the story added before the force,
+        even after the placeholder was planted, is something she wears, and is given.
+      - The request is built once, at the force. Its rows are then memoised, so anything
+        asserted later never reaches that request, because it no longer exists to be changed.
+      - A name, kind or edge valid only after `at` is not given.
     - `id: str`: the item's canonical id.
     - `kind: str | None`: the folded `kind` of the item when its status is `known` and its value is
       a string; otherwise `None` (no kind, unresolved, conflicted, or not a string).
@@ -181,8 +188,10 @@ monitor queued it after R42a (note n7052ef).
    - *(r3)* **Shape witnesses.**
      - A stated worn item with no kind and no name appears as `(id, None, ())`.
      - One with two names appears with both, sorted.
-     - A `name` and a `kind` written after `at`, or valid only from a later time, do not appear in
-       a resolve at `at`; a second world resolved at the later time does show them.
+     - *(r3.1)* A `name` and a `kind` valid only from a time after `at` do not appear in a resolve
+       at `at`. A second world, resolved at the later time, does show them.
+     - *(r3.1)* A worn edge asserted after the placeholder was planted, but before the force, and
+       valid at `at`, is in `existing`: the log at force time is the truth.
      - The order is by id, whatever order the edges were written in.
 3. **Taking it off.**
    - A stated `obj:gen_N · carried_by · person:thief` after the resolve moves the coat;
@@ -221,7 +230,7 @@ monitor queued it after R42a (note n7052ef).
 
 - **`existing`** (on `ResolveRequest`, V1.2): for a minting aspect, the items already joined to
   the entity by its relation at the placeholder's time, as `(id, kind-or-None, sorted names)`
-  sorted by id, every field read at that time in the resolve's frame; the generator answers the
+  sorted by id, every field read in the resolve's frame at that valid time, from the log as it stands at the force; the generator answers the
   complement.
 - **minting aspect**: an aspect whose resolution mints entities joined to the resolved entity by a
   containment relation (`contents` → `in`, `attire` → `worn_by`), instead of writing literal rows
