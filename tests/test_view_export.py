@@ -169,6 +169,15 @@ def test_2_an_owner_of_a_knows_frame_is_a_person_even_without_the_namespace(mano
     assert not {r.get("kind") for r in after["present"].values()} & {"cap", "statue"}
 
 
+def test_2_a_canon_kind_of_person_makes_a_person_without_namespace_or_frame(manor):
+    # r3.1: a hidden NPC with neither the person: namespace nor a knows: frame
+    canon(manor, T("char:stranger", "kind", "person"), E("char:stranger", "in", "place:study"),
+          E("obj:dagger", "carried_by", "char:stranger"), T("obj:dagger", "kind", "dagger"))
+    doc = mirror.export(manor, VF, key=KEY)
+    assert h("char:stranger") not in doc["present"] and h("obj:dagger") not in doc["present"]
+    assert "dagger" not in CJ(doc)
+
+
 # ------------------------------------------------------ 3. no key, no canon
 
 
@@ -585,6 +594,18 @@ def test_6c_the_public_record_answer_is_bare_for_every_batch(standalone, caplog)
     assert seen == ["recorded", "refused", "refused", "refused", "refused", "refused"]
     assert any(r.levelno == logging.INFO and "committed" in r.getMessage()
                for r in caplog.records)
+
+
+def test_6c_an_unexpected_record_failure_is_bare_and_names_nothing(standalone, monkeypatch):
+    # r3.1: a failure other than AtomicAbort may name the id a handle mapped to
+    w, svc, sess = standalone
+    def boom(*a, **k):
+        raise ValueError("cannot write obj:key")
+    monkeypatch.setattr(w.porcelain, "commit_set", boom)
+    out = _call(svc, sess, "record", items=[{"entity": h("obj:key"), "attribute": "opened",
+                                             "value": True}])
+    assert out == {"status": "refused"}
+    assert "obj:key" in svc.last_record_outcome["error"]
 
 
 def test_6c_a_non_recorder_calling_record_is_still_a_role_error(standalone):

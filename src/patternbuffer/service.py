@@ -696,6 +696,12 @@ class WorldService:
         except AtomicAbort as abort:
             return self._note_record({"status": "refused", "cause": abort.cause,
                                       "skipped": abort.skipped, "error": abort.error})
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            # any other failure's text may name an id a handle was mapped to:
+            # it stays with the host, like every other refusal's detail
+            logger.exception("record failed")
+            return self._note_record({"status": "refused", "cause": "error",
+                                      "error": f"{type(exc).__name__}: {exc}"})
         return self._note_record({"status": "recorded", "receipt": receipt.to_dict()})
 
 

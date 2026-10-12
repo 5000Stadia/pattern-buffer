@@ -44,6 +44,8 @@ CURSOR_VERSION = 1
 _CURSOR_LABEL = b"patternbuffer.view/1 cursor"
 MIN_KEY_BYTES = 16
 HANDLE_RE = re.compile(r"^h:[0-9a-f]{20}$")
+# The folded canon kind that makes an entity a person whatever its id (spec §2).
+PERSON_KIND = "person"
 
 # The containment relations a present record may name (spec §2): the built-in
 # family. Anything else a world declares is served as plain `in`.
@@ -178,12 +180,14 @@ class _Reader:
         return out
 
     def is_person(self, ident: str) -> bool:
-        """A `person:` id, or one whose identity closure owns a `knows:` frame
-        (the owners R35 recognises, `identity._owns_frame`, here as of `head`)."""
+        """A `person:` id, one whose identity closure owns a `knows:` frame (the
+        owners R35 recognises, `identity._owns_frame`, here as of `head`), or
+        one whose canon kind folds to `person` (spec §2, r3.1)."""
         out = self._person.get(ident)
         if out is None:
             members = self.world.registry.closure(ident, self.head) | {ident}
-            out = any(m.startswith("person:") or self._owns_frame(m) for m in members)
+            out = (any(m.startswith("person:") or self._owns_frame(m) for m in members)
+                   or self.literal(ident, "kind") == PERSON_KIND)
             self._person[ident] = out
         return out
 

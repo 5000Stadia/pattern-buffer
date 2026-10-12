@@ -5,7 +5,8 @@
 read (m095e7d): handles can come back in, containment slots, the birth address, and the §7 wording.
 Changes are marked *(r2)*. r3 answers pbr's r2 RED (m 46bceec1): the standalone `record` result
 leaked the id it had just unhandled. Its public answer is now a bare acknowledgement (§5, marked
-*(r3)*). Author: pb, 2026-10-12.
+*(r3)*). r3.1, from the build: a canon `kind` of `person` also makes a person (§2), and a
+`record` failure of any kind answers the bare `refused` (§5). Author: pb, 2026-10-12.
 **Source:** roadmap R40, S2 of `specs/proposals/UNIFIED-WORLD-ACCESS.md` §7, approved by Kabe on
 2026-10-12 (gate gde97f3), including its point 5: *unopened contents can sit on the device, without
 their meaning; accepted*. The monitor started this item for Kabe (note n662076).
@@ -93,9 +94,12 @@ apply(document, feed_answer) -> dict        # pure; the reference for every clie
 
 ### 2. The present layer: what crosses from canon, and nothing more
 
-**Roots.** Every subject in `known` that is **not a person** is a root. Person means: an id in the
-`person:` namespace, or an id whose identity closure owns a `knows:` frame. These are the same
-owners R35 already recognises (`identity.py`, `frame_owner`).
+**Roots.** Every subject in `known` that is **not a person** is a root. A person is any of these:
+- an id whose identity closure has a member in the `person:` namespace;
+- an id whose identity closure owns a `knows:` frame. These are the same owners R35 already
+  recognises (`identity.py`, `frame_owner`);
+- *(r3.1, found in the build)* an id whose canon `kind` folds to `person`. This catches a hidden
+  NPC that has neither the namespace nor a frame of its own.
 
 **The walk.** From each root, the walk takes canon's `contents(root, as_of=at)`, then each item's
 own contents, recursively, with a visited set. It never descends into a person, and never emits
@@ -272,6 +276,9 @@ log holds now and adds no recipe concept.
     - It is also kept as `WorldService.last_record_outcome` for the trusted host. It never goes over
       the wire.
     - An unknown handle is therefore indistinguishable at the wire from any other refusal.
+    - *(r3.1)* A failure of any other kind while recording (not only `AtomicAbort`) is answered
+      the same bare `refused`, with its text kept for the host: an exception's message could name
+      a mapped id.
     - This narrows S1's `record` answer, which was the receipt. Its tests move to the bare shape
       and read the logged outcome. No client depends on the receipt yet; the standalone runner has
       no consumer.
