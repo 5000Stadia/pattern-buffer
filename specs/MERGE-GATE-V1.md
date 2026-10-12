@@ -1,6 +1,8 @@
 # MERGE-GATE-V1: a yes/no check on lexical merge candidates (roadmap R25, part A)
 
-**Status:** r1 (2026-10-12), for pbr's spec review. The monitor approved specifying R25 for Kabe
+**Status:** r2 (2026-10-12). It answers pbr's r1 RED with two additions: the exact call
+envelope and its validation, and one deterministic way to apply overlapping `same` verdicts with
+no repoints (marked *(r2)*). r1 was for pbr's spec review. The monitor approved specifying R25 for Kabe
 (gate g90c34b, note ndfbe02): spec it through pbr, fix the pass mark on what is free to measure, and
 bring the metered measurement to Kabe, with its cost, run count and pass mark, before anything
 metered runs.
@@ -60,27 +62,82 @@ each pair of distinct closure representatives, `(a, b)`, that:
 
 Candidates are sorted by `(a, b)` and sent in batches of `batch_size` (default 25).
 
-### The gate (one model call per batch)
+### The gate (one model call per batch) *(r2: the exact envelope)*
 
-- **The call.** The pipeline's injected model is called with a `merge_gate` schema.
-- **Per pair, the request gives:**
-  - each side's id, kind, names and aliases, read from the world's own `name`/`alias` rows on
-    the closure, in canon;
-  - up to two source sentences per side that mention one of its names. These come from the alias
-    index's mention hits on the same durable `source_segments.json` R24 reads. With no source,
-    the sentences are omitted and the pair is still asked.
-- **Per pair, the answer is** `{"pair": [a, b], "verdict": "same" | "different" | "unsure",
-  "keep": a | b, "reason": "<one line>"}`. `keep` is the id whose name is the most complete one.
-- **Malformed answers are unsure.** A missing pair, an unknown pair, a duplicate pair, an unknown
-  verdict, or a `keep` that is neither side is treated as `unsure` for that pair and logged. A
-  batch whose whole answer is unparseable makes every pair in it `unsure`. The gate never retries.
+- **The callable.** The gate is the pipeline's injected model, with the engine's model signature
+  `model(prompt: str, schema: dict) -> dict`.
+  - The schema's `title` is `merge_gate`.
+  - The batch travels as data on the schema, as `TaskSchema.request` does for a resolve (E2):
+    `{"batch": <n>, "pairs": [<pair>, ...]}`.
+  - The prompt is fixed text and the same batch rendered for reading.
+  - The free measures pass any callable with the same signature.
+- **A pair in the request.** Each pair has a deterministic `pair_id`: `"p0001"` onwards, numbered
+  over the whole sorted candidate list, so ids are unique across batches. The shape is:
+
+  ```json
+  {"pair_id": "p0007",
+   "a": {"id": "...", "kind": "...", "names": [...], "aliases": [...], "context": [...]},
+   "b": {"id": "...", "kind": "...", "names": [...], "aliases": [...], "context": [...]}}
+  ```
+
+  - `a` is the smaller id of the pair. Names and aliases are the world's own `name` and `alias`
+    rows on the closure, in canon, sorted.
+  - `context` holds up to two source sentences mentioning one of the side's names, from the alias
+    index's hits on `source_segments.json`. It is `[]` with no source.
+- **The answer** is exactly this top-level object:
+
+  ```json
+  {"verdicts": [{"pair_id": "p0007", "verdict": "same", "keep": "a", "reason": "..."}, ...]}
+  ```
+
+  - `verdict` is `"same"`, `"different"` or `"unsure"`.
+  - `keep`, required when the verdict is `same`, is `"a"` or `"b"`: the **side** whose name is
+    the most complete. Naming the side rather than the id means a swapped orientation cannot
+    happen.
+  - `reason` is a short string. A non-string reason is stored as `""`.
+- **Validation, per batch and per pair.** Every requested pair gets exactly one final verdict and
+  one status:
+  - **The whole answer is unusable** (not an object, no `verdicts` list): every pair in the batch
+    is `unsure`, with status `batch_unparseable`.
+  - **An entry that is not an object, or whose `pair_id` is not in this batch:** the entry is
+    ignored and listed under `stray` in the report. It changes no pair.
+  - **A `pair_id` that appears more than once:** that pair is `unsure`, with status `duplicate`.
+    Every entry for it is discarded.
+  - **A pair with no entry:** `unsure`, with status `missing`.
+  - **A verdict outside the three values:** `unsure`, with status `bad_verdict`.
+  - **A `same` whose `keep` is not `"a"` or `"b"`:** `unsure`, with status `bad_keep`. A `keep`
+    given with any other verdict is ignored.
+  - **Otherwise** the status is `answered`, with the verdict as given.
+- **No retries.** The gate never retries a batch.
+
+### Applying the verdicts *(r2: one deterministic rule, no repoints)*
+
+- **Ask first, write after.** Every batch is asked first, against the world as `reconcile` left
+  it, and nothing is written while asking. Then the `same` verdicts are applied together.
+- **Components.** The `same` pairs are joined into components (union-find over closure
+  representatives, built in `pair_id` order).
+- **A component with any `different` among its pairs is not applied.** If any pair inside the
+  component was judged `different`, nothing in it is written, and it is reported as
+  `conflicting_component` with its pairs. This is the vault-chain case: `a` same as `c`, `b` same
+  as `c`, while `a` is different from `b`.
+- **One representative per component**, chosen in this order:
+  1. the id the most `keep` votes in the component name;
+  2. on a tie, the one whose longest name is longest;
+  3. on a further tie, the smallest id.
+- **Merges in a fixed order.** Each other member, in sorted id order, is merged as
+  `porcelain.merge(rep, member, evidence="merge gate: <reasons of the pairs naming member>",
+  representative=rep)`.
+  - Every merge in a component names the same representative, so no merge re-points an earlier
+    one.
+  - The result does not depend on the order in which the pairs were judged.
+- **Reported per merge:** the receipt outcome (`merged`, `noop`, or vetoed with its reason). A
+  veto partway through a component leaves the members merged so far, and says so. Nothing is
+  retracted.
 
 ### What is written
 
-- **`same`.** The pipeline writes `porcelain.merge(a, b, evidence="merge gate: <reason>",
-  representative=keep)`, a host merge (`decided_by: host`, R35). Being a `same_as`, it can be
-  reversed by retraction. A vetoed merge (a containment or `distinct_from` veto the engine applies)
-  writes nothing and is reported.
+- **`same`**, through a component as above: a host merge (`decided_by: host`, R35). Being a
+  `same_as`, it can be reversed by retraction.
 - **`different` and `unsure`.** Nothing is written; both are reported. The gate starts
   precision-first, as the research note advises. Writing `distinct_from` for a `different` is a
   later choice, to make once the gate's measured precision justifies it.
@@ -115,9 +172,22 @@ All on the five stored registries, through the shared path, with no model calls:
      least **0.8339** on par2b (0.7961 today).
 3. **An all-`unsure` gate, and the gate off,** both give a log byte-identical to R24's default
    commit.
-4. **Malformed answers.** Each malformed shape listed under the gate (missing, unknown, duplicate,
-   bad verdict, bad `keep`, an unparseable batch) merges nothing for the pairs it touches. It is
-   logged and reported, and the other pairs in the batch are unaffected.
+4. **Malformed answers** *(r2)*. Each status has its own test, and each checks that the pair's
+   final verdict is `unsure` and that nothing is merged for it:
+   - `batch_unparseable`: the answer is not an object, or has no `verdicts` list;
+   - `stray`: an unknown `pair_id`, or a non-object entry;
+   - `duplicate`;
+   - `missing`;
+   - `bad_verdict`;
+   - `bad_keep`.
+
+   A `stray` entry changes nothing. The other pairs in the batch keep their verdicts.
+4a. *(r2)* **Overlap.** On fixtures:
+   - a three-member component whose pairs name different `keep`s merges under the rule's
+     representative, with no re-point event in the log;
+   - the same verdicts presented in a different pair order give a byte-identical log;
+   - the vault-chain shape (two `same`, one `different` inside the component) writes nothing and
+     reports `conflicting_component`.
 5. **Determinism.** The same gate answers give a byte-identical log and `merge_gate.json`, from the
    original `Pipeline` and from a fresh one on the same `run_dir`.
 6. **Persons and vetoes.**
