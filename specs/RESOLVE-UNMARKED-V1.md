@@ -1,6 +1,6 @@
 # RESOLVE-UNMARKED-V1: resolve a declared aspect nobody marked open
 
-**Status:** r1, spec for pbr review, before code. Author: pb, 2026-10-12.
+**Status:** r2: answers pbr's r1 RED (two contradictions, §4), spec for review before code. Author: pb, 2026-10-12.
 **Source:** roadmap R38, E1 of `specs/proposals/UNIFIED-WORLD-ACCESS.md`, approved by Kabe 2026-10-12
 (gate gde97f3). Builds on RESOLVE-REQUEST-V1 (E2).
 
@@ -57,12 +57,22 @@ The round-robin also set three guardrails:
    Old worlds hold no `resolvable_for` row, so **nothing changes for them** until a host declares
    one. That is the opt-in.
 4. **The porcelain.**
-   - `resolve(entity, aspect, frame=CANON, at=None)`: `at` poses the cursor for this call only, as
-     `ingest_structured(at=)` does.
+   - `resolve(entity, aspect, frame=CANON, at=None)`: `at` poses the scene cursor **exactly as
+     `ingest_structured(at=)` does**, through the same porcelain helper (`_posed`). After a
+     successful call the cursor stays at `at`. A call that raises with the log head unmoved restores
+     it (GATE-AUTHORITY-V1 §6). One rule for every write verb's `at` *(r2: r1 said "this call only",
+     which contradicted the verb it cited)*.
+     - A resolve that plants nothing (memo served, concrete value, a host-planted placeholder,
+       `deny`) still applies `at` in the same way, so the verb has one behaviour.
+     - A host that wants no pose passes no `at`.
    - The result gains `"planted": true` when the placeholder was planted by this call.
    - An undeclared or unlisted aspect returns `{"status": "undeclared", "facts": [], "receipt": …,
-     "reason": …}`, so a module learns why nothing came back. This is only in a story world, and only
-     when no placeholder or value exists; tracking worlds keep answering `unknown`.
+     "reason": …}`, so a module learns why nothing came back. **Only in a world that has opted in**,
+     meaning one holding at least one visible `resolvable_for` declaration (rows or
+     `attribute_default`), and only when no placeholder or value exists.
+     - A world with **no** declarations keeps today's answer exactly: `{"status": "resolved",
+       "facts": []}` in a story world, `unknown` in tracking. Old worlds see no new status *(r2: r1
+       made every old story world's empty answer change shape)*.
 5. **Role authority.**
    - The placeholder and its resolution are both the resolver's rows (`generated`), and no other
      component writes them.
@@ -83,8 +93,11 @@ The round-robin also set three guardrails:
 
 1. A declared aspect on a matching kind plants and forces in one call. The second call is memoized
    with no model call.
-2. An undeclared aspect, an unlisted kind, a tracking world, or a world with no declarations
-   returns as today, plus `undeclared` on the porcelain in a story world.
+2. A world with no declarations returns byte-identically to today (`resolved`, `[]`). In an
+   opted-in story world, an undeclared aspect or unlisted kind returns `undeclared`. A tracking world
+   returns `unknown`.
+2a. `at`: the cursor stays at `at` after success and is restored when the call raises, the same as
+    `ingest_structured(at=)`. This is tested on both the planting and the non-planting paths.
 3. `contents` mints objects `in` the entity, as today, but only when it contains nothing yet.
 4. A durability pin of DISPOSITIONAL plants timeless; otherwise the placeholder is at `at`, or the
    cursor.
