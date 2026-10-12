@@ -136,7 +136,7 @@ def grade(registry: Any, gold: Mapping[str, list[str]] | None = None) -> dict[st
     }
 
 
-def seeded_registry(registry: Any) -> dict[str, Any]:
+def seeded_registry(registry: Any, segments: list[str] | None = None) -> dict[str, Any]:
     """The registry as the engine leaves it: seed it into a scratch world
     (stub model, no pass-1), run identity promotion and ``reconcile``, and
     fold each merged group into one card under its surviving id. Grading this
@@ -144,16 +144,23 @@ def seeded_registry(registry: Any) -> dict[str, Any]:
 
     Ids are first repaired as ``registry.parse_registry_lines`` repairs them
     (a stored registry from before that fix may carry ``person:/x`` ids,
-    which the gate would refuse)."""
+    which the gate would refuse).
+
+    With ``segments`` (the story text pass-0 read) the registry is seeded with
+    ALIAS-INDEX-V1 Part B exactly as ``Pipeline.commit`` does it: the seed and
+    the pass are ``pipeline.seed_world`` and ``pipeline.alias_distinct_pass``,
+    shared with the commit, and the pass runs before promotion and
+    ``reconcile``. The pass's report is returned under ``"alias_report"``."""
     import tempfile
 
     from patternbuffer import World
 
     try:
-        from registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id, seed_items
+        from pipeline import alias_distinct_pass, seed_world
+        from registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id
     except ImportError:
-        from evals.harness.registry import (EntityCard, TimelineSpec, WorldRegistry,
-                                            _norm_id, seed_items)
+        from evals.harness.pipeline import alias_distinct_pass, seed_world
+        from evals.harness.registry import EntityCard, TimelineSpec, WorldRegistry, _norm_id
 
     if isinstance(registry, (str, Path)):
         registry = json.loads(Path(registry).read_text())
@@ -172,22 +179,59 @@ def seeded_registry(registry: Any) -> dict[str, Any]:
         w = World(Path(tmp) / "seeded.world", world_id=reg.world_id,
                   model=lambda prompt, schema: {})
         w.ingestor.classify_inline = False
-        for alias, canonical in sorted(reg.attributes.items()):
-            try:
-                w.ingestor.add_attribute_alias(alias, canonical)
-            except ValueError:  # refused by the engine (e.g. `holds`), as at commit
-                pass
-        w.ingest_structured(seed_items(reg))
+        seed_world(w, reg)
+        alias_report = alias_distinct_pass(w, reg, segments) if segments is not None else None
         w.registry.promote_identity_proposals()
         w.registry.reconcile()
         entities: dict[str, dict[str, list[str]]] = {}
+        merged_into: dict[str, str] = {}
         for eid, card in sorted(reg.entities.items()):
             root = w.registry.resolve(eid)
+            if root != eid:
+                merged_into[eid] = root
             merged = entities.setdefault(root, {"names": [], "aliases": []})
             merged["names"] += [n for n in card.names if n not in merged["names"]]
             merged["aliases"] += [a for a in card.aliases if a not in merged["aliases"]]
         w.close()
-    return {"world_id": reg.world_id, "entities": entities}
+    out: dict[str, Any] = {"world_id": reg.world_id, "entities": entities,
+                           "merged_into": merged_into}
+    if alias_report is not None:
+        out["alias_report"] = alias_report
+    return out
+
+
+def part_b_effect(registry: Any, segments: list[str]) -> dict[str, Any]:
+    """What ALIAS-INDEX-V1 Part B changes on one registry (no model call): the
+    registry seeded without it (main) and with it exactly as ``Pipeline.commit``
+    does, each graded. Returns, per side, B3 F1, the fused ids and fragmented
+    gold entities, and for every Part A merge candidate whether the pair ended
+    as one id; plus what Part B ``written`` and kept ``report_only``."""
+    sides: dict[str, dict[str, Any]] = {}
+    report: dict[str, Any] = {}
+    for label, segs in (("main", None), ("part_b", segments)):
+        seeded = seeded_registry(registry, segments=segs)
+        g = grade(seeded)
+        report = seeded.get("alias_report", report)
+        sides[label] = {"seeded": seeded, "grade": g}
+    candidates = report["merge_candidates"] + report["merge_excluded"]
+    out: dict[str, Any] = {}
+    for label, side in sides.items():
+        g, into = side["grade"], side["seeded"]["merged_into"]
+        root = lambda i: into.get(i, i)  # noqa: E731
+        out[label] = {
+            "b3_f1": g["b3_f1"],
+            "fusion_count": g["fusion_count"],
+            "fusion": g["fusion"],
+            "fragmentation_count": g["fragmentation_count"],
+            "fragmentation": sorted(g["fragmentation"]),
+            "merge_candidates_merged": sorted(
+                f"{c['holder']} + {c['named']}" for c in candidates
+                if c["holder"] in into or c["named"] in into
+                if root(c["holder"]) == root(c["named"])),
+        }
+    out["written"] = report["written"]
+    out["report_only"] = report["report_only"]
+    return out
 
 
 def scorecard_md(result: Mapping[str, Any], title: str = "Pass-0 registry scorecard") -> str:
@@ -234,10 +278,22 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("registry", help="path to registry.json")
     ap.add_argument("--out", required=True, help="directory for scorecard.md/.json")
+    ap.add_argument("--part-b", action="store_true",
+                    help="also write part_b_effect.json: this registry seeded without and with "
+                         "ALIAS-INDEX-V1 Part B over the chapter-test story (needs PYTHONPATH=src)")
     args = ap.parse_args(argv)
     result = grade(args.registry)
     md, js = write_scorecard(result, args.out)
     print(f"{md}\n{js}")
+    if args.part_b:
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent))
+        import run_pass0_baseline  # the segmentation lives there
+
+        effect = part_b_effect(args.registry, run_pass0_baseline.story_segments())
+        path = Path(args.out) / "part_b_effect.json"
+        path.write_text(json.dumps(effect, indent=2, sort_keys=True) + "\n")
+        print(path)
     return 0
 
 

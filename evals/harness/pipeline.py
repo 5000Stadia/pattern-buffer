@@ -9,18 +9,24 @@ rows) and leaves its staging directory as the resumable state.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
 from patternbuffer import World
 
-import grammar
-from registry import RegistryWorldMismatch, WorldRegistry, establish, glean, seed_items
+try:
+    import grammar
+    from registry import RegistryWorldMismatch, WorldRegistry, establish, glean, seed_items
+except ImportError:  # imported as evals.harness.pipeline (e.g. via grade_registry)
+    from evals.harness import grammar
+    from evals.harness.registry import (RegistryWorldMismatch, WorldRegistry, establish,
+                                        glean, seed_items)
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +80,81 @@ _PASS1_SCHEMA = {
 }
 
 
+SOURCE_SEGMENTS_FILE = "source_segments.json"
+ALIAS_INDEX_FILE = "alias_index.json"
+
+
+def canonical_sha256(obj: Any) -> str:
+    """sha256 of the canonical JSON of ``obj`` (sorted keys, no spaces, UTF-8)."""
+    blob = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def registry_payload(registry: WorldRegistry) -> dict[str, Any]:
+    """The registry as ``WorldRegistry.save`` writes it (places as lists)."""
+    payload = asdict(registry)
+    payload["places"] = [list(p) for p in registry.places]
+    return payload
+
+
+def write_source_segments(run_dir: Path, parts: list[str]) -> Path:
+    """Write the exact parts pass-0 read, with their sha256, beside registry.json
+    (ALIAS-INDEX-V1 Part B r3). Commit reads this file, never memory."""
+    path = Path(run_dir) / SOURCE_SEGMENTS_FILE
+    path.write_text(json.dumps({"segments": list(parts), "sha256": canonical_sha256(list(parts))},
+                               indent=2, sort_keys=True, ensure_ascii=False) + "\n")
+    return path
+
+
+def read_source_segments(path: Path) -> list[str]:
+    """Read and verify ``source_segments.json``. A malformed file or a sha256
+    that does not match the segments raises ``ValueError``."""
+    try:
+        data = json.loads(Path(path).read_text())
+        parts, digest = data["segments"], data["sha256"]
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise ValueError(f"{path}: unreadable source segments ({exc})") from exc
+    if not isinstance(parts, list) or not all(isinstance(x, str) for x in parts):
+        raise ValueError(f"{path}: segments must be a list of strings")
+    if canonical_sha256(parts) != digest:
+        raise ValueError(f"{path}: sha256 does not match its segments (tampered or truncated)")
+    return parts
+
+
+def seed_world(w: World, registry: WorldRegistry) -> None:
+    """Phase 1 of the single commit: attribute aliases, then the registry's rows.
+    Shared by ``Pipeline.commit`` and ``grade_registry.seeded_registry`` so a
+    seeded grade is the world the commit builds."""
+    for alias, canonical in sorted(registry.attributes.items()):
+        try:
+            w.ingestor.add_attribute_alias(alias, canonical)
+        except ValueError as exc:
+            # The engine refuses some aliases (an inverse relation such as
+            # `holds` cannot be renamed, GATE-INVERSE-ALIAS-V1). A registry
+            # proposing one loses that alias, not the world build.
+            logger.warning("commit: attribute alias %r -> %r refused: %s",
+                           alias, canonical, exc)
+    w.ingest_structured(seed_items(registry))
+
+
+def alias_distinct_pass(w: World, registry: WorldRegistry, segments: list[str]) -> dict[str, Any]:
+    """ALIAS-INDEX-V1 Part B: with the registry seeded into ``w`` and nothing
+    after it, build the alias report over ``segments`` and write the host's
+    ``distinct_from`` for its strong non-person pairs. Returns the report
+    ``commit`` saves as ``alias_index.json`` (Part A report, plus ``written``,
+    ``report_only``, ``registry_sha256``, ``segments_sha256``)."""
+    try:  # lazy: a commit with the pass off never loads it
+        import alias_index
+    except ImportError:
+        from evals.harness import alias_index
+
+    report = alias_index.build_report(registry, segments)
+    acted = alias_index.apply_distinctness(w, registry, report)
+    return {**report, "part_b": "applied", **acted,
+            "registry_sha256": canonical_sha256(registry_payload(registry)),
+            "segments_sha256": canonical_sha256(list(segments))}
+
+
 @dataclass
 class ChunkResult:
     chunk_id: int
@@ -93,6 +174,7 @@ class Pipeline:
         max_workers: int = 4,
         reject_threshold: float = 0.20,
         alias_slice: bool = False,
+        alias_distinct: bool = True,
     ) -> None:
         self.model = model
         self.world_id = world_id
@@ -105,6 +187,11 @@ class Pipeline:
         # alias index hits (plus ids sharing a string with them) instead of the
         # raw substring test. Off by default: the slice is unchanged.
         self.alias_slice = alias_slice
+        # R24 ALIAS-INDEX-V1 Part B: at commit, right after the registry is
+        # seeded, write the host's `distinct_from` for strong non-person
+        # distinctness pairs found in the source. False restores the
+        # pre-Part-B commit exactly (nothing read, nothing written).
+        self.alias_distinct = alias_distinct
         # R26 BUILD-TIMINGS-V1: wall seconds per stage, filled by pass0 and
         # commit (the runner adds the rest). Observation only.
         self.timings: dict[str, Any] = {}
@@ -149,6 +236,9 @@ class Pipeline:
                 self.timings["pass0_glean_s"] = glean_s
         assert registry is not None
         registry.save(self.run_dir / "registry.json")
+        # Part B r3: the source is durable, so a fresh Pipeline on this run_dir
+        # commits the same world. The exact parts this call read.
+        write_source_segments(self.run_dir, parts)
         return registry
 
     def _pass0_one(self, part: str, glean: bool) -> tuple[WorldRegistry, float, float]:
@@ -376,14 +466,40 @@ class Pipeline:
             logger.info("confirm_frame_owners: %d merge(s)", merged)
         return merged
 
-    def commit(self, world_path: str | Path, registry: WorldRegistry) -> World:
-        """The single commit (spec §3.3): seed registry -> replay chunks in
-        order. Refuses if any chunk failed or still carries orphans."""
+    def _alias_source(self, segments: list[str] | None) -> tuple[list[str] | None, str]:
+        """The source Part B reads (ALIAS-INDEX-V1 r3): an explicit ``segments``
+        argument, else the verified ``run_dir/source_segments.json`` (a bad
+        sha256 raises), else none."""
+        if segments is not None:
+            return list(segments), "explicit"
+        path = self.run_dir / SOURCE_SEGMENTS_FILE
+        if path.exists():
+            return read_source_segments(path), "file"
+        return None, "none"
+
+    def commit(
+        self,
+        world_path: str | Path,
+        registry: WorldRegistry,
+        segments: list[str] | None = None,
+    ) -> World:
+        """The single commit (spec §3.3): seed registry -> (Part B) -> replay
+        chunks in order. Refuses if any chunk failed or still carries orphans.
+
+        ALIAS-INDEX-V1 Part B (``alias_distinct``, default on): after the seed,
+        strong non-person distinctness pairs found in the source get
+        ``distinct_from``, and ``run_dir/alias_index.json`` records what was
+        written. The source is ``segments`` if given, else the verified
+        ``run_dir/source_segments.json``; with neither, Part B is skipped (a
+        warning, a ``skipped`` report) and the log is exactly the pre-Part-B
+        log. A source that fails its sha256 raises before anything is written."""
         if registry.world_id != self.world_id:
             raise RegistryWorldMismatch(
                 f"registry is for {registry.world_id!r}; commit target is "
                 f"{self.world_id!r} — refusing to seed (spec §3.3)"
             )
+        source, source_kind = (self._alias_source(segments) if self.alias_distinct
+                               else (None, "off"))
         results = self.load_staged()
         bad = [r for r in results if r.failed or r.orphans]
         if bad:
@@ -398,16 +514,20 @@ class Pipeline:
         registry.save(self.run_dir / "registry.json")  # the artifact always
         w = World(world_path, world_id=self.world_id, model=self.model)  # rides beside the dump
         w.ingestor.classify_inline = False
-        for alias, canonical in sorted(registry.attributes.items()):
-            try:
-                w.ingestor.add_attribute_alias(alias, canonical)
-            except ValueError as exc:
-                # The engine refuses some aliases (an inverse relation such as
-                # `holds` cannot be renamed, GATE-INVERSE-ALIAS-V1). A registry
-                # proposing one loses that alias, not the world build.
-                logger.warning("commit: attribute alias %r -> %r refused: %s",
-                               alias, canonical, exc)
-        w.ingest_structured(seed_items(registry))
+        seed_world(w, registry)
+        alias_s = 0.0
+        if self.alias_distinct:
+            t_alias = time.perf_counter()
+            if source is None:
+                logger.warning("commit: no source segments for the alias pass "
+                               "(no argument, no %s); Part B skipped", SOURCE_SEGMENTS_FILE)
+                alias_report: dict[str, Any] = {"part_b": "skipped", "reason": "no_source"}
+            else:
+                alias_report = alias_distinct_pass(w, registry, source)
+                alias_report["source"] = source_kind
+            (self.run_dir / ALIAS_INDEX_FILE).write_text(
+                json.dumps(alias_report, indent=2, sort_keys=True) + "\n")
+            alias_s = time.perf_counter() - t_alias
         t_replay = time.perf_counter()
         # Per-item ingest with gate quarantine: the engine's write-time
         # guards (e.g. the containment self-edge rejection, LIVE-FINDINGS
@@ -452,11 +572,13 @@ class Pipeline:
         w.truth.scan()
         t_end = time.perf_counter()
         self.timings.update({
-            "commit_seed_s": round(t_replay - t_seed, 2),
+            "commit_seed_s": round(t_replay - t_seed - alias_s, 2),
             "commit_replay_s": round(t_classify - t_replay, 2),
             "commit_classify_all_s": round(t_promote - t_classify, 2),
             "commit_promotion_s": round(t_scan - t_promote, 2),
             "commit_truth_scan_s": round(t_end - t_scan, 2),
         })
+        if self.alias_distinct:
+            self.timings["commit_alias_distinct_s"] = round(alias_s, 2)
         logger.info("committed: %d rows", w.buffer.head())
         return w
