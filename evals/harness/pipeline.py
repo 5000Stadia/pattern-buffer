@@ -82,6 +82,7 @@ _PASS1_SCHEMA = {
 
 SOURCE_SEGMENTS_FILE = "source_segments.json"
 ALIAS_INDEX_FILE = "alias_index.json"
+MERGE_GATE_FILE = "merge_gate.json"
 
 
 def canonical_sha256(obj: Any) -> str:
@@ -141,15 +142,31 @@ def resolve_reconcile(mode: Any, part_b_runs: bool) -> bool:
     return part_b_runs if mode == "auto" else bool(mode)
 
 
-def finalize_identity(w: World, *, reconcile: bool) -> None:
-    """The one identity finalization (ALIAS-INDEX-V1 r4), shared by
+def finalize_identity(w: World, *, reconcile: bool, gate: Callable[[str, dict], Any] | None = None,
+                      segments: list[str] | None = None, gate_batch_size: int = 25,
+                      gate_source: str | None = None) -> dict[str, Any] | None:
+    """The one identity finalization (ALIAS-INDEX-V1 r4, MERGE-GATE-V1), shared by
     ``Pipeline.commit`` and ``grade_registry.seeded_registry``:
     ``promote_identity_proposals()``, then ``reconcile()`` when asked, then the
-    host's ``confirm_frame_owners``."""
+    merge gate when ``gate`` is given, then the host's ``confirm_frame_owners``.
+
+    ``gate`` is a callable with the engine's model signature
+    ``(prompt, schema) -> dict`` (``None``: no gate, today's finalization exactly).
+    ``segments`` are the source segments its ``context`` reads. Returns the gate's
+    report (``merge_gate.json``), or ``None`` when no gate ran."""
     w.registry.promote_identity_proposals()
     if reconcile:
         w.registry.reconcile()
+    report = None
+    if gate is not None:
+        try:  # lazy: a finalization with the gate off never loads it
+            import merge_gate
+        except ImportError:
+            from evals.harness import merge_gate
+        report = merge_gate.run_gate(w, gate, segments=segments,
+                                     batch_size=gate_batch_size, source=gate_source)
     Pipeline.confirm_frame_owners(w)
+    return report
 
 
 def seed_world(w: World, registry: WorldRegistry) -> None:
@@ -209,6 +226,8 @@ class Pipeline:
         alias_slice: bool = False,
         alias_distinct: bool = True,
         reconcile: Any = "auto",
+        merge_gate: bool = False,
+        merge_gate_batch_size: int = 25,
     ) -> None:
         self.model = model
         self.world_id = world_id
@@ -231,6 +250,17 @@ class Pipeline:
         # a commit with no source is today's commit; True/False force it.
         resolve_reconcile(reconcile, False)  # validates
         self.reconcile = reconcile
+        # R25 MERGE-GATE-V1: after `reconcile`, ask this pipeline's model (one
+        # batched yes/no call per 25 lexical candidate pairs) and merge the
+        # `same` verdicts as host merges; `run_dir/merge_gate.json` records
+        # every candidate. Off by default: the gate's precision on real answers
+        # is measured before it is turned on. Off is exactly R24's commit.
+        if not (isinstance(merge_gate_batch_size, int) and not isinstance(merge_gate_batch_size, bool)
+                and merge_gate_batch_size >= 1):
+            raise ValueError(f"merge_gate_batch_size must be a positive integer, "
+                             f"got {merge_gate_batch_size!r}")
+        self.merge_gate = bool(merge_gate)
+        self.merge_gate_batch_size = merge_gate_batch_size
         # R26 BUILD-TIMINGS-V1: wall seconds per stage, filled by pass0 and
         # commit (the runner adds the rest). Observation only.
         self.timings: dict[str, Any] = {}
@@ -528,7 +558,8 @@ class Pipeline:
         chunks in order. Refuses if any chunk failed or still carries orphans.
 
         ALIAS-INDEX-V1 r4: identity is finalized by ``finalize_identity``
-        (promote, ``reconcile`` per ``self.reconcile``, confirm frame owners).
+        (promote, ``reconcile`` per ``self.reconcile``, the merge gate when
+        ``merge_gate`` is on, confirm frame owners).
         ALIAS-INDEX-V1 Part B (``alias_distinct``, default on): after the seed,
         strong non-person distinctness pairs found in the source get
         ``distinct_from``, and ``run_dir/alias_index.json`` records what was
@@ -543,6 +574,11 @@ class Pipeline:
             )
         source, source_kind = (self._alias_source(segments) if self.alias_distinct
                                else (None, "off"))
+        # MERGE-GATE-V1: the gate's `context` reads the same durable source, even
+        # with Part B off; an unreadable one raises before anything is written.
+        gate_source, gate_source_kind = source, source_kind
+        if self.merge_gate and source is None:
+            gate_source, gate_source_kind = self._alias_source(segments)
         results = self.load_staged()
         bad = [r for r in results if r.failed or r.orphans]
         if bad:
@@ -612,7 +648,13 @@ class Pipeline:
         # a pair that owns a `knows:` frame to the host; a book world's host is
         # this pipeline. ALIAS-INDEX-V1 r4: the shared finalization, with
         # `reconcile` per the mode (Part B's rows are already in the log).
-        finalize_identity(w, reconcile=do_reconcile)
+        gate_report = finalize_identity(
+            w, reconcile=do_reconcile, gate=self.model if self.merge_gate else None,
+            segments=gate_source, gate_batch_size=self.merge_gate_batch_size,
+            gate_source=gate_source_kind)
+        if gate_report is not None:
+            (self.run_dir / MERGE_GATE_FILE).write_text(
+                json.dumps(gate_report, indent=2, sort_keys=True) + "\n")
         t_scan = time.perf_counter()
         w.truth.scan()
         t_end = time.perf_counter()

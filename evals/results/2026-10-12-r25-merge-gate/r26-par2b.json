@@ -1,0 +1,89 @@
+{
+  "all_unsure_log_identical": true,
+  "batches": 12,
+  "candidates": 284,
+  "default": {
+    "b3_f1": 0.7961,
+    "fragmentation": [
+      "core",
+      "desk",
+      "false_drawer",
+      "ilsa",
+      "letter",
+      "maps",
+      "wellhead"
+    ],
+    "fragmentation_count": 7,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "labels": {
+    "different": 8,
+    "same": 7,
+    "unknown": 269
+  },
+  "log_sha256": "dad89325e4496cf6b04b990b8afc4a3388a9686b19126db3e975c9440cfc6442",
+  "oracle": {
+    "b3_f1": 0.8339,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "oracle_merges": {
+    "merged": 7
+  },
+  "oracle_report_counts": {
+    "batches": 12,
+    "candidates": 284,
+    "components": 7,
+    "conflicting_components": 0,
+    "merges": {
+      "merged": 7
+    },
+    "statuses": {
+      "answered": 284
+    },
+    "stray": 0,
+    "verdicts": {
+      "same": 7,
+      "unsure": 277
+    }
+  },
+  "recall": {
+    "found": 7,
+    "missed": [],
+    "of": 7
+  },
+  "registry": "r26-par2b",
+  "split_pairs": [
+    [
+      "doc:aquifer_maps",
+      "obj:aquifer_maps"
+    ],
+    [
+      "doc:tovan_letter",
+      "obj:tovan_letter"
+    ],
+    [
+      "obj:core",
+      "obj:master_meter_memory_core"
+    ],
+    [
+      "org:wellhead",
+      "place:wellhead"
+    ],
+    [
+      "person:ilsa_renn",
+      "person:tin_ear_clerk"
+    ],
+    [
+      "place:false_drawer",
+      "place:ilsas_desk_false_drawer"
+    ],
+    [
+      "place:ilsa_desk",
+      "place:ilsas_desk"
+    ]
+  ]
+}

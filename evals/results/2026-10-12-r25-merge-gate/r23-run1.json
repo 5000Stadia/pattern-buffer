@@ -1,0 +1,46 @@
+{
+  "all_unsure_log_identical": true,
+  "batches": 4,
+  "candidates": 83,
+  "default": {
+    "b3_f1": 0.7517,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "labels": {
+    "different": 4,
+    "unknown": 79
+  },
+  "log_sha256": "d64de2976e4e2862c4323e4881ff3c64aec64106460b384bafc015810b77aa78",
+  "oracle": {
+    "b3_f1": 0.7517,
+    "fragmentation": [],
+    "fragmentation_count": 0,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "oracle_merges": {},
+  "oracle_report_counts": {
+    "batches": 4,
+    "candidates": 83,
+    "components": 0,
+    "conflicting_components": 0,
+    "merges": {},
+    "statuses": {
+      "answered": 83
+    },
+    "stray": 0,
+    "verdicts": {
+      "unsure": 83
+    }
+  },
+  "recall": {
+    "found": 0,
+    "missed": [],
+    "of": 0
+  },
+  "registry": "r23-run1",
+  "split_pairs": []
+}

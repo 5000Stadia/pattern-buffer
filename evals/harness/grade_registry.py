@@ -24,8 +24,10 @@ CLI: python evals/harness/grade_registry.py RUN_DIR/registry.json --out DIR
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
+from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -137,7 +139,9 @@ def grade(registry: Any, gold: Mapping[str, list[str]] | None = None) -> dict[st
 
 
 def seeded_registry(registry: Any, segments: list[str] | None = None, *,
-                    alias_distinct: bool = True, reconcile: Any = "auto") -> dict[str, Any]:
+                    alias_distinct: bool = True, reconcile: Any = "auto",
+                    gate: Any = None, gate_batch_size: int = 25,
+                    with_log: bool = False) -> dict[str, Any]:
     """The registry as a commit leaves it: seed it into a scratch world (stub
     model, no pass-1), finalize identity, and fold each merged group into one
     card under its surviving id. Grading this measures identity after commit,
@@ -158,6 +162,7 @@ def seeded_registry(registry: Any, segments: list[str] | None = None, *,
     import tempfile
 
     from patternbuffer import World
+    from patternbuffer.dump import dump
 
     try:
         from pipeline import (alias_distinct_pass, finalize_identity, require_source,
@@ -191,7 +196,11 @@ def seeded_registry(registry: Any, segments: list[str] | None = None, *,
         w.ingestor.classify_inline = False
         seed_world(w, reg)
         alias_report = alias_distinct_pass(w, reg, segments) if part_b else None
-        finalize_identity(w, reconcile=do_reconcile)
+        gate_report = finalize_identity(
+            w, reconcile=do_reconcile, gate=gate, segments=segments or None,
+            gate_batch_size=gate_batch_size,
+            gate_source="explicit" if segments else None)
+        log_sha = hashlib.sha256(dump(w.buffer).encode("utf-8")).hexdigest() if with_log else None
         entities: dict[str, dict[str, list[str]]] = {}
         merged_into: dict[str, str] = {}
         for eid, card in sorted(reg.entities.items()):
@@ -206,6 +215,10 @@ def seeded_registry(registry: Any, segments: list[str] | None = None, *,
                            "merged_into": merged_into}
     if alias_report is not None:
         out["alias_report"] = alias_report
+    if gate_report is not None:
+        out["gate_report"] = gate_report
+    if log_sha is not None:
+        out["log_sha256"] = log_sha
     return out
 
 
@@ -244,6 +257,143 @@ def part_b_effect(registry: Any, segments: list[str]) -> dict[str, Any]:
     out["written"] = report["written"]
     out["report_only"] = report["report_only"]
     return out
+
+
+# --------------------------------- MERGE-GATE-V1: the free measures (no model call)
+
+
+def _gold_index(gold: Mapping[str, list[str]]) -> dict[str, set[str]]:
+    index: dict[str, set[str]] = {}
+    for key, aliases in gold.items():
+        for a in aliases:
+            index.setdefault(normalize(a), set()).add(key)
+    return index
+
+
+def gold_keys(side: Mapping[str, Any], gold: Mapping[str, list[str]] | None = None) -> set[str]:
+    """The gold entities a merge-gate request side (``names`` + ``aliases``) resolves to."""
+    index = _gold_index(_default_gold() if gold is None else gold)
+    keys: set[str] = set()
+    for text in list(side["names"]) + list(side["aliases"]):
+        keys |= index.get(normalize(text), set())
+    return keys
+
+
+def _default_gold() -> Mapping[str, list[str]]:
+    try:
+        from fixtures import ENTITIES
+    except ImportError:
+        from evals.harness.fixtures import ENTITIES
+    return ENTITIES
+
+
+def gold_label(pair: Mapping[str, Any], gold: Mapping[str, list[str]] | None = None) -> str:
+    """``same`` when both sides of a merge-gate request pair resolve to the same
+    single gold entity, ``different`` when both resolve and share none, else
+    ``unknown`` (most pairs: the gold is partial)."""
+    ga, gb = gold_keys(pair["a"], gold), gold_keys(pair["b"], gold)
+    if ga and ga == gb and len(ga) == 1:
+        return "same"
+    if ga and gb and not (ga & gb):
+        return "different"
+    return "unknown"
+
+
+def gold_oracle_gate(gold: Mapping[str, list[str]] | None = None):
+    """A MEASUREMENT gate, never a real one: it reads the grader's gold labels and
+    answers ``same`` (``keep`` the side with the longer longest name) exactly for
+    the pairs whose two cards resolve to the same single gold entity, ``unsure``
+    for every other pair (MERGE-GATE-V1 pass mark 2)."""
+    try:
+        from merge_gate import batch_request
+    except ImportError:
+        from evals.harness.merge_gate import batch_request
+
+    def longest(side: Mapping[str, Any]) -> int:
+        return max((len(x) for x in (side["names"] or side["aliases"])), default=0)
+
+    def oracle(prompt: str, schema: Any) -> dict[str, Any]:
+        verdicts = []
+        for p in batch_request(schema)["pairs"]:
+            if gold_label(p, gold) == "same":
+                keep = "b" if longest(p["b"]) > longest(p["a"]) else "a"
+                verdicts.append({"pair_id": p["pair_id"], "verdict": "same", "keep": keep,
+                                 "reason": "gold oracle"})
+            else:
+                verdicts.append({"pair_id": p["pair_id"], "verdict": "unsure", "reason": "gold oracle"})
+        return {"verdicts": verdicts}
+
+    oracle.identity = "gold-oracle"  # type: ignore[attr-defined]
+    return oracle
+
+
+def _frag_pairs(graded: Mapping[str, Any]) -> list[tuple[str, str]]:
+    """Every pair of ids that the grader reports as one split gold entity."""
+    from itertools import combinations
+    return sorted({p for ids in graded["fragmentation"].values()
+                   for p in combinations(sorted(ids), 2)})
+
+
+def merge_gate_effect(registry: Any, segments: list[str], gate: Any, *,
+                      batch_size: int = 25, gold: Mapping[str, list[str]] | None = None
+                      ) -> dict[str, Any]:
+    """What MERGE-GATE-V1 changes on one registry through the shared commit path:
+    ``seeded_registry`` as R24's default commit leaves it (``default``) and with
+    ``gate`` between ``reconcile`` and ``confirm_frame_owners`` (``gated``), both
+    graded (B3 F1, fused ids, fragmented gold entities). Also: the candidate count
+    and batch count, ``recall`` (the default's split-entity pairs that are
+    candidates), the gold labels of the candidates, the gate's verdict counts, and
+    the pairs it merged by label. ``gate`` is any callable with the model
+    signature; calls to it are recorded."""
+    requests: list[Mapping[str, Any]] = []
+
+    def spy(prompt: str, schema: Any) -> Any:
+        try:
+            from merge_gate import batch_request
+        except ImportError:
+            from evals.harness.merge_gate import batch_request
+        requests.append(batch_request(schema))
+        return gate(prompt, schema)
+
+    ident = getattr(gate, "identity", None)
+    if isinstance(ident, str):
+        spy.identity = ident  # type: ignore[attr-defined]
+
+    base = seeded_registry(registry, segments=segments)
+    g0 = grade(base, gold)
+    spy_out = seeded_registry(registry, segments=segments, gate=spy, gate_batch_size=batch_size)
+    g1 = grade(spy_out, gold)
+    report = spy_out["gate_report"]
+    labelled = {p["pair_id"]: gold_label(p, gold) for r in requests for p in r["pairs"]}
+    by_id = {p["pair_id"]: p for p in report["pairs"]}
+    frag0 = _frag_pairs(g0)
+    cands = {(p["a"], p["b"]) for p in report["pairs"]}
+    into = spy_out["merged_into"]
+    root = lambda i: into.get(i, i)  # noqa: E731
+
+    def col(g: Mapping[str, Any]) -> dict[str, Any]:
+        return {"b3_f1": g["b3_f1"], "fusion_count": g["fusion_count"],
+                "fusion": g["fusion"], "fragmentation_count": g["fragmentation_count"],
+                "fragmentation": sorted(g["fragmentation"])}
+
+    same_by_label = Counter(labelled[pid] for pid, p in by_id.items() if p["verdict"] == "same")
+    return {
+        "default": col(g0), "gated": col(g1),
+        "candidates": len(report["pairs"]), "batches": report["counts"]["batches"],
+        "calls": len(requests),
+        "split_pairs": [list(p) for p in frag0],
+        "recall": {"found": sum(1 for p in frag0 if p in cands), "of": len(frag0),
+                   "missed": [list(p) for p in frag0 if p not in cands]},
+        "labels": dict(sorted(Counter(labelled.values()).items())),
+        "pair_labels": labelled,
+        "same_by_label": dict(sorted(same_by_label.items())),
+        "split_pairs_joined": sum(1 for a, b in frag0 if root(a) == root(b)),
+        "verdicts": report["counts"]["verdicts"],
+        "statuses": report["counts"]["statuses"],
+        "merges": report["counts"]["merges"],
+        "conflicting_components": report["counts"]["conflicting_components"],
+        "gate_report": report,
+    }
 
 
 def scorecard_md(result: Mapping[str, Any], title: str = "Pass-0 registry scorecard") -> str:

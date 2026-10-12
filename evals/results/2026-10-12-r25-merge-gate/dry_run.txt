@@ -1,0 +1,13 @@
+MERGE-GATE-V1 metered measurement: DRY RUN (no model is called)
+batch size 25, 2 repetition(s)
+
+registry    candidates  batches  calls  prompt chars  est tok in  est tok out
+r23-run1            83        4      4         74096       18524         3855
+r23-run2            97        4      4         88122       22030         4485
+r26-seq             92        4      4         85514       21378         4260
+r26-par1b          286       12     12        286437       71609        13230
+r26-par2b          284       12     12        242295       60573        13140
+one rep            842       36     36        776464      194114        38970
+
+total over 2 repetition(s): 72 calls, ~388,228 tokens in + ~77,940 out = ~466,168 tokens
+(estimate: 4 characters per token in, 45 tokens out per pair + 30 per call)
