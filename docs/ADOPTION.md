@@ -214,6 +214,29 @@ normalize to the same stored row. Rules that follow from append-only fidelity:
   deterministic; sums are exact. Currency codes, units, and rounding *policy*
   are host meaning — model them as ordinary facts, not value forms.
 
+### Declaring what the resolver may invent: `resolvable_for`
+
+By default `resolve(entity, aspect)` invents only for a placeholder somebody
+planted first; with none, a story world answers `[]`. A host opts an aspect in
+with set-valued `attr:<aspect> · resolvable_for · <kind>` rows (a lowercase kind
+name; one row per kind), written through `ingest_structured` or supplied from
+`attribute_default` (`{"resolvable_for": ["person"]}`, applied when an item on
+the attribute is first ingested; for an aspect that is never ingested as a row,
+such as `contents`, write the `attr:` rows once). Read them with
+`world.semantics.resolvable_kinds(aspect)`. When an entity of a declared kind
+holds no value for the aspect (for `contents`, holds nothing), `resolve` plants
+the resolver's own `generated` placeholder and forces it in one atomic unit,
+and the result says `"planted": true`; the next call is the memo. The
+placeholder sits at `at` (default: the scene cursor), or timeless when the
+aspect's durability pin is `CONSTITUTIVE` or `DISPOSITIONAL`. `at` poses the
+cursor exactly as `ingest_structured(at=)` does, on every path. In a world with
+at least one declaration, an aspect or kind nobody opened answers
+`{"status": "undeclared", "reason": ...}`; a world with none answers exactly as
+before. The engine never decides what may be invented: the host declares
+it, and a declaration on a core attribute (`in`, `kind`, `name`, ...) skips
+`invalid_semantics_declaration`. Unlike the other declarations it may follow
+existing data.
+
 ### Host-control vocabulary: the durability pin and `last_write`
 
 Two declarations (READ-SURFACE-V1 §1–§2) let a host fix how its OWN
@@ -556,7 +579,8 @@ p.ingest_structured(items, frame=None, classify="inline"|"batch"|"defer"|"rules"
    # or the authored form of a swapped inverse item. Authority violations still RAISE,
    # before anything of the item is written. One bad item is skipped; the rest of the
    # chunk still ingests (no silent cap).
-p.resolve(entity, aspect, frame="canon") -> {status: resolved|unknown|denied, facts}
+p.resolve(entity, aspect, frame="canon", at=None)
+   -> {status: resolved|unknown|denied|undeclared, facts, receipt, planted?, reason?}
 p.retract(assertion_id, reason) -> Receipt
 p.snapshot(scope_ids, frame=, as_of=, lens=, budget=, since=, correlated=False, features=False,
            asserted_as_of=None) -> dict
