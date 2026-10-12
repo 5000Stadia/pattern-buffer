@@ -676,7 +676,12 @@ class WorldService:
     def _do_record(self, items: list[dict], at: float | None) -> dict:
         world, view_frame = self._world, self._view_frame
         assert world is not None and view_frame is not None
-        items, unknown = self._map_handles(items)
+        try:
+            items, unknown = self._map_handles(items)
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            logger.exception("mapping record handles failed")
+            return self._note_record({"status": "refused", "cause": "error",
+                                      "error": f"{type(exc).__name__}: {exc}"})
         if unknown:
             return self._note_record({"status": "refused", "cause": "unknown_handle",
                                       "handles": unknown})
@@ -857,8 +862,19 @@ class Session:
             # wire answers the bare `refused`, the reason stays with the host
             return self.service._note_record({"status": "refused", "cause": "invalid",
                                               "reason": str(exc)})
-        return self.service._submit(
-            "record", {"items": clean, "at": at}, DEFAULT_WAIT)
+        try:
+            result = self.service._submit(
+                "record", {"items": clean, "at": at}, DEFAULT_WAIT)
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            logger.exception("record job failed")
+            return self.service._note_record({"status": "refused", "cause": "error",
+                                              "error": f"{type(exc).__name__}: {exc}"})
+        if result.get("status") in ("recorded", "refused") and set(result) == {"status"}:
+            return result
+        # deferred (no pump in time; the job was cancelled, nothing written) or
+        # detached: the wire still answers only the bare `refused`
+        return self.service._note_record({"status": "refused",
+                                          "cause": result.get("status"), "detail": result})
 
     @staticmethod
     def _clean_items(items: Any, at: Any) -> list[dict]:

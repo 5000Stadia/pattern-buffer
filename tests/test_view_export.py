@@ -690,6 +690,33 @@ def test_6c_a_bad_handle_and_a_barred_attribute_are_byte_identical_over_http(run
     assert {a for a in answers} == {(200, b'{"result": {"status": "refused"}}')}
 
 
+def test_6c_a_record_no_pump_runs_in_time_is_bare_refused_and_writes_nothing(
+        standalone, monkeypatch):
+    # pbr code review: a deferred (cancelled) job was a third public shape
+    import patternbuffer.service as service_module
+    w, svc, sess = standalone
+    monkeypatch.setattr(service_module, "DEFAULT_WAIT", 0)
+    head = w.buffer.head()
+    out = sess.call("record", items=[{"entity": "person:mara", "attribute": "mood",
+                                      "value": "x"}])
+    assert out == {"status": "refused"}
+    svc.pump()                                         # the cancelled job never runs
+    assert w.buffer.head() == head
+    assert svc.last_record_outcome["cause"] == "deferred"
+
+
+def test_6c_a_handle_map_failure_is_the_same_bare_http_refusal(runner, monkeypatch):
+    # pbr code review: an exception while mapping handles reached the wire as a 500
+    def boom(*a, **k):
+        raise ValueError("obj:key")
+    monkeypatch.setattr(mirror, "present_handles", boom)
+    code, raw = _call_http(runner.port, "record", items=[
+        {"entity": h("obj:key"), "attribute": "opened", "value": True}])
+    assert (code, raw) == (200, b'{"result": {"status": "refused"}}')
+    assert b"obj:key" not in raw
+    assert runner.service.last_record_outcome["cause"] == "error"
+
+
 # ------------------------------------------------------- 6d. slot and address
 
 

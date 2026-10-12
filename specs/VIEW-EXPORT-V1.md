@@ -278,7 +278,9 @@ log holds now and adds no recipe concept.
     - An unknown handle is therefore indistinguishable at the wire from any other refusal.
     - *(r3.1)* A failure of any other kind while recording (not only `AtomicAbort`) is answered
       the same bare `refused`, with its text kept for the host: an exception's message could name
-      a mapped id.
+      a mapped id. The same holds for a failure while mapping handles, and for a batch whose job
+      the host did not pump in time (`deferred`, cancelled with nothing written) or that met a
+      detached service (pbr's code review).
     - This narrows S1's `record` answer, which was the receipt. Its tests move to the bare shape
       and read the logged outcome. No client depends on the receipt yet; the standalone runner has
       no consumer.
