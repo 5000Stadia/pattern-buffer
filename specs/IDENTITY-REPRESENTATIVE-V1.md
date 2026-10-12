@@ -1,7 +1,7 @@
 # IDENTITY-REPRESENTATIVE-V1: a host merge can name the id the closure is served under
 
-**Status:** r2. It folds in construct's answers (mc29a14) on the later-merge default, retype, and
-the receipt, and supersedes r1 in review. Author: pb, 2026-10-12.
+**Status:** r3. It answers pbr's r2 RED on the already-merged path (§1a, §1b). pbr agreed the
+election rule; r2 folded in construct's answers (mc29a14). Author: pb, 2026-10-12.
 
 **Source.** Construct's ask m0243e8 (its gate gc53c58), a root cause found on a fresh build of the
 ironhold seed:
@@ -44,14 +44,36 @@ authored arc after each merge.
      accepts it as an item, so prose, extraction and forged items can't write it.
    - Readers honour it only on a `kind · identity_merge` event whose `decided_by` is `host`. Engine
      merges never write one.
-   - A merge that is a no-op (already merged) with `representative` given still records the
-     designation: the same rows, on a new event with `decided_by · host` and no new `same_as` edge.
-     This lets a host re-point an existing closure.
+1a. **The re-point event** *(r3)*. When the pair is already one closure and a designation is
+    requested, the engine writes a **re-point event**. It carries no `same_as` and no `caused_by`.
+    - Its exact rows, all timeless, status `inferred`, canon, in one unit:
+      - `event:merge_N · kind · identity_merge`
+      - `event:merge_N · evidence · <the call's evidence, or "re-point: <verb>">`
+      - `event:merge_N · decided_by · host`
+      - `event:merge_N · representative · <id>`
+    - This is how a host re-points a closure it already merged.
+1b. **Every verb, every outcome** *(r3)*. A designation is requested when `merge` or `confirm` is
+    given `representative=`, and implicitly by `retype(..., absorb=target)`, which designates
+    `target`.
+
+    | Outcome | What is written |
+    |---|---|
+    | `merged` | The merge's ordinary rows plus the `representative` row on its event. |
+    | `noop_already_merged` (merge, confirm or retype absorb) | The re-point event (§1a). The outcome stays `noop_already_merged`, and the Receipt gains `"repointed": true`. `confirm` and `retype` reach this write on their existing early-return path; it doesn't wait until `guarded_merge`. |
+    | Any other (`vetoed`, `no_proposal`, a retype refusal) | Nothing. The Receipt's outcome says why, as today. No designation is ever silently dropped. |
+
 2. **The election.** A closure's representative is:
-   - **(a)** the id named by the **latest** honoured designation (highest seq) whose:
-     - named id is still a member of the closure;
-     - merge's `same_as` edge is still visible (the edge from its `caused_by`). For a no-op
-       designation, which has no edge, the event itself must be unretracted.
+   - **(a)** the id named by the **latest** honoured designation (highest seq). A designation is
+     **honoured** when all of these hold *(r3: exact visibility predicates)*:
+     - its `representative` row is visible, carries the mechanism mark `inferred`, and names an id
+       that is a member of the closure as of the read;
+     - its event's `decided_by` row is visible, marked, and `host`;
+     - its event's `kind · identity_merge` row is visible;
+     - **for an edge-producing merge:** the event's `same_as` edge, found through the edge's
+       `caused_by` row naming the event, is visible;
+     - **for a re-point event (§1a):** there is no edge to check, so the visible rows above suffice.
+
+     Retracting any one of these rows withdraws that designation.
    - **(b)** otherwise the first-seen member, exactly as today.
 
    Election stays a pure function of the visible log, so it is stable across instances and
@@ -98,8 +120,13 @@ authored arc after each merge.
    - `asserted_as_of` pins see each stage.
 4. **Mechanism.** A `representative` item is refused at the gate (`mechanism_attribute`). A forged
    row with the wrong status, or on a non-host merge event, elects nothing.
-5. **Validation.** A representative outside both closures raises before any write. A no-op merge
-   with `representative` re-points without a new edge.
+5. **Validation.** A representative outside both closures raises before any write.
+5a. **Re-point** *(r3)*:
+    - `merge`, `confirm` and `retype(absorb=)` on an already-merged pair each write exactly the
+      §1a rows, with no `same_as` or `caused_by`, and report `noop_already_merged` with
+      `repointed: true`;
+    - retracting the re-point event's `kind` row, or its `representative` row, withdraws it;
+    - a `vetoed` or `no_proposal` outcome writes nothing, with or without `representative=`.
 6. **Byte-identity.** On copies of construct's worlds, which hold no designations, `resolve` and
    every read are identical to main.
 7. The full suite passes, and construct's suite passes on the branch.
