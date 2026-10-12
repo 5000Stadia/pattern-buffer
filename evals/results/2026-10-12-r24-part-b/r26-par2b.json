@@ -1,5 +1,23 @@
 {
-  "main": {
+  "default": {
+    "b3_f1": 0.7961,
+    "fragmentation": [
+      "core",
+      "desk",
+      "false_drawer",
+      "ilsa",
+      "letter",
+      "maps",
+      "wellhead"
+    ],
+    "fragmentation_count": 7,
+    "fusion": {},
+    "fusion_count": 0,
+    "merge_candidates_merged": [
+      "place:bazaar_level + place:bazaar"
+    ]
+  },
+  "reconcile": {
     "b3_f1": 0.791,
     "fragmentation": [
       "core",
@@ -22,25 +40,29 @@
       "place:bazaar_level + place:bazaar"
     ]
   },
-  "part_b": {
+  "report_only": [],
+  "today": {
     "b3_f1": 0.7961,
     "fragmentation": [
+      "bazaar",
       "core",
+      "cray",
       "desk",
       "false_drawer",
+      "footlocker",
       "ilsa",
       "letter",
       "maps",
+      "personal_case",
+      "sela",
+      "tovan",
       "wellhead"
     ],
-    "fragmentation_count": 7,
+    "fragmentation_count": 13,
     "fusion": {},
     "fusion_count": 0,
-    "merge_candidates_merged": [
-      "place:bazaar_level + place:bazaar"
-    ]
+    "merge_candidates_merged": []
   },
-  "report_only": [],
   "written": [
     {
       "evidence": "different proper names: 'the Records Vault' vs 'the Seed Vault'",

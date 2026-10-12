@@ -118,7 +118,34 @@ def read_source_segments(path: Path) -> list[str]:
         raise ValueError(f"{path}: segments must be a list of strings")
     if canonical_sha256(parts) != digest:
         raise ValueError(f"{path}: sha256 does not match its segments (tampered or truncated)")
+    require_source(parts, str(path))
     return parts
+
+
+def require_source(parts: Any, where: str = "segments") -> None:
+    """An empty segment list is not a source (ALIAS-INDEX-V1 r4): raise."""
+    if not parts:
+        raise ValueError(f"{where}: an empty segment list is not a source")
+
+
+def resolve_reconcile(mode: Any, part_b_runs: bool) -> bool:
+    """Whether to run the engine's ``reconcile`` (ALIAS-INDEX-V1 r4.2). ``"auto"``
+    reconciles exactly when Part B runs (``alias_distinct`` on and a source);
+    ``True`` / ``False`` force it either way, for measurement."""
+    if not (mode == "auto" or mode is True or mode is False):
+        raise ValueError(f"reconcile must be 'auto', True or False, got {mode!r}")
+    return part_b_runs if mode == "auto" else bool(mode)
+
+
+def finalize_identity(w: World, *, reconcile: bool) -> None:
+    """The one identity finalization (ALIAS-INDEX-V1 r4), shared by
+    ``Pipeline.commit`` and ``grade_registry.seeded_registry``:
+    ``promote_identity_proposals()``, then ``reconcile()`` when asked, then the
+    host's ``confirm_frame_owners``."""
+    w.registry.promote_identity_proposals()
+    if reconcile:
+        w.registry.reconcile()
+    Pipeline.confirm_frame_owners(w)
 
 
 def seed_world(w: World, registry: WorldRegistry) -> None:
@@ -142,7 +169,9 @@ def alias_distinct_pass(w: World, registry: WorldRegistry, segments: list[str]) 
     after it, build the alias report over ``segments`` and write the host's
     ``distinct_from`` for its strong non-person pairs. Returns the report
     ``commit`` saves as ``alias_index.json`` (Part A report, plus ``written``,
-    ``report_only``, ``registry_sha256``, ``segments_sha256``)."""
+    ``report_only``, ``registry_sha256``, ``segments_sha256``). An empty
+    ``segments`` raises ``ValueError``."""
+    require_source(segments)
     try:  # lazy: a commit with the pass off never loads it
         import alias_index
     except ImportError:
@@ -175,6 +204,7 @@ class Pipeline:
         reject_threshold: float = 0.20,
         alias_slice: bool = False,
         alias_distinct: bool = True,
+        reconcile: Any = "auto",
     ) -> None:
         self.model = model
         self.world_id = world_id
@@ -192,6 +222,11 @@ class Pipeline:
         # distinctness pairs found in the source. False restores the
         # pre-Part-B commit exactly (nothing read, nothing written).
         self.alias_distinct = alias_distinct
+        # ALIAS-INDEX-V1 r4.2: whether the commit runs the engine's `reconcile`.
+        # "auto" = exactly when Part B runs (alias_distinct on and a source), so
+        # a commit with no source is today's commit; True/False force it.
+        resolve_reconcile(reconcile, False)  # validates
+        self.reconcile = reconcile
         # R26 BUILD-TIMINGS-V1: wall seconds per stage, filled by pass0 and
         # commit (the runner adds the rest). Observation only.
         self.timings: dict[str, Any] = {}
@@ -469,8 +504,10 @@ class Pipeline:
     def _alias_source(self, segments: list[str] | None) -> tuple[list[str] | None, str]:
         """The source Part B reads (ALIAS-INDEX-V1 r3): an explicit ``segments``
         argument, else the verified ``run_dir/source_segments.json`` (a bad
-        sha256 raises), else none."""
+        sha256 raises), else none. An empty list, explicit or in the file, raises
+        (r4)."""
         if segments is not None:
+            require_source(segments)
             return list(segments), "explicit"
         path = self.run_dir / SOURCE_SEGMENTS_FILE
         if path.exists():
@@ -486,13 +523,15 @@ class Pipeline:
         """The single commit (spec §3.3): seed registry -> (Part B) -> replay
         chunks in order. Refuses if any chunk failed or still carries orphans.
 
+        ALIAS-INDEX-V1 r4: identity is finalized by ``finalize_identity``
+        (promote, ``reconcile`` per ``self.reconcile``, confirm frame owners).
         ALIAS-INDEX-V1 Part B (``alias_distinct``, default on): after the seed,
         strong non-person distinctness pairs found in the source get
         ``distinct_from``, and ``run_dir/alias_index.json`` records what was
         written. The source is ``segments`` if given, else the verified
         ``run_dir/source_segments.json``; with neither, Part B is skipped (a
-        warning, a ``skipped`` report) and the log is exactly the pre-Part-B
-        log. A source that fails its sha256 raises before anything is written."""
+        warning, a ``skipped`` report) and, under ``reconcile="auto"``, nothing
+        reconciles either: the log is exactly the pre-Part-B log. A source that fails its sha256 raises before anything is written."""
         if registry.world_id != self.world_id:
             raise RegistryWorldMismatch(
                 f"registry is for {registry.world_id!r}; commit target is "
@@ -516,6 +555,8 @@ class Pipeline:
         w.ingestor.classify_inline = False
         seed_world(w, registry)
         alias_s = 0.0
+        do_reconcile = resolve_reconcile(self.reconcile,
+                                         self.alias_distinct and source is not None)
         if self.alias_distinct:
             t_alias = time.perf_counter()
             if source is None:
@@ -525,6 +566,7 @@ class Pipeline:
             else:
                 alias_report = alias_distinct_pass(w, registry, source)
                 alias_report["source"] = source_kind
+                alias_report["reconcile"] = do_reconcile
             (self.run_dir / ALIAS_INDEX_FILE).write_text(
                 json.dumps(alias_report, indent=2, sort_keys=True) + "\n")
             alias_s = time.perf_counter() - t_alias
@@ -562,12 +604,11 @@ class Pipeline:
         w.classifier.classify_all(batch_size=40)
         t_promote = time.perf_counter()
         # 036: gate same_as now proposes; promotion happens HERE, where the
-        # whole world is in view (shared name anchors promote; title-only
-        # candidates stay proposals for tier-2/confirmation).
-        w.registry.promote_identity_proposals()
-        # IDENTITY-ROOT-CAUSES-V1 §4: the engine leaves a pair that owns a
-        # `knows:` frame to the host; a book world's host is this pipeline.
-        self.confirm_frame_owners(w)
+        # whole world is in view. IDENTITY-ROOT-CAUSES-V1 §4: the engine leaves
+        # a pair that owns a `knows:` frame to the host; a book world's host is
+        # this pipeline. ALIAS-INDEX-V1 r4: the shared finalization, with
+        # `reconcile` per the mode (Part B's rows are already in the log).
+        finalize_identity(w, reconcile=do_reconcile)
         t_scan = time.perf_counter()
         w.truth.scan()
         t_end = time.perf_counter()

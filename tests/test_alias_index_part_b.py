@@ -21,7 +21,8 @@ from patternbuffer.testing import rule_classifier_fallback
 import alias_index as ai
 from grade_registry import grade, part_b_effect, seeded_registry
 from pipeline import (ALIAS_INDEX_FILE, SOURCE_SEGMENTS_FILE, Pipeline, canonical_sha256,
-                      read_source_segments, seed_world, write_source_segments)
+                      finalize_identity, read_source_segments, seed_world,
+                      write_source_segments)
 from registry import EntityCard, TimelineSpec, WorldRegistry
 
 WID = "w:partb"
@@ -118,7 +119,8 @@ def test_strong_pair_is_seeded_before_any_replay_row(tmp_path):
     rows = list(w.buffer.all_rows())
     d = pos[next(r.id for r in rows if r.attribute == "distinct_from")]
     first_replay = pos[next(r.id for r in rows if r.attribute == "reactor_count")]
-    last_seed = max(pos[r.id] for r in rows if r.attribute in ("kind", "name"))
+    last_seed = max(pos[r.id] for r in rows
+                    if r.attribute in ("kind", "name") and r.entity in reg.entities)
     assert last_seed < d < first_replay
     w.close()
 
@@ -346,7 +348,146 @@ def test_repaired_registry_is_the_registry_the_report_reads(tmp_path):
     w.close()
 
 
-# ------------------------- 1-4: the pass mark, on the five stored registries
+# ------------------------------------- 4b, 6: the modes, through a real commit
+
+
+def chunk_model(prompt, schema):
+    if "PASSAGE (chunk" in prompt:
+        return {"lines": ["place:records_vault|reactor_count|2|vf=1"]}
+    return stub(prompt, schema)
+
+
+def commit_mode(tmp_path, name, *, with_source, **flags) -> World:
+    """A fixture run_dir with one staged chunk, committed by a fresh Pipeline
+    through the real ``Pipeline.commit`` under ``flags``."""
+    staged = Pipeline(chunk_model, WID, tmp_path / name, max_workers=1)
+    reg = vault_registry()
+    staged.pass1([(1.0, "text")], reg)
+    if with_source:
+        write_source_segments(staged.run_dir, SEGS)
+    p = Pipeline(stub, WID, staged.run_dir, max_workers=1, **flags)
+    return p.commit(tmp_path / f"{name}.world", reg)
+
+
+def legacy_dump(tmp_path) -> str:
+    """Today's commit (before ALIAS-INDEX-V1), spelled out from engine calls:
+    seed, replay the staged items, classify, promote, confirm owners, scan."""
+    staged = Pipeline(chunk_model, WID, tmp_path / "legacy", max_workers=1)
+    reg = vault_registry()
+    staged.pass1([(1.0, "text")], reg)
+    w = World(tmp_path / "legacy.world", world_id=WID, model=stub)
+    w.ingestor.classify_inline = False
+    seed_world(w, reg)
+    for r in staged.load_staged():
+        for item in r.items:
+            w.ingest_structured([item])
+    w.classifier.classify_all(batch_size=40)
+    w.registry.promote_identity_proposals()
+    Pipeline.confirm_frame_owners(w)
+    w.truth.scan()
+    out = dump(w.buffer)
+    w.close()
+    return out
+
+
+def vaults_one(w: World) -> bool:
+    return w.registry.resolve("place:records_vault") == w.registry.resolve("place:seed_vault")
+
+
+def test_the_five_modes_through_a_real_commit(tmp_path):
+    today = legacy_dump(tmp_path)
+    modes = {
+        "default_with_source": dict(with_source=True),
+        "default_no_source": dict(with_source=False),
+        "auto_no_part_b": dict(with_source=True, alias_distinct=False),          # ("auto", False)
+        "reconcile_only": dict(with_source=True, alias_distinct=False, reconcile=True),
+        "both_off": dict(with_source=True, alias_distinct=False, reconcile=False),
+    }
+    worlds = {name: commit_mode(tmp_path, name, **kw) for name, kw in modes.items()}
+    dumps = {name: dump(w.buffer) for name, w in worlds.items()}
+    # the vault-style fusion appears only where reconcile runs without Part B
+    assert {n: vaults_one(w) for n, w in worlds.items()} == {
+        "default_with_source": False, "default_no_source": False, "auto_no_part_b": False,
+        "reconcile_only": True, "both_off": False}
+    # the default (Part B, then reconcile) reconciles, keeps the vaults apart, and writes the row
+    assert distinct_rows(worlds["default_with_source"])
+    assert worlds["default_with_source"].registry.resolve("person:tin_ear_clerk") == \
+        worlds["default_with_source"].registry.resolve("person:ilsa_renn")  # reconcile merged Ilsa
+    assert dumps["default_with_source"] != today
+    # the three legacy modes are today's commit, byte for byte
+    for name in ("default_no_source", "auto_no_part_b", "both_off"):
+        assert dumps[name] == today, name
+        assert distinct_rows(worlds[name]) == []
+    assert dumps["reconcile_only"] != today
+    # no source: skipped report, and nothing reconciled
+    rep = json.loads((tmp_path / "default_no_source" / ALIAS_INDEX_FILE).read_text())
+    assert rep == {"part_b": "skipped", "reason": "no_source"}
+    assert json.loads((tmp_path / "default_with_source" / ALIAS_INDEX_FILE).read_text()
+                      )["reconcile"] is True
+    for w in worlds.values():
+        w.close()
+
+
+def test_forced_reconcile_runs_even_without_a_source(tmp_path):
+    w = commit_mode(tmp_path, "forced", with_source=False, reconcile=True)
+    assert vaults_one(w)  # reconcile without Part B: the measured fusion
+    w.close()
+    w = commit_mode(tmp_path, "forced_off", with_source=True, reconcile=False)
+    assert distinct_rows(w) and not vaults_one(w)  # Part B writes its row, nothing reconciles
+    w.close()
+
+
+def test_reconcile_knob_is_validated(tmp_path):
+    for bad in ("yes", 1, None, "AUTO"):
+        with pytest.raises(ValueError, match="reconcile"):
+            Pipeline(stub, WID, tmp_path / "v", reconcile=bad)
+
+
+def test_finalize_identity_is_the_shared_finalization(tmp_path):
+    """promote, then reconcile only when asked, then confirm owners."""
+    reg = vault_registry()
+    for flag, fused in ((False, False), (True, True)):
+        w = World(tmp_path / f"fi{flag}.world", world_id=WID, model=stub)
+        w.ingestor.classify_inline = False
+        seed_world(w, reg)
+        finalize_identity(w, reconcile=flag)
+        assert vaults_one(w) is fused
+        w.close()
+
+
+# ---------------------------------------- 7: an empty source is not a source
+
+
+def test_empty_source_raises_before_any_write(tmp_path):
+    p, reg = staged_run(tmp_path)
+    path = p.run_dir / SOURCE_SEGMENTS_FILE
+    reg_before = (p.run_dir / "registry.json").read_bytes()
+    (p.run_dir / ALIAS_INDEX_FILE).unlink(missing_ok=True)
+    target = tmp_path / "e.world"
+    # a file holding [] with a matching digest
+    path.write_text(json.dumps({"segments": [], "sha256": canonical_sha256([])}))
+    with pytest.raises(ValueError, match="empty"):
+        p.commit(target, reg)
+    # an explicit segments=[] (the file now valid again)
+    write_source_segments(p.run_dir, SEGS)
+    with pytest.raises(ValueError, match="empty"):
+        p.commit(target, reg, segments=[])
+    assert not target.exists()
+    assert not (p.run_dir / ALIAS_INDEX_FILE).exists()
+    assert (p.run_dir / "registry.json").read_bytes() == reg_before
+    with pytest.raises(ValueError, match="empty"):
+        read_source_segments(_write_raw(tmp_path, {"segments": [], "sha256": canonical_sha256([])}))
+    with pytest.raises(ValueError, match="empty"):
+        seeded_registry(STORED["r23-run1"] / "registry.json", segments=[])
+
+
+def _write_raw(tmp_path, payload) -> Path:
+    path = tmp_path / "raw_source.json"
+    path.write_text(json.dumps(payload))
+    return path
+
+
+# --------------- 1-4a: the pass mark, on the five stored registries (3 columns)
 
 STORED = {
     "r23-run1": RESULTS / "2026-10-10-r23-pass0-baseline" / "run1",
@@ -355,13 +496,15 @@ STORED = {
     "r26-par1b": RESULTS / "2026-10-10-r26-build-timings" / "par1b",
     "r26-par2b": RESULTS / "2026-10-10-r26-build-timings" / "par2b",
 }
-#: B3 F1 (main, Part B) and fused ids (main) per registry, as measured in the spec.
+#: (B3 F1, fused, fragmented) per column, as measured on the shared path.
 EXPECTED = {
-    "r23-run1": (0.7471, 0.7517, ["place:records_vault"]),
-    "r23-run2": (0.7303, 0.7347, ["place:records_vault"]),
-    "r26-seq": (0.7517, 0.7517, []),
-    "r26-par1b": (0.8264, 0.8320, ["place:records_vault"]),
-    "r26-par2b": (0.7910, 0.7961, ["place:records_vault"]),
+    "r23-run1": {"today": (0.7517, 0, 1), "reconcile": (0.7471, 1, 0), "default": (0.7517, 0, 0)},
+    "r23-run2": {"today": (0.7347, 0, 1), "reconcile": (0.7303, 1, 0), "default": (0.7347, 0, 0)},
+    "r26-seq": {"today": (0.7517, 0, 0), "reconcile": (0.7517, 0, 0), "default": (0.7517, 0, 0)},
+    "r26-par1b": {"today": (0.8320, 0, 13), "reconcile": (0.8264, 1, 4),
+                  "default": (0.8320, 0, 4)},
+    "r26-par2b": {"today": (0.7961, 0, 13), "reconcile": (0.7910, 1, 7),
+                  "default": (0.7961, 0, 7)},
 }
 ILSA = "person:tin_ear_clerk + person:ilsa_renn"
 
@@ -378,31 +521,36 @@ def effects(story_segments) -> dict[str, dict]:
 
 
 @pytest.mark.parametrize("name", sorted(STORED))
-def test_pass_mark_1_to_4_on_stored_registries(effects, name):
+def test_pass_mark_1_to_4a_on_stored_registries(effects, name):
     e = effects[name]
-    main, pb = e["main"], e["part_b"]
-    main_f1, pb_f1, main_fused = EXPECTED[name]
-    # the measured starting point is what the spec says it is
-    assert main["b3_f1"] == pytest.approx(main_f1, abs=1e-4)
-    assert sorted(main["fusion"]) == main_fused
-    # 1: fused ids 0
-    assert pb["fusion_count"] == 0
-    # 3: no new fusion, no new fragmentation (subsets of main's)
-    assert set(pb["fusion"]) <= set(main["fusion"])
-    assert set(pb["fragmentation"]) <= set(main["fragmentation"])
-    assert pb["fragmentation_count"] == main["fragmentation_count"]
-    # 4: F1 not lower than main's (and equal to the measured figure)
-    assert pb["b3_f1"] >= main["b3_f1"]
-    assert pb["b3_f1"] == pytest.approx(pb_f1, abs=1e-4)
-    # nothing else merges or splits: merged candidate pairs only ever stay merged
-    assert set(main["merge_candidates_merged"]) <= set(pb["merge_candidates_merged"])
+    today, rec, default = e["today"], e["reconcile"], e["default"]
+    for col, got in (("today", today), ("reconcile", rec), ("default", default)):
+        f1, fused, frag = EXPECTED[name][col]
+        assert (got["fusion_count"], got["fragmentation_count"]) == (fused, frag), col
+        assert got["b3_f1"] == pytest.approx(f1, abs=1e-4), col
+    # 1: fused ids 0 on the default commit path
+    assert default["fusion_count"] == 0
+    # 3: no new fusion, no new fragmentation (subsets of the unfixed reconcile column's, and today's)
+    assert set(default["fusion"]) <= set(rec["fusion"])
+    assert set(default["fragmentation"]) <= set(today["fragmentation"])
+    assert set(default["fragmentation"]) <= set(rec["fragmentation"])
+    # 4: F1 not lower than today's commit (measured equal)
+    assert default["b3_f1"] >= today["b3_f1"]
+    assert default["b3_f1"] == pytest.approx(today["b3_f1"], abs=1e-4)
+    # 4a: fragmentation not higher than today's, lower where reconcile merges
+    assert default["fragmentation_count"] <= today["fragmentation_count"]
+    if name != "r26-seq":
+        assert default["fragmentation_count"] < today["fragmentation_count"]
+    # reconcile alone is what fuses the vaults
+    assert rec["fusion_count"] == (0 if name == "r26-seq" else 1)
 
 
 @pytest.mark.parametrize("name", ["r23-run1", "r23-run2"])
-def test_pass_mark_2_ilsa_pair_stays_merged(effects, name):
+def test_pass_mark_2_ilsa_pair_is_merged(effects, name):
     e = effects[name]
-    assert ILSA in e["main"]["merge_candidates_merged"]
-    assert ILSA in e["part_b"]["merge_candidates_merged"]
+    assert ILSA not in e["today"]["merge_candidates_merged"]  # commit today never merges it
+    assert ILSA in e["reconcile"]["merge_candidates_merged"]
+    assert ILSA in e["default"]["merge_candidates_merged"]
 
 
 @pytest.mark.parametrize("name", sorted(STORED))
@@ -411,7 +559,7 @@ def test_the_only_writes_are_the_vault_split_and_persons_stay_report_only(effect
     for w in e["written"]:
         assert w["outcome"] == "rejected"
         assert w["ids"] == ["place:records_vault", "place:seed_vault"]
-    assert [len(e["written"])] == ([0] if name == "r26-seq" else [1])
+    assert len(e["written"]) == (0 if name == "r26-seq" else 1)
     for r in e["report_only"]:
         assert r["reason"] == "person"
     if name == "r26-par1b":
@@ -419,10 +567,17 @@ def test_the_only_writes_are_the_vault_split_and_persons_stay_report_only(effect
             ["person:cray", "person:marn"], ["person:sela_voss", "person:tovan_voss"]]
 
 
-def test_seeded_grade_with_part_b_matches_grade_of_the_same_helper(story_segments):
-    """seeded_registry(registry, segments) is the shared seeding path."""
+def test_seeded_registry_default_is_todays_commit_without_a_source(story_segments):
+    """The grader's knobs mirror the Pipeline's: no segments, no reconcile."""
     reg = STORED["r23-run1"] / "registry.json"
-    s = seeded_registry(reg, segments=story_segments)
-    assert grade(s)["fusion_count"] == 0
-    assert s["alias_report"]["part_b"] == "applied"
-    assert grade(seeded_registry(reg))["fusion_count"] == 1
+    no_src = seeded_registry(reg)
+    assert "alias_report" not in no_src
+    assert no_src == seeded_registry(reg, alias_distinct=False, reconcile=False)
+    assert grade(no_src)["fragmentation_count"] == 1  # the Ilsa split, unreconciled
+    default = seeded_registry(reg, segments=story_segments)
+    assert default["alias_report"]["part_b"] == "applied"
+    assert grade(default)["fusion_count"] == 0
+    assert grade(seeded_registry(reg, segments=story_segments, alias_distinct=False,
+                                 reconcile=True))["fusion_count"] == 1
+    with pytest.raises(ValueError, match="reconcile"):
+        seeded_registry(reg, reconcile="maybe")

@@ -1,5 +1,21 @@
 {
-  "main": {
+  "default": {
+    "b3_f1": 0.832,
+    "fragmentation": [
+      "desk",
+      "ilsa",
+      "vial_crate",
+      "wellhead"
+    ],
+    "fragmentation_count": 4,
+    "fusion": {},
+    "fusion_count": 0,
+    "merge_candidates_merged": [
+      "place:bazaar_level + place:bazaar",
+      "place:vault + place:records_vault"
+    ]
+  },
+  "reconcile": {
     "b3_f1": 0.8264,
     "fragmentation": [
       "desk",
@@ -15,22 +31,6 @@
       ]
     },
     "fusion_count": 1,
-    "merge_candidates_merged": [
-      "place:bazaar_level + place:bazaar",
-      "place:vault + place:records_vault"
-    ]
-  },
-  "part_b": {
-    "b3_f1": 0.832,
-    "fragmentation": [
-      "desk",
-      "ilsa",
-      "vial_crate",
-      "wellhead"
-    ],
-    "fragmentation_count": 4,
-    "fusion": {},
-    "fusion_count": 0,
     "merge_candidates_merged": [
       "place:bazaar_level + place:bazaar",
       "place:vault + place:records_vault"
@@ -74,6 +74,28 @@
       "reason": "person"
     }
   ],
+  "today": {
+    "b3_f1": 0.832,
+    "fragmentation": [
+      "bazaar",
+      "core",
+      "desk",
+      "false_drawer",
+      "footlocker",
+      "ilsa",
+      "letter",
+      "personal_case",
+      "records_vault",
+      "sela",
+      "tovan",
+      "vial_crate",
+      "wellhead"
+    ],
+    "fragmentation_count": 13,
+    "fusion": {},
+    "fusion_count": 0,
+    "merge_candidates_merged": []
+  },
   "written": [
     {
       "evidence": "different proper names: 'the Records Vault' vs 'the Seed Vault'",
