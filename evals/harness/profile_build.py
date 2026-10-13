@@ -273,6 +273,30 @@ def stage_table(data: dict[str, Any], walls: dict[str, float]) -> list[dict[str,
     return rows
 
 
+# ----------------------------------------------------- model and effort (STAGE-MODELS-V1)
+
+
+def model_effort_table(calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One row per (model, effort) for each stage that used more than one, with that
+    group's tokens, cost and latency figures. A call line without ``effort`` (a run before
+    STAGE-MODELS-V1) ran at the CLI default, so its effort is None. Stages that used a
+    single (model, effort) have no rows: their table row already says it all."""
+    rows: list[dict[str, Any]] = []
+    stages = [s for s in dict.fromkeys(c.get("stage") for c in calls) if s]
+    stages = [s for s in STAGES if s in stages] + sorted(set(stages) - set(STAGES))
+    for stage in stages:
+        groups: dict[tuple[str, str | None], list[dict[str, Any]]] = {}
+        for c in calls:
+            if c.get("stage") == stage:
+                groups.setdefault((str(c.get("model")), c.get("effort")), []).append(c)
+        if len(groups) < 2:
+            continue
+        for (model, effort), cs in sorted(groups.items(), key=lambda kv: (kv[0][0], str(kv[0][1]))):
+            rows.append({"stage": stage, "model": model, "effort": effort,
+                         **_tokens_cost(cs), **_call_stats(cs)})
+    return rows
+
+
 # --------------------------------------------------------------------- turns
 
 
@@ -457,6 +481,7 @@ def build_profile(run_dir: Path) -> dict[str, Any]:
         "notes": notes,
         "total_wall_s": _r(sum(walls.values()), 1) if walls else UNMEASURED,
         "stages": table,
+        "by_model_effort": model_effort_table(calls),
         "turns": turns_table(objs),
         "ceilings": ceilings,
         "build_what_ifs": build_whatifs(ceilings, walls, overlap) if ceilings else UNMEASURED,
@@ -506,6 +531,20 @@ def render_md(p: dict[str, Any]) -> str:
                                     _f(r["turns_per_call_max"]), _pc(r["api_time_share_of_latency"]),
                                     _f(r["harness_overhead_s"]),
                                     str(r["max_concurrent_calls"])]) + " |")
+    if p.get("by_model_effort"):
+        L += ["", "### Stages that mixed models or efforts (STAGE-MODELS-V1)", "",
+              "| stage | model | effort | calls | tokens in | tokens out | cached | latency sum s | "
+              "p50 s | p90 s | out tok/s median | cost |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+        for r in p["by_model_effort"]:
+            cost = r["cost_usd"]
+            cost = (f"{cost:.4f}" + ("" if r.get("cost_known") is True else " (lower bound)")
+                    if isinstance(cost, float) else str(cost))
+            L.append("| " + " | ".join([
+                r["stage"], r["model"], "default" if r["effort"] is None else str(r["effort"]),
+                str(r["calls"]), str(r["input_tokens"]), str(r["output_tokens"]),
+                str(r["cached_tokens"]), _f(r["latency_sum_s"]), _f(r["latency_p50_s"]),
+                _f(r["latency_p90_s"]), _f(r["out_tok_per_s_median"]), cost]) + " |")
     L += ["", "## Turns to an objective", ""]
     if not p["turns"]:
         L.append(f"{UNMEASURED}: no objectives.jsonl.")

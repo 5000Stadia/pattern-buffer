@@ -21,6 +21,9 @@ writes ``objectives.jsonl`` (one line per unit of work, with its attempts) and
 every ``usage.jsonl`` line carries its stage, unit and attempt (BUILD-PROFILE-V1);
 ``profile_build.py DIR`` turns them into ``profile.md``.
 
+With ``PB_EVAL_STAGE_MODELS`` set (STAGE-MODELS-V1) each stage runs on its own
+model and effort, and ``meta.json`` records the map and its sha256.
+
 ``DIR`` receives ``timings.json`` and ``receipt.json`` (rewritten as each stage
 finishes, so a failed run keeps what it spent), ``usage.jsonl`` (one line per
 model call, this run only), ``meta.json``, the registry, the staged chunks, the
@@ -275,6 +278,13 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
     from audit import run_audit
 
     plan = load_book(book_dir)
+    # STAGE-MODELS-V1: a refused stage map stops the run before any directory or call
+    # (model_shim is imported here, never at module load: a dry run imports no model)
+    from model_shim import StageMapError, stage_map_receipt
+    try:
+        stage_models = stage_map_receipt()
+    except StageMapError as exc:
+        raise BookRunAborted(f"stage map refused: {exc}") from exc
     run_dir = Path(out_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     world_id = world_id_for(plan.slug)
@@ -353,6 +363,8 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
             "timings": timings,
             "receipt": receipt.total(),
         }
+        if stage_models is not None:    # absent without PB_EVAL_STAGE_MODELS: meta is as it was
+            meta["stage_models"] = stage_models
         write_json(run_dir / "meta.json", meta)
         world.close()
         return meta

@@ -21,6 +21,12 @@ nothing is inferred: the sections say ``"unmeasured"``.
 "by chapter k" is a read as the log stood after chapter k's last chunk
 (``asserted_as_of = hi(k)``), valid time unpinned. Story time is the model's
 and is never inferred; the recorded cursor is not read by any check.
+
+STAGE-MODELS-V1: grading a partial book (``through_chapter=N``) reads the world
+through a ``Horizon``: every read is bounded at ``asserted_as_of = hi(N)``, and
+identity (roots and closures) is read as of that same position, so nothing written
+after chapter N's last chunk (a gate merge, an audit row) reaches a verdict. With
+no horizon every call is the one it always was.
 """
 
 from __future__ import annotations
@@ -30,7 +36,8 @@ import logging
 import re
 from typing import Any, Iterable, Mapping, Sequence
 
-from patternbuffer.model import ATTR_PREFIX, CANON, KNOWS_PREFIX
+from patternbuffer.model import (ATTR_PREFIX, CANON, EVENT_PREFIX, KNOWS_PREFIX, META_ATTRIBUTES,
+                                 is_event_row)
 
 try:
     from book_gold import book_normalize, fold_quotes
@@ -76,16 +83,20 @@ def contains_run(haystack: Sequence[str], needle: Sequence[str]) -> bool:
 
 
 class Spans:
-    """``chunk_spans.json`` read for lookups: a row's source chunk, a chapter's time."""
+    """``chunk_spans.json`` read for lookups: a row's source chunk, a chapter's time.
 
-    def __init__(self, doc: Mapping[str, Any]) -> None:
+    ``through`` (STAGE-MODELS-V1) ends the chapter clock at that chapter: ``chapters``,
+    ``marks`` and ``hi`` know nothing later, while ``chunk_of`` still places every row."""
+
+    def __init__(self, doc: Mapping[str, Any], through: int | None = None) -> None:
         self.chunks: list[dict[str, Any]] = list(doc["chunks"])
         spans = sorted(((c["seq"][0], c["seq"][1], c["chunk"], c["chapter"])
                         for c in self.chunks if c.get("seq")), key=lambda t: t[0])
         self._los = [s[0] for s in spans]
         self._spans = spans
         self.chapter_of_chunk: dict[int, int] = {c["chunk"]: c["chapter"] for c in self.chunks}
-        self.chapters: list[int] = sorted(set(self.chapter_of_chunk.values()))
+        self.chapters: list[int] = sorted(c for c in set(self.chapter_of_chunk.values())
+                                          if through is None or c <= through)
         #: chapter 0 is the seed: the log head before the first chunk
         self.head0: int = (spans[0][0] - 1) if spans else 0
         self._hi: dict[int, int] = {0: self.head0}
@@ -127,6 +138,65 @@ class Spans:
         return None if chunk is None else self.chapter_of_chunk[chunk]
 
 
+# ------------------------------------------------------------------ horizon
+
+
+class Horizon:
+    """How a grader reads a world. With ``bound=None`` (the full book) every method is the
+    call the grader always made. With ``bound`` (``hi(N)`` of a partial book) rows are read
+    ``asserted_as_of`` that position (or earlier, where a caller asks for an earlier mark),
+    roots and closures come from ``ident`` as of ``bound``, and a fold runs over the
+    ``bound`` closure's members, never the end-of-run closure ``World.state`` would use."""
+
+    def __init__(self, world: Any, ident: Any, bound: int | None = None) -> None:
+        self.world, self.ident, self.bound = world, ident, bound
+
+    def resolve(self, entity: str) -> str:
+        return self.ident.resolve(entity) if self.bound is None else self.ident.resolve(entity, self.bound)
+
+    def closure(self, entity: str) -> set[str]:
+        return self.ident.closure(entity) if self.bound is None else self.ident.closure(entity, self.bound)
+
+    def visible(self, **kw: Any) -> list[Any]:
+        """``buffer.visible``, bounded at the horizon unless the caller gave an earlier bound."""
+        if self.bound is not None:
+            kw["asserted_as_of"] = min(kw["asserted_as_of"], self.bound) \
+                if kw.get("asserted_as_of") is not None else self.bound
+        return self.world.buffer.visible(**kw)
+
+    def state(self, root: str, attribute: str, frame: Any = CANON, *, valid_as_of: float | None = None,
+              asserted_as_of: int | None = None) -> Any:
+        """The fold of ``attribute`` on ``root``'s closure. ``asserted_as_of=None`` is the end
+        of what the grader may see: the head, or the horizon."""
+        if self.bound is None:
+            return self.world.state(root, attribute, frame, valid_as_of=valid_as_of,
+                                    asserted_as_of=asserted_as_of)
+        at = self.bound if asserted_as_of is None else min(asserted_as_of, self.bound)
+        idx = self.world.indexes
+        return idx._fold_over_closure(sorted(self.closure(root)), attribute,
+                                      idx.fold_attribute(attribute), frame, valid_as_of, at)
+
+    def event_values(self, root: str, attribute: str, frame: Any,
+                     asserted_as_of: int | None) -> tuple[Any, tuple[Any, ...]]:
+        """An event's own ``attribute`` (the read a fold serving nothing falls back to):
+        ``(winner row or None, every value)``. Bounded, it reads the event rows of the
+        ``bound`` closure; unbounded it is ``World.indexes.event_attribute``."""
+        if self.bound is None:
+            fold = self.world.indexes.event_attribute(root, attribute, frame, None, asserted_as_of)
+            return fold.winner, tuple(fold.values)
+        if attribute in META_ATTRIBUTES:
+            return None, ()
+        at = self.bound if asserted_as_of is None else min(asserted_as_of, self.bound)
+        stored = sorted(m for m in self.closure(root) if m.startswith(EVENT_PREFIX))
+        if not stored:
+            return None, ()
+        rows = [r for r in self.world.buffer.visible(entity_in=stored, attribute=attribute,
+                                                     frame=frame, asserted_as_of=at)
+                if is_event_row(r)]
+        winner = self.world.indexes.event_pick(rows)
+        return winner, tuple(r.value for r in rows)
+
+
 # -------------------------------------------------------------- raw reading
 
 
@@ -138,14 +208,15 @@ class RawIds:
     """The raw mapping (§3 steps 1-2): each raw id R to the key entity E it
     names, read from R's own canon ``name`` and ``alias`` rows."""
 
-    def __init__(self, world: Any, graded: Mapping[str, Any]) -> None:
+    def __init__(self, world: Any, graded: Mapping[str, Any], bound: int | None = None) -> None:
         self.alias_entities: dict[str, set[str]] = {}
         for key, ent in graded["entities"].items():
             for alias in ent["aliases"]:
                 self.alias_entities.setdefault(book_normalize(alias), set()).add(key)
         #: raw id -> [(seq, normalized value)] of its canon name/alias rows, in log order
         self.names: dict[str, list[tuple[int, str]]] = {}
-        for row in world.buffer.visible(attribute_in=["name", "alias"], frame=CANON):
+        extra = {} if bound is None else {"asserted_as_of": bound}
+        for row in world.buffer.visible(attribute_in=["name", "alias"], frame=CANON, **extra):
             if _is_entity_row(row) and isinstance(row.value, str):
                 self.names.setdefault(row.entity, []).append((row.seq, book_normalize(row.value)))
         self._map: dict[str, tuple[str, str | None]] = {}
@@ -191,13 +262,14 @@ def _row_view(row: Any, spans: Spans) -> dict[str, Any]:
 
 def grade_leaks(world: Any, graded: Mapping[str, Any], spans: Spans | None,
                 chunk_texts: Mapping[int, str] | None, pass0: Any | None,
-                raw: RawIds | None = None) -> dict[str, Any] | str:
+                raw: RawIds | None = None, bound: int | None = None) -> dict[str, Any] | str:
     """The ``leaks`` section (§3). ``pass0`` is the pass-0 ``WorldRegistry`` (or ``None``),
     ``chunk_texts`` the text of each chunk by id (or ``None``)."""
     if spans is None:
         return UNMEASURED
-    raw = raw or RawIds(world, graded)
-    rows = [r for r in world.buffer.visible() if _is_entity_row(r)]
+    raw = raw or RawIds(world, graded, bound)
+    rows = [r for r in world.buffer.visible(**({} if bound is None else {"asserted_as_of": bound}))
+            if _is_entity_row(r)]
     entities = graded["entities"]
     afc: Mapping[str, Mapping[str, int]] = graded.get("alias_first_chapter") or {}
 
@@ -333,15 +405,20 @@ def _lit(value: Any) -> Any:
 
 
 class Reader:
-    """Reads a fact form from a world: where its keys map, whether a frame holds it at a time."""
+    """Reads a fact form from a world: where its keys map, whether a frame holds it at a time.
 
-    def __init__(self, world: Any, ident: Any, raw: RawIds, spans: Spans) -> None:
+    ``horizon`` (STAGE-MODELS-V1) bounds every read and every identity lookup at a partial
+    book's last position; without one the reader is as it always was."""
+
+    def __init__(self, world: Any, ident: Any, raw: RawIds, spans: Spans,
+                 horizon: Horizon | None = None) -> None:
         self.world, self.ident, self.raw, self.spans = world, ident, raw, spans
+        self.h = horizon or Horizon(world, ident)
         self._rows: dict[tuple[tuple[str, ...], str], bool] = {}
 
     def roots(self, key: str) -> list[str]:
         """Closure representatives of the raw ids that map to key entity ``key``."""
-        return sorted({self.ident.resolve(r) for r in self.raw.raw_ids_of(key)})
+        return sorted({self.h.resolve(r) for r in self.raw.raw_ids_of(key)})
 
     def resolve(self, fact: Mapping[str, Any]) -> dict[str, Any]:
         """A fact form with its keys mapped to built ids; ``problems`` lists
@@ -368,19 +445,20 @@ class Reader:
     def _attribute_seen(self, roots: Sequence[str], attribute: str) -> bool:
         members: set[str] = set()
         for r in roots:
-            members |= self.ident.closure(r)
-        return bool(self.world.buffer.visible(entity_in=sorted(members), attribute=attribute))
+            members |= self.h.closure(r)
+        return bool(self.h.visible(entity_in=sorted(members), attribute=attribute))
 
     def _matches(self, resolved: Mapping[str, Any], value: Any) -> bool:
         if resolved["value_roots"] is not None:
-            return isinstance(value, str) and self.ident.resolve(value) in resolved["value_roots"]
+            return isinstance(value, str) and self.h.resolve(value) in resolved["value_roots"]
         return _lit(value) == resolved["literal"]
 
     def merged_frame(self, observer: str) -> Any:
         """The ``knows:`` frame of ``observer`` read with ``frame_scope="merged"``: the frame
-        itself, then the frames of every other member of its closure at the end of the run."""
+        itself, then the frames of every other member of its closure at the end of the run
+        (at the horizon, for a partial book)."""
         frame = KNOWS_PREFIX + observer
-        others = sorted(KNOWS_PREFIX + m for m in self.ident.closure(observer) if m != observer)
+        others = sorted(KNOWS_PREFIX + m for m in self.h.closure(observer) if m != observer)
         return (frame, *others) if others else frame
 
     def holds(self, resolved: Mapping[str, Any], asserted_as_of: int | None, *,
@@ -388,16 +466,17 @@ class Reader:
         """Whether the fact is served as the log stood at ``asserted_as_of`` (``None``: the end),
         valid time unpinned: the canon fold, or, with ``observer`` (closure representatives
         of a believer), each merged ``knows:`` frame. A set-valued key holds it when any member does."""
-        w = self.world
         for root in resolved["roots"]:
             for who in (observer if observer is not None else [None]):
                 frame = CANON if who is None else self.merged_frame(who)
-                fold = w.state(root, resolved["attribute"], frame, asserted_as_of=asserted_as_of)
-                if fold.winner is None:     # an event's own attributes come from its record
-                    fold = w.indexes.event_attribute(root, resolved["attribute"], frame, None, asserted_as_of)
-                if fold.winner is None or fold.winner.value_type == "unresolved":
+                fold = self.h.state(root, resolved["attribute"], frame, asserted_as_of=asserted_as_of)
+                winner, values = fold.winner, tuple(fold.values)
+                if winner is None:     # an event's own attributes come from its record
+                    winner, values = self.h.event_values(root, resolved["attribute"], frame,
+                                                         asserted_as_of)
+                if winner is None or winner.value_type == "unresolved":
                     continue
-                if any(self._matches(resolved, v) for v in [fold.winner.value, *fold.values]):
+                if any(self._matches(resolved, v) for v in [winner.value, *values]):
                     return True
         return False
 
@@ -524,16 +603,19 @@ def grade_point_of_view(world: Any, graded: Mapping[str, Any],
 
 
 def grade_sections(world: Any, ident: Any, graded: Mapping[str, Any], *, spans: Mapping[str, Any] | None,
-                   chunk_texts: Mapping[int, str] | None = None, pass0: Any | None = None) -> dict[str, Any]:
+                   chunk_texts: Mapping[int, str] | None = None, pass0: Any | None = None,
+                   through_chapter: int | None = None) -> dict[str, Any]:
     """``{"leaks", "beliefs", "point_of_view"}`` for ``grade_book``. Without ``spans`` all
-    three are ``"unmeasured"``."""
+    three are ``"unmeasured"``. ``through_chapter`` (STAGE-MODELS-V1) grades a partial book:
+    the chapter clock ends at that chapter and every read is bounded at its ``hi``."""
     if spans is None:
         return {"leaks": UNMEASURED, "beliefs": UNMEASURED, "point_of_view": UNMEASURED}
-    span_index = Spans(spans)
-    raw = RawIds(world, graded)
-    reader = Reader(world, ident, raw, span_index)
+    span_index = Spans(spans, through=through_chapter)
+    bound = None if through_chapter is None else span_index.hi(through_chapter)
+    raw = RawIds(world, graded, bound)
+    reader = Reader(world, ident, raw, span_index, Horizon(world, ident, bound))
     return {
-        "leaks": grade_leaks(world, graded, span_index, chunk_texts, pass0, raw),
+        "leaks": grade_leaks(world, graded, span_index, chunk_texts, pass0, raw, bound),
         "beliefs": grade_beliefs(world, graded, reader),
         "point_of_view": grade_point_of_view(world, graded, reader),
     }

@@ -9,7 +9,13 @@ merge the build or the merge gate made is credited or charged where it lands.
 
 CLI:
     PYTHONPATH=src python evals/harness/grade_book.py --run RUN_DIR \\
-        --graded evals/books/<slug>/graded.json [--out DIR]
+        --graded evals/books/<slug>/graded.json [--out DIR] [--through-chapter N]
+
+``--through-chapter N`` (STAGE-MODELS-V1) grades a build of chapters 1..N against a
+``graded.json`` that ``book_gold.py --through-chapter N`` windowed and stamped. Every
+read is bounded at chapter N's exposure-clock position (``asserted_as_of = hi(N)``) and
+identity is read as of that position, so a merge or row written after chapter N's last
+chunk never changes a verdict. Without the flag the output is what it always was.
 """
 
 from __future__ import annotations
@@ -25,11 +31,11 @@ from patternbuffer.model import ATTR_PREFIX, CANON
 
 try:
     from book_gold import book_normalize, fold_quotes
-    from grade_leaks import grade_sections
+    from grade_leaks import Horizon, Spans, grade_sections
     from grade_registry import grade
 except ImportError:  # imported as evals.harness.grade_book
     from evals.harness.book_gold import book_normalize, fold_quotes
-    from evals.harness.grade_leaks import grade_sections
+    from evals.harness.grade_leaks import Horizon, Spans, grade_sections
     from evals.harness.grade_registry import grade
 
 logger = logging.getLogger(__name__)
@@ -39,19 +45,56 @@ _SECTION_ORDER = {"locations": 0, "holdings": 1}
 _ID = re.compile(r"^(\w+)\[(\d+)\]$")
 
 
+class WindowRefused(ValueError):
+    """A partial-book grade the grader refuses before reading the world."""
+
+
+def check_window(graded: Mapping[str, Any], through_chapter: int | None,
+                 spans: Mapping[str, Any] | None, chapters: int | None = None) -> None:
+    """Refuse a window that cannot be graded (STAGE-MODELS-V1 §2): a flag without a stamped
+    ``graded.json``, a stamp without the flag, a different N, N outside ``1..chapters`` (the
+    book's chapter count, when known) or beyond the last chapter in the run's
+    ``chunk_spans.json``, or a flag with no spans (no chapter has a log position)."""
+    stamp = graded.get("through_chapter")
+    if through_chapter is None:
+        if "through_chapter" in graded:
+            raise WindowRefused(f"graded.json is windowed (through_chapter {stamp!r}); "
+                                "pass --through-chapter to grade it")
+        return
+    if isinstance(through_chapter, bool) or not isinstance(through_chapter, int):
+        raise WindowRefused(f"--through-chapter {through_chapter!r} is not a chapter number")
+    if "through_chapter" not in graded:
+        raise WindowRefused("graded.json is not windowed (no through_chapter stamp); build one "
+                            "with book_gold.py --through-chapter")
+    if stamp != through_chapter:
+        raise WindowRefused(f"graded.json is windowed through chapter {stamp!r}, not {through_chapter}")
+    if through_chapter < 1 or (chapters is not None and through_chapter > chapters):
+        raise WindowRefused(f"--through-chapter {through_chapter} is outside the book's chapters "
+                            f"1..{chapters if chapters is not None else '?'}")
+    if spans is None:
+        raise WindowRefused("--through-chapter needs the run's chunk_spans.json: without it no "
+                            "chapter has a log position")
+    last = max((c["chapter"] for c in spans["chunks"]), default=0)
+    if through_chapter > last:
+        raise WindowRefused(f"--through-chapter {through_chapter} is beyond the last chapter "
+                            f"({last}) in the run's chunk_spans.json")
+
+
 def _ratio(num: float, den: float) -> float | None:
     return None if not den else round(num / den, 4)
 
 
-def _name_index(world: Any, ident: Any) -> tuple[dict[str, set[str]], dict[str, list[str]]]:
+def _name_index(world: Any, ident: Any,
+                horizon: Horizon | None = None) -> tuple[dict[str, set[str]], dict[str, list[str]]]:
     """(normalized string -> closure roots, closure root -> its folded strings),
     from the canon ``name`` and ``alias`` rows."""
+    h = horizon or Horizon(world, ident)
     index: dict[str, set[str]] = {}
     strings: dict[str, list[str]] = {}
-    for row in world.buffer.visible(attribute_in=["name", "alias"], frame=CANON):
+    for row in h.visible(attribute_in=["name", "alias"], frame=CANON):
         if row.entity.startswith(ATTR_PREFIX) or not isinstance(row.value, str):
             continue
-        root = ident.resolve(row.entity)
+        root = h.resolve(row.entity)
         index.setdefault(book_normalize(row.value), set()).add(root)
         folded = fold_quotes(row.value)
         if folded not in strings.setdefault(root, []):
@@ -90,8 +133,13 @@ def _move_order(move: Mapping[str, Any]) -> tuple[int, int, int]:
 def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
                spans: Mapping[str, Any] | None = None,
                chunk_texts: Mapping[int, str] | None = None,
-               pass0: Any | None = None) -> dict[str, Any]:
+               pass0: Any | None = None, through_chapter: int | None = None) -> dict[str, Any]:
     """Score ``world`` against ``graded`` (the content of ``graded.json``).
+
+    ``through_chapter`` (STAGE-MODELS-V1) grades a partial book: ``graded`` must be the
+    windowed, stamped artifact of ``book_gold.py --through-chapter`` for the same N, and
+    ``spans`` is required. Every read is bounded at ``hi(N)`` and identity is read as of
+    it (see the module doc); the scorecard states the window. ``WindowRefused`` otherwise.
 
     GRADE-LEAKS-V1: ``spans`` is the run's ``chunk_spans.json`` content,
     ``chunk_texts`` the text of each chunk by id and ``pass0`` the pass-0
@@ -105,8 +153,11 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
     when the book grades nothing of that kind), then the detail of each
     measure. See BOOK-RUN-V1 §3 for what each measures."""
     ident = registry if registry is not None else world.registry
+    check_window(graded, through_chapter, spans)
+    bound = None if through_chapter is None else Spans(spans, through=through_chapter).hi(through_chapter)
+    H = Horizon(world, ident, bound)
     family = sorted(world.semantics.containment_family())
-    index, strings = _name_index(world, ident)
+    index, strings = _name_index(world, ident, H)
     entities = graded["entities"]
 
     # ---- mapping: key entity -> closure roots
@@ -130,7 +181,7 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
     def members(key: str) -> list[str]:
         out: set[str] = set()
         for r in ids.get(key, []):
-            out |= ident.closure(r)
+            out |= H.closure(r)
         return sorted(out)
 
     # ---- 1. identity
@@ -167,7 +218,7 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
 
     # ---- 4. where things are, as order
     def element(value: Any) -> tuple[frozenset[str], str]:
-        root = ident.resolve(value)
+        root = H.resolve(value)
         return frozenset(keys_of.get(root, ())), root
 
     def tag(el: tuple[frozenset[str], str]) -> str:
@@ -177,7 +228,7 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
     for key, moves in sorted(graded["moves"].items()):
         ordered = sorted(moves, key=_move_order)
         expected = _collapse([m["to"] for m in ordered])
-        rows = world.buffer.visible(entity_in=members(key), attribute_in=family, frame=CANON) \
+        rows = H.visible(entity_in=members(key), attribute_in=family, frame=CANON) \
             if ids.get(key) else []
         rows.sort(key=lambda r: (r.valid_from is not None,
                                  r.valid_from if r.valid_from is not None else 0.0, r.seq))
@@ -198,8 +249,9 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
         "objects": order_objects,
     }
 
-    # final: the fold at the end of the book
-    canon_rows = world.buffer.visible(frame=CANON)
+    # final: the fold at the end of the book (at chapter N's position, for a partial book:
+    # the valid anchor comes from the rows visible at that bound, never from later ones)
+    canon_rows = H.visible(frame=CANON)
     times = [r.valid_from for r in canon_rows if r.valid_from is not None]
     as_of = max(times) if times else None
     final_objects: dict[str, Any] = {}
@@ -208,7 +260,7 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
             continue
         got: set[str] = set()
         for root in ids.get(key, []):
-            winner = world.state(root, "in", valid_as_of=as_of).winner
+            winner = H.state(root, "in", valid_as_of=as_of).winner
             if winner is not None and isinstance(winner.value, str):
                 got |= element(winner.value)[0]
         final_objects[key] = {"expected": o["last_to"], "got": sorted(got),
@@ -230,9 +282,9 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
         roots = set(ids.get(c["container"], []))
         placed: dict[str, bool] = {}
         for content in c["contents"]:
-            rows = world.buffer.visible(entity_in=members(content), attribute_in=["in", "within"],
-                                        frame=CANON) if ids.get(content) else []
-            placed[content] = any(isinstance(r.value, str) and ident.resolve(r.value) in roots
+            rows = H.visible(entity_in=members(content), attribute_in=["in", "within"],
+                             frame=CANON) if ids.get(content) else []
+            placed[content] = any(isinstance(r.value, str) and H.resolve(r.value) in roots
                                   for r in rows)
         container_items.append({"id": c["id"], "container": c["container"], "placed": placed,
                                 "score": _ratio(sum(placed.values()), len(placed))})
@@ -245,8 +297,9 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
         "order": order["mean"], "final": final["score"], "ever": ever["score"],
         "containers": containers["score"],
     }
-    new = grade_sections(world, ident, graded, spans=spans, chunk_texts=chunk_texts, pass0=pass0)
-    return {
+    new = grade_sections(world, ident, graded, spans=spans, chunk_texts=chunk_texts, pass0=pass0,
+                         through_chapter=through_chapter)
+    card = {
         "key_sha256": graded.get("key_sha256"), "readers": graded.get("readers"),
         "summary": summary, "identity": identity, "reveals": reveals,
         "look_alikes": look_alikes, "order": order, "final": final, "ever": ever,
@@ -258,6 +311,11 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
         "dropped": len(graded.get("dropped", [])),
         "dropped_fields": len(graded.get("dropped_fields", [])),
     }
+    if through_chapter is not None:
+        final["asserted_as_of"] = bound
+        card.update(through_chapter=through_chapter, asserted_as_of=bound,
+                    pending_corrections=graded.get("pending_corrections", 0))
+    return card
 
 
 def _ungraded(graded: Mapping[str, Any]) -> dict[str, int]:
@@ -299,8 +357,15 @@ def scorecard_md(card: Mapping[str, Any], title: str = "Book scorecard") -> str:
     """Render ``grade_book`` output as a Markdown scorecard."""
     fmt = lambda x: "n/a" if x is None else f"{x:.3f}"  # noqa: E731
     s, ident = card["summary"], card["identity"]
-    lines = [f"# {title}", "", f"Readers: {', '.join(card.get('readers') or [])}; "
+    window = card.get("through_chapter")
+    lines = [f"# {title}" + ("" if window is None else f" [through_chapter: {window}]"), "",
+             f"Readers: {', '.join(card.get('readers') or [])}; "
              f"{card['dropped']} entries dropped.", ""]
+    if window is not None:
+        lines += [f"through_chapter: {window}; every read bounded at asserted_as_of = "
+                  f"{card.get('asserted_as_of')}, identity read as of that position; "
+                  f"{card.get('pending_corrections', 0)} correction(s) pending (stated, not yet "
+                  "corrected; outside the scores).", ""]
     if "headline" in card:
         lines += ["## Headline (judging order)", "", "| # | measure | value | target |", "|---|---|---|---|"]
         for h in card["headline"]:
@@ -464,19 +529,29 @@ def main(argv: list[str] | None = None) -> int:
                     help="the book directory (chNN.md) for chunk texts; default: beside --graded")
     ap.add_argument("--out", default=None, help="where to write (default: the run directory)")
     ap.add_argument("--world-id", default=None, help="default: the run's meta.json")
+    ap.add_argument("--through-chapter", type=int, default=None, metavar="N",
+                    help="grade a build of chapters 1..N against a graded.json windowed "
+                         "to N by book_gold.py --through-chapter N")
     args = ap.parse_args(argv)
     from patternbuffer.mirror import open_read_only_copy
 
     run = Path(args.run)
     world_id = args.world_id or json.loads((run / "meta.json").read_text())["world_id"]
+    graded = json.loads(Path(args.graded).read_text())
     spans, texts, pass0 = _load_run_inputs(run, Path(args.graded),
                                            Path(args.book) if args.book else None, world_id)
+    try:
+        meta = json.loads((run / "meta.json").read_text()) if (run / "meta.json").exists() else {}
+        check_window(graded, args.through_chapter, spans,
+                     meta.get("chapters") if isinstance(meta.get("chapters"), int) else None)
+    except WindowRefused as exc:
+        raise SystemExit(f"ABORT: {exc}") from exc
     # a sealed in-memory copy taken through `mode=ro`: the build artifact is
     # never opened for writing (bytes and mtime unchanged)
     world = open_read_only_copy(run / "fresh_ingest.world", world_id)
     try:
-        card = grade_book(world, world.registry, json.loads(Path(args.graded).read_text()),
-                          spans=spans, chunk_texts=texts, pass0=pass0)
+        card = grade_book(world, world.registry, graded, spans=spans, chunk_texts=texts,
+                          pass0=pass0, through_chapter=args.through_chapter)
     finally:
         world.close()
     receipt = run / "receipt.json"

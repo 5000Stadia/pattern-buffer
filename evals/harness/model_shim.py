@@ -16,10 +16,16 @@ the old ``--max-turns 8`` command line with no cwd or env override, and
 with it the old acceptance of multi-turn answers.
 ``python -m evals.harness.model_shim --smoke`` makes one paid bare call and
 prints the envelope's figures.
+
+STAGE-MODELS-V1: ``PB_EVAL_STAGE_MODELS`` names a JSON map from a build stage
+(the usage label's ``stage``) to ``{"model", "effort"}``. ``claude_model`` routes
+each call by the label in force; ``bare_argv(model, effort)`` appends
+``--effort`` only when set. No map, or ``PB_SHIM_LEGACY=1``, is today's call.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -58,6 +64,117 @@ class ModelShimError(RuntimeError):
 
 class QuotaExhausted(ModelShimError):
     pass
+
+
+class StageMapError(ModelShimError):
+    """A ``PB_EVAL_STAGE_MODELS`` map the shim refuses; raised before any call."""
+
+
+# ------------------------------------------------------- STAGE-MODELS-V1 (the map)
+
+STAGE_MODELS_ENV = "PB_EVAL_STAGE_MODELS"
+STAGE_KEYS = ("pass0", "pass1", "escape_repair", "commit", "audit")   # BUILD-PROFILE-V1 labels
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+
+
+class StageMap:
+    """A validated stage map: each key's ``(model, effort)``, with the file's
+    parsed content and the sha256 of its bytes (what ``meta.json`` records)."""
+
+    def __init__(self, entries: dict[str, tuple[str, str | None]], content: dict, sha256: str) -> None:
+        self.entries, self.content, self.sha256 = entries, content, sha256
+
+    def route(self, stage: str | None) -> tuple[str, str | None]:
+        """The ``(model, effort)`` for ``stage``: its entry, else ``"default"``, else today's
+        call (``PB_EVAL_MODEL``, no effort). Unlabelled and unlisted stages take the default."""
+        if stage in self.entries:
+            return self.entries[stage]
+        return self.entries.get("default", (MODEL, None))
+
+
+def parse_stage_map(raw: bytes, source: str = "stage map") -> StageMap:
+    """Validate a map's bytes. Raises ``StageMapError`` naming the first problem: invalid
+    JSON, a non-object, an unknown stage key, an entry that is not an object with exactly
+    ``model`` (a non-empty string) and optional ``effort`` (``null`` or one of ``EFFORTS``)."""
+    try:
+        content = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise StageMapError(f"{source}: not valid JSON ({exc})") from exc
+    if not isinstance(content, dict):
+        raise StageMapError(f"{source}: must be a JSON object of stage entries")
+    entries: dict[str, tuple[str, str | None]] = {}
+    for key, entry in content.items():
+        if key != "default" and key not in STAGE_KEYS:
+            raise StageMapError(f"{source}: unknown stage {key!r} "
+                                f"(stages: {', '.join(('default',) + STAGE_KEYS)})")
+        if not isinstance(entry, dict):
+            raise StageMapError(f"{source}: {key!r} must be an object with model and effort")
+        extra = sorted(set(entry) - {"model", "effort"})
+        if extra:
+            raise StageMapError(f"{source}: {key!r} has unknown field(s) {extra}")
+        model, effort = entry.get("model"), entry.get("effort")
+        if not isinstance(model, str):
+            raise StageMapError(f"{source}: {key!r} model must be a string, got {model!r}")
+        if not model.strip():
+            raise StageMapError(f"{source}: {key!r} model is empty")
+        if model != model.strip() or model.startswith("-"):
+            raise StageMapError(f"{source}: {key!r} model {model!r} is not a model name")
+        if effort is not None and not isinstance(effort, str):
+            raise StageMapError(f"{source}: {key!r} effort must be a string or null, got {effort!r}")
+        if effort is not None and effort not in EFFORTS:
+            raise StageMapError(f"{source}: {key!r} effort {effort!r} is not one of "
+                                f"{', '.join(EFFORTS)} or null")
+        entries[key] = (model, effort)
+    return StageMap(entries, content, hashlib.sha256(raw).hexdigest())
+
+
+_map_cache: tuple[tuple[str, int, int], StageMap] | None = None
+
+
+def load_stage_map() -> StageMap | None:
+    """The map ``PB_EVAL_STAGE_MODELS`` names, validated; ``None`` when it is unset or
+    empty. Read once per (path, mtime, size). Raises ``StageMapError`` for an unreadable
+    file or any refusal of ``parse_stage_map``."""
+    global _map_cache
+    path = os.environ.get(STAGE_MODELS_ENV)
+    if not path:
+        return None
+    try:
+        st = os.stat(path)
+        key = (path, st.st_mtime_ns, st.st_size)
+        if _map_cache is not None and _map_cache[0] == key:
+            return _map_cache[1]
+        with open(path, "rb") as fh:
+            raw = fh.read()
+    except OSError as exc:
+        raise StageMapError(f"{STAGE_MODELS_ENV} {path!r}: unreadable ({exc})") from exc
+    parsed = parse_stage_map(raw, f"{STAGE_MODELS_ENV} {path!r}")
+    _map_cache = (key, parsed)
+    return parsed
+
+
+def stage_map_receipt() -> dict | None:
+    """What ``meta.json`` records of the map in force: its parsed content and the sha256 of
+    its bytes. ``None`` when there is no map. Under ``PB_SHIM_LEGACY=1`` the map is ignored
+    and says so. Raises ``StageMapError`` for a refused map (a runner calls this before its
+    first call)."""
+    if not os.environ.get(STAGE_MODELS_ENV):
+        return None
+    if _legacy():
+        return {"applied": False, "reason": "PB_SHIM_LEGACY=1 ignores the stage map"}
+    m = load_stage_map()
+    return {"applied": True, "sha256": m.sha256, "map": m.content}
+
+
+def route() -> tuple[str, str | None]:
+    """The ``(model, effort)`` for a call made here: the stage map's entry for the usage
+    label's stage; otherwise ``PB_EVAL_MODEL`` with no effort (also under legacy)."""
+    if _legacy():
+        return MODEL, None
+    m = load_stage_map()
+    if m is None:
+        return MODEL, None
+    return m.route(usage_ledger.current_label()["stage"])
 
 
 def _extract_json(text: str) -> dict:
@@ -120,13 +237,15 @@ def _cli_extras(stdout: str) -> dict:
     return {"num_turns": None, "cli_duration_ms": None, "api_duration_ms": None}
 
 
-def bare_argv(model: str) -> list[str]:
+def bare_argv(model: str, effort: str | None = None) -> list[str]:
     """The bare call's command line (BARE-CALL-V1): one turn, no tools, no
-    settings or MCP servers, no session file, a fixed minimal system prompt."""
-    return ["claude", "-p", "--model", model, "--output-format", "json",
+    settings or MCP servers, no session file, a fixed minimal system prompt.
+    STAGE-MODELS-V1: ``--effort <effort>`` ends it when ``effort`` is set."""
+    argv = ["claude", "-p", "--model", model, "--output-format", "json",
             "--max-turns", "1", "--tools", "", "--strict-mcp-config",
             "--setting-sources", "", "--no-session-persistence",
             "--system-prompt", BARE_SYSTEM_PROMPT]
+    return argv + ["--effort", effort] if effort is not None else argv
 
 
 def _legacy() -> bool:
@@ -137,24 +256,28 @@ def _child_env() -> dict[str, str]:
     return {k: os.environ[k] for k in _CHILD_ENV_KEYS if k in os.environ}
 
 
-def _invoke(full: str) -> subprocess.CompletedProcess:
+def _invoke(full: str, model: str | None = None,
+            effort: str | None = None) -> subprocess.CompletedProcess:
     """One CLI invocation with ``full`` on stdin. Bare by default: a fresh empty
     temporary directory as cwd (removed afterwards on every path) and a trimmed
-    environment. ``PB_SHIM_LEGACY=1`` runs the old command line as before."""
+    environment. ``PB_SHIM_LEGACY=1`` runs the old command line as before.
+    ``model`` defaults to ``PB_EVAL_MODEL``."""
+    model = MODEL if model is None else model
     if _legacy():
         return subprocess.run(
-            ["claude", "-p", "--model", MODEL, "--max-turns", "8",
+            ["claude", "-p", "--model", model, "--max-turns", "8",
              "--output-format", "json"],
             input=full, capture_output=True, text=True, timeout=TIMEOUT)
     with tempfile.TemporaryDirectory(prefix="pb-bare-") as empty:
         return subprocess.run(
-            bare_argv(MODEL), input=full, capture_output=True, text=True,
+            bare_argv(model, effort), input=full, capture_output=True, text=True,
             timeout=TIMEOUT, cwd=empty, env=_child_env())
 
 
 def claude_model(prompt: str, schema: dict) -> dict:
     """One model call: up to three attempts, each one bare call. Retries on a
     failed exit, a timeout, a multi-turn answer, or a JSON-parse failure."""
+    model, effort = route()     # a refused stage map stops here, before any attempt
     full = (
         f"{prompt}\n\n"
         "Respond with ONLY a JSON object (no prose, no code fences) matching "
@@ -166,11 +289,12 @@ def claude_model(prompt: str, schema: dict) -> dict:
             time.sleep(15 * (attempt - 1))  # transient rate pressure backs off
         started, t0 = time.time(), time.perf_counter()
         try:
-            proc = _invoke(full)
+            proc = _invoke(full, model, effort)
         except subprocess.TimeoutExpired as exc:
-            usage_ledger.record("claude", MODEL, None, None, started=started,
+            usage_ledger.record("claude", model, None, None, started=started,
                                 latency_s=time.perf_counter() - t0, outcome="timeout",
-                                prompt_chars=len(full), response_chars=0)  # spent, amount unknown
+                                prompt_chars=len(full), response_chars=0,  # spent, amount unknown
+                                effort=effort)
             last_err = exc
             logger.warning("model shim timeout (attempt %d)", attempt)
             continue
@@ -181,10 +305,11 @@ def claude_model(prompt: str, schema: dict) -> dict:
         turns = extras["num_turns"]
         multi_turn = (not _legacy() and proc.returncode == 0
                       and turns is not None and turns > 1)
-        usage_ledger.record("claude", MODEL, usage, cost, started=started, latency_s=latency,
+        usage_ledger.record("claude", model, usage, cost, started=started, latency_s=latency,
                             outcome=("multi_turn" if multi_turn
                                      else "ok" if proc.returncode == 0 else "error"),
-                            prompt_chars=len(full), response_chars=len(text), **extras)
+                            prompt_chars=len(full), response_chars=len(text), effort=effort,
+                            **extras)
         if multi_turn:
             last_err = ModelShimError(f"claude reported num_turns={turns}; one turn expected")
             logger.warning("model shim multi-turn answer rejected (attempt %d): "

@@ -8,7 +8,11 @@ lost. Deterministic, no model call.
 CLI:
     python evals/harness/book_gold.py --key evals/books/<slug>/key.json \\
         --verdicts readerA.json readerB.json --out evals/books/<slug>/graded.json \\
-        [--dropped-md dropped.md]
+        [--dropped-md dropped.md] [--through-chapter N]
+
+``--through-chapter N`` (STAGE-MODELS-V1) writes a **windowed** ``graded.json`` for a build
+of chapters 1..N, stamped ``"through_chapter": N``: only what a reader of those chapters
+could know. The window is cut here, where the full key is (``window_gold``).
 
 GRADE-LEAKS-V1 §2: a key may also carry ``alias_first_chapter`` on its entities
 and ``as_fact`` / ``corrected_as_fact`` fact forms on ``false_beliefs``,
@@ -30,6 +34,7 @@ import argparse
 import hashlib
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -370,10 +375,18 @@ def _field_gold(key: Mapping[str, Any], docs: Sequence[Mapping[str, Any]], reade
             "dropped_fields": sorted(dropped, key=lambda e: e["id"]), "field_counts": counts}
 
 
-def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]],
+               through_chapter: int | None = None) -> dict[str, Any]:
     """The ``graded.json`` content from the key's bytes and two readers' verdict
-    documents. Raises ``VerdictError`` on any refusal (see the module doc)."""
+    documents. Raises ``VerdictError`` on any refusal (see the module doc).
+    ``through_chapter`` windows it (see ``window_gold``)."""
     key = json.loads(key_bytes)
+    if through_chapter is not None:
+        n_chapters = len(key.get("chapters", []) or [])
+        if isinstance(through_chapter, bool) or not isinstance(through_chapter, int) \
+                or not 1 <= through_chapter <= n_chapters:
+            raise VerdictError(f"--through-chapter {through_chapter!r} is not in 1..{n_chapters} "
+                               "(the key's chapter count)")
     key_sha = sha256_bytes(key_bytes)
     check_key(key)
     if len(verdict_docs) != 2:
@@ -487,7 +500,156 @@ def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> d
         "ungraded_counts": {s: len(_section(key, s)) for s in UNGRADED_SECTIONS},
     }
     gold.update(field_gold)
+    if through_chapter is not None:
+        gold = window_gold(gold, key, through_chapter)
     return gold
+
+
+# ------------------------------------------------------ the window (STAGE-MODELS-V1)
+
+_ID_INDEX = re.compile(r"^(\w+)\[(\d+)\]")
+
+
+def _chapter(value: Any, where: str, *, nullable: bool = False) -> int | None:
+    if value is None and nullable:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise VerdictError(f"cannot window the key: {where} is {value!r}, not a chapter number")
+    return value
+
+
+def window_gold(gold: Mapping[str, Any], key: Mapping[str, Any], n: int) -> dict[str, Any]:
+    """The part of ``gold`` a reader of chapters 1..``n`` could know, stamped
+    ``"through_chapter": n``. The rules, from the full ``key``:
+
+    - entities with ``first_chapter <= n`` (an entity without one refuses the window);
+      aliases only where ``alias_first_chapter <= n`` when the key gives one;
+    - ``same_as`` revealed by ``n``; ``not_same`` pairs whose entities both exist by ``n``;
+    - locations and holdings are half-open ``[from_chapter, to_chapter)``: in when
+      ``from_chapter <= n``; a ``to_chapter`` of null or beyond ``n`` stays open
+      (``to_chapter: null``), otherwise as written; nothing is clipped;
+    - containers revealed by ``n``; knowledge with ``chapter <= n``;
+    - false beliefs with ``from_chapter <= n``, held through ``n`` (``corrected_chapter`` null)
+      when their correction comes after it;
+    - corrections only when ``corrected_chapter <= n``. One stated by ``n`` and not yet
+      corrected is *pending*: outside every item and denominator, counted in
+      ``pending_corrections``.
+
+    Dropped lists and the counts follow the window. Raises ``VerdictError`` when the key
+    lacks a chapter the rules need."""
+    entities_k = key.get("entities", {})
+    first = {k: _chapter(e.get("first_chapter"), f"entities.{k}.first_chapter")
+             for k, e in entities_k.items()}
+    present = {k for k, c in first.items() if c <= n}
+
+    def entry_in_window(item_id: str) -> bool:
+        """Whether a dropped-list id (``entities.X``, ``entities.X.alias_first_chapter[a]``,
+        ``same_as[3]``, ``corrections[1].as_fact``...) names something inside the window."""
+        if item_id.startswith("entities."):
+            kid = item_id.split(".")[1]
+            if kid not in present:
+                return False
+            m = re.match(r"^entities\.[^.]+\.alias_first_chapter\[(.*)\]$", item_id, re.S)
+            if m:
+                chapter = (entities_k[kid].get("alias_first_chapter") or {}).get(m.group(1))
+                return chapter is None or chapter <= n
+            return True
+        m = _ID_INDEX.match(item_id)
+        if not m:
+            return True
+        section, i = m.group(1), int(m.group(2))
+        row = _section(key, section)[i]
+        if section == "same_as":
+            return _chapter(row[2], f"same_as[{i}]") <= n
+        if section == "not_same":
+            return row[0] in present and row[1] in present
+        if section in ("locations", "holdings"):
+            return _chapter(row["from_chapter"], f"{section}[{i}].from_chapter") <= n
+        if section == "containers":
+            return _chapter(row["revealed_chapter"], f"containers[{i}].revealed_chapter") <= n
+        if section == "knowledge":
+            return _chapter(row.get("chapter"), f"knowledge[{i}].chapter") <= n
+        if section == "false_beliefs":
+            return _chapter(row["from_chapter"], f"false_beliefs[{i}].from_chapter") <= n
+        if section == "corrections":
+            c = _chapter(row["corrected_chapter"], f"corrections[{i}].corrected_chapter", nullable=True)
+            return c is not None and c <= n
+        return True
+
+    out: dict[str, Any] = dict(gold)
+    # entities, with their aliases
+    ents: dict[str, Any] = {}
+    for kid, ent in gold["entities"].items():
+        if kid not in present:
+            continue
+        afc = entities_k[kid].get("alias_first_chapter") or {}
+        ents[kid] = {**ent, "aliases": [a for a in ent["aliases"]
+                                        if a not in afc or _chapter(afc[a], f"{kid} alias {a!r}") <= n]}
+    out["entities"] = ents
+    if "alias_first_chapter" in gold:
+        out["alias_first_chapter"] = {
+            kid: {a: c for a, c in by.items() if c <= n and a in ents[kid]["aliases"]}
+            for kid, by in gold["alias_first_chapter"].items() if kid in ents
+            and any(c <= n and a in ents[kid]["aliases"] for a, c in by.items())}
+    out["same_as"] = [r for r in gold["same_as"] if _chapter(r["chapter"], r["id"]) <= n]
+    out["not_same"] = [r for r in gold["not_same"] if r["a"] in present and r["b"] in present]
+    moves: dict[str, list[dict[str, Any]]] = {}
+    for kid, rows in gold["moves"].items():
+        for r in rows:
+            if _chapter(r["from_chapter"], r["id"]) > n:
+                continue
+            to = _chapter(r["to_chapter"], r["id"], nullable=True)
+            moves.setdefault(kid, []).append({**r, "to_chapter": to if to is not None and to <= n else None})
+    out["moves"] = moves
+    out["containers"] = [r for r in gold["containers"] if entry_in_window(r["id"])]
+    if "knowledge" in gold:
+        out["knowledge"] = [r for r in gold["knowledge"] if _chapter(r["chapter"], r["id"]) <= n]
+    if "beliefs" in gold:
+        beliefs = []
+        for r in gold["beliefs"]:
+            if _chapter(r["from_chapter"], r["id"]) > n:
+                continue
+            c = _chapter(r["corrected_chapter"], r["id"], nullable=True)
+            beliefs.append({**r, "corrected_chapter": c if c is not None and c <= n else None})
+        out["beliefs"] = beliefs
+    out["pending_corrections"] = 0
+    if "corrections" in gold:
+        graded_c, pending = [], 0
+        for r in gold["corrections"]:
+            c = _chapter(r["corrected_chapter"], r["id"], nullable=True)
+            if c is not None and c <= n:
+                graded_c.append(r)
+            elif r.get("stated_chapter") is None or _chapter(r["stated_chapter"], r["id"]) <= n:
+                pending += 1
+        out["corrections"] = graded_c
+        out["pending_corrections"] = pending
+    for name in ("dropped", "dropped_fields"):
+        if name in gold:
+            out[name] = [d for d in gold[name] if entry_in_window(d["id"])]
+    out["dropped_aliases"] = [d for d in gold["dropped_aliases"] if d["entity"] in present]
+    out["dropped_contents"] = [d for d in gold["dropped_contents"] if entry_in_window(d["id"])]
+    # counts follow the window
+    out["ungraded_counts"] = {
+        s: sum(1 for i in range(len(_section(key, s))) if entry_in_window(f"{s}[{i}]"))
+        for s in UNGRADED_SECTIONS}
+    if "field_counts" in gold:
+        verified = {
+            "alias_first_chapter": sum(len(v) for v in out.get("alias_first_chapter", {}).values()),
+            "beliefs": len(out.get("beliefs", [])),
+            "corrections": sum((r.get("as_fact") is not None) + (r.get("corrected_as_fact") is not None)
+                               for r in out.get("corrections", [])),
+            "knowledge": len(out.get("knowledge", []))}
+        by_key_section = {"false_beliefs": "beliefs", "corrections": "corrections",
+                          "knowledge": "knowledge"}
+        dropped_by = dict.fromkeys(verified, 0)
+        for d in out["dropped_fields"]:
+            m = _ID_INDEX.match(d["id"])
+            dropped_by[by_key_section.get(m.group(1) if m else "", "alias_first_chapter")] += 1
+        out["field_counts"] = {name: {"entries": verified[name] + dropped_by[name],
+                                      "verified": verified[name], "dropped": dropped_by[name]}
+                               for name in verified}
+    out["through_chapter"] = n
+    return out
 
 
 def gold_json(gold: Mapping[str, Any]) -> str:
@@ -533,9 +695,11 @@ def main(argv: list[str] | None = None) -> int:
                     help="the two readers' final verdict files")
     ap.add_argument("--out", required=True, help="graded.json to write")
     ap.add_argument("--dropped-md", default=None, help="also write the dropped list as Markdown")
+    ap.add_argument("--through-chapter", type=int, default=None, metavar="N",
+                    help="write a graded.json windowed to chapters 1..N and stamped with N")
     args = ap.parse_args(argv)
     docs = [json.loads(Path(p).read_text()) for p in args.verdicts]
-    gold = build_gold(Path(args.key).read_bytes(), docs)
+    gold = build_gold(Path(args.key).read_bytes(), docs, through_chapter=args.through_chapter)
     Path(args.out).write_text(gold_json(gold))
     if args.dropped_md:
         Path(args.dropped_md).write_text(dropped_markdown(gold))
