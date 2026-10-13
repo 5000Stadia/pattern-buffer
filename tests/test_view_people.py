@@ -288,6 +288,56 @@ def test_3_position_only_when_no_names_are_given(house):
     assert "person:drifter" not in doc["people"]
 
 
+# ------------------------------------------- 3a. numeric arrays (r2.1, Photonic)
+
+_ARRAYS = {
+    "person:p_three": [1.5, 0.0, -2.25],
+    "person:p_one": [1],
+    "person:p_four": [1, 2, 3, 4],
+    "person:p_empty": [],
+    "person:p_five": [1, 2, 3, 4, 5],
+    "person:p_text": [1, "a"],
+    "person:p_bool": [True, 1],
+    "person:p_nested": [[1, 2], 3],
+    "person:p_object": {"x": 1},
+}
+_CROSSES = ("person:p_three", "person:p_one", "person:p_four")
+
+
+def test_3a_a_short_numeric_array_crosses_as_a_literal(house):
+    for person, value in _ARRAYS.items():
+        canon(house, T(person, "kind", "person"), E(person, "in", "place:hall"),
+              T(person, "rest_pos", value))
+    crowd = people_of(house, attrs=("rest_pos",))
+    for person, value in _ARRAYS.items():
+        facts = crowd[person]["facts"]
+        if person in _CROSSES:
+            assert facts == [["rest_pos", value, "lit"]], person
+        else:
+            assert facts == [], person
+
+
+def test_3a_a_non_finite_number_never_crosses():
+    assert mirror._numeric_array([1.0, 2.0])
+    assert not mirror._numeric_array([1.0, float("nan")])
+    assert not mirror._numeric_array([float("inf")])
+    assert not mirror._numeric_array((1, 2))                  # a tuple is not JSON's list
+
+
+def test_3a_the_present_layer_still_omits_a_numeric_array(tmp_path):
+    w = build_manor(tmp_path)
+    try:
+        # a declared aspect whose known value is a numeric array
+        canon(w, T("attr:size", "resolvable_for", "ring"), T("obj:ring", "size", [1, 2, 3]))
+        assert w.porcelain.state("obj:ring", "size")["fact"]["value"] == [1, 2, 3]
+        doc = mirror.export(w, MANOR_VF, key=KEY)
+        rings = [r for r in doc["present"].values() if r.get("kind") == "ring"]
+        assert rings == [{"in": rings[0]["in"], "kind": "ring",
+                          "look": [["material", "gold"]]}]          # no `size`
+    finally:
+        w.close()
+
+
 # -------------------------------------------------------- 4. still never crosses
 
 

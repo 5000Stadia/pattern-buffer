@@ -111,6 +111,16 @@ def _scalar(value: Any) -> bool:
     return isinstance(value, float) and math.isfinite(value)
 
 
+def _numeric_array(value: Any) -> bool:
+    """A short numeric array the people layer lets cross as a literal
+    (VIEW-PEOPLE-V1 §2 r2.1): a list of 1 to 4 ints or finite floats, never a
+    bool. A position such as Photonic's `rest_pos`."""
+    return (isinstance(value, list) and 1 <= len(value) <= 4
+            and all(not isinstance(n, bool) and isinstance(n, (int, float))
+                    and (not isinstance(n, float) or math.isfinite(n))
+                    for n in value))
+
+
 def normalize_people(people: Sequence[str] | None,
                      canonical: Callable[[str], str] | None = None
                      ) -> tuple[str, ...] | None:
@@ -499,12 +509,12 @@ class _Reader:
 
     def _person_fact(self, fact: dict, known: dict, key: bytes | None) -> list[Any] | None:
         kind, value = fact["value_type"], fact["value"]
-        if kind == "literal" and _scalar(value):
+        if kind == "literal" and (_scalar(value) or _numeric_array(value)):
             return [fact["attribute"], value, "lit"]
         if kind == "entity" and isinstance(value, str):
             ref = self._ref(self.canon(value), known, key, places=True)
             return [fact["attribute"], ref, "id"] if ref is not None else None
-        return None             # structured, delta or unresolved: never guessed
+        return None             # other structured, delta or unresolved: never guessed
 
 
 def _resolve_at(world: Any, at: float | None) -> float | None:

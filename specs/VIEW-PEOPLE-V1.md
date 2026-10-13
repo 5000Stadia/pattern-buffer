@@ -1,8 +1,7 @@
 # VIEW-PEOPLE-V1: people on the device, where the world says they are
 
-**Status:** r2 (pbr r1 RED: P1 a real place predicate, P2 the attribute list normalized), for pbr review and for Photonic's review as the host that needs it. Author: pb,
-2026-10-13. The open questions to Photonic (m27078b) are marked *(Photonic?)*. Their answers can
-change names, not the shape.
+**Status:** r2.1. r2 answered pbr's r1 RED (P1 a real place predicate, P2 the attribute list normalized). r2.1 takes Photonic's review (m79a495): a short numeric array crosses as a literal, and the names are settled. For pbr review and for Photonic's review as the host that needs it. Author: pb,
+2026-10-13. Photonic answered the open questions in m79a495.
 **Source:** roadmap R46. Photonic's SEAM (b) (m019da7): "Offline, the phone must know where people
 are in rooms the player hasn't seen, so walking in finds them where the world says. The present
 layer excludes persons by design … a 'people' layer of persons' canon position and activity on the
@@ -67,7 +66,7 @@ That includes persons the player knows, because the view's facts about them can 
 people layer is canon now. It also includes the player, which is harmless. A person whose record
 would be empty (no place and no facts) is left out.
 
-**Keyed by canonical id** *(Photonic? q2)*. The device's cast has to match these people to draw
+**Keyed by canonical id** *(Photonic confirmed, q2: one id per person across the three projects)*. The device's cast has to match these people to draw
 them, so the key is the id the author wrote, such as `person:mara`. This is the exposure Kabe
 accepted. Authors should name person ids neutrally (`person:mara`, not `person:the_killer`); the
 spec can't enforce that.
@@ -104,12 +103,23 @@ The id of an unperceived container a person hides in never crosses. Only its han
 `state(person, attribute, frame=CANON, as_of=at, asserted_as_of=head)`. Only `known` answers
 cross:
 - a literal JSON scalar crosses as `[attribute, value, "lit"]`;
+- *(r2.1, Photonic)* a literal that is a **short numeric array** crosses the same way, as
+  `[attribute, [n, ...], "lit"]`. That is a JSON list of 1 to 4 numbers, each an int or a finite
+  float, never a bool.
+  - **Why:** in a room the player hasn't seen, the device can't point at a chair, because unseen
+    things cross only as handles. So a person's resting spot has to cross as a value: Photonic's
+    `rest_pos`, `[x, height, -y]` in metres.
+  - The host named the attribute, so the exposure is the same as a scalar's.
+  - Any other list, any object, and an exact-decimal tag dict are still structured and omitted.
+  - This holds for the people layer only. The present layer's literal-only rule (VIEW-EXPORT-V1
+    §2) is unchanged;
 - an entity value crosses as `[attribute, ref, "id"]`. The `ref` is the id when the target is in
   `known`, is a person, or is a place (by the predicate above, not by being a root). Otherwise it is the
   target's handle with a key, or the fact is omitted without one;
 - a set-valued key crosses as one tuple per member, by the same rules;
 - an accrue key's derived quantity crosses as a literal;
-- structured values (objects, lists), `conflicted`, `unresolved` and `unknown` are omitted. A
+- other structured values (objects, any other list, exact-decimal tag dicts), `conflicted`,
+  `unresolved` and `unknown` are omitted. A
   conflicted posture is unknown to the device, never guessed.
 
 Tuples are sorted as `known`'s are: `(attribute, type, canonical JSON of value)`.
@@ -127,8 +137,14 @@ refused (`ValueError` at the call, or at service or runner start) when it is any
 - a mechanism, semantics, canon-identity or meta attribute (`_RECORD_BARRED_ATTRIBUTES`);
 - `kind`, which is the person test's own key.
 
-The host chooses the rest. *(Photonic? q1)* Photonic's names are expected to be something like
-`posture`, `activity` and `heading`.
+The host chooses the rest. *(r2.1, Photonic's answer to q1)* Photonic names these:
+- `posture`, a literal: `standing`, `sitting` or `lying`;
+- `activity`, a literal short verb;
+- `facing`, literal radians;
+- `bound_for`, an entity that is always a place id, so it crosses as an id;
+- `departed_at`, literal world seconds, because tuples carry no `valid_from`;
+- `rest_pos`, a numeric array (above);
+- `sits_on`, an entity that crosses as an id when known, otherwise as a handle.
 - **The spec's warning, in the docstring:** naming an appearance attribute ships canon looks, and
   that undoes a disguise. That trade is the host's to make for its game, not the engine's.
 
@@ -211,6 +227,12 @@ more folded layer through the same diff.
    - A person in `obj:wardrobe` in `place:bedroom` in `place:house` has `place` set to
      `place:bedroom` (the nearest), and `in` as the wardrobe's handle.
    - A root whose canon kind is `place`, under a non-`place:` id, counts as a place.
+3a. *(r2.1)* **Numeric arrays.**
+    - `rest_pos = [1.5, 0.0, -2.25]` crosses as a literal.
+    - `[1]` and `[1, 2, 3, 4]` cross.
+    - These are omitted: `[]`, a list of five numbers, `[1, "a"]`, `[true, 1]`, `[1, NaN]`, a
+      nested list, and a `{"x": 1}` object.
+    - A present-layer item with a numeric-array look value is still omitted there.
 3. **On, facts.**
    - Named literal facts cross.
    - An entity fact crosses as an id when it points to a place, a person or a known thing, as a
