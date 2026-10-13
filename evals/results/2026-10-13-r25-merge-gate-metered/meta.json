@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-13",
+  "model": "claude-sonnet-4-6",
+  "reps": 2,
+  "batch_size": 25,
+  "registries": [
+    "r23-run1",
+    "r23-run2",
+    "r26-par1b",
+    "r26-par2b",
+    "r26-seq"
+  ],
+  "wall_s": 2836.9,
+  "calls": 72,
+  "seconds": 2753.3,
+  "chars_in": 1538528,
+  "chars_out": 288239
+}

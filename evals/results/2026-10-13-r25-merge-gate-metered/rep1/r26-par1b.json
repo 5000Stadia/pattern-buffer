@@ -1,0 +1,5917 @@
+{
+  "batches": 12,
+  "calls": 12,
+  "candidates": 286,
+  "conflicting_components": 0,
+  "default": {
+    "b3_f1": 0.832,
+    "fragmentation": [
+      "desk",
+      "ilsa",
+      "vial_crate",
+      "wellhead"
+    ],
+    "fragmentation_count": 4,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "gate_report": {
+    "batch_errors": [],
+    "batch_size": 25,
+    "components": [
+      {
+        "different_pairs": [],
+        "members": [
+          "doc:canonical_books",
+          "doc:council_allocation_books"
+        ],
+        "merges": [
+          {
+            "canonical_id": "doc:canonical_books",
+            "member": "doc:council_allocation_books",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "doc:canonical_books",
+        "same_pairs": [
+          "p0002"
+        ],
+        "served": "doc:canonical_books",
+        "status": "applied",
+        "votes": {
+          "doc:canonical_books": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "doc:dead_admin_records",
+          "doc:dead_mens_files"
+        ],
+        "merges": [
+          {
+            "canonical_id": "doc:dead_admin_records",
+            "member": "doc:dead_mens_files",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "doc:dead_admin_records",
+        "same_pairs": [
+          "p0043"
+        ],
+        "served": "doc:dead_admin_records",
+        "status": "applied",
+        "votes": {
+          "doc:dead_admin_records": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "doc:door_log",
+          "obj:door_log"
+        ],
+        "merges": [
+          {
+            "canonical_id": "doc:door_log",
+            "member": "obj:door_log",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "doc:door_log",
+        "same_pairs": [
+          "p0057"
+        ],
+        "served": "doc:door_log",
+        "status": "applied",
+        "votes": {
+          "doc:door_log": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "doc:inventory_ledger",
+          "obj:inventory_ledger"
+        ],
+        "merges": [
+          {
+            "canonical_id": "doc:inventory_ledger",
+            "member": "obj:inventory_ledger",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "doc:inventory_ledger",
+        "same_pairs": [
+          "p0074"
+        ],
+        "served": "doc:inventory_ledger",
+        "status": "applied",
+        "votes": {
+          "doc:inventory_ledger": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "event:marn_tribunal",
+          "org:tribunal"
+        ],
+        "merges": [
+          {
+            "canonical_id": "event:marn_tribunal",
+            "member": "org:tribunal",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "event:marn_tribunal",
+        "same_pairs": [
+          "p0117"
+        ],
+        "served": "event:marn_tribunal",
+        "status": "applied",
+        "votes": {
+          "event:marn_tribunal": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "event:technician_death",
+          "event:tovan_death"
+        ],
+        "merges": [
+          {
+            "canonical_id": "event:tovan_death",
+            "member": "event:technician_death",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "event:tovan_death",
+        "same_pairs": [
+          "p0125"
+        ],
+        "served": "event:tovan_death",
+        "status": "applied",
+        "votes": {
+          "event:tovan_death": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "obj:ilsa_desk",
+          "obj:ilsa_renns_desk"
+        ],
+        "merges": [
+          {
+            "canonical_id": "obj:ilsa_desk",
+            "member": "obj:ilsa_renns_desk",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "obj:ilsa_desk",
+        "same_pairs": [
+          "p0209"
+        ],
+        "served": "obj:ilsa_desk",
+        "status": "applied",
+        "votes": {
+          "obj:ilsa_desk": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "obj:master_meter_housing",
+          "obj:old_meter_housing"
+        ],
+        "merges": [
+          {
+            "canonical_id": "obj:master_meter_housing",
+            "member": "obj:old_meter_housing",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "obj:master_meter_housing",
+        "same_pairs": [
+          "p0225"
+        ],
+        "served": "obj:master_meter_housing",
+        "status": "applied",
+        "votes": {
+          "obj:master_meter_housing": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "org:allocation_office",
+          "place:allocation_office"
+        ],
+        "merges": [
+          {
+            "canonical_id": "org:allocation_office",
+            "member": "place:allocation_office",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "org:allocation_office",
+        "same_pairs": [
+          "p0245"
+        ],
+        "served": "org:allocation_office",
+        "status": "applied",
+        "votes": {
+          "org:allocation_office": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "org:wellhead",
+          "place:wellhead"
+        ],
+        "merges": [
+          {
+            "canonical_id": "place:wellhead",
+            "member": "org:wellhead",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "place:wellhead",
+        "same_pairs": [
+          "p0251"
+        ],
+        "served": "place:wellhead",
+        "status": "applied",
+        "votes": {
+          "place:wellhead": 1
+        }
+      },
+      {
+        "different_pairs": [],
+        "members": [
+          "person:ilsa_renn",
+          "person:tin_ear_clerk"
+        ],
+        "merges": [
+          {
+            "canonical_id": "person:ilsa_renn",
+            "member": "person:tin_ear_clerk",
+            "outcome": "merged"
+          }
+        ],
+        "partial": false,
+        "representative": "person:ilsa_renn",
+        "same_pairs": [
+          "p0257"
+        ],
+        "served": "person:ilsa_renn",
+        "status": "applied",
+        "votes": {
+          "person:ilsa_renn": 1
+        }
+      }
+    ],
+    "counts": {
+      "batches": 12,
+      "candidates": 286,
+      "components": 11,
+      "conflicting_components": 0,
+      "merges": {
+        "merged": 11
+      },
+      "statuses": {
+        "answered": 286
+      },
+      "stray": 0,
+      "verdicts": {
+        "different": 263,
+        "same": 11,
+        "unsure": 12
+      }
+    },
+    "gate": "merge_gate",
+    "model": "claude-sonnet-4-6",
+    "pairs": [
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "doc:canonical_ledgers",
+        "b_names": [
+          "the canonical ledgers"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0001",
+        "reason": "Both refer to official Council allocation records kept in the vault, but 'canonical books' and 'canonical ledgers' may be the same set described differently or distinct items co-located in the vault.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "doc:council_allocation_books",
+        "b_names": [
+          "the Council allocation books"
+        ],
+        "batch": 1,
+        "keep": "a",
+        "keep_id": "doc:canonical_books",
+        "pair_id": "p0002",
+        "reason": "Both describe the official Council allocation records that don't reconcile with the master meter total; 'canonical books' and 'Council allocation books' are the same document set.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "doc:crays_books",
+        "b_names": [
+          "Cray's books"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0003",
+        "reason": "Cray's books are a specific administrator's personal records listed separately from the canonical Council books in the unified archive.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "doc:dead_admin_records",
+        "b_names": [
+          "dead administrators' records"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0004",
+        "reason": "Dead administrators' records are files of deceased personnel kept alongside the canonical books, not the canonical books themselves.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "doc:marns_books",
+        "b_names": [
+          "Marn's books"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0005",
+        "reason": "Marn's books are a specific administrator's records listed separately from the canonical books in the unified archive.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "doc:second_set_of_books",
+        "b_names": [
+          "the second set of books"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0006",
+        "reason": "The second set of books is explicitly a shadow ledger kept alongside the originals to account for the fraud, contrasted with the canonical books.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "event:assembly",
+        "b_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0007",
+        "reason": "The assembly is an event (a public gathering/tribunal), not a document.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "obj:condenser_logbook",
+        "b_names": [
+          "the condenser station logbook"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0008",
+        "reason": "The condenser station logbook is a physical logbook kept at the Rust Quarter condenser, not the Council's canonical allocation records.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "obj:council_writ",
+        "b_names": [
+          "the Council writ"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0009",
+        "reason": "The Council writ is a legal authorization document, not the canonical allocation books.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "obj:marn_allocation_seal",
+        "b_names": [
+          "Marn's Allocation seal"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0010",
+        "reason": "Marn's Allocation seal is a physical sealing instrument, not the canonical books.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "org:allocation_office",
+        "b_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0011",
+        "reason": "The Allocation Office is an organization/institution, not a document.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "org:council",
+        "b_names": [
+          "the Council"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0012",
+        "reason": "The Council is a governing body/organization, not a document.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "place:allocation_corridor",
+        "b_names": [
+          "the Allocation corridor"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0013",
+        "reason": "The Allocation corridor is a physical place, not a document.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "place:allocation_office",
+        "b_names": [
+          "the Allocation Office"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0014",
+        "reason": "The Allocation Office is a physical place, not a document.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0015",
+        "reason": "The Council tier is a physical location, not a document.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_books",
+        "a_names": [
+          "the Council's books",
+          "the accounting",
+          "the books",
+          "the canonical books"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0016",
+        "reason": "The Records Vault is a physical place where the canonical books are stored, not the books themselves.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_ledgers",
+        "a_names": [
+          "the canonical ledgers"
+        ],
+        "b": "doc:cray_ledgers",
+        "b_names": [
+          "Cray's ledgers"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0017",
+        "reason": "Cray's ledgers have no context sentences; cannot determine if they are among the canonical ledgers or a separate administrator's set.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "doc:canonical_ledgers",
+        "a_names": [
+          "the canonical ledgers"
+        ],
+        "b": "doc:ilsa_ledgers",
+        "b_names": [
+          "the second-hand ledgers"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0018",
+        "reason": "The second-hand ledgers are a separate document the investigator lays on a desk to confront a clerk, distinct from the vault's canonical ledgers.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:canonical_ledgers",
+        "a_names": [
+          "the canonical ledgers"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0019",
+        "reason": "The Records Vault is a physical place; the canonical ledgers are documents stored inside it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:core_record",
+        "a_names": [
+          "the core's record"
+        ],
+        "b": "obj:core",
+        "b_names": [
+          "the core",
+          "the memory core"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0020",
+        "reason": "The core's record is a document about the memory core; the core itself is a physical hardware component pulled from the master meter.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "doc:crays_books",
+        "b_names": [
+          "Cray's books"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0021",
+        "reason": "Cray's books are a specific administrator's records listed separately in the unified archive, not the general Council allocation books.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "doc:ilsa_ledgers",
+        "b_names": [
+          "the second-hand ledgers"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0022",
+        "reason": "The second ledger is a separate document used to confront a clerk, distinct from the Council allocation books.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "doc:inventory_ledger",
+        "b_names": [
+          "the inventory ledger"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0023",
+        "reason": "The inventory ledger is held by the vault clerk to track vault contents, distinct from the Council allocation books that record water distribution.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "doc:marns_books",
+        "b_names": [
+          "Marn's books"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0024",
+        "reason": "Marn's books are a specific administrator's records listed separately in the unified archive, not the general Council allocation books.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "doc:second_set_of_books",
+        "b_names": [
+          "the second set of books"
+        ],
+        "batch": 1,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0025",
+        "reason": "The second set of books is explicitly a shadow ledger for the fraud, contrasted with the originals (the Council allocation books) in the same vault.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "event:assembly",
+        "b_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0026",
+        "reason": "One is a financial document; the other is a governance event \u2014 different kinds entirely.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "obj:council_writ",
+        "b_names": [
+          "the Council writ"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0027",
+        "reason": "The allocation books are the ledger records; the Council writ is a one-off authorization document granting vault access.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "obj:inventory_ledger",
+        "b_names": [
+          "the inventory ledger"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0028",
+        "reason": "The inventory ledger tracks what is physically inside the vault; the Council allocation books are the macro water-allocation accounts that fail to reconcile with the master total \u2014 different scope and purpose.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "obj:marn_allocation_seal",
+        "b_names": [
+          "Marn's Allocation seal"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0029",
+        "reason": "One is a document; the other is a physical lead seal used for official stamping.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0030",
+        "reason": "One is the document content; the other is the pneumatic rack furniture that houses ledgers.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "org:allocation_office",
+        "b_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0031",
+        "reason": "One is a document; the other is the organization that produced it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "org:council",
+        "b_names": [
+          "the Council"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0032",
+        "reason": "One is a document; the other is the governing body whose name it bears.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "place:allocation_corridor",
+        "b_names": [
+          "the Allocation corridor"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0033",
+        "reason": "One is a document; the other is a physical corridor.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "place:allocation_office",
+        "b_names": [
+          "the Allocation Office"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0034",
+        "reason": "One is a document; the other is the physical office room.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0035",
+        "reason": "One is a document; the other is a physical level of the habitat.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:council_allocation_books",
+        "a_names": [
+          "the Council allocation books"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0036",
+        "reason": "One is a document; the other is the physical vault room that stores it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:cray_ledgers",
+        "a_names": [
+          "Cray's ledgers"
+        ],
+        "b": "doc:crays_books",
+        "b_names": [
+          "Cray's books"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0037",
+        "reason": "'Cray's ledgers' has no context; 'Cray's books' appears in a formal unified-archive inventory \u2014 names are synonymous but evidence is insufficient to confirm identity.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "doc:cray_ledgers",
+        "a_names": [
+          "Cray's ledgers"
+        ],
+        "b": "doc:ilsa_ledgers",
+        "b_names": [
+          "the second-hand ledgers"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0038",
+        "reason": "Cray's ledgers belong to the administrator Cray; the second-hand ledgers are a separate confrontation document laid on Ilsa's desk.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:cray_ledgers",
+        "a_names": [
+          "Cray's ledgers"
+        ],
+        "b": "obj:crays_personal_case",
+        "b_names": [
+          "Cray's PERSONAL case",
+          "the personal case"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0039",
+        "reason": "Ledgers are documents; the PERSONAL case is a physical latched container \u2014 different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:crays_books",
+        "a_names": [
+          "Cray's books"
+        ],
+        "b": "doc:marns_books",
+        "b_names": [
+          "Marn's books"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0040",
+        "reason": "The same sentence lists Cray's books and Marn's books as separate items in the unified archive.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:crays_books",
+        "a_names": [
+          "Cray's books"
+        ],
+        "b": "doc:second_set_of_books",
+        "b_names": [
+          "the second set of books"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0041",
+        "reason": "Cray's books are the official records; the second set of books is the hidden shadow accounting for the illicit scheme.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:crays_books",
+        "a_names": [
+          "Cray's books"
+        ],
+        "b": "obj:crays_personal_case",
+        "b_names": [
+          "Cray's PERSONAL case",
+          "the personal case"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0042",
+        "reason": "Cray's books are documents; the PERSONAL case is a physical latched container.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "doc:dead_mens_files",
+        "b_names": [
+          "the dead men's files"
+        ],
+        "batch": 2,
+        "keep": "a",
+        "keep_id": "doc:dead_admin_records",
+        "pair_id": "p0043",
+        "reason": "Both sentences describe the same vault's contents with identical accompanying items (canonical books/ledgers and seal blanks), and both phrases denote records of deceased administrators.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "obj:condenser_logbook",
+        "b_names": [
+          "the condenser station logbook"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0044",
+        "reason": "Dead administrators' records are archival files in the Records Vault; the condenser logbook is a live operational log kept at the Rust Quarter station.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0045",
+        "reason": "One is a collection of archival documents; the other is a single physical identity badge.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "obj:master_meter",
+        "b_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0046",
+        "reason": "One is a collection of documents; the other is a physical measurement device.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0047",
+        "reason": "Dead administrators' records are a standing archive; Tovan's letter is a single folded sheet found tucked in a logbook.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "place:dead_elevator_shaft",
+        "b_names": [
+          "the dead elevator"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0048",
+        "reason": "One is a document collection; the other is a physical elevator shaft.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "place:dead_stairs",
+        "b_names": [
+          "the dead stairs"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0049",
+        "reason": "One is a document collection; the other is a physical stairway.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_admin_records",
+        "a_names": [
+          "dead administrators' records"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 2,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0050",
+        "reason": "One is the document collection; the other is the physical vault room that stores it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_mens_files",
+        "a_names": [
+          "the dead men's files"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0051",
+        "reason": "Dead men's files are archival records in the Records Vault; the guild badge is a physical credential used for door access.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_mens_files",
+        "a_names": [
+          "the dead men's files"
+        ],
+        "b": "obj:master_meter",
+        "b_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0052",
+        "reason": "Dead men's files are archival documents; the master meter is a water-measurement instrument.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_mens_files",
+        "a_names": [
+          "the dead men's files"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0053",
+        "reason": "Dead men's files are records in the vault; Tovan's letter is a specific folded note found in a logbook.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_mens_files",
+        "a_names": [
+          "the dead men's files"
+        ],
+        "b": "place:dead_elevator_shaft",
+        "b_names": [
+          "the dead elevator"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0054",
+        "reason": "Dead men's files are documents stored in the Records Vault; the dead elevator is a defunct physical shaft below the Council tier.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:dead_mens_files",
+        "a_names": [
+          "the dead men's files"
+        ],
+        "b": "place:dead_stairs",
+        "b_names": [
+          "the dead stairs"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0055",
+        "reason": "Dead men's files are archival records; the dead stairs are a physical maintenance stairway.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "event:badge_entries",
+        "b_names": [
+          "the Wellhead badge entries"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0056",
+        "reason": "The door log is a physical record/document; the badge entries are specific events recorded within that log.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "obj:door_log",
+        "b_names": [
+          "the door log"
+        ],
+        "batch": 3,
+        "keep": "a",
+        "keep_id": "doc:door_log",
+        "pair_id": "p0057",
+        "reason": "Both cards share identical name, identical context sentences, and describe the same Wellhead door access record \u2014 the doc and obj kinds are a registry duplication of one thing.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0058",
+        "reason": "The door log is a record-keeping document; the guild badge is a physical identity credential.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "obj:maintenance_log",
+        "b_names": [
+          "the maintenance log"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0059",
+        "reason": "The door log and maintenance log are explicitly described as two separate systems kept by different mechanisms.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "org:wellhead",
+        "b_names": [
+          "Wellhead"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0060",
+        "reason": "The door log is a document; Wellhead as org is an organizational entity.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "place:wellhead",
+        "b_names": [
+          "the Wellhead",
+          "the Wellhead facility"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0061",
+        "reason": "The door log is a document; the Wellhead is a physical facility/place.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "place:wellhead_hatch",
+        "b_names": [
+          "the Wellhead hatch",
+          "the hatch"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0062",
+        "reason": "The door log is the record itself; the Wellhead hatch is the physical door the log tracks.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:father_survey",
+        "a_names": [
+          "Father's old survey"
+        ],
+        "b": "event:southern_survey",
+        "b_names": [
+          "the southern survey"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0063",
+        "reason": "Father's old survey is an existing document; the southern survey is a new field expedition commissioned by Maret using those maps.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:father_survey",
+        "a_names": [
+          "Father's old survey"
+        ],
+        "b": "obj:aquifer_maps",
+        "b_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0064",
+        "reason": "Father's survey and the aquifer maps found on Tovan's body may be the same artifact described differently, but the survey could be a separate document from the maps.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "doc:father_survey",
+        "a_names": [
+          "Father's old survey"
+        ],
+        "b": "place:deep_aquifer",
+        "b_names": [
+          "deep aquifer",
+          "the deep aquifer"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0065",
+        "reason": "Father's survey is a document; the deep aquifer is a physical underground water source.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:father_survey",
+        "a_names": [
+          "Father's old survey"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0066",
+        "reason": "Father's old survey is the document; the southern aquifer site is the physical location the survey describes.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:ilsa_ledgers",
+        "a_names": [
+          "the second-hand ledgers"
+        ],
+        "b": "doc:inventory_ledger",
+        "b_names": [
+          "the inventory ledger"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0067",
+        "reason": "The second-hand ledger Ilsa is shown is a specific document used as evidence; the inventory ledger is the clerk's own operational record.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:ilsa_ledgers",
+        "a_names": [
+          "the second-hand ledgers"
+        ],
+        "b": "doc:second_set_of_books",
+        "b_names": [
+          "the second set of books"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0068",
+        "reason": "The second ledger shown to Ilsa and the second set of books in the vault may be the same shadow accounting document, but the context does not confirm they are identical.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "doc:ilsa_ledgers",
+        "a_names": [
+          "the second-hand ledgers"
+        ],
+        "b": "event:credential_reuse",
+        "b_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0069",
+        "reason": "The second-hand ledger is a document; the second Tovan / second sign-in is an event.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:ilsa_ledgers",
+        "a_names": [
+          "the second-hand ledgers"
+        ],
+        "b": "obj:false_drawer",
+        "b_names": [
+          "the false drawer"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0070",
+        "reason": "The second ledger is an accounting document; the false drawer is a concealed compartment in a desk.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:ilsa_ledgers",
+        "a_names": [
+          "the second-hand ledgers"
+        ],
+        "b": "obj:inventory_ledger",
+        "b_names": [
+          "the inventory ledger"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0071",
+        "reason": "The second-hand ledger is the fraudulent accounting document shown as evidence; the inventory ledger is the vault clerk's own operational record.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:ilsa_ledgers",
+        "a_names": [
+          "the second-hand ledgers"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0072",
+        "reason": "The second-hand ledger is a specific accounting document; the pneumatic ledger racks are physical storage furniture.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:inventory_ledger",
+        "a_names": [
+          "the inventory ledger"
+        ],
+        "b": "doc:second_set_of_books",
+        "b_names": [
+          "the second set of books"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0073",
+        "reason": "The inventory ledger is the clerk's operational record of vault contents; the second set of books is the fraudulent shadow accounting kept separately.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:inventory_ledger",
+        "a_names": [
+          "the inventory ledger"
+        ],
+        "b": "obj:inventory_ledger",
+        "b_names": [
+          "the inventory ledger"
+        ],
+        "batch": 3,
+        "keep": "a",
+        "keep_id": "doc:inventory_ledger",
+        "pair_id": "p0074",
+        "reason": "Both cards share identical name and identical context sentences describing the same vault clerk's inventory record \u2014 the doc and obj kinds are a registry duplication.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "doc:inventory_ledger",
+        "a_names": [
+          "the inventory ledger"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 3,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0075",
+        "reason": "The inventory ledger is a single clerk's document; the pneumatic ledger racks are the physical storage furniture holding many ledgers.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:marns_books",
+        "a_names": [
+          "Marn's books"
+        ],
+        "b": "doc:second_set_of_books",
+        "b_names": [
+          "the second set of books"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0076",
+        "reason": "Marn's books are ledgers held in the unified archive; the second set of books is a suspected shadow ledger kept in the vault \u2014 different documents with different purposes.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:marns_books",
+        "a_names": [
+          "Marn's books"
+        ],
+        "b": "event:marn_tribunal",
+        "b_names": [
+          "Marn's tribunal"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0077",
+        "reason": "Marn's books are documents; Marn's tribunal is an event \u2014 entirely different kinds of entities.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:marns_books",
+        "a_names": [
+          "Marn's books"
+        ],
+        "b": "obj:marn_allocation_seal",
+        "b_names": [
+          "Marn's Allocation seal"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0078",
+        "reason": "Marn's books are ledger documents; Marn's Allocation seal is a physical object melted down as punishment.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:marns_books",
+        "a_names": [
+          "Marn's books"
+        ],
+        "b": "place:marn_quarters",
+        "b_names": [
+          "Marn's quarters"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0079",
+        "reason": "Marn's books are documents; Marn's quarters is a place where he was confined.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:rationing_schedule",
+        "a_names": [
+          "the rationing schedule"
+        ],
+        "b": "event:rationing_vote",
+        "b_names": [
+          "the rationing vote"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0080",
+        "reason": "The rationing schedule is the posted document; the rationing vote is the Council decision event that preceded it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:rationing_schedule",
+        "a_names": [
+          "the rationing schedule"
+        ],
+        "b": "place:bulletin_wall",
+        "b_names": [
+          "the bulletin wall"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0081",
+        "reason": "The rationing schedule is a document posted on the bulletin wall; the bulletin wall is the physical location where it was posted.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:second_set_of_books",
+        "a_names": [
+          "the second set of books"
+        ],
+        "b": "event:credential_reuse",
+        "b_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0082",
+        "reason": "The second set of books is a shadow ledger document; the second Tovan/second sign-in is an access event involving a stolen credential.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:second_set_of_books",
+        "a_names": [
+          "the second set of books"
+        ],
+        "b": "obj:false_drawer",
+        "b_names": [
+          "the false drawer"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0083",
+        "reason": "The second set of books is a ledger kept in the vault; the false drawer is a hidden compartment in a desk.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:second_set_of_books",
+        "a_names": [
+          "the second set of books"
+        ],
+        "b": "obj:inventory_ledger",
+        "b_names": [
+          "the inventory ledger"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0084",
+        "reason": "The second set of books is a suspected shadow ledger; the inventory ledger is the vault clerk's official record of what enters the vault.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "doc:second_set_of_books",
+        "a_names": [
+          "the second set of books"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0085",
+        "reason": "The second set of books is a suspected shadow ledger; the pneumatic ledger racks are the physical storage infrastructure in the Allocation Office.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "event:marn_tribunal",
+        "b_names": [
+          "Marn's tribunal"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0086",
+        "reason": "Both carry the alias 'the tribunal' and both involve Marn's public accountability, but the assembly appears to be a broader settlement-wide gathering while the tribunal is a formal legal proceeding \u2014 they may be the same event or sequential events.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "obj:council_writ",
+        "b_names": [
+          "the Council writ"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0087",
+        "reason": "The assembly is an event; the Council writ is a legal document authorizing vault access.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "org:allocation_office",
+        "b_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0088",
+        "reason": "The assembly is an event; the Allocation Office is an organizational body with a physical location.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "org:council",
+        "b_names": [
+          "the Council"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0089",
+        "reason": "The assembly is an event; the Council is the governing organization.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "org:tribunal",
+        "b_names": [
+          "the tribunal"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0090",
+        "reason": "Both 'the assembly' and 'the tribunal' share the alias 'the tribunal' and both involve Marn; context shows they are mentioned as separate events ('through the tribunal, through the assembly'), confirming they are different.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "place:bazaar_table",
+        "b_names": [
+          "the table at the Bazaar"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0091",
+        "reason": "The assembly is a large settlement event; the table at the Bazaar is a physical place where a smaller meeting occurred.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0092",
+        "reason": "The assembly is an event; the Council tier is a physical location within Anchor.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "place:flats",
+        "b_names": [
+          "the flats",
+          "the open desert",
+          "the salt flats"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0093",
+        "reason": "The assembly is an event; the flats/salt flats are an exterior geographical location outside the dome.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:assembly",
+        "a_names": [
+          "the assembly",
+          "the open assembly"
+        ],
+        "b": "place:gallery",
+        "b_names": [
+          "the gallery"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0094",
+        "reason": "The gallery with its assembly hall alias could be the venue where the open assembly took place, but one is a place and one is an event \u2014 they are not the same entity even if related.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "event:badge_entries",
+        "a_names": [
+          "the Wellhead badge entries"
+        ],
+        "b": "obj:door_log",
+        "b_names": [
+          "the door log"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0095",
+        "reason": "The Wellhead badge entries are access events; the door log is the physical record that documents those entries.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:badge_entries",
+        "a_names": [
+          "the Wellhead badge entries"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0096",
+        "reason": "The Wellhead badge entries are access events; Tovan's badge is the physical credential object used in those events.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:badge_entries",
+        "a_names": [
+          "the Wellhead badge entries"
+        ],
+        "b": "obj:survey_condensers",
+        "b_names": [
+          "the two condensers"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0097",
+        "reason": "The Wellhead badge entries are access events at the Wellhead; the two condensers are physical equipment at a different location (Sela Voss's station).",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:badge_entries",
+        "a_names": [
+          "the Wellhead badge entries"
+        ],
+        "b": "org:wellhead",
+        "b_names": [
+          "Wellhead"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0098",
+        "reason": "The Wellhead badge entries are access events; Wellhead as an org is the organizational/operational entity \u2014 different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:badge_entries",
+        "a_names": [
+          "the Wellhead badge entries"
+        ],
+        "b": "place:wellhead",
+        "b_names": [
+          "the Wellhead",
+          "the Wellhead facility"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0099",
+        "reason": "The Wellhead badge entries are access events; the Wellhead facility is the physical place where those entries occurred.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:badge_entries",
+        "a_names": [
+          "the Wellhead badge entries"
+        ],
+        "b": "place:wellhead_hatch",
+        "b_names": [
+          "the Wellhead hatch",
+          "the hatch"
+        ],
+        "batch": 4,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0100",
+        "reason": "The Wellhead badge entries are the access log events; the Wellhead hatch is the specific physical entry point that the door log recorded passage through.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "event:tovan_death",
+        "b_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0101",
+        "reason": "credential reuse is the act of using a stolen badge after death; tovan_death is the death event itself",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "event:tovan_gap",
+        "b_names": [
+          "Tovan's gap"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0102",
+        "reason": "credential reuse is an unauthorized sign-in event; tovan_gap is a separate named gap that opened the same year",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "obj:aquifer_maps",
+        "b_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0103",
+        "reason": "credential reuse is an event; aquifer maps are a physical object found on the body",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "obj:false_drawer",
+        "b_names": [
+          "the false drawer"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0104",
+        "reason": "credential reuse is an event; the false drawer is a physical concealed compartment",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "obj:footlocker",
+        "b_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0105",
+        "reason": "credential reuse is an event; the footlocker is a physical effects case",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0106",
+        "reason": "the credential reuse is the act of using the stolen badge; the badge itself is the object \u2014 event vs object",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0107",
+        "reason": "credential reuse is an event; tovan_letter is a physical folded sheet found in a logbook",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0108",
+        "reason": "credential reuse is an event; the guild is an organization",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:credential_reuse",
+        "a_names": [
+          "the second Tovan",
+          "the second sign-in"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0109",
+        "reason": "credential reuse is an event; the southern aquifer site is a geographic location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:dome_breach",
+        "a_names": [
+          "the dome breach"
+        ],
+        "b": "event:the_collapse",
+        "b_names": [
+          "the Collapse"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0110",
+        "reason": "the dome breach is an in-settlement structural failure in the early years; the Collapse is a pre-settlement civilization-level event predating the colony",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:dome_breach",
+        "a_names": [
+          "the dome breach"
+        ],
+        "b": "event:tovan_death",
+        "b_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0111",
+        "reason": "the dome breach is a structural failure; tovan_death is a person's death \u2014 unrelated events",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:dome_breach",
+        "a_names": [
+          "the dome breach"
+        ],
+        "b": "obj:patchwork_dome",
+        "b_names": [
+          "Anchor's dome",
+          "the patchwork dome"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0112",
+        "reason": "the dome breach is an event; the patchwork dome is the physical structure",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:dome_breach",
+        "a_names": [
+          "the dome breach"
+        ],
+        "b": "place:anchor",
+        "b_names": [
+          "Anchor",
+          "the settlement"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0113",
+        "reason": "the dome breach is an event; Anchor is the settlement place",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:dome_breach",
+        "a_names": [
+          "the dome breach"
+        ],
+        "b": "place:flats",
+        "b_names": [
+          "the flats",
+          "the open desert",
+          "the salt flats"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0114",
+        "reason": "the dome breach is an event inside the dome; the flats are the exterior desert geography",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:dome_breach",
+        "a_names": [
+          "the dome breach"
+        ],
+        "b": "place:south_dome_panel",
+        "b_names": [
+          "the south dome panel"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0115",
+        "reason": "the dome breach is an event; the south dome panel is a specific structural section of the dome",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:marn_tribunal",
+        "a_names": [
+          "Marn's tribunal"
+        ],
+        "b": "obj:marn_allocation_seal",
+        "b_names": [
+          "Marn's Allocation seal"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0116",
+        "reason": "the tribunal is an event; the Allocation seal is a physical object destroyed as part of that proceeding",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:marn_tribunal",
+        "a_names": [
+          "Marn's tribunal"
+        ],
+        "b": "org:tribunal",
+        "b_names": [
+          "the tribunal"
+        ],
+        "batch": 5,
+        "keep": "a",
+        "keep_id": "event:marn_tribunal",
+        "pair_id": "p0117",
+        "reason": "both name the single specific proceeding against Marn; org:tribunal shares context sentences with event:marn_tribunal and is the same instance, not a standing body",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "event:marn_tribunal",
+        "a_names": [
+          "Marn's tribunal"
+        ],
+        "b": "place:marn_quarters",
+        "b_names": [
+          "Marn's quarters"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0118",
+        "reason": "the tribunal is a legal proceeding event; Marn's quarters is the place where he was confined pending it",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:meter_dark",
+        "a_names": [
+          "master meter going dark",
+          "the meter failing"
+        ],
+        "b": "obj:access_panel",
+        "b_names": [
+          "the access panel"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0119",
+        "reason": "meter going dark is an event; the access panel is a physical component of the meter housing",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:meter_dark",
+        "a_names": [
+          "master meter going dark",
+          "the meter failing"
+        ],
+        "b": "obj:core",
+        "b_names": [
+          "the core",
+          "the memory core"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0120",
+        "reason": "the meter failing is an event; the memory core is a physical component pulled from the meter",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:meter_dark",
+        "a_names": [
+          "master meter going dark",
+          "the meter failing"
+        ],
+        "b": "obj:master_meter",
+        "b_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0121",
+        "reason": "the meter going dark is the failure event; the master meter is the physical instrument",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:meter_dark",
+        "a_names": [
+          "master meter going dark",
+          "the meter failing"
+        ],
+        "b": "obj:master_meter_housing",
+        "b_names": [
+          "meter housing",
+          "the housing"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0122",
+        "reason": "the meter failing is an event; the meter housing is a physical enclosure component",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:meter_dark",
+        "a_names": [
+          "master meter going dark",
+          "the meter failing"
+        ],
+        "b": "obj:old_meter_housing",
+        "b_names": [
+          "the old housing"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0123",
+        "reason": "the meter failing is an event; the old housing is the physical enclosure that received the new meter",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:southern_survey",
+        "a_names": [
+          "the southern survey"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 5,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0124",
+        "reason": "the southern survey is an organized expedition event; the southern aquifer site is the geographic location being surveyed",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:technician_death",
+        "a_names": [
+          "the technician's death"
+        ],
+        "b": "event:tovan_death",
+        "b_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "batch": 5,
+        "keep": "b",
+        "keep_id": "event:tovan_death",
+        "pair_id": "p0125",
+        "reason": "the technician who died is Tovan Voss; both events reference the same death, and tovan_death carries fuller provenance and aliases",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "event:technician_death",
+        "a_names": [
+          "the technician's death"
+        ],
+        "b": "obj:guild_locker",
+        "b_names": [
+          "the technician's guild locker"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0126",
+        "reason": "One is an event (a death), the other is a physical object (a locker); different kinds entirely.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:technician_death",
+        "a_names": [
+          "the technician's death"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0127",
+        "reason": "One is an event (a death), the other is a geographic place; different kinds entirely.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:the_collapse",
+        "a_names": [
+          "the Collapse"
+        ],
+        "b": "place:anchor",
+        "b_names": [
+          "Anchor",
+          "the settlement"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0128",
+        "reason": "The Collapse is a historical event; Anchor is the settlement that survived it \u2014 different kinds entirely.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "event:tovan_gap",
+        "b_names": [
+          "Tovan's gap"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0129",
+        "reason": "Tovan's death is the closed Voss matter; Tovan's gap is something that 'opened' the same year, suggesting a separate event (a records or supply gap), not the death itself.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "obj:aquifer_maps",
+        "b_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0130",
+        "reason": "One is an event (a death), the other is a physical object (maps found on the body); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "obj:footlocker",
+        "b_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0131",
+        "reason": "One is an event (a death), the other is a physical object (a footlocker); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0132",
+        "reason": "One is an event (a death), the other is a physical object (a badge); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0133",
+        "reason": "One is an event (a death), the other is a physical object (a letter); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0134",
+        "reason": "One is an event (a death), the other is an organization; different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "place:flats",
+        "b_names": [
+          "the flats",
+          "the open desert",
+          "the salt flats"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0135",
+        "reason": "One is an event (a death), the other is a physical location; different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_death",
+        "a_names": [
+          "Tovan's death",
+          "the Voss matter"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0136",
+        "reason": "One is an event (a death), the other is a geographic place; different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_gap",
+        "a_names": [
+          "Tovan's gap"
+        ],
+        "b": "obj:aquifer_maps",
+        "b_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0137",
+        "reason": "One is an event (a gap that opened), the other is a physical object (maps); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_gap",
+        "a_names": [
+          "Tovan's gap"
+        ],
+        "b": "obj:footlocker",
+        "b_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0138",
+        "reason": "One is an event (a gap), the other is a physical object (a footlocker); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_gap",
+        "a_names": [
+          "Tovan's gap"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0139",
+        "reason": "One is an event (a gap), the other is a physical object (a badge); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_gap",
+        "a_names": [
+          "Tovan's gap"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0140",
+        "reason": "One is an event (a gap), the other is a physical object (a letter); different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_gap",
+        "a_names": [
+          "Tovan's gap"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0141",
+        "reason": "One is an event (a gap), the other is an organization; different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "event:tovan_gap",
+        "a_names": [
+          "Tovan's gap"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0142",
+        "reason": "One is an event (a gap), the other is a geographic place; different kinds.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:access_panel",
+        "a_names": [
+          "the access panel"
+        ],
+        "b": "obj:core",
+        "b_names": [
+          "the core",
+          "the memory core"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0143",
+        "reason": "The access panel and the memory core are distinct components of the meter, not the same object.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:access_panel",
+        "a_names": [
+          "the access panel"
+        ],
+        "b": "obj:master_meter",
+        "b_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0144",
+        "reason": "The access panel is a component of the meter; the master meter is the whole device \u2014 part vs whole.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:access_panel",
+        "a_names": [
+          "the access panel"
+        ],
+        "b": "obj:master_meter_housing",
+        "b_names": [
+          "meter housing",
+          "the housing"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0145",
+        "reason": "The access panel and the meter housing are separate physical components of the same device.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:access_panel",
+        "a_names": [
+          "the access panel"
+        ],
+        "b": "obj:old_meter_housing",
+        "b_names": [
+          "the old housing"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0146",
+        "reason": "The access panel and the old housing are distinct components; the panel gives access, the housing is the outer casing.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:access_panel",
+        "a_names": [
+          "the access panel"
+        ],
+        "b": "place:south_dome_panel",
+        "b_names": [
+          "the south dome panel"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0147",
+        "reason": "The meter access panel is a component of the water meter; the south dome panel is an architectural feature of the dome \u2014 entirely different objects.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:anchor_reactors",
+        "a_names": [
+          "Anchor's reactors"
+        ],
+        "b": "obj:patchwork_dome",
+        "b_names": [
+          "Anchor's dome",
+          "the patchwork dome"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0148",
+        "reason": "The reactors and the patchwork dome are distinct infrastructure elements of Anchor, not the same object.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:anchor_reactors",
+        "a_names": [
+          "Anchor's reactors"
+        ],
+        "b": "place:anchor",
+        "b_names": [
+          "Anchor",
+          "the settlement"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0149",
+        "reason": "The reactors are infrastructure objects within Anchor; Anchor is the settlement itself \u2014 part vs whole.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:aquifer_maps",
+        "a_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "b": "obj:footlocker",
+        "b_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "batch": 6,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0150",
+        "reason": "The maps were found on Tovan's body; the footlocker was brought by Sela later \u2014 two distinct objects with separate provenance.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:aquifer_maps",
+        "a_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0151",
+        "reason": "aquifer maps are paper documents found on a body; guild badge is an identity credential used for access",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:aquifer_maps",
+        "a_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0152",
+        "reason": "aquifer maps are cartographic documents; Tovan's letter is a folded sheet found tucked in a logbook binding",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:aquifer_maps",
+        "a_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0153",
+        "reason": "aquifer maps are physical documents; the guild is an organization that issues seals",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:aquifer_maps",
+        "a_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "b": "place:deep_aquifer",
+        "b_names": [
+          "deep aquifer",
+          "the deep aquifer"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0154",
+        "reason": "aquifer maps are objects (documents); the deep aquifer is a place underground",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:aquifer_maps",
+        "a_names": [
+          "Tovan's maps",
+          "aquifer maps",
+          "deep aquifer maps",
+          "the aquifer maps",
+          "the maps"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0155",
+        "reason": "aquifer maps are documents carried on a person; the southern aquifer site is a physical survey location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:block_meters",
+        "a_names": [
+          "block meters",
+          "block readings",
+          "flow meters"
+        ],
+        "b": "obj:condenser_logbook",
+        "b_names": [
+          "the condenser station logbook"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0156",
+        "reason": "block meters are physical measurement devices; condenser logbook is a written record book",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:block_meters",
+        "a_names": [
+          "block meters",
+          "block readings",
+          "flow meters"
+        ],
+        "b": "place:condenser_station",
+        "b_names": [
+          "the condenser station"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0157",
+        "reason": "block meters are measurement devices; condenser station is a physical facility",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:cigarette_tin",
+        "a_names": [
+          "the flat steel tin"
+        ],
+        "b": "obj:core",
+        "b_names": [
+          "the core",
+          "the memory core"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0158",
+        "reason": "cigarette tin is a personal tobacco container; memory core is an electronic data component from the master meter",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:cigarette_tin",
+        "a_names": [
+          "the flat steel tin"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0159",
+        "reason": "cigarette tin holds tobacco; guild badge is an identity credential",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:cigarette_tin",
+        "a_names": [
+          "the flat steel tin"
+        ],
+        "b": "obj:memory_core_case",
+        "b_names": [
+          "the steel document case"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0160",
+        "reason": "cigarette tin is a personal tobacco container; steel document case holds the memory core on a shelf",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:cigarette_tin",
+        "a_names": [
+          "the flat steel tin"
+        ],
+        "b": "obj:spare_fuses",
+        "b_names": [
+          "the spare fuses"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0161",
+        "reason": "cigarette tin holds hand-rolled cigarettes; spare fuses tin is taped inside an access panel",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:condenser_logbook",
+        "a_names": [
+          "the condenser station logbook"
+        ],
+        "b": "place:condenser_station",
+        "b_names": [
+          "the condenser station"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0162",
+        "reason": "condenser logbook is a written record; condenser station is the physical facility",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:condenser_logbook",
+        "a_names": [
+          "the condenser station logbook"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0163",
+        "reason": "condenser logbook is a document; records vault is a physical room in the allocation facility",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:core",
+        "a_names": [
+          "the core",
+          "the memory core"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0164",
+        "reason": "memory core is an electronic data component; guild badge is an identity credential",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:core",
+        "a_names": [
+          "the core",
+          "the memory core"
+        ],
+        "b": "obj:master_meter",
+        "b_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0165",
+        "reason": "memory core is a removable data component extracted from the master meter; master meter is the device itself",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:core",
+        "a_names": [
+          "the core",
+          "the memory core"
+        ],
+        "b": "obj:master_meter_housing",
+        "b_names": [
+          "meter housing",
+          "the housing"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0166",
+        "reason": "memory core is the removable data component; meter housing is the outer casing with the scorch mark",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:core",
+        "a_names": [
+          "the core",
+          "the memory core"
+        ],
+        "b": "obj:old_meter_housing",
+        "b_names": [
+          "the old housing"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0167",
+        "reason": "memory core is the removable data component; old housing is the physical casing the new meter was installed into",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:council_writ",
+        "a_names": [
+          "the Council writ"
+        ],
+        "b": "org:allocation_office",
+        "b_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0168",
+        "reason": "Council writ is a legal document; Allocation Office is an organization",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:council_writ",
+        "a_names": [
+          "the Council writ"
+        ],
+        "b": "org:council",
+        "b_names": [
+          "the Council"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0169",
+        "reason": "Council writ is a document; the Council is the governing body that issues writs",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:council_writ",
+        "a_names": [
+          "the Council writ"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0170",
+        "reason": "Council writ is a document; Council tier is a physical location in the settlement",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:crays_personal_case",
+        "a_names": [
+          "Cray's PERSONAL case",
+          "the personal case"
+        ],
+        "b": "obj:footlocker",
+        "b_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0171",
+        "reason": "both share the alias 'the case' and the footlocker context mentions 'beside it sat a second case' suggesting they are distinct objects in the same scene, but the alias overlap warrants caution",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "obj:crays_personal_case",
+        "a_names": [
+          "Cray's PERSONAL case",
+          "the personal case"
+        ],
+        "b": "obj:memory_core_case",
+        "b_names": [
+          "the steel document case"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0172",
+        "reason": "Cray's personal case is a small latched case labeled PERSONAL; steel document case holds the memory core on a shelf in the vault",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:dig_sledge",
+        "a_names": [
+          "the dig sledge"
+        ],
+        "b": "org:dig_crews",
+        "b_names": [
+          "the dig crews"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0173",
+        "reason": "dig sledge is a vehicle or sled sent out the south lock; dig crews are the people doing excavation work",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "obj:maintenance_log",
+        "b_names": [
+          "the maintenance log"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0174",
+        "reason": "door log and maintenance log are explicitly described as kept by different systems",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:door_log",
+        "a_names": [
+          "the door log"
+        ],
+        "b": "place:wellhead_hatch",
+        "b_names": [
+          "the Wellhead hatch",
+          "the hatch"
+        ],
+        "batch": 7,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0175",
+        "reason": "door log is a record; Wellhead hatch is the physical door whose passage the log records",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:dried_figs",
+        "a_names": [
+          "the dried figs"
+        ],
+        "b": "place:allocation_office",
+        "b_names": [
+          "the Allocation Office"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0176",
+        "reason": "One is a food item bought at a stall; the other is a bureaucratic office on the Council tier.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:dried_figs",
+        "a_names": [
+          "the dried figs"
+        ],
+        "b": "place:cistern_three",
+        "b_names": [
+          "Cistern Three"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0177",
+        "reason": "One is a food item; the other is an underground water reservoir.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:false_drawer",
+        "a_names": [
+          "the false drawer"
+        ],
+        "b": "obj:ilsa_desk_visible_drawer",
+        "b_names": [
+          "the visible drawer"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0178",
+        "reason": "The false drawer is a hidden compartment; the visible drawer is the ordinary outer drawer that conceals it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:floor_plates",
+        "a_names": [
+          "the floor plates"
+        ],
+        "b": "place:bazaar",
+        "b_names": [
+          "the Bazaar",
+          "the Bazaar level"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0179",
+        "reason": "Floor plates are structural elements underfoot; the Bazaar is a market-level place.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:gallery_display",
+        "b_names": [
+          "the gallery display"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0180",
+        "reason": "The footlocker is a dented green case belonging to Tovan; the gallery display is an electronic wall display showing water totals.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:guild_badge",
+        "b_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0181",
+        "reason": "The footlocker is a physical container; the guild badge is an identity credential.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:guild_crimp",
+        "b_names": [
+          "the guild crimp"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0182",
+        "reason": "The footlocker is a personal effects case with a lead-and-wire seal; the guild crimp on the Seed Vault hatch is a separate sealing device on a different object.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:lead_crimp_blanks",
+        "b_names": [
+          "lead crimp blanks"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0183",
+        "reason": "The footlocker is a personal case; lead crimp blanks are raw materials stored in a desk drawer.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:maintenance_log",
+        "b_names": [
+          "the maintenance log"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0184",
+        "reason": "The footlocker is a container for personal effects; the maintenance log is a written record of service work.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:marn_allocation_seal",
+        "b_names": [
+          "Marn's Allocation seal"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0185",
+        "reason": "The footlocker is Tovan's personal case; Marn's Allocation seal is an official administrative seal melted down as punishment.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:memory_core_case",
+        "b_names": [
+          "the steel document case"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0186",
+        "reason": "The footlocker is a dented green case; the steel document case is a separate, smaller anti-static container holding the memory core.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:seal_blanks",
+        "b_names": [
+          "seal blanks",
+          "the seal blanks"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0187",
+        "reason": "The footlocker is a personal effects case; seal blanks are inventory items stored in the Records Vault.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:seal_wire_spool",
+        "b_names": [
+          "seal wire spool"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0188",
+        "reason": "The footlocker is a personal case; the seal wire spool is a small consumable item from a desk drawer.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0189",
+        "reason": "The footlocker is a container; Tovan's letter is a written note found tucked in a logbook.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0190",
+        "reason": "The footlocker is an object; the guild is an organization.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:footlocker",
+        "a_names": [
+          "Tovan's footlocker",
+          "the footlocker",
+          "the maintenance crimp seal"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0191",
+        "reason": "The footlocker is a physical container; the southern aquifer site is a geographic location Tovan died verifying.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:gallery_display",
+        "a_names": [
+          "the gallery display"
+        ],
+        "b": "obj:number_display",
+        "b_names": [
+          "the number on the wall"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0192",
+        "reason": "The gallery display shows water totals in green columns on a wall; the number display refers to a single key figure \u2014 they may overlap contextually but the cards describe distinct referents at different levels of specificity; insufficient evidence to merge.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:gallery_display",
+        "a_names": [
+          "the gallery display"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0193",
+        "reason": "The gallery display is an electronic readout; the pneumatic ledger racks are physical filing infrastructure in the Allocation Office.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:gallery_display",
+        "a_names": [
+          "the gallery display"
+        ],
+        "b": "place:bulletin_wall",
+        "b_names": [
+          "the bulletin wall"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0194",
+        "reason": "The gallery display is an electronic wall display inside the gallery; the bulletin wall is a public posting surface outside the Bazaar.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:gallery_display",
+        "a_names": [
+          "the gallery display"
+        ],
+        "b": "place:gallery",
+        "b_names": [
+          "the gallery"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0195",
+        "reason": "The gallery display is a wall-mounted readout inside the gallery; the gallery is the room containing it \u2014 they are related but distinct entities, one a place and one an object within it, so not the same card.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "obj:gallery_display",
+        "a_names": [
+          "the gallery display"
+        ],
+        "b": "place:gallery_stairs",
+        "b_names": [
+          "the gallery stairs"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0196",
+        "reason": "The gallery display is an object mounted in the gallery; the gallery stairs are a separate architectural feature leading to the gallery level.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "obj:guild_crimp",
+        "b_names": [
+          "the guild crimp"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0197",
+        "reason": "The guild badge is an identity credential; the guild crimp is a physical lead seal on a hatch.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "obj:guild_locker",
+        "b_names": [
+          "the technician's guild locker"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0198",
+        "reason": "The badge is a wearable identity credential; the guild locker is a storage unit where the badge was kept.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "obj:master_meter",
+        "b_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0199",
+        "reason": "The badge is an identity credential; the master meter is a water-measurement instrument.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 8,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0200",
+        "reason": "The badge is an identity credential; Tovan's letter is a written note found in a logbook.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0201",
+        "reason": "one is a physical identity badge, the other is the organization that issued it",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "place:dead_elevator_shaft",
+        "b_names": [
+          "the dead elevator"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0202",
+        "reason": "one is a physical badge object, the other is a decommissioned elevator shaft",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "place:dead_stairs",
+        "b_names": [
+          "the dead stairs"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0203",
+        "reason": "one is a physical badge object, the other is a set of unlit maintenance stairs",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_badge",
+        "a_names": [
+          "Tovan's badge",
+          "dead man's badge",
+          "stolen credential",
+          "the badge"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0204",
+        "reason": "one is a physical badge object, the other is an outdoor survey location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_crimp",
+        "a_names": [
+          "the guild crimp"
+        ],
+        "b": "obj:guild_locker",
+        "b_names": [
+          "the technician's guild locker"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0205",
+        "reason": "one is a sealing crimp on the Seed Vault hatch, the other is a storage locker belonging to a technician",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_crimp",
+        "a_names": [
+          "the guild crimp"
+        ],
+        "b": "obj:lead_crimp_blanks",
+        "b_names": [
+          "lead crimp blanks"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0206",
+        "reason": "one is a specific installed crimp on the vault hatch, the other is a stock of blank crimp materials in a desk drawer",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_crimp",
+        "a_names": [
+          "the guild crimp"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0207",
+        "reason": "one is a physical sealing crimp, the other is the maintenance organization",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:guild_locker",
+        "a_names": [
+          "the technician's guild locker"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0208",
+        "reason": "one is a physical storage locker, the other is the maintenance organization",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:ilsa_desk",
+        "a_names": [
+          "Ilsa Renn's desk"
+        ],
+        "b": "obj:ilsa_renns_desk",
+        "b_names": [
+          "Ilsa's desk"
+        ],
+        "batch": 9,
+        "keep": "a",
+        "keep_id": "obj:ilsa_desk",
+        "pair_id": "p0209",
+        "reason": "both refer to Ilsa Renn's desk \u2014 the clerk's desk the narrator sat across from",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "obj:inventory_ledger",
+        "a_names": [
+          "the inventory ledger"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0210",
+        "reason": "one is a ledger book used for inventory, the other is the rack furniture that holds ledgers",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:lead_crimp_blanks",
+        "a_names": [
+          "lead crimp blanks"
+        ],
+        "b": "obj:seal_blanks",
+        "b_names": [
+          "seal blanks",
+          "the seal blanks"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0211",
+        "reason": "one is a set of six crimp blanks in Ilsa's desk drawer, the other is the stock of seal blanks kept in the Records Vault \u2014 different locations, likely different objects",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:maintenance_log",
+        "a_names": [
+          "the maintenance log"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0212",
+        "reason": "one is a log book, the other is the maintenance organization",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "obj:seal_blanks",
+        "b_names": [
+          "seal blanks",
+          "the seal blanks"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0213",
+        "reason": "one is Marn's personal authority seal, the other is a stock of blank unused seal materials",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "obj:seal_wire_spool",
+        "b_names": [
+          "seal wire spool"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0214",
+        "reason": "one is an official authority seal, the other is a spool of wire used in sealing",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "org:allocation_office",
+        "b_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0215",
+        "reason": "one is a physical seal object, the other is an organization",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "place:allocation_corridor",
+        "b_names": [
+          "the Allocation corridor"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0216",
+        "reason": "one is a physical seal object, the other is a corridor location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "place:allocation_office",
+        "b_names": [
+          "the Allocation Office"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0217",
+        "reason": "one is a physical seal object, the other is an office location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "place:marn_quarters",
+        "b_names": [
+          "Marn's quarters"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0218",
+        "reason": "one is a physical seal object, the other is a residential quarters location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:marn_allocation_seal",
+        "a_names": [
+          "Marn's Allocation seal"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0219",
+        "reason": "one is a physical seal object, the other is a vault location",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:master_meter",
+        "a_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "b": "obj:master_meter_housing",
+        "b_names": [
+          "meter housing",
+          "the housing"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0220",
+        "reason": "the meter is the measuring instrument; the housing is its outer casing \u2014 distinct components",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:master_meter",
+        "a_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "b": "obj:old_meter_housing",
+        "b_names": [
+          "the old housing"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0221",
+        "reason": "the meter is the instrument itself; the old housing is the casing it was installed into",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:master_meter",
+        "a_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "b": "obj:tovan_letter",
+        "b_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0222",
+        "reason": "one is a water-flow measuring device, the other is a written letter",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:master_meter",
+        "a_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "b": "place:dead_elevator_shaft",
+        "b_names": [
+          "the dead elevator"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0223",
+        "reason": "one is a measuring device object, the other is a decommissioned elevator shaft",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:master_meter",
+        "a_names": [
+          "the last honest meter",
+          "the master meter",
+          "the meter",
+          "the new master meter"
+        ],
+        "b": "place:dead_stairs",
+        "b_names": [
+          "the dead stairs"
+        ],
+        "batch": 9,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0224",
+        "reason": "one is a measuring device object, the other is a set of maintenance stairs",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:master_meter_housing",
+        "a_names": [
+          "meter housing",
+          "the housing"
+        ],
+        "b": "obj:old_meter_housing",
+        "b_names": [
+          "the old housing"
+        ],
+        "batch": 9,
+        "keep": "a",
+        "keep_id": "obj:master_meter_housing",
+        "pair_id": "p0225",
+        "reason": "the scorched housing and the old housing are the same physical casing \u2014 context explicitly links the scorch to the scratched-word spot on the old housing",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "obj:number_display",
+        "a_names": [
+          "the number on the wall"
+        ],
+        "b": "obj:pneumatic_ledger_racks",
+        "b_names": [
+          "the pneumatic ledger racks"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0226",
+        "reason": "A displayed number versus physical pneumatic racks \u2014 different objects entirely.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:number_display",
+        "a_names": [
+          "the number on the wall"
+        ],
+        "b": "place:bulletin_wall",
+        "b_names": [
+          "the bulletin wall"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0227",
+        "reason": "A numeric display versus a public posting wall outside the Bazaar \u2014 different objects.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:patchwork_dome",
+        "a_names": [
+          "Anchor's dome",
+          "the patchwork dome"
+        ],
+        "b": "place:anchor",
+        "b_names": [
+          "Anchor",
+          "the settlement"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0228",
+        "reason": "The dome is the physical structure overhead; Anchor is the settlement beneath it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:patchwork_dome",
+        "a_names": [
+          "Anchor's dome",
+          "the patchwork dome"
+        ],
+        "b": "place:flats",
+        "b_names": [
+          "the flats",
+          "the open desert",
+          "the salt flats"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0229",
+        "reason": "The dome encloses the settlement; the salt flats are the open desert beyond it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:patchwork_dome",
+        "a_names": [
+          "Anchor's dome",
+          "the patchwork dome"
+        ],
+        "b": "place:south_dome_panel",
+        "b_names": [
+          "the south dome panel"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0230",
+        "reason": "The patchwork dome is the whole structure; the south dome panel is one specific section of it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:pneumatic_ledger_racks",
+        "a_names": [
+          "the pneumatic ledger racks"
+        ],
+        "b": "place:bulletin_wall",
+        "b_names": [
+          "the bulletin wall"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0231",
+        "reason": "Internal office ledger racks versus a public posting wall at the Bazaar \u2014 different objects.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:sample_vials",
+        "a_names": [
+          "the sample vials"
+        ],
+        "b": "obj:wooden_crate_vials",
+        "b_names": [
+          "the wooden crate"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0232",
+        "reason": "The vials are the contents; the crate is the container \u2014 same sentence, two distinct objects.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:seal_blanks",
+        "a_names": [
+          "seal blanks",
+          "the seal blanks"
+        ],
+        "b": "obj:seal_wire_spool",
+        "b_names": [
+          "seal wire spool"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0233",
+        "reason": "Seal blanks are the lead slugs; the wire spool supplies the wire \u2014 related but distinct objects.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:seed_vault_hatch",
+        "a_names": [
+          "the Seed Vault hatch"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0234",
+        "reason": "The hatch is a door mechanism; the Records Vault is the room behind a different door.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:seed_vault_hatch",
+        "a_names": [
+          "the Seed Vault hatch"
+        ],
+        "b": "place:seed_vault",
+        "b_names": [
+          "the Seed Vault"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0235",
+        "reason": "The Seed Vault hatch is the entry door; the Seed Vault is the room itself.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:seed_vault_hatch",
+        "a_names": [
+          "the Seed Vault hatch"
+        ],
+        "b": "place:wellhead_hatch",
+        "b_names": [
+          "the Wellhead hatch",
+          "the hatch"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0236",
+        "reason": "The Seed Vault hatch is at the sub-basement vault; the Wellhead hatch is at the Wellhead \u2014 two hatches in different locations.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:survey_condensers",
+        "a_names": [
+          "the two condensers"
+        ],
+        "b": "place:condenser_site",
+        "b_names": [
+          "out past the Rust Quarter",
+          "the condensers"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0237",
+        "reason": "The survey condensers are the physical machines; the condenser site is the location where they operate.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:tovan_letter",
+        "a_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "b": "org:the_guild",
+        "b_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0238",
+        "reason": "A written document versus an organization \u2014 entirely different kinds of thing.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:tovan_letter",
+        "a_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "b": "place:dead_elevator_shaft",
+        "b_names": [
+          "the dead elevator"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0239",
+        "reason": "A written note versus a physical place in the settlement.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:tovan_letter",
+        "a_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "b": "place:dead_stairs",
+        "b_names": [
+          "the dead stairs"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0240",
+        "reason": "A written note versus a set of stairs \u2014 different in kind and context.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:tovan_letter",
+        "a_names": [
+          "Tovan's note",
+          "the letter"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0241",
+        "reason": "A written note versus a geographic survey location outside the dome.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "obj:wheel_lock",
+        "a_names": [
+          "the wheel lock"
+        ],
+        "b": "place:south_lock",
+        "b_names": [
+          "the south lock"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0242",
+        "reason": "The wheel lock is a mechanism on the Seed Vault hatch; the south lock is the settlement's exterior exit gate.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:allocation_office",
+        "a_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "b": "org:council",
+        "b_names": [
+          "the Council"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0243",
+        "reason": "The Allocation Office is a subordinate office; the Council is the governing body above it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:allocation_office",
+        "a_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "b": "place:allocation_corridor",
+        "b_names": [
+          "the Allocation corridor"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0244",
+        "reason": "The Allocation Office is the organization; the Allocation corridor is a passage near it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:allocation_office",
+        "a_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "b": "place:allocation_office",
+        "b_names": [
+          "the Allocation Office"
+        ],
+        "batch": 10,
+        "keep": "a",
+        "keep_id": "org:allocation_office",
+        "pair_id": "p0245",
+        "reason": "Same place split across org and place kinds \u2014 identical name, identical sentences, one real-world office; 'a' carries the more formal name 'the Council's Allocation Office'.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "org:allocation_office",
+        "a_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0246",
+        "reason": "The Allocation Office is one room on the tier; the Council tier is the entire upper level.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:allocation_office",
+        "a_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "b": "place:narrator_office",
+        "b_names": [
+          "my office",
+          "the narrator's office"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0247",
+        "reason": "The Allocation Office is on the Council tier; the narrator's office is a separate personal workspace.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:allocation_office",
+        "a_names": [
+          "the Allocation Office",
+          "the Council's Allocation Office"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0248",
+        "reason": "The Allocation Office handles records administration; the Records Vault is a separate storage room behind it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:council",
+        "a_names": [
+          "the Council"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0249",
+        "reason": "The Council is the governing body; the Council tier is the physical floor where it operates.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:the_guild",
+        "a_names": [
+          "Tovan's guild",
+          "the guild"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 10,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0250",
+        "reason": "The maintenance guild is an organization; the southern aquifer site is a geographic location.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "org:wellhead",
+        "a_names": [
+          "Wellhead"
+        ],
+        "b": "place:wellhead",
+        "b_names": [
+          "the Wellhead",
+          "the Wellhead facility"
+        ],
+        "batch": 11,
+        "keep": "b",
+        "keep_id": "place:wellhead",
+        "pair_id": "p0251",
+        "reason": "Both share identical context sentences; place card is the fuller, correctly-typed entry for the physical Wellhead facility.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "org:wellhead",
+        "a_names": [
+          "Wellhead"
+        ],
+        "b": "place:wellhead_hatch",
+        "b_names": [
+          "the Wellhead hatch",
+          "the hatch"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0252",
+        "reason": "The Wellhead is the facility itself; the Wellhead hatch is its entry door \u2014 part of it, not the same thing.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:council_cousins",
+        "a_names": [
+          "the Council cousins"
+        ],
+        "b": "person:marn_guards",
+        "b_names": [
+          "the guard rotation"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0253",
+        "reason": "The Council cousins are soft clerical staff; the guard rotation is a security detail outside Marn's quarters.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:cray",
+        "a_names": [
+          "Administrator Cray",
+          "Cray"
+        ],
+        "b": "person:ilsa_renn",
+        "b_names": [
+          "Ilsa Renn"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0254",
+        "reason": "Cray is a past administrator; Ilsa Renn is a clerk who served under him and then Marn.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:cray",
+        "a_names": [
+          "Administrator Cray",
+          "Cray"
+        ],
+        "b": "person:marn",
+        "b_names": [
+          "Allocation Officer Marn",
+          "Marn"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0255",
+        "reason": "Cray is named as Marn's predecessor; they held the same office at different times.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:ilsa_renn",
+        "a_names": [
+          "Ilsa Renn"
+        ],
+        "b": "person:marn",
+        "b_names": [
+          "Allocation Officer Marn",
+          "Marn"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0256",
+        "reason": "Ilsa Renn is a clerk; Marn is the Allocation Officer she clerked for.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:ilsa_renn",
+        "a_names": [
+          "Ilsa Renn"
+        ],
+        "b": "person:tin_ear_clerk",
+        "b_names": [
+          "the tin-ear clerk"
+        ],
+        "batch": 11,
+        "keep": "a",
+        "keep_id": "person:ilsa_renn",
+        "pair_id": "p0257",
+        "reason": "Ilsa Renn's own aliases include 'the clerk with the tin ear', matching the tin-ear clerk card exactly; the proper name is on side a.",
+        "status": "answered",
+        "verdict": "same"
+      },
+      {
+        "a": "person:marn",
+        "a_names": [
+          "Allocation Officer Marn",
+          "Marn"
+        ],
+        "b": "person:pell",
+        "b_names": [
+          "Pell"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0258",
+        "reason": "Marn is the confined Allocation Officer; Pell is a nineteen-year-old guard on door duty.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:marn",
+        "a_names": [
+          "Allocation Officer Marn",
+          "Marn"
+        ],
+        "b": "person:tovan",
+        "b_names": [
+          "Tovan",
+          "Tovan Voss"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0259",
+        "reason": "Marn is the living Allocation Officer under tribunal; Tovan is the dead man whose name cleared.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:pell",
+        "a_names": [
+          "Pell"
+        ],
+        "b": "person:pells_mother",
+        "b_names": [
+          "Pell's mother"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0260",
+        "reason": "Pell is the young guard; Pell's mother is his parent who swung the commutation vote.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:pell",
+        "a_names": [
+          "Pell"
+        ],
+        "b": "person:tovan",
+        "b_names": [
+          "Tovan",
+          "Tovan Voss"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0261",
+        "reason": "Pell is a living teenage guard; Tovan is the dead man at the center of the case.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:sela",
+        "a_names": [
+          "Sela",
+          "Sela Voss"
+        ],
+        "b": "person:stall_woman",
+        "b_names": [
+          "the stall woman"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0262",
+        "reason": "Sela Voss is the client and condenser steward; the stall woman is an anonymous fig seller at the Bazaar.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:sela",
+        "a_names": [
+          "Sela",
+          "Sela Voss"
+        ],
+        "b": "person:tin_ear_clerk",
+        "b_names": [
+          "the tin-ear clerk"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0263",
+        "reason": "Sela Voss runs condensers outside; the tin-ear clerk is a gray woman who works in the vault.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:sela",
+        "a_names": [
+          "Sela",
+          "Sela Voss"
+        ],
+        "b": "person:tovan",
+        "b_names": [
+          "Tovan",
+          "Tovan Voss"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0264",
+        "reason": "Sela and Tovan are named as siblings \u2014 two different people.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:sela",
+        "a_names": [
+          "Sela",
+          "Sela Voss"
+        ],
+        "b": "person:tovan_father",
+        "b_names": [
+          "Father"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0265",
+        "reason": "Sela is the daughter/sister; Father is the parent \u2014 different generation, different person.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:stall_woman",
+        "a_names": [
+          "the stall woman"
+        ],
+        "b": "person:tin_ear_clerk",
+        "b_names": [
+          "the tin-ear clerk"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0266",
+        "reason": "The stall woman sells figs at the Bazaar; the tin-ear clerk works in the vault \u2014 different roles, different contexts.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "person:the_technician",
+        "a_names": [
+          "the technician"
+        ],
+        "b": "person:wellhead_tech",
+        "b_names": [
+          "the Wellhead tech"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0267",
+        "reason": "The unnamed technician pulled the core covertly; the Wellhead tech displayed it publicly \u2014 different actions in different contexts, possibly two people or a time-gap scenario.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "person:tovan",
+        "a_names": [
+          "Tovan",
+          "Tovan Voss"
+        ],
+        "b": "person:tovan_father",
+        "b_names": [
+          "Father"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0268",
+        "reason": "Tovan is the dead son; Father is his parent \u2014 different people.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:allocation_corridor",
+        "a_names": [
+          "the Allocation corridor"
+        ],
+        "b": "place:allocation_office",
+        "b_names": [
+          "the Allocation Office"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0269",
+        "reason": "The Allocation corridor is a passage route; the Allocation Office is the staffed clerical room.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:allocation_corridor",
+        "a_names": [
+          "the Allocation corridor"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0270",
+        "reason": "The Allocation corridor is a transit passage; the Records Vault is a secured storage room.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:allocation_office",
+        "a_names": [
+          "the Allocation Office"
+        ],
+        "b": "place:narrator_office",
+        "b_names": [
+          "my office",
+          "the narrator's office"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0271",
+        "reason": "The Allocation Office is an institutional workspace on the Council tier; the narrator's office is the detective's personal workspace.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:allocation_office",
+        "a_names": [
+          "the Allocation Office"
+        ],
+        "b": "place:records_vault",
+        "b_names": [
+          "the Records Vault",
+          "the vault"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0272",
+        "reason": "The Allocation Office is a clerical room with ledger racks; the Records Vault is a separate secured vault requiring a writ to enter.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:anchor",
+        "a_names": [
+          "Anchor",
+          "the settlement"
+        ],
+        "b": "place:flats",
+        "b_names": [
+          "the flats",
+          "the open desert",
+          "the salt flats"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0273",
+        "reason": "Anchor is the entire domed settlement; the salt flats are the open desert outside the dome.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:anchor",
+        "a_names": [
+          "Anchor",
+          "the settlement"
+        ],
+        "b": "place:south_dome_panel",
+        "b_names": [
+          "the south dome panel"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0274",
+        "reason": "Anchor is the whole settlement; the south dome panel is one structural section of its dome.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:bazaar",
+        "a_names": [
+          "the Bazaar",
+          "the Bazaar level"
+        ],
+        "b": "place:bazaar_stall",
+        "b_names": [
+          "the Bazaar stall"
+        ],
+        "batch": 11,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0275",
+        "reason": "The Bazaar is the whole market level; the Bazaar stall is a single vendor booth within it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:bazaar",
+        "a_names": [
+          "the Bazaar",
+          "the Bazaar level"
+        ],
+        "b": "place:bazaar_table",
+        "b_names": [
+          "the table at the Bazaar"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0276",
+        "reason": "The Bazaar is the whole market-floor place; the table at the Bazaar is a specific meeting spot within it.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:bazaar",
+        "a_names": [
+          "the Bazaar",
+          "the Bazaar level"
+        ],
+        "b": "place:council_tier",
+        "b_names": [
+          "the Council tier"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0277",
+        "reason": "The Bazaar is the market level; the Council tier is a separate, upper-level administrative area with filtered air.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:bazaar_stall",
+        "a_names": [
+          "the Bazaar stall"
+        ],
+        "b": "place:bazaar_table",
+        "b_names": [
+          "the table at the Bazaar"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0278",
+        "reason": "The stall is a vendor stand where figs were bought; the table is the seating spot where the meeting took place.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:condenser_site",
+        "a_names": [
+          "out past the Rust Quarter",
+          "the condensers"
+        ],
+        "b": "place:rust_quarter",
+        "b_names": [
+          "the Rust Quarter"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0279",
+        "reason": "The condenser site is located out past the Rust Quarter; the Rust Quarter is the surrounding district, not the condenser site itself.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:dead_elevator_shaft",
+        "a_names": [
+          "the dead elevator"
+        ],
+        "b": "place:dead_stairs",
+        "b_names": [
+          "the dead stairs"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0280",
+        "reason": "The dead elevator is a shaft connecting the Council tier to the sub-basement; the dead stairs are two unlit maintenance flights used as an alternative route.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:dead_stairs",
+        "a_names": [
+          "the dead stairs"
+        ],
+        "b": "place:gallery_stairs",
+        "b_names": [
+          "the gallery stairs"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0281",
+        "reason": "The same passage distinguishes the gallery stairs (descent to Bazaar level) from the dead stairs (unlit maintenance flights below), naming them separately.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:deep_aquifer",
+        "a_names": [
+          "deep aquifer",
+          "the deep aquifer"
+        ],
+        "b": "place:southern_aquifer_site",
+        "b_names": [
+          "the southern aquifer site",
+          "the survey",
+          "the survey site"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0282",
+        "reason": "Both reference an aquifer but the deep aquifer has no context sentences; the southern aquifer site may or may not tap the same deep aquifer.",
+        "status": "answered",
+        "verdict": "unsure"
+      },
+      {
+        "a": "place:flats",
+        "a_names": [
+          "the flats",
+          "the open desert",
+          "the salt flats"
+        ],
+        "b": "place:south_dome_panel",
+        "b_names": [
+          "the south dome panel"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0283",
+        "reason": "The flats are the open desert surface outside the dome; the south dome panel is a structural section of the dome itself, inside Anchor.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:gallery",
+        "a_names": [
+          "the gallery"
+        ],
+        "b": "place:gallery_stairs",
+        "b_names": [
+          "the gallery stairs"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0284",
+        "reason": "The gallery is the assembly hall where the settlement gathers; the gallery stairs are the stairway that descends from that level to the Bazaar.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:south_dome_panel",
+        "a_names": [
+          "the south dome panel"
+        ],
+        "b": "place:south_lock",
+        "b_names": [
+          "the south lock"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0285",
+        "reason": "The south dome panel is an overhead structural element inside Anchor; the south lock is an exit airlock through which the sledge departed.",
+        "status": "answered",
+        "verdict": "different"
+      },
+      {
+        "a": "place:wellhead",
+        "a_names": [
+          "the Wellhead",
+          "the Wellhead facility"
+        ],
+        "b": "place:wellhead_hatch",
+        "b_names": [
+          "the Wellhead hatch",
+          "the hatch"
+        ],
+        "batch": 12,
+        "keep": null,
+        "keep_id": null,
+        "pair_id": "p0286",
+        "reason": "The Wellhead is the whole facility at Anchor's base; the Wellhead hatch is specifically the entry door whose log records who passed through.",
+        "status": "answered",
+        "verdict": "different"
+      }
+    ],
+    "source": "explicit",
+    "stray": []
+  },
+  "gated": {
+    "b3_f1": 0.8429,
+    "fragmentation": [
+      "vial_crate"
+    ],
+    "fragmentation_count": 1,
+    "fusion": {},
+    "fusion_count": 0
+  },
+  "labels": {
+    "different": 15,
+    "same": 4,
+    "unknown": 267
+  },
+  "merges": {
+    "merged": 11
+  },
+  "pair_labels": {
+    "p0001": "unknown",
+    "p0002": "unknown",
+    "p0003": "unknown",
+    "p0004": "unknown",
+    "p0005": "unknown",
+    "p0006": "unknown",
+    "p0007": "unknown",
+    "p0008": "unknown",
+    "p0009": "unknown",
+    "p0010": "unknown",
+    "p0011": "unknown",
+    "p0012": "unknown",
+    "p0013": "unknown",
+    "p0014": "unknown",
+    "p0015": "unknown",
+    "p0016": "unknown",
+    "p0017": "unknown",
+    "p0018": "unknown",
+    "p0019": "unknown",
+    "p0020": "unknown",
+    "p0021": "unknown",
+    "p0022": "unknown",
+    "p0023": "unknown",
+    "p0024": "unknown",
+    "p0025": "unknown",
+    "p0026": "unknown",
+    "p0027": "unknown",
+    "p0028": "unknown",
+    "p0029": "unknown",
+    "p0030": "unknown",
+    "p0031": "unknown",
+    "p0032": "unknown",
+    "p0033": "unknown",
+    "p0034": "unknown",
+    "p0035": "unknown",
+    "p0036": "unknown",
+    "p0037": "unknown",
+    "p0038": "unknown",
+    "p0039": "unknown",
+    "p0040": "unknown",
+    "p0041": "unknown",
+    "p0042": "unknown",
+    "p0043": "unknown",
+    "p0044": "unknown",
+    "p0045": "unknown",
+    "p0046": "unknown",
+    "p0047": "unknown",
+    "p0048": "unknown",
+    "p0049": "unknown",
+    "p0050": "unknown",
+    "p0051": "unknown",
+    "p0052": "unknown",
+    "p0053": "unknown",
+    "p0054": "unknown",
+    "p0055": "unknown",
+    "p0056": "unknown",
+    "p0057": "unknown",
+    "p0058": "unknown",
+    "p0059": "unknown",
+    "p0060": "unknown",
+    "p0061": "unknown",
+    "p0062": "unknown",
+    "p0063": "unknown",
+    "p0064": "unknown",
+    "p0065": "unknown",
+    "p0066": "unknown",
+    "p0067": "unknown",
+    "p0068": "unknown",
+    "p0069": "unknown",
+    "p0070": "unknown",
+    "p0071": "unknown",
+    "p0072": "unknown",
+    "p0073": "unknown",
+    "p0074": "unknown",
+    "p0075": "unknown",
+    "p0076": "unknown",
+    "p0077": "unknown",
+    "p0078": "unknown",
+    "p0079": "unknown",
+    "p0080": "unknown",
+    "p0081": "unknown",
+    "p0082": "unknown",
+    "p0083": "unknown",
+    "p0084": "unknown",
+    "p0085": "unknown",
+    "p0086": "unknown",
+    "p0087": "unknown",
+    "p0088": "unknown",
+    "p0089": "unknown",
+    "p0090": "unknown",
+    "p0091": "unknown",
+    "p0092": "unknown",
+    "p0093": "unknown",
+    "p0094": "unknown",
+    "p0095": "unknown",
+    "p0096": "unknown",
+    "p0097": "unknown",
+    "p0098": "unknown",
+    "p0099": "unknown",
+    "p0100": "unknown",
+    "p0101": "unknown",
+    "p0102": "unknown",
+    "p0103": "unknown",
+    "p0104": "unknown",
+    "p0105": "unknown",
+    "p0106": "unknown",
+    "p0107": "unknown",
+    "p0108": "unknown",
+    "p0109": "unknown",
+    "p0110": "unknown",
+    "p0111": "unknown",
+    "p0112": "unknown",
+    "p0113": "unknown",
+    "p0114": "unknown",
+    "p0115": "unknown",
+    "p0116": "unknown",
+    "p0117": "unknown",
+    "p0118": "unknown",
+    "p0119": "unknown",
+    "p0120": "unknown",
+    "p0121": "unknown",
+    "p0122": "unknown",
+    "p0123": "unknown",
+    "p0124": "unknown",
+    "p0125": "unknown",
+    "p0126": "unknown",
+    "p0127": "unknown",
+    "p0128": "unknown",
+    "p0129": "unknown",
+    "p0130": "unknown",
+    "p0131": "unknown",
+    "p0132": "unknown",
+    "p0133": "unknown",
+    "p0134": "unknown",
+    "p0135": "unknown",
+    "p0136": "unknown",
+    "p0137": "unknown",
+    "p0138": "unknown",
+    "p0139": "unknown",
+    "p0140": "unknown",
+    "p0141": "unknown",
+    "p0142": "unknown",
+    "p0143": "unknown",
+    "p0144": "unknown",
+    "p0145": "unknown",
+    "p0146": "unknown",
+    "p0147": "unknown",
+    "p0148": "unknown",
+    "p0149": "unknown",
+    "p0150": "different",
+    "p0151": "unknown",
+    "p0152": "different",
+    "p0153": "unknown",
+    "p0154": "unknown",
+    "p0155": "unknown",
+    "p0156": "unknown",
+    "p0157": "unknown",
+    "p0158": "different",
+    "p0159": "unknown",
+    "p0160": "unknown",
+    "p0161": "different",
+    "p0162": "unknown",
+    "p0163": "unknown",
+    "p0164": "unknown",
+    "p0165": "unknown",
+    "p0166": "unknown",
+    "p0167": "unknown",
+    "p0168": "unknown",
+    "p0169": "unknown",
+    "p0170": "unknown",
+    "p0171": "different",
+    "p0172": "unknown",
+    "p0173": "unknown",
+    "p0174": "unknown",
+    "p0175": "unknown",
+    "p0176": "unknown",
+    "p0177": "unknown",
+    "p0178": "unknown",
+    "p0179": "unknown",
+    "p0180": "unknown",
+    "p0181": "unknown",
+    "p0182": "unknown",
+    "p0183": "unknown",
+    "p0184": "unknown",
+    "p0185": "unknown",
+    "p0186": "unknown",
+    "p0187": "unknown",
+    "p0188": "unknown",
+    "p0189": "different",
+    "p0190": "unknown",
+    "p0191": "unknown",
+    "p0192": "unknown",
+    "p0193": "unknown",
+    "p0194": "unknown",
+    "p0195": "unknown",
+    "p0196": "unknown",
+    "p0197": "unknown",
+    "p0198": "unknown",
+    "p0199": "unknown",
+    "p0200": "unknown",
+    "p0201": "unknown",
+    "p0202": "unknown",
+    "p0203": "unknown",
+    "p0204": "unknown",
+    "p0205": "unknown",
+    "p0206": "unknown",
+    "p0207": "unknown",
+    "p0208": "unknown",
+    "p0209": "same",
+    "p0210": "unknown",
+    "p0211": "unknown",
+    "p0212": "unknown",
+    "p0213": "unknown",
+    "p0214": "unknown",
+    "p0215": "unknown",
+    "p0216": "unknown",
+    "p0217": "unknown",
+    "p0218": "unknown",
+    "p0219": "unknown",
+    "p0220": "unknown",
+    "p0221": "unknown",
+    "p0222": "unknown",
+    "p0223": "unknown",
+    "p0224": "unknown",
+    "p0225": "unknown",
+    "p0226": "unknown",
+    "p0227": "unknown",
+    "p0228": "unknown",
+    "p0229": "unknown",
+    "p0230": "unknown",
+    "p0231": "unknown",
+    "p0232": "same",
+    "p0233": "unknown",
+    "p0234": "unknown",
+    "p0235": "unknown",
+    "p0236": "unknown",
+    "p0237": "unknown",
+    "p0238": "unknown",
+    "p0239": "unknown",
+    "p0240": "unknown",
+    "p0241": "unknown",
+    "p0242": "unknown",
+    "p0243": "unknown",
+    "p0244": "unknown",
+    "p0245": "unknown",
+    "p0246": "unknown",
+    "p0247": "unknown",
+    "p0248": "unknown",
+    "p0249": "unknown",
+    "p0250": "unknown",
+    "p0251": "same",
+    "p0252": "unknown",
+    "p0253": "unknown",
+    "p0254": "different",
+    "p0255": "different",
+    "p0256": "different",
+    "p0257": "same",
+    "p0258": "different",
+    "p0259": "different",
+    "p0260": "unknown",
+    "p0261": "different",
+    "p0262": "unknown",
+    "p0263": "different",
+    "p0264": "different",
+    "p0265": "unknown",
+    "p0266": "unknown",
+    "p0267": "unknown",
+    "p0268": "unknown",
+    "p0269": "unknown",
+    "p0270": "unknown",
+    "p0271": "unknown",
+    "p0272": "unknown",
+    "p0273": "unknown",
+    "p0274": "unknown",
+    "p0275": "unknown",
+    "p0276": "unknown",
+    "p0277": "different",
+    "p0278": "unknown",
+    "p0279": "unknown",
+    "p0280": "unknown",
+    "p0281": "unknown",
+    "p0282": "unknown",
+    "p0283": "unknown",
+    "p0284": "unknown",
+    "p0285": "unknown",
+    "p0286": "unknown"
+  },
+  "recall": {
+    "found": 4,
+    "missed": [],
+    "of": 4
+  },
+  "same_by_label": {
+    "same": 3,
+    "unknown": 8
+  },
+  "split_pairs": [
+    [
+      "obj:ilsa_desk",
+      "obj:ilsa_renns_desk"
+    ],
+    [
+      "obj:sample_vials",
+      "obj:wooden_crate_vials"
+    ],
+    [
+      "org:wellhead",
+      "place:wellhead"
+    ],
+    [
+      "person:ilsa_renn",
+      "person:tin_ear_clerk"
+    ]
+  ],
+  "split_pairs_joined": 3,
+  "statuses": {
+    "answered": 286
+  },
+  "verdicts": {
+    "different": 263,
+    "same": 11,
+    "unsure": 12
+  }
+}

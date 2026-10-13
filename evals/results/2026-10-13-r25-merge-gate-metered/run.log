@@ -1,0 +1,397 @@
+2026-10-13 03:50:08,099 alias_index alias index: {'index_strings': 174, 'segments_with_hits': 4, 'ambiguous_strings': 3, 'stoplisted_strings': 3, 'escape_candidates': 11, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 03:50:08,109 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 03:50:08,199 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:50:08,254 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:50:08,301 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 03:50:09,687 alias_index alias index: {'index_strings': 174, 'segments_with_hits': 4, 'ambiguous_strings': 3, 'stoplisted_strings': 3, 'escape_candidates': 11, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 03:50:09,694 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 03:50:09,844 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:50:09,905 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:50:09,970 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 03:52:37,173 merge_gate merge gate: {'candidates': 83, 'batches': 4, 'verdicts': {'different': 82, 'unsure': 1}, 'statuses': {'answered': 83}, 'stray': 0, 'components': 0, 'conflicting_components': 0, 'merges': {}}
+2026-10-13 03:52:37,225 merge_gate_metered rep 1 r23-run1: 83 candidates, {'different': 82, 'unsure': 1}
+2026-10-13 03:52:39,050 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 2, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 03:52:39,054 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 03:52:39,135 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:52:39,218 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:52:39,231 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 03:52:40,684 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 2, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 03:52:40,689 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 03:52:40,760 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:52:40,831 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:52:40,850 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 03:54:55,471 merge_gate merge gate: {'candidates': 97, 'batches': 4, 'verdicts': {'different': 94, 'unsure': 3}, 'statuses': {'answered': 97}, 'stray': 0, 'components': 0, 'conflicting_components': 0, 'merges': {}}
+2026-10-13 03:54:55,503 merge_gate_metered rep 1 r23-run2: 97 candidates, {'different': 94, 'unsure': 3}
+2026-10-13 03:54:56,617 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 0, 'escape_candidates': 11, 'distinct_pairs': 0, 'distinct_pairs_strong': 0, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 03:54:56,617 alias_index alias distinctness: 0 written, 0 report-only
+2026-10-13 03:54:56,681 patternbuffer.identity merge obj:seed_vault_hatch == obj:wellhead_hatch (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:54:56,744 patternbuffer.identity identity reconcile: 1 merge(s)
+2026-10-13 03:54:57,937 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 0, 'escape_candidates': 11, 'distinct_pairs': 0, 'distinct_pairs_strong': 0, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 03:54:57,937 alias_index alias distinctness: 0 written, 0 report-only
+2026-10-13 03:54:58,009 patternbuffer.identity merge obj:seed_vault_hatch == obj:wellhead_hatch (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:54:58,092 patternbuffer.identity identity reconcile: 1 merge(s)
+2026-10-13 03:57:22,963 patternbuffer.identity merge org:allocation_office == place:allocation_office (merge gate: Both sides describe the same named office on the Council tier that holds canonical books and records — org and physical location are the same entity here.; decided by host)
+2026-10-13 03:57:22,965 merge_gate merge gate: {'candidates': 92, 'batches': 4, 'verdicts': {'different': 87, 'same': 1, 'unsure': 4}, 'statuses': {'answered': 92}, 'stray': 0, 'components': 1, 'conflicting_components': 0, 'merges': {'merged': 1}}
+2026-10-13 03:57:22,999 merge_gate_metered rep 1 r26-seq: 92 candidates, {'different': 87, 'same': 1, 'unsure': 4}
+2026-10-13 03:57:23,037 pipeline commit: attribute alias 'holds' -> 'custody' refused: 'holds' is an inverse relation: the gate swaps its direction (-> 'held_by'); it cannot be aliased
+2026-10-13 03:57:24,813 alias_index alias index: {'index_strings': 373, 'segments_with_hits': 4, 'ambiguous_strings': 40, 'stoplisted_strings': 15, 'escape_candidates': 9, 'distinct_pairs': 4, 'distinct_pairs_strong': 3, 'merge_candidates': 2, 'merge_excluded': 0}
+2026-10-13 03:57:24,817 alias_index alias distinctness: 1 written, 2 report-only
+2026-10-13 03:57:24,919 patternbuffer.identity merge doc:canonical_books == doc:council_books (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:25,291 patternbuffer.identity merge event:assembly == event:open_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:25,380 patternbuffer.identity merge event:assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,165 patternbuffer.identity merge obj:core == obj:master_meter_memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,269 patternbuffer.identity merge obj:core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,397 patternbuffer.identity merge obj:crays_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,604 patternbuffer.identity merge obj:false_drawer == obj:ilsa_desk_false_drawer (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,699 patternbuffer.identity merge obj:footlocker == obj:maintenance_crimp_seal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,828 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:26,927 patternbuffer.identity merge obj:gray_stuff == obj:narrators_bottle (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:27,050 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:27,165 patternbuffer.identity merge obj:master_meter == obj:new_master_meter (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:27,392 patternbuffer.identity merge obj:tovan_badge == obj:tovan_credential (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:27,506 patternbuffer.identity merge obj:tovan_letter == obj:tovan_note (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:27,762 patternbuffer.identity merge org:council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:27,884 patternbuffer.identity merge org:the_guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,026 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,263 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,400 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,524 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,662 patternbuffer.identity merge place:narrator_office == place:narrators_office (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,812 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:29,946 patternbuffer.identity merge place:southern_aquifer_site == place:survey_site (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:31,922 patternbuffer.identity identity reconcile: 23 merge(s)
+2026-10-13 03:57:33,845 pipeline commit: attribute alias 'holds' -> 'custody' refused: 'holds' is an inverse relation: the gate swaps its direction (-> 'held_by'); it cannot be aliased
+2026-10-13 03:57:35,667 alias_index alias index: {'index_strings': 373, 'segments_with_hits': 4, 'ambiguous_strings': 40, 'stoplisted_strings': 15, 'escape_candidates': 9, 'distinct_pairs': 4, 'distinct_pairs_strong': 3, 'merge_candidates': 2, 'merge_excluded': 0}
+2026-10-13 03:57:35,672 alias_index alias distinctness: 1 written, 2 report-only
+2026-10-13 03:57:35,790 patternbuffer.identity merge doc:canonical_books == doc:council_books (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:36,140 patternbuffer.identity merge event:assembly == event:open_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:36,272 patternbuffer.identity merge event:assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,133 patternbuffer.identity merge obj:core == obj:master_meter_memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,266 patternbuffer.identity merge obj:core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,387 patternbuffer.identity merge obj:crays_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,623 patternbuffer.identity merge obj:false_drawer == obj:ilsa_desk_false_drawer (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,725 patternbuffer.identity merge obj:footlocker == obj:maintenance_crimp_seal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,850 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:37,961 patternbuffer.identity merge obj:gray_stuff == obj:narrators_bottle (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:38,080 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:38,182 patternbuffer.identity merge obj:master_meter == obj:new_master_meter (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:38,422 patternbuffer.identity merge obj:tovan_badge == obj:tovan_credential (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:38,529 patternbuffer.identity merge obj:tovan_letter == obj:tovan_note (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:38,761 patternbuffer.identity merge org:council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:38,857 patternbuffer.identity merge org:the_guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:39,948 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:40,244 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:40,371 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:40,481 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:40,624 patternbuffer.identity merge place:narrator_office == place:narrators_office (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:40,827 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:41,009 patternbuffer.identity merge place:southern_aquifer_site == place:survey_site (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 03:57:43,155 patternbuffer.identity identity reconcile: 23 merge(s)
+2026-10-13 04:05:36,691 patternbuffer.identity merge doc:canonical_books == doc:council_allocation_books (merge gate: Both describe the official Council allocation records that don't reconcile with the master meter total; 'canonical books' and 'Council allocation books' are the same document set.; decided by host)
+2026-10-13 04:05:36,750 patternbuffer.identity merge doc:dead_admin_records == doc:dead_mens_files (merge gate: Both sentences describe the same vault's contents with identical accompanying items (canonical books/ledgers and seal blanks), and both phrases denote records of deceased administrators.; decided by host)
+2026-10-13 04:05:36,798 patternbuffer.identity merge doc:door_log == obj:door_log (merge gate: Both cards share identical name, identical context sentences, and describe the same Wellhead door access record — the doc and obj kinds are a registry duplication of one thing.; decided by host)
+2026-10-13 04:05:36,843 patternbuffer.identity merge doc:inventory_ledger == obj:inventory_ledger (merge gate: Both cards share identical name and identical context sentences describing the same vault clerk's inventory record — the doc and obj kinds are a registry duplication.; decided by host)
+2026-10-13 04:05:36,880 patternbuffer.identity merge event:marn_tribunal == org:tribunal (merge gate: both name the single specific proceeding against Marn; org:tribunal shares context sentences with event:marn_tribunal and is the same instance, not a standing body; decided by host)
+2026-10-13 04:05:36,924 patternbuffer.identity merge event:tovan_death == event:technician_death (merge gate: the technician who died is Tovan Voss; both events reference the same death, and tovan_death carries fuller provenance and aliases; decided by host)
+2026-10-13 04:05:36,968 patternbuffer.identity merge obj:ilsa_desk == obj:ilsa_renns_desk (merge gate: both refer to Ilsa Renn's desk — the clerk's desk the narrator sat across from; decided by host)
+2026-10-13 04:05:37,010 patternbuffer.identity merge obj:master_meter_housing == obj:old_meter_housing (merge gate: the scorched housing and the old housing are the same physical casing — context explicitly links the scorch to the scratched-word spot on the old housing; decided by host)
+2026-10-13 04:05:37,052 patternbuffer.identity merge org:allocation_office == place:allocation_office (merge gate: Same place split across org and place kinds — identical name, identical sentences, one real-world office; 'a' carries the more formal name 'the Council's Allocation Office'.; decided by host)
+2026-10-13 04:05:37,098 patternbuffer.identity merge place:wellhead == org:wellhead (merge gate: Both share identical context sentences; place card is the fuller, correctly-typed entry for the physical Wellhead facility.; decided by host)
+2026-10-13 04:05:37,146 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (merge gate: Ilsa Renn's own aliases include 'the clerk with the tin ear', matching the tin-ear clerk card exactly; the proper name is on side a.; decided by host)
+2026-10-13 04:05:37,151 merge_gate merge gate: {'candidates': 286, 'batches': 12, 'verdicts': {'different': 263, 'same': 11, 'unsure': 12}, 'statuses': {'answered': 286}, 'stray': 0, 'components': 11, 'conflicting_components': 0, 'merges': {'merged': 11}}
+2026-10-13 04:05:38,630 merge_gate_metered rep 1 r26-par1b: 286 candidates, {'different': 263, 'same': 11, 'unsure': 12}
+2026-10-13 04:05:40,005 alias_index alias index: {'index_strings': 276, 'segments_with_hits': 4, 'ambiguous_strings': 26, 'stoplisted_strings': 8, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:05:40,009 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:05:40,219 patternbuffer.identity merge event:marn_tribunal == event:tribunal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:40,457 patternbuffer.identity merge event:open_assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:40,556 patternbuffer.identity merge obj:bottle == obj:narrator_drink (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:40,656 patternbuffer.identity merge obj:cray_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:40,718 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:40,847 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:40,929 patternbuffer.identity merge obj:master_meter == obj:master_meter_new (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,035 patternbuffer.identity merge obj:master_meter_memory_core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,118 patternbuffer.identity merge org:anchor_council == org:council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,206 patternbuffer.identity merge org:anchor_council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,315 patternbuffer.identity merge org:guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,503 patternbuffer.identity merge person:administrator_cray == person:cray (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,607 patternbuffer.identity merge person:council_clerk_a == person:council_clerk_b (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,753 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,825 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,911 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:41,990 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:42,082 patternbuffer.identity merge place:flats == place:the_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:42,194 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:42,648 patternbuffer.identity identity reconcile: 19 merge(s)
+2026-10-13 04:05:44,441 alias_index alias index: {'index_strings': 276, 'segments_with_hits': 4, 'ambiguous_strings': 26, 'stoplisted_strings': 8, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:05:44,444 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:05:44,637 patternbuffer.identity merge event:marn_tribunal == event:tribunal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:44,881 patternbuffer.identity merge event:open_assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:44,945 patternbuffer.identity merge obj:bottle == obj:narrator_drink (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,011 patternbuffer.identity merge obj:cray_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,080 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,222 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,299 patternbuffer.identity merge obj:master_meter == obj:master_meter_new (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,391 patternbuffer.identity merge obj:master_meter_memory_core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,490 patternbuffer.identity merge org:anchor_council == org:council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,598 patternbuffer.identity merge org:anchor_council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,697 patternbuffer.identity merge org:guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,878 patternbuffer.identity merge person:administrator_cray == person:cray (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:45,965 patternbuffer.identity merge person:council_clerk_a == person:council_clerk_b (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:46,125 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:46,208 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:46,280 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:46,395 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:46,517 patternbuffer.identity merge place:flats == place:the_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:46,657 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:05:47,153 patternbuffer.identity identity reconcile: 19 merge(s)
+2026-10-13 04:14:52,721 patternbuffer.identity merge obj:aquifer_maps == doc:aquifer_maps (merge gate: Both cards share identical context sentences and refer to the same physical maps found on Tovan's body; side b has richer aliases including 'tovan's maps'.; decided by host)
+2026-10-13 04:14:52,778 patternbuffer.identity merge obj:canonical_ledgers == doc:canonical_books (merge gate: Both describe the same physical records in the vault: floor-to-ceiling official ledgers alongside seal blanks and dead administrators' files; 'canonical ledgers' is just a slightly fuller name.; decided by host)
+2026-10-13 04:14:52,848 patternbuffer.identity merge obj:seed_vault_ledgers == doc:second_books (merge gate: Both share the identical name 'the second set of books' and the same vault-ledger context quote; obj:seed_vault_ledgers carries richer aliases.; decided by host)
+2026-10-13 04:14:52,908 patternbuffer.identity merge doc:tovan_letter == obj:tovan_letter (merge gate: Both are Tovan's letter — the dead man's folded sheet whose water totals are confirmed to the liter; doc:tovan_letter has the more complete primary name.; decided by host)
+2026-10-13 04:14:52,970 patternbuffer.identity merge obj:inventory_ledger == doc:vault_ledger (merge gate: Both are the ledger Ilsa uses to record vault intake — 'Nothing comes into the vault without my hand on the ledger'; obj:inventory_ledger carries richer context and keeper attribution.; decided by host)
+2026-10-13 04:14:53,031 patternbuffer.identity merge event:badge_entry_2340 == event:second_entry (merge gate: Both name the same door-log event: the badge passage through the Wellhead hatch at 2340, called the second entry in context.; decided by host)
+2026-10-13 04:14:53,079 patternbuffer.identity merge event:dome_breach == event:the_breach (merge gate: Both refer to the same historical breach of Anchor's dome in its early years; 'the breach year' is just a temporal framing of the same event.; decided by host)
+2026-10-13 04:14:53,136 patternbuffer.identity merge event:tovan_death == event:technicians_death (merge gate: Tovan's badge is explicitly called 'the technician's guild badge,' making 'the night the technician died' and 'the night Tovan died' the same event.; decided by host)
+2026-10-13 04:14:53,192 patternbuffer.identity merge obj:anchor_reactors == obj:reactors (merge gate: Both refer to Anchor's reactors; 'b' mentions two working initially but 'a' names all three humming — same physical reactors at different story moments.; decided by host)
+2026-10-13 04:14:53,272 patternbuffer.identity merge obj:master_meter_memory_core == obj:core (merge gate: Both describe the master meter's memory core that was pulled and carried out of Wellhead by someone using Tovan's badge — same missing object, b's name is more complete.; decided by host)
+2026-10-13 04:14:53,323 patternbuffer.identity merge obj:master_meter_housing == place:meter_housing (merge gate: Both refer to the physical casing of the master meter; 'the meter housing' (a's name) matches 'meter housing' (b's alias) directly, and the scorch context applies to the same object.; decided by host)
+2026-10-13 04:14:53,376 patternbuffer.identity merge obj:pneumatic_ledger_racks == place:records_vault_racks (merge gate: Both contexts describe the same office with three clerks sitting near a wall of ledger racks — the clerk who 'sat nearest the racks' is sitting nearest the pneumatic ledger racks.; decided by host)
+2026-10-13 04:14:53,427 patternbuffer.identity merge org:allocation_office == place:allocation_office (merge gate: Both share the identical context sentence and name the same physical-and-institutional entity; the org/place split is a registry artifact.; decided by host)
+2026-10-13 04:14:53,475 patternbuffer.identity merge place:wellhead == org:wellhead (merge gate: Identical context sentences confirm the same entity; 'place' is the more accurate kind for a physical facility.; decided by host)
+2026-10-13 04:14:53,535 patternbuffer.identity merge place:southern_aquifer == place:aquifer_site (merge gate: Both are the southern aquifer location tied to the Voss family survey; Tovan verified his father's site, making them the same place.; The man who 'walked out to verify a survey site in the dark' is Tovan verifying his aquifer site — same location, more specific name is on side a.; decided by host)
+2026-10-13 04:14:53,592 patternbuffer.identity merge place:southern_aquifer == place:survey_site (merge gate: The man who 'walked out to verify a survey site in the dark' is Tovan verifying his aquifer site — same location, more specific name is on side a.; decided by host)
+2026-10-13 04:14:53,657 patternbuffer.identity merge place:condenser_station == place:condenser_facility (merge gate: Both describe the facility past the Rust Quarter where Sela works; 'condenser station' with alias 'sela's station' is more complete.; decided by host)
+2026-10-13 04:14:53,715 patternbuffer.identity merge place:ilsas_desk_false_drawer == place:false_drawer (merge gate: Identical context sentences and the same physical hidden drawer; side b carries the more complete entry with alias.; decided by host)
+2026-10-13 04:14:53,776 patternbuffer.identity merge place:ilsas_desk == place:ilsa_desk (merge gate: Both cards describe Ilsa Renn's desk where the narrator interacts with her; the false drawer context confirms it is the same desk.; decided by host)
+2026-10-13 04:14:53,781 merge_gate merge gate: {'candidates': 284, 'batches': 12, 'verdicts': {'different': 254, 'same': 19, 'unsure': 11}, 'statuses': {'answered': 284}, 'stray': 0, 'components': 18, 'conflicting_components': 0, 'merges': {'merged': 19}}
+2026-10-13 04:14:54,151 merge_gate_metered rep 1 r26-par2b: 284 candidates, {'different': 254, 'same': 19, 'unsure': 11}
+2026-10-13 04:14:55,538 alias_index alias index: {'index_strings': 174, 'segments_with_hits': 4, 'ambiguous_strings': 3, 'stoplisted_strings': 3, 'escape_candidates': 11, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:14:55,543 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:14:55,669 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:14:55,730 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:14:55,785 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 04:14:57,188 alias_index alias index: {'index_strings': 174, 'segments_with_hits': 4, 'ambiguous_strings': 3, 'stoplisted_strings': 3, 'escape_candidates': 11, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:14:57,193 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:14:57,310 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:14:57,378 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:14:57,441 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 04:18:47,240 merge_gate merge gate: {'candidates': 83, 'batches': 4, 'verdicts': {'different': 79, 'unsure': 4}, 'statuses': {'answered': 83}, 'stray': 0, 'components': 0, 'conflicting_components': 0, 'merges': {}}
+2026-10-13 04:18:47,295 merge_gate_metered rep 2 r23-run1: 83 candidates, {'different': 79, 'unsure': 4}
+2026-10-13 04:18:48,086 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 2, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:18:48,092 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:18:48,139 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:18:48,184 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:18:48,196 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 04:18:49,176 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 2, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:18:49,180 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:18:49,223 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:18:49,268 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:18:49,284 patternbuffer.identity identity reconcile: 2 merge(s)
+2026-10-13 04:20:19,540 merge_gate merge gate: {'candidates': 97, 'batches': 4, 'verdicts': {'different': 95, 'unsure': 2}, 'statuses': {'answered': 97}, 'stray': 0, 'components': 0, 'conflicting_components': 0, 'merges': {}}
+2026-10-13 04:20:19,748 merge_gate_metered rep 2 r23-run2: 97 candidates, {'different': 95, 'unsure': 2}
+2026-10-13 04:20:21,733 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 0, 'escape_candidates': 11, 'distinct_pairs': 0, 'distinct_pairs_strong': 0, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 04:20:21,734 alias_index alias distinctness: 0 written, 0 report-only
+2026-10-13 04:20:21,785 patternbuffer.identity merge obj:seed_vault_hatch == obj:wellhead_hatch (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:20:21,872 patternbuffer.identity identity reconcile: 1 merge(s)
+2026-10-13 04:20:23,637 alias_index alias index: {'index_strings': 167, 'segments_with_hits': 4, 'ambiguous_strings': 2, 'stoplisted_strings': 0, 'escape_candidates': 11, 'distinct_pairs': 0, 'distinct_pairs_strong': 0, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 04:20:23,637 alias_index alias distinctness: 0 written, 0 report-only
+2026-10-13 04:20:23,708 patternbuffer.identity merge obj:seed_vault_hatch == obj:wellhead_hatch (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:20:23,785 patternbuffer.identity identity reconcile: 1 merge(s)
+2026-10-13 04:22:44,621 patternbuffer.identity merge org:allocation_office == place:allocation_office (merge gate: Both cards refer to the same Allocation Office on the Council tier where records and seal blanks are kept; the org and place names are identical and context overlaps directly.; decided by host)
+2026-10-13 04:22:44,623 merge_gate merge gate: {'candidates': 92, 'batches': 4, 'verdicts': {'different': 89, 'same': 1, 'unsure': 2}, 'statuses': {'answered': 92}, 'stray': 0, 'components': 1, 'conflicting_components': 0, 'merges': {'merged': 1}}
+2026-10-13 04:22:44,650 merge_gate_metered rep 2 r26-seq: 92 candidates, {'different': 89, 'same': 1, 'unsure': 2}
+2026-10-13 04:22:44,688 pipeline commit: attribute alias 'holds' -> 'custody' refused: 'holds' is an inverse relation: the gate swaps its direction (-> 'held_by'); it cannot be aliased
+2026-10-13 04:22:46,266 alias_index alias index: {'index_strings': 373, 'segments_with_hits': 4, 'ambiguous_strings': 40, 'stoplisted_strings': 15, 'escape_candidates': 9, 'distinct_pairs': 4, 'distinct_pairs_strong': 3, 'merge_candidates': 2, 'merge_excluded': 0}
+2026-10-13 04:22:46,270 alias_index alias distinctness: 1 written, 2 report-only
+2026-10-13 04:22:46,395 patternbuffer.identity merge doc:canonical_books == doc:council_books (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:46,739 patternbuffer.identity merge event:assembly == event:open_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:46,839 patternbuffer.identity merge event:assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:47,539 patternbuffer.identity merge obj:core == obj:master_meter_memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:47,647 patternbuffer.identity merge obj:core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:47,750 patternbuffer.identity merge obj:crays_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:47,966 patternbuffer.identity merge obj:false_drawer == obj:ilsa_desk_false_drawer (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,085 patternbuffer.identity merge obj:footlocker == obj:maintenance_crimp_seal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,193 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,292 patternbuffer.identity merge obj:gray_stuff == obj:narrators_bottle (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,398 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,492 patternbuffer.identity merge obj:master_meter == obj:new_master_meter (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,696 patternbuffer.identity merge obj:tovan_badge == obj:tovan_credential (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:48,794 patternbuffer.identity merge obj:tovan_letter == obj:tovan_note (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:49,009 patternbuffer.identity merge org:council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:49,116 patternbuffer.identity merge org:the_guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:50,158 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:50,371 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:50,471 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:50,562 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:50,712 patternbuffer.identity merge place:narrator_office == place:narrators_office (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:50,907 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:51,057 patternbuffer.identity merge place:southern_aquifer_site == place:survey_site (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:53,095 patternbuffer.identity identity reconcile: 23 merge(s)
+2026-10-13 04:22:54,874 pipeline commit: attribute alias 'holds' -> 'custody' refused: 'holds' is an inverse relation: the gate swaps its direction (-> 'held_by'); it cannot be aliased
+2026-10-13 04:22:56,514 alias_index alias index: {'index_strings': 373, 'segments_with_hits': 4, 'ambiguous_strings': 40, 'stoplisted_strings': 15, 'escape_candidates': 9, 'distinct_pairs': 4, 'distinct_pairs_strong': 3, 'merge_candidates': 2, 'merge_excluded': 0}
+2026-10-13 04:22:56,518 alias_index alias distinctness: 1 written, 2 report-only
+2026-10-13 04:22:56,631 patternbuffer.identity merge doc:canonical_books == doc:council_books (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:56,971 patternbuffer.identity merge event:assembly == event:open_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:57,080 patternbuffer.identity merge event:assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:57,811 patternbuffer.identity merge obj:core == obj:master_meter_memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:57,913 patternbuffer.identity merge obj:core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,017 patternbuffer.identity merge obj:crays_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,198 patternbuffer.identity merge obj:false_drawer == obj:ilsa_desk_false_drawer (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,283 patternbuffer.identity merge obj:footlocker == obj:maintenance_crimp_seal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,399 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,487 patternbuffer.identity merge obj:gray_stuff == obj:narrators_bottle (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,574 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,666 patternbuffer.identity merge obj:master_meter == obj:new_master_meter (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,881 patternbuffer.identity merge obj:tovan_badge == obj:tovan_credential (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:58,979 patternbuffer.identity merge obj:tovan_letter == obj:tovan_note (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:59,166 patternbuffer.identity merge org:council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:22:59,266 patternbuffer.identity merge org:the_guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:00,441 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:00,679 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:00,769 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:00,868 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:01,007 patternbuffer.identity merge place:narrator_office == place:narrators_office (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:01,190 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:01,342 patternbuffer.identity merge place:southern_aquifer_site == place:survey_site (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:23:03,469 patternbuffer.identity identity reconcile: 23 merge(s)
+2026-10-13 04:30:51,165 patternbuffer.identity merge doc:canonical_books == doc:council_allocation_books (merge gate: Both describe the official Council allocation records that fail to reconcile with the master meter total; 'canonical books' and 'Council allocation books' are the same official ledger set.; decided by host)
+2026-10-13 04:30:51,264 patternbuffer.identity merge doc:crays_books == doc:cray_ledgers (merge gate: 'Ledgers' and 'books' are synonyms for the same accounting records belonging to Cray; 'Cray's books' appears in context and is the working term used.; decided by host)
+2026-10-13 04:30:51,343 patternbuffer.identity merge doc:dead_admin_records == doc:dead_mens_files (merge gate: 'Dead administrators' records' and 'the dead men's files' describe the same contents of the Records Vault in near-identical context sentences.; decided by host)
+2026-10-13 04:30:51,445 patternbuffer.identity merge doc:door_log == obj:door_log (merge gate: Identical names and identical context sentences; side a carries more aliases.; decided by host)
+2026-10-13 04:30:51,530 patternbuffer.identity merge obj:inventory_ledger == doc:inventory_ledger (merge gate: Identical names and identical context sentences across both cards; side b carries the alias 'the ledger'.; decided by host)
+2026-10-13 04:30:51,642 patternbuffer.identity merge event:marn_tribunal == org:tribunal (merge gate: both cards share the identical context sentence about the tribunal sorting the living; event:marn_tribunal and org:tribunal are the same hearing described from two angles; decided by host)
+2026-10-13 04:30:51,736 patternbuffer.identity merge event:tovan_death == event:technician_death (merge gate: Tovan was the technician; 'the night the technician died' directly parallels Tovan's death, and tovan_death has the fuller set of names and aliases; decided by host)
+2026-10-13 04:30:51,829 patternbuffer.identity merge obj:ilsa_desk == obj:ilsa_renns_desk (merge gate: Both are Ilsa Renn's desk — the clerk's desk with one visible drawer, described from the same office.; decided by host)
+2026-10-13 04:30:51,930 patternbuffer.identity merge obj:old_meter_housing == obj:master_meter_housing (merge gate: Both are the same physical meter housing — described first with a scorch blister, then later as 'the old housing' after the new meter replaced it and the scorch was scratched over.; decided by host)
+2026-10-13 04:30:52,019 patternbuffer.identity merge place:allocation_office == org:allocation_office (merge gate: Both cards refer to the same Allocation Office on the Council tier; b has fuller aliases covering the physical place.; decided by host)
+2026-10-13 04:30:52,120 patternbuffer.identity merge place:wellhead == org:wellhead (merge gate: Both cards share identical context sentences and refer to the same physical facility; 'b' is the place card with richer aliases and is the correct kind.; decided by host)
+2026-10-13 04:30:52,177 patternbuffer.identity merge person:ilsa_renn == person:tin_ear_clerk (merge gate: Both describe the same small gray woman with a tin ear who works in the records area; 'a' has the proper name Ilsa Renn and is more complete.; decided by host)
+2026-10-13 04:30:52,180 merge_gate merge gate: {'candidates': 286, 'batches': 12, 'verdicts': {'different': 261, 'same': 12, 'unsure': 13}, 'statuses': {'answered': 286}, 'stray': 0, 'components': 12, 'conflicting_components': 0, 'merges': {'merged': 12}}
+2026-10-13 04:30:53,594 merge_gate_metered rep 2 r26-par1b: 286 candidates, {'different': 261, 'same': 12, 'unsure': 13}
+2026-10-13 04:30:55,431 alias_index alias index: {'index_strings': 276, 'segments_with_hits': 4, 'ambiguous_strings': 26, 'stoplisted_strings': 8, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:30:55,436 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:30:55,666 patternbuffer.identity merge event:marn_tribunal == event:tribunal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:55,859 patternbuffer.identity merge event:open_assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:55,932 patternbuffer.identity merge obj:bottle == obj:narrator_drink (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,000 patternbuffer.identity merge obj:cray_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,069 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,230 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,301 patternbuffer.identity merge obj:master_meter == obj:master_meter_new (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,397 patternbuffer.identity merge obj:master_meter_memory_core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,472 patternbuffer.identity merge org:anchor_council == org:council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,568 patternbuffer.identity merge org:anchor_council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,650 patternbuffer.identity merge org:guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,793 patternbuffer.identity merge person:administrator_cray == person:cray (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:56,866 patternbuffer.identity merge person:council_clerk_a == person:council_clerk_b (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,020 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,107 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,183 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,271 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,362 patternbuffer.identity merge place:flats == place:the_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,477 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:30:57,836 patternbuffer.identity identity reconcile: 19 merge(s)
+2026-10-13 04:31:00,229 alias_index alias index: {'index_strings': 276, 'segments_with_hits': 4, 'ambiguous_strings': 26, 'stoplisted_strings': 8, 'escape_candidates': 12, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 1, 'merge_excluded': 0}
+2026-10-13 04:31:00,235 alias_index alias distinctness: 1 written, 0 report-only
+2026-10-13 04:31:00,483 patternbuffer.identity merge event:marn_tribunal == event:tribunal (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:00,658 patternbuffer.identity merge event:open_assembly == event:the_assembly (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:00,722 patternbuffer.identity merge obj:bottle == obj:narrator_drink (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:00,788 patternbuffer.identity merge obj:cray_personal_case == obj:personal_case (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:00,850 patternbuffer.identity merge obj:footlocker == obj:tovan_footlocker (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:00,980 patternbuffer.identity merge obj:guild_badge == obj:tovan_badge (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,087 patternbuffer.identity merge obj:master_meter == obj:master_meter_new (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,175 patternbuffer.identity merge obj:master_meter_memory_core == obj:memory_core (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,245 patternbuffer.identity merge org:anchor_council == org:council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,324 patternbuffer.identity merge org:anchor_council == org:the_council (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,399 patternbuffer.identity merge org:guild == org:tovan_guild (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,533 patternbuffer.identity merge person:administrator_cray == person:cray (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,605 patternbuffer.identity merge person:council_clerk_a == person:council_clerk_b (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,736 patternbuffer.identity merge person:sela == person:sela_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,828 patternbuffer.identity merge person:tovan == person:tovan_voss (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,914 patternbuffer.identity merge place:bazaar == place:bazaar_level (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:01,999 patternbuffer.identity merge place:flats == place:salt_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:02,091 patternbuffer.identity merge place:flats == place:the_flats (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:02,189 patternbuffer.identity merge place:records_vault == place:vault (reconcile: gated shared-anchor coreference; decided by engine)
+2026-10-13 04:31:02,520 patternbuffer.identity identity reconcile: 19 merge(s)
+2026-10-13 04:37:23,098 patternbuffer.identity merge obj:aquifer_maps == doc:aquifer_maps (merge gate: Identical context sentences, same physical object (maps found on body), b has fuller alias set including provenance chain.; decided by host)
+2026-10-13 04:37:23,135 patternbuffer.identity merge obj:canonical_ledgers == doc:canonical_books (merge gate: Both describe the same physical objects: the official allocation ledgers racked in the vault with seal blanks and dead administrators' records — identical content and location.; decided by host)
+2026-10-13 04:37:23,178 patternbuffer.identity merge doc:councils_books == doc:council_allocation_books (merge gate: Both describe the official Council water-allocation books that Tovan compared against the master meter total; b has richer context confirming the same gap discovery.; decided by host)
+2026-10-13 04:37:23,223 patternbuffer.identity merge obj:seed_vault_ledgers == doc:second_books (merge gate: Both share the exact phrase 'the second set of books' and the same vault context; b has fuller aliases including 'phantom reserve ledgers' and 'ledgers in Cray's hand'.; decided by host)
+2026-10-13 04:37:23,272 patternbuffer.identity merge doc:tovan_letter == obj:tovan_letter (merge gate: Both refer to the same written letter from Tovan; 'dead man's letter' and 'the folded sheet' align with Tovan's letter, and the context sentences overlap exactly.; decided by host)
+2026-10-13 04:37:23,318 patternbuffer.identity merge event:second_entry == event:badge_entry_2340 (merge gate: Both name the badge entry at 2340, which is explicitly called 'the second entry' in the same sentence.; decided by host)
+2026-10-13 04:37:23,358 patternbuffer.identity merge event:dome_breach == event:the_breach (merge gate: Both cards describe the same early-years structural failure of Anchor's dome, referred to as 'the dome breach' and 'the breach year.'; decided by host)
+2026-10-13 04:37:23,414 patternbuffer.identity merge obj:master_meter_memory_core == event:memory_core_theft (merge gate: Both refer to the same physical object — the memory core pulled from the master meter; b has the fuller, more specific name.; decided by host)
+2026-10-13 04:37:23,456 patternbuffer.identity merge obj:anchor_reactors == obj:reactors (merge gate: Both refer to Anchor's reactors — the same physical reactors described first as two working, then all three humming; one card is more specific.; decided by host)
+2026-10-13 04:37:23,495 patternbuffer.identity merge place:gallery == obj:gallery_display (merge gate: The gallery display is the display screen/wall in the gallery — 'place:gallery' already lists 'gallery display' as an alias, and both contexts describe the same wall where data columns were shown to the settlement.; decided by host)
+2026-10-13 04:37:23,537 patternbuffer.identity merge place:meter_housing == obj:master_meter_housing (merge gate: Both refer to the physical outer casing of the master meter, described identically with the scorch mark context; 'place:meter_housing' has richer context sentences.; decided by host)
+2026-10-13 04:37:23,573 patternbuffer.identity merge place:allocation_office == org:allocation_office (merge gate: Both sides refer to the same physical office on the Council tier where paper records are kept; org vs. place cards for the same entity.; decided by host)
+2026-10-13 04:37:23,623 patternbuffer.identity merge place:wellhead == org:wellhead (merge gate: Identical names and identical context sentences; the Wellhead is one facility that was double-classified as both org and place.; decided by host)
+2026-10-13 04:37:23,665 patternbuffer.identity merge place:aquifer_site == place:southern_aquifer (merge gate: Both are the southern water source tied to the Voss family surveys; 'tovan's site' and 'the southern aquifer site from Father's old survey' describe the same location from different perspectives.; decided by host)
+2026-10-13 04:37:23,705 patternbuffer.identity merge place:condenser_station == place:condenser_facility (merge gate: Both are Sela's facility out past the Rust Quarter; 'the condensers' and 'the condenser station' name the same place with different levels of specificity.; decided by host)
+2026-10-13 04:37:23,742 patternbuffer.identity merge place:ilsas_desk_false_drawer == place:false_drawer (merge gate: Identical context sentences; one entry lacks the 'second drawer' alias that b carries, but both name the same hidden compartment in the same desk.; decided by host)
+2026-10-13 04:37:23,785 patternbuffer.identity merge place:ilsas_desk == place:ilsa_desk (merge gate: Both describe the same desk belonging to Ilsa Renn, a standard clerk's desk with a hidden drawer.; decided by host)
+2026-10-13 04:37:23,790 merge_gate merge gate: {'candidates': 284, 'batches': 12, 'verdicts': {'different': 242, 'same': 17, 'unsure': 25}, 'statuses': {'answered': 284}, 'stray': 0, 'components': 17, 'conflicting_components': 0, 'merges': {'merged': 17}}
+2026-10-13 04:37:23,989 merge_gate_metered rep 2 r26-par2b: 284 candidates, {'different': 242, 'same': 17, 'unsure': 25}
+# MERGE-GATE-V1 part 2: scoring against the pass mark
+
+Complete (all five registries): **True**. Pass: **True**.
+
+| rep | no `same` on gold-different | gold-same merged (>= 8 of 11) | F1 not below default | unlabelled `same` |
+|---|---|---|---|---|
+| 1 | PASS | PASS (9 of 11) | PASS | 22 |
+| 2 | PASS | PASS (8 of 11) | PASS | 22 |
+
+## Pairs whose verdict differs between repetitions (29)
+
+- `r23-run1` obj:desk_crimp_blanks / obj:seal_blanks: ['different', 'unsure']
+- `r23-run1` obj:gray_stuff / obj:gray_stuff_bottle: ['different', 'unsure']
+- `r23-run1` obj:seed_vault_hatch / place:wellhead_hatch: ['different', 'unsure']
+- `r23-run2` doc:seed_vault_ledgers / place:seed_vault: ['unsure', 'different']
+- `r26-par1b` doc:council_allocation_books / obj:inventory_ledger: ['different', 'unsure']
+- `r26-par1b` doc:cray_ledgers / doc:crays_books: ['unsure', 'same']
+- `r26-par1b` obj:crays_personal_case / obj:footlocker: ['unsure', 'different']
+- `r26-par1b` obj:crays_personal_case / obj:memory_core_case: ['different', 'unsure']
+- `r26-par1b` obj:gallery_display / obj:number_display: ['different', 'unsure']
+- `r26-par2b` doc:council_allocation_books / doc:councils_books: ['unsure', 'same']
+- `r26-par2b` doc:councils_books / obj:marns_books: ['different', 'unsure']
+- `r26-par2b` doc:second_books / obj:crays_books: ['different', 'unsure']
+- `r26-par2b` doc:vault_ledger / obj:inventory_ledger: ['same', 'unsure']
+- `r26-par2b` doc:vault_ledger / place:records_vault: ['different', 'unsure']
+- `r26-par2b` doc:vault_ledger / place:seed_vault: ['different', 'unsure']
+- `r26-par2b` event:memory_core_theft / obj:core: ['different', 'unsure']
+- `r26-par2b` event:memory_core_theft / obj:master_meter_memory_core: ['different', 'same']
+- `r26-par2b` event:technicians_death / event:tovan_death: ['same', 'unsure']
+- `r26-par2b` obj:bulletin_wall / obj:gallery_display: ['different', 'unsure']
+- `r26-par2b` obj:core / obj:master_meter_memory_core: ['same', 'unsure']
+- `r26-par2b` obj:cray_personal_case / obj:steel_document_case: ['different', 'unsure']
+- `r26-par2b` obj:crays_books / obj:seed_vault_ledgers: ['different', 'unsure']
+- `r26-par2b` obj:gallery_display / place:gallery: ['different', 'same']
+- `r26-par2b` obj:lead_crimp_blanks / obj:seal_blanks: ['different', 'unsure']
+- `r26-par2b` obj:pneumatic_ledger_racks / place:records_vault_racks: ['same', 'unsure']
+- `r26-par2b` person:ilsa_renn / person:tin_ear_clerk: ['different', 'unsure']
+- `r26-par2b` place:aquifer_site / place:survey_site: ['same', 'unsure']
+- `r26-seq` obj:desk_crimp_blanks / obj:seal_blanks: ['unsure', 'different']
+- `r26-seq` place:desert / place:salt_flats: ['unsure', 'different']
+
+## 20 sampled unlabelled `same` pairs of 26 (not scored)
+
+- `r26-par1b` doc:canonical_books ["the Council's books", 'the accounting', 'the books', 'the canonical books'] / doc:council_allocation_books ['the Council allocation books'] (keep doc:canonical_books; reps [1, 2]): Both describe the official Council allocation records that don't reconcile with the master meter total; 'canonical books' and 'Council allocation books' are the same document set.
+- `r26-par1b` doc:cray_ledgers ["Cray's ledgers"] / doc:crays_books ["Cray's books"] (keep doc:crays_books; reps [2]): 'Ledgers' and 'books' are synonyms for the same accounting records belonging to Cray; 'Cray's books' appears in context and is the working term used.
+- `r26-par1b` doc:door_log ['the door log'] / obj:door_log ['the door log'] (keep doc:door_log; reps [1, 2]): Both cards share identical name, identical context sentences, and describe the same Wellhead door access record — the doc and obj kinds are a registry duplication of one thing.
+- `r26-par1b` event:marn_tribunal ["Marn's tribunal"] / org:tribunal ['the tribunal'] (keep event:marn_tribunal; reps [1, 2]): both name the single specific proceeding against Marn; org:tribunal shares context sentences with event:marn_tribunal and is the same instance, not a standing body
+- `r26-par1b` event:technician_death ["the technician's death"] / event:tovan_death ["Tovan's death", 'the Voss matter'] (keep event:tovan_death; reps [1, 2]): the technician who died is Tovan Voss; both events reference the same death, and tovan_death carries fuller provenance and aliases
+- `r26-par1b` org:allocation_office ['the Allocation Office', "the Council's Allocation Office"] / place:allocation_office ['the Allocation Office'] (keep org:allocation_office; reps [1, 2]): Same place split across org and place kinds — identical name, identical sentences, one real-world office; 'a' carries the more formal name 'the Council's Allocation Office'.
+- `r26-par2b` doc:canonical_books ['the canonical books'] / obj:canonical_ledgers ['the canonical ledgers'] (keep obj:canonical_ledgers; reps [1, 2]): Both describe the same physical records in the vault: floor-to-ceiling official ledgers alongside seal blanks and dead administrators' files; 'canonical ledgers' is just a slightly fuller name.
+- `r26-par2b` doc:second_books ['the second set of books'] / obj:seed_vault_ledgers ["ledgers in Cray's hand"] (keep obj:seed_vault_ledgers; reps [1, 2]): Both share the identical name 'the second set of books' and the same vault-ledger context quote; obj:seed_vault_ledgers carries richer aliases.
+- `r26-par2b` doc:vault_ledger ['the vault inventory ledger'] / obj:inventory_ledger ["Ilsa's inventory ledger", 'the inventory ledger'] (keep obj:inventory_ledger; reps [1]): Both are the ledger Ilsa uses to record vault intake — 'Nothing comes into the vault without my hand on the ledger'; obj:inventory_ledger carries richer context and keeper attribution.
+- `r26-par2b` event:badge_entry_2340 ['the 2340 badge entry'] / event:second_entry ['the 2340 entry', 'the second entry'] (keep event:badge_entry_2340; reps [1, 2]): Both name the same door-log event: the badge passage through the Wellhead hatch at 2340, called the second entry in context.
+- `r26-par2b` event:dome_breach ['the dome breach'] / event:the_breach ['the breach year'] (keep event:dome_breach; reps [1, 2]): Both refer to the same historical breach of Anchor's dome in its early years; 'the breach year' is just a temporal framing of the same event.
+- `r26-par2b` event:memory_core_theft ['core theft', 'memory core pulled'] / obj:master_meter_memory_core ['memory core', 'the memory core'] (keep obj:master_meter_memory_core; reps [2]): Both refer to the same physical object — the memory core pulled from the master meter; b has the fuller, more specific name.
+- `r26-par2b` event:technicians_death ['the night the technician died'] / event:tovan_death ["Tovan's death", 'the night Tovan died'] (keep event:tovan_death; reps [1]): Tovan's badge is explicitly called 'the technician's guild badge,' making 'the night the technician died' and 'the night Tovan died' the same event.
+- `r26-par2b` obj:gallery_display ['gallery display'] / place:gallery ['the gallery'] (keep place:gallery; reps [2]): The gallery display is the display screen/wall in the gallery — 'place:gallery' already lists 'gallery display' as an alias, and both contexts describe the same wall where data columns were shown to the settlement.
+- `r26-par2b` obj:master_meter_housing ['master meter housing', 'the meter housing'] / place:meter_housing ['the old housing'] (keep obj:master_meter_housing; reps [1, 2]): Both refer to the physical casing of the master meter; 'the meter housing' (a's name) matches 'meter housing' (b's alias) directly, and the scorch context applies to the same object.
+- `r26-par2b` obj:pneumatic_ledger_racks ['the pneumatic ledger racks'] / place:records_vault_racks ['the racks'] (keep obj:pneumatic_ledger_racks; reps [1]): Both contexts describe the same office with three clerks sitting near a wall of ledger racks — the clerk who 'sat nearest the racks' is sitting nearest the pneumatic ledger racks.
+- `r26-par2b` org:allocation_office ['Allocation Office', "Council's Allocation Office"] / place:allocation_office ['the Allocation Office'] (keep org:allocation_office; reps [1, 2]): Both share the identical context sentence and name the same physical-and-institutional entity; the org/place split is a registry artifact.
+- `r26-par2b` place:aquifer_site ['the aquifer site'] / place:southern_aquifer ['the southern aquifer site'] (keep place:southern_aquifer; reps [1, 2]): Both are the southern aquifer location tied to the Voss family survey; Tovan verified his father's site, making them the same place.
+- `r26-par2b` place:condenser_facility ['condenser facility', 'the condensers'] / place:condenser_station ['condenser station', 'the condenser station'] (keep place:condenser_station; reps [1, 2]): Both describe the facility past the Rust Quarter where Sela works; 'condenser station' with alias 'sela's station' is more complete.
+- `r26-seq` org:allocation_office ['Allocation Office', 'the Allocation Office', "the Council's Allocation Office"] / place:allocation_office ['Allocation Office'] (keep org:allocation_office; reps [1, 2]): Both sides describe the same named office on the Council tier that holds canonical books and records — org and physical location are the same entity here.
+

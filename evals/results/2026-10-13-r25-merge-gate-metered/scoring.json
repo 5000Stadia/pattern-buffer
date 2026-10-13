@@ -1,0 +1,722 @@
+{
+  "complete": true,
+  "pass": true,
+  "per_rep": [
+    {
+      "f1": {
+        "r23-run1": {
+          "default": 0.7517,
+          "gated": 0.7517,
+          "not_below": true
+        },
+        "r23-run2": {
+          "default": 0.7347,
+          "gated": 0.7347,
+          "not_below": true
+        },
+        "r26-par1b": {
+          "default": 0.832,
+          "gated": 0.8429,
+          "not_below": true
+        },
+        "r26-par2b": {
+          "default": 0.7961,
+          "gated": 0.8339,
+          "not_below": true
+        },
+        "r26-seq": {
+          "default": 0.7517,
+          "gated": 0.7517,
+          "not_below": true
+        }
+      },
+      "f1_ok": true,
+      "precision_ok": true,
+      "precision_same_on_gold_different": {
+        "r23-run1": [],
+        "r23-run2": [],
+        "r26-par1b": [],
+        "r26-par2b": [],
+        "r26-seq": []
+      },
+      "recall_joined": 9,
+      "recall_of": 11,
+      "recall_ok": true,
+      "statuses": {
+        "answered": 842
+      },
+      "unlabelled_same": 22,
+      "verdicts": {
+        "different": 780,
+        "same": 31,
+        "unsure": 31
+      }
+    },
+    {
+      "f1": {
+        "r23-run1": {
+          "default": 0.7517,
+          "gated": 0.7517,
+          "not_below": true
+        },
+        "r23-run2": {
+          "default": 0.7347,
+          "gated": 0.7347,
+          "not_below": true
+        },
+        "r26-par1b": {
+          "default": 0.832,
+          "gated": 0.8429,
+          "not_below": true
+        },
+        "r26-par2b": {
+          "default": 0.7961,
+          "gated": 0.819,
+          "not_below": true
+        },
+        "r26-seq": {
+          "default": 0.7517,
+          "gated": 0.7517,
+          "not_below": true
+        }
+      },
+      "f1_ok": true,
+      "precision_ok": true,
+      "precision_same_on_gold_different": {
+        "r23-run1": [],
+        "r23-run2": [],
+        "r26-par1b": [],
+        "r26-par2b": [],
+        "r26-seq": []
+      },
+      "recall_joined": 8,
+      "recall_of": 11,
+      "recall_ok": true,
+      "statuses": {
+        "answered": 842
+      },
+      "unlabelled_same": 22,
+      "verdicts": {
+        "different": 766,
+        "same": 30,
+        "unsure": 46
+      }
+    }
+  ],
+  "run_to_run_differing_pairs": [
+    {
+      "a": "obj:desk_crimp_blanks",
+      "b": "obj:seal_blanks",
+      "registry": "r23-run1",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:gray_stuff",
+      "b": "obj:gray_stuff_bottle",
+      "registry": "r23-run1",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:seed_vault_hatch",
+      "b": "place:wellhead_hatch",
+      "registry": "r23-run1",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:seed_vault_ledgers",
+      "b": "place:seed_vault",
+      "registry": "r23-run2",
+      "verdicts": [
+        "unsure",
+        "different"
+      ]
+    },
+    {
+      "a": "doc:council_allocation_books",
+      "b": "obj:inventory_ledger",
+      "registry": "r26-par1b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:cray_ledgers",
+      "b": "doc:crays_books",
+      "registry": "r26-par1b",
+      "verdicts": [
+        "unsure",
+        "same"
+      ]
+    },
+    {
+      "a": "obj:crays_personal_case",
+      "b": "obj:footlocker",
+      "registry": "r26-par1b",
+      "verdicts": [
+        "unsure",
+        "different"
+      ]
+    },
+    {
+      "a": "obj:crays_personal_case",
+      "b": "obj:memory_core_case",
+      "registry": "r26-par1b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:gallery_display",
+      "b": "obj:number_display",
+      "registry": "r26-par1b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:council_allocation_books",
+      "b": "doc:councils_books",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "unsure",
+        "same"
+      ]
+    },
+    {
+      "a": "doc:councils_books",
+      "b": "obj:marns_books",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:second_books",
+      "b": "obj:crays_books",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:vault_ledger",
+      "b": "obj:inventory_ledger",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "same",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:vault_ledger",
+      "b": "place:records_vault",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "doc:vault_ledger",
+      "b": "place:seed_vault",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "event:memory_core_theft",
+      "b": "obj:core",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "event:memory_core_theft",
+      "b": "obj:master_meter_memory_core",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "same"
+      ]
+    },
+    {
+      "a": "event:technicians_death",
+      "b": "event:tovan_death",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "same",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:bulletin_wall",
+      "b": "obj:gallery_display",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:core",
+      "b": "obj:master_meter_memory_core",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "same",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:cray_personal_case",
+      "b": "obj:steel_document_case",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:crays_books",
+      "b": "obj:seed_vault_ledgers",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:gallery_display",
+      "b": "place:gallery",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "same"
+      ]
+    },
+    {
+      "a": "obj:lead_crimp_blanks",
+      "b": "obj:seal_blanks",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:pneumatic_ledger_racks",
+      "b": "place:records_vault_racks",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "same",
+        "unsure"
+      ]
+    },
+    {
+      "a": "person:ilsa_renn",
+      "b": "person:tin_ear_clerk",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "different",
+        "unsure"
+      ]
+    },
+    {
+      "a": "place:aquifer_site",
+      "b": "place:survey_site",
+      "registry": "r26-par2b",
+      "verdicts": [
+        "same",
+        "unsure"
+      ]
+    },
+    {
+      "a": "obj:desk_crimp_blanks",
+      "b": "obj:seal_blanks",
+      "registry": "r26-seq",
+      "verdicts": [
+        "unsure",
+        "different"
+      ]
+    },
+    {
+      "a": "place:desert",
+      "b": "place:salt_flats",
+      "registry": "r26-seq",
+      "verdicts": [
+        "unsure",
+        "different"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "a": "doc:canonical_books",
+      "a_names": [
+        "the Council's books",
+        "the accounting",
+        "the books",
+        "the canonical books"
+      ],
+      "b": "doc:council_allocation_books",
+      "b_names": [
+        "the Council allocation books"
+      ],
+      "keep_id": "doc:canonical_books",
+      "reason": "Both describe the official Council allocation records that don't reconcile with the master meter total; 'canonical books' and 'Council allocation books' are the same document set.",
+      "registry": "r26-par1b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "doc:cray_ledgers",
+      "a_names": [
+        "Cray's ledgers"
+      ],
+      "b": "doc:crays_books",
+      "b_names": [
+        "Cray's books"
+      ],
+      "keep_id": "doc:crays_books",
+      "reason": "'Ledgers' and 'books' are synonyms for the same accounting records belonging to Cray; 'Cray's books' appears in context and is the working term used.",
+      "registry": "r26-par1b",
+      "same_in_reps": [
+        2
+      ]
+    },
+    {
+      "a": "doc:door_log",
+      "a_names": [
+        "the door log"
+      ],
+      "b": "obj:door_log",
+      "b_names": [
+        "the door log"
+      ],
+      "keep_id": "doc:door_log",
+      "reason": "Both cards share identical name, identical context sentences, and describe the same Wellhead door access record \u2014 the doc and obj kinds are a registry duplication of one thing.",
+      "registry": "r26-par1b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "event:marn_tribunal",
+      "a_names": [
+        "Marn's tribunal"
+      ],
+      "b": "org:tribunal",
+      "b_names": [
+        "the tribunal"
+      ],
+      "keep_id": "event:marn_tribunal",
+      "reason": "both name the single specific proceeding against Marn; org:tribunal shares context sentences with event:marn_tribunal and is the same instance, not a standing body",
+      "registry": "r26-par1b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "event:technician_death",
+      "a_names": [
+        "the technician's death"
+      ],
+      "b": "event:tovan_death",
+      "b_names": [
+        "Tovan's death",
+        "the Voss matter"
+      ],
+      "keep_id": "event:tovan_death",
+      "reason": "the technician who died is Tovan Voss; both events reference the same death, and tovan_death carries fuller provenance and aliases",
+      "registry": "r26-par1b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "org:allocation_office",
+      "a_names": [
+        "the Allocation Office",
+        "the Council's Allocation Office"
+      ],
+      "b": "place:allocation_office",
+      "b_names": [
+        "the Allocation Office"
+      ],
+      "keep_id": "org:allocation_office",
+      "reason": "Same place split across org and place kinds \u2014 identical name, identical sentences, one real-world office; 'a' carries the more formal name 'the Council's Allocation Office'.",
+      "registry": "r26-par1b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "doc:canonical_books",
+      "a_names": [
+        "the canonical books"
+      ],
+      "b": "obj:canonical_ledgers",
+      "b_names": [
+        "the canonical ledgers"
+      ],
+      "keep_id": "obj:canonical_ledgers",
+      "reason": "Both describe the same physical records in the vault: floor-to-ceiling official ledgers alongside seal blanks and dead administrators' files; 'canonical ledgers' is just a slightly fuller name.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "doc:second_books",
+      "a_names": [
+        "the second set of books"
+      ],
+      "b": "obj:seed_vault_ledgers",
+      "b_names": [
+        "ledgers in Cray's hand"
+      ],
+      "keep_id": "obj:seed_vault_ledgers",
+      "reason": "Both share the identical name 'the second set of books' and the same vault-ledger context quote; obj:seed_vault_ledgers carries richer aliases.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "doc:vault_ledger",
+      "a_names": [
+        "the vault inventory ledger"
+      ],
+      "b": "obj:inventory_ledger",
+      "b_names": [
+        "Ilsa's inventory ledger",
+        "the inventory ledger"
+      ],
+      "keep_id": "obj:inventory_ledger",
+      "reason": "Both are the ledger Ilsa uses to record vault intake \u2014 'Nothing comes into the vault without my hand on the ledger'; obj:inventory_ledger carries richer context and keeper attribution.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1
+      ]
+    },
+    {
+      "a": "event:badge_entry_2340",
+      "a_names": [
+        "the 2340 badge entry"
+      ],
+      "b": "event:second_entry",
+      "b_names": [
+        "the 2340 entry",
+        "the second entry"
+      ],
+      "keep_id": "event:badge_entry_2340",
+      "reason": "Both name the same door-log event: the badge passage through the Wellhead hatch at 2340, called the second entry in context.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "event:dome_breach",
+      "a_names": [
+        "the dome breach"
+      ],
+      "b": "event:the_breach",
+      "b_names": [
+        "the breach year"
+      ],
+      "keep_id": "event:dome_breach",
+      "reason": "Both refer to the same historical breach of Anchor's dome in its early years; 'the breach year' is just a temporal framing of the same event.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "event:memory_core_theft",
+      "a_names": [
+        "core theft",
+        "memory core pulled"
+      ],
+      "b": "obj:master_meter_memory_core",
+      "b_names": [
+        "memory core",
+        "the memory core"
+      ],
+      "keep_id": "obj:master_meter_memory_core",
+      "reason": "Both refer to the same physical object \u2014 the memory core pulled from the master meter; b has the fuller, more specific name.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        2
+      ]
+    },
+    {
+      "a": "event:technicians_death",
+      "a_names": [
+        "the night the technician died"
+      ],
+      "b": "event:tovan_death",
+      "b_names": [
+        "Tovan's death",
+        "the night Tovan died"
+      ],
+      "keep_id": "event:tovan_death",
+      "reason": "Tovan's badge is explicitly called 'the technician's guild badge,' making 'the night the technician died' and 'the night Tovan died' the same event.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1
+      ]
+    },
+    {
+      "a": "obj:gallery_display",
+      "a_names": [
+        "gallery display"
+      ],
+      "b": "place:gallery",
+      "b_names": [
+        "the gallery"
+      ],
+      "keep_id": "place:gallery",
+      "reason": "The gallery display is the display screen/wall in the gallery \u2014 'place:gallery' already lists 'gallery display' as an alias, and both contexts describe the same wall where data columns were shown to the settlement.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        2
+      ]
+    },
+    {
+      "a": "obj:master_meter_housing",
+      "a_names": [
+        "master meter housing",
+        "the meter housing"
+      ],
+      "b": "place:meter_housing",
+      "b_names": [
+        "the old housing"
+      ],
+      "keep_id": "obj:master_meter_housing",
+      "reason": "Both refer to the physical casing of the master meter; 'the meter housing' (a's name) matches 'meter housing' (b's alias) directly, and the scorch context applies to the same object.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "obj:pneumatic_ledger_racks",
+      "a_names": [
+        "the pneumatic ledger racks"
+      ],
+      "b": "place:records_vault_racks",
+      "b_names": [
+        "the racks"
+      ],
+      "keep_id": "obj:pneumatic_ledger_racks",
+      "reason": "Both contexts describe the same office with three clerks sitting near a wall of ledger racks \u2014 the clerk who 'sat nearest the racks' is sitting nearest the pneumatic ledger racks.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1
+      ]
+    },
+    {
+      "a": "org:allocation_office",
+      "a_names": [
+        "Allocation Office",
+        "Council's Allocation Office"
+      ],
+      "b": "place:allocation_office",
+      "b_names": [
+        "the Allocation Office"
+      ],
+      "keep_id": "org:allocation_office",
+      "reason": "Both share the identical context sentence and name the same physical-and-institutional entity; the org/place split is a registry artifact.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "place:aquifer_site",
+      "a_names": [
+        "the aquifer site"
+      ],
+      "b": "place:southern_aquifer",
+      "b_names": [
+        "the southern aquifer site"
+      ],
+      "keep_id": "place:southern_aquifer",
+      "reason": "Both are the southern aquifer location tied to the Voss family survey; Tovan verified his father's site, making them the same place.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "place:condenser_facility",
+      "a_names": [
+        "condenser facility",
+        "the condensers"
+      ],
+      "b": "place:condenser_station",
+      "b_names": [
+        "condenser station",
+        "the condenser station"
+      ],
+      "keep_id": "place:condenser_station",
+      "reason": "Both describe the facility past the Rust Quarter where Sela works; 'condenser station' with alias 'sela's station' is more complete.",
+      "registry": "r26-par2b",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    },
+    {
+      "a": "org:allocation_office",
+      "a_names": [
+        "Allocation Office",
+        "the Allocation Office",
+        "the Council's Allocation Office"
+      ],
+      "b": "place:allocation_office",
+      "b_names": [
+        "Allocation Office"
+      ],
+      "keep_id": "org:allocation_office",
+      "reason": "Both sides describe the same named office on the Council tier that holds canonical books and records \u2014 org and physical location are the same entity here.",
+      "registry": "r26-seq",
+      "same_in_reps": [
+        1,
+        2
+      ]
+    }
+  ],
+  "unlabelled_same_pairs": 26
+}
