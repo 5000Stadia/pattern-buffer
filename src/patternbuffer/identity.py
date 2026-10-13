@@ -306,7 +306,10 @@ class IdentityRegistry:
             for row in self._buffer.visible(frame=CANON):
                 if row.entity not in clos:
                     continue
-                if row.attribute in ("name", "alias", "kind") \
+                # `role` (PERSON-ROLES-V1): a person's roles change over a life
+                # (prisoner, then hero), so two ids' differing roles are eras of
+                # one person, never a contradiction that vetoes a merge
+                if row.attribute in ("name", "alias", "kind", "role") \
                         or row.attribute in _IDENTITY_ATTRS \
                         or row.attribute in META_ATTRIBUTES \
                         or row.attribute in family:
@@ -352,6 +355,18 @@ class IdentityRegistry:
                 if row is not None:
                     vals.add(_norm(row.value, row.value_type))
         return vals
+
+    def folded_kind(self, entity: str) -> str | None:
+        """The lowercased literal an entity's canon `kind` folds to, or None
+        (PERSON-ROLES-V1: the gate's "already folded to person" test). None
+        when the fold is absent, contested, or entity-valued: an ambiguous
+        kind is not a basis for moving a row."""
+        fold = self._kind_of(entity) if self._kind_of is not None else None
+        if fold is None or fold.winner is None or fold.conflicted:
+            return None
+        if fold.winner.value_type != "literal" or not isinstance(fold.winner.value, str):
+            return None
+        return fold.winner.value.strip().lower()
 
     def containment_related(self, a: str, b: str, asserted_as_of: int | None = None) -> bool:
         return bool(self.containment_block(a, b, asserted_as_of))

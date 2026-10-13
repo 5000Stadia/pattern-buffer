@@ -129,11 +129,15 @@ def test_code_no_shared_anchor(world):
 def test_kinds_conflicted_flag(world):
     world.ingest_structured([
         {"entity": "person:tovan", "attribute": "kind", "value": "person", "valid_from": 1.0},
-        {"entity": "person:tovan", "attribute": "kind", "value": "narrator", "valid_from": 1.0},
         {"entity": "person:tovan", "attribute": "alias", "value": "the chronicler"},
         {"entity": "person:voss", "attribute": "kind", "value": "person", "valid_from": 1.0},
         {"entity": "person:voss", "attribute": "alias", "value": "the chronicler"},
     ])
+    # PERSON-ROLES-V1: the gate now makes a person's second kind a role, so the
+    # contested kind is written the way a pre-R49 world holds it (a direct row).
+    row = world.buffer.append(entity="person:tovan", attribute="kind", value="narrator",
+                              valid_from=1.0, status="stated", role=world.ingestor._role)
+    world.classifier.classify(row)
     world.registry.maybe_same_as("person:tovan", "person:voss", evidence="x")
     p = _ctx(world, "person:tovan", "person:voss")
     flags = {k["entity"]: k["conflicted"] for k in p["auto_decline"]["kinds"]}

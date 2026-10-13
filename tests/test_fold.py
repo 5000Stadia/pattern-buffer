@@ -866,13 +866,16 @@ class TestEvidenceRankEveryClass:
         w = _fc_world(tmp_path)
         try:
             w.ingest_structured([
-                {"entity": "thing:x", "attribute": "kind", "value": "person",
+                {"entity": "thing:x", "attribute": "kind", "value": "creature",
                  "timeless": True, "status": "inferred"},
                 {"entity": "thing:x", "attribute": "kind", "value": "place",
                  "timeless": True},
             ])
             fold = w.state("thing:x", "kind")
-            # today: person, conflicted — the earliest CONSTITUTIVE row served
+            # (PERSON-ROLES-V1: the inferred value was `person`, which now makes
+            # a later non-person kind a role; the fold rule under test is
+            # unchanged, so the fixture uses a non-person value)
+            # today: creature, conflicted — the earliest CONSTITUTIVE row served
             # whatever its evidence
             assert fold.winner.value == "place" and not fold.conflicted
         finally:

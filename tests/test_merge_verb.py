@@ -75,11 +75,15 @@ def test_kind_conflict_pair_surfaces_contested_set(world):
     # same-kind (person↔person) overlap — a real confirm candidate.
     world.ingest_structured([
         {"entity": "person:tovan", "attribute": "kind", "value": "person", "valid_from": 1.0},
-        {"entity": "person:tovan", "attribute": "kind", "value": "narrator", "valid_from": 1.0},
         {"entity": "person:tovan", "attribute": "alias", "value": "the chronicler"},
         {"entity": "person:tovan_voss", "attribute": "kind", "value": "person", "valid_from": 1.0},
         {"entity": "person:tovan_voss", "attribute": "alias", "value": "the chronicler"},
     ])
+    # PERSON-ROLES-V1: the gate now makes a person's second kind a role, so the
+    # contested kind is written the way a pre-R49 world holds it (a direct row).
+    row = world.buffer.append(entity="person:tovan", attribute="kind", value="narrator",
+                              valid_from=1.0, status="stated", role=world.ingestor._role)
+    world.classifier.classify(row)
     world.registry.maybe_same_as("person:tovan", "person:tovan_voss", evidence="seed")
     props = world.porcelain.proposals()
     pr = [p for p in props if {p["a"], p["b"]} == {"person:tovan", "person:tovan_voss"}][0]

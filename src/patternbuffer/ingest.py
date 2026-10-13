@@ -164,6 +164,10 @@ _EXTRACT_RULES_FULL = (
     "a garment worn is '<garment> worn_by <person>' (not 'in', and never with "
     "the person as the subject).\n"
     "- value_type 'entity' when the value is another entity id.\n"
+    "- a person's 'kind' is always 'person'. What they are at a time "
+    "(prisoner, captain, widow, hero) is 'role', with valid_from when it "
+    "begins and valid_to when the text ends it; a person can hold several "
+    "roles at once.\n"
     "- MOVEMENT: when the text narrates a person actually leaving or arriving "
     "at a place (goes out, slips away, comes in, arrives, departs, walks/rides/"
     "drives from A to B), ALSO emit an event with a FRESH UNIQUE id of the form "
@@ -241,6 +245,10 @@ _EXTRACT_RULES_LEAN = (
     "a garment worn is '<garment> worn_by <person>' (not 'in', and never with "
     "the person as the subject).\n"
     "- value_type 'entity' when the value is another entity id.\n"
+    "- a person's 'kind' is always 'person'. What they are at a time "
+    "(prisoner, captain, widow, hero) is 'role', with valid_from when it "
+    "begins and valid_to when the text ends it; a person can hold several "
+    "roles at once.\n"
     "- FRAMES: world facts are frame 'canon' (give their true historical "
     "valid_from even if revealed late); use 'knows:<person_id>' ONLY for the "
     "extra fact that a character learned something, never instead of canon.\n"
@@ -551,6 +559,43 @@ class Ingestor:
         if attr in _BUILTIN_INVERSE_ALIASES and not self._semantics.is_structural(attr):
             return _BUILTIN_INVERSE_ALIASES[attr]
         return None
+
+    # ------------------------------------------------------ person roles
+
+    def _is_person_role_move(self, entity: str, value: Any, value_type: str) -> bool:
+        """PERSON-ROLES-V1 §2: whether a `kind` item is a person's non-person
+        literal kind, to be stored as a `role`. A person subject is one whose
+        id, or a member of its identity closure at the head (as of this item),
+        is in the `person:` namespace, or whose canon kind already folds to
+        `person`. Judged on state before this item, so inside one batch the
+        order of items decides a non-`person:` id. An entity-valued kind on a
+        person is left alone and logged: V1 has no rule for it."""
+        if isinstance(value, str) and value.strip().lower() == "person":
+            return False
+        if not (value_type == "entity" or (value_type == "literal"
+                                           and isinstance(value, str))):
+            return False
+        if not (any(member.startswith("person:")
+                    for member in self._registry.closure(entity))
+                or self._registry.folded_kind(entity) == "person"):
+            return False
+        if value_type == "entity":
+            logger.warning(
+                "PERSON-ROLES-V1: entity-valued kind %r on person %r is stored "
+                "as given (no role rule for an entity-valued kind)", value, entity)
+            return False
+        return True
+
+    def _has_person_kind(self, entity: str, frame: str) -> bool:
+        """Whether the subject (or its closure) already has a `kind = person`
+        row in ``frame``."""
+        for row in self._buffer.visible(
+                entity_in=sorted(self._registry.closure(entity)),
+                attribute="kind", frame=frame):
+            if (row.value_type == "literal" and isinstance(row.value, str)
+                    and row.value.strip().lower() == "person"):
+                return True
+        return False
 
     # ---------------------------------------------------- attr semantics
 
@@ -1469,6 +1514,18 @@ class Ingestor:
                               detail=authored_detail)
             return out  # nothing appended
 
+        # PERSON-ROLES-V1 §2: a person's non-person literal `kind` is a role.
+        # Decided here, after every skip above (so a skip receipt still names
+        # what the author wrote) and before the declarations and the main row,
+        # which then see the attribute the row is stored under. Nothing is
+        # written yet; the receipts come with the side rows.
+        reclassified = False
+        if attribute == "kind" and self._is_person_role_move(entity, value, value_type):
+            reclassified = True
+            attribute = "role"
+            plan = None if is_manual_semantics_row else self._declaration_plan(attribute, item)
+            family = self._family_after(attribute, plan)
+
         # 10. Declarations (GATE-AUTHORITY-V1 §5): a declaration the gate would
         # write must be in its axis vocabulary, validated before anything is
         # written. Authority first: the buffer's vocabulary-authority refusal
@@ -1587,6 +1644,32 @@ class Ingestor:
                     status="inferred", role=self._role,
                 )
             )
+        if row is not None and reclassified:
+            # PERSON-ROLES-V1 §2: the contextual move's own receipt, never a
+            # `canonicalized_from` (that is a global spelling alias, replayed
+            # on reopen); nothing reads this one but a human or a host.
+            out.append(
+                self._buffer.append(
+                    entity=row.id, attribute="reclassified_from", value="kind",
+                    status="inferred", role=self._role,
+                )
+            )
+            if not self._has_person_kind(entity, frame):
+                # The subject is a person; this frame's key identity reads says
+                # so. `inferred` (the input did not state it), timeless.
+                kind_row = self._buffer.append(
+                    entity=entity, attribute="kind", value="person",
+                    value_type="literal", frame=frame, status="inferred",
+                    role=self._role,
+                )
+                out.append(kind_row)
+                to_classify.append(kind_row)
+                out.append(
+                    self._buffer.append(
+                        entity=kind_row.id, attribute="derived_by",
+                        value="person_subject", status="inferred", role=self._role,
+                    )
+                )
         if row is not None and item.get("source_doc"):
             out.append(
                 self._buffer.append(
