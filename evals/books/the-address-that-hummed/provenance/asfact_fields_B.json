@@ -1,0 +1,38 @@
+{
+  "false_beliefs": {
+    "1": {"as_fact": "ok"},
+    "3": {"as_fact": "ok"},
+    "4": {"as_fact": "ok"},
+    "5": {"as_fact": "ok"},
+    "7": {"as_fact": "ok"},
+    "8": {"as_fact": "ok"}
+  },
+  "corrections": {
+    "1": {"as_fact": "ok"},
+    "2": {"corrected_as_fact": "wrong: door_passage is the 'narrow passage beyond the round door' (ch3), not the door that scarred Eren Vey. The true fact is about the scar door: ch5 'The door that had scarred Eren Vey had not belonged to a vanished wall ... it was one of the first house's thresholds, folded away when the room divided.' The subject denotes the wrong thing, and the key has no entity for the scar door."},
+    "3": {"as_fact": "ok", "corrected_as_fact": "ok"},
+    "5": {"as_fact": "ok", "corrected_as_fact": "ok"},
+    "7": {"as_fact": "ok", "corrected_as_fact": "wrong: the tooth was in the false bottom only before Pell moved it (ch2 'Tovan had hidden the seventh tooth in the false bottom. Pell found it there, then moved it beneath the moth'). By the correction in ch4 it is tied to the spool that Eren Vey carries (ch3 'put the spool in his coat'), and the false bottom is empty (ch4 'held nothing now but a dark outline shaped like a key'). What ch4 establishes is that Tovan lied and had hidden it ('Tovan had lied to Pell about the tooth being lost'), e.g. seventh_tooth hidden_by tovan, not a current location."},
+    "8": {"corrected_as_fact": "ok"},
+    "10": {"as_fact": "ok", "corrected_as_fact": "wrong: 'petition refers_to first_house' was never in dispute. The petition was about the missing Latch from the start (ch1 'a room was missing from the Tin Orchard ... the Latch'). The correction is that Lio is the room's own name, not a signer (ch1 'Lio isn't a person. It's what the missing room calls itself when it wants to be found'; 'the petition had mistaken a room's name for its signer'). A fact like first_house name 'Lio' (or petition signed_by nima, ch1 'I signed the petition that arrived') would carry it."},
+    "11": {"as_fact": "ok", "corrected_as_fact": "wrong: it is identical to as_fact (understair status officially_sealed), so it corrects nothing. Ch2 only reconfirms the claim: 'The passage was still officially sealed, though its door had been painted over and the paint had a fresh crack.' Either the true fact is that it has been entered or breached (ch1: the key warmed at 'never entered the Understair'), or the field should be null."},
+    "12": {"as_fact": "ok", "corrected_as_fact": "ok"},
+    "14": {"as_fact": "ok", "corrected_as_fact": "ok"},
+    "17": {"as_fact": "ok"}
+  },
+  "knowledge": {
+    "0": {"as_fact": "ok"},
+    "4": {"as_fact": "ok"},
+    "5": {"as_fact": "ok"},
+    "6": {"as_fact": "ok"},
+    "9": {"as_fact": "ok"},
+    "10": {"as_fact": "ok"},
+    "11": {"as_fact": "ok"},
+    "13": {"as_fact": "ok"},
+    "14": {"as_fact": "ok"},
+    "16": {"as_fact": "wrong: the tooth was placed beneath the moth, not in it (ch2 'moved it beneath the moth in the hidden chamber'; ch3 'The chalk moth lifted one wing. Beneath it lay a numbered spool, the seventh tooth from the comb tied around its middle'). It is tied to the numbered spool, and both sit in the hidden chamber (first_house). The value should be numbered_spool or first_house, or the attribute should be 'under'. The fact also leaves out the main point learned, that Tovan hid it in the false bottom."},
+    "17": {"as_fact": "wrong: 'ivara in first_house' reads as Ivara's current location, and in ch4, when she learns this, she is on the Nacre Stair. What she learns is a past fact (ch4 'You were the baby in the house. They wrote your name on the wall before you could speak'). The attribute should say past residence or childhood membership (e.g. lived_in_as_baby), not 'in'."},
+    "18": {"as_fact": "ok"},
+    "19": {"as_fact": "ok"}
+  }
+}

@@ -1,0 +1,105 @@
+{
+ "false_beliefs": {
+  "1": {
+   "as_fact": "ok"
+  },
+  "3": {
+   "as_fact": "ok"
+  },
+  "4": {
+   "as_fact": "ok"
+  },
+  "5": {
+   "as_fact": "wrong: ch3 'Ivara had assumed the phrase meant her sister had not taken a first breath' is a stillbirth belief (never lived); alis is_alive=false just says she is dead, which collapses into the 'dead and buried' belief (entries 1/8) and loses the not-born-alive content. A fact like born_alive=false / status stillborn would match."
+  },
+  "7": {
+   "as_fact": "ok"
+  },
+  "8": {
+   "as_fact": "ok"
+  }
+ },
+ "corrections": {
+  "1": {
+   "as_fact": "ok"
+  },
+  "2": {
+   "corrected_as_fact": "wrong: entity door_passage is the 'narrow passage beyond the round door' (ch3), not the door that scarred Eren Vey. ch5: 'The door that had scarred Eren Vey ... was one of the first house's thresholds, folded away when the room divided.' No entity in the key denotes that scarring door, so the fact attaches to the wrong thing (and 'in' is a poor word for 'is a threshold of')."
+  },
+  "3": {
+   "as_fact": "ok",
+   "corrected_as_fact": "ok"
+  },
+  "5": {
+   "as_fact": "ok",
+   "corrected_as_fact": "ok"
+  },
+  "7": {
+   "as_fact": "ok",
+   "corrected_as_fact": "wrong: ch2 says Tovan hid the tooth in the false bottom but 'Pell found it there, then moved it beneath the moth' before sending the box (and ch3 shows it tied round the spool under the moth). At the ch4 correction the tooth is not in the false bottom; text establishes only that it was not lost and is kept with the spool/moth in the hidden chamber."
+  },
+  "8": {
+   "corrected_as_fact": "ok"
+  },
+  "10": {
+   "as_fact": "ok",
+   "corrected_as_fact": "wrong: ch1 'Lio isn't a person... It's what the missing room calls itself... the petition had mistaken a room's name for its signer.' The established fact is that Lio is the room's name (first_house name Lio / room is the signer). petition refers_to first_house is a different, uncontradicting relation and does not state the correction of signed_by Lio."
+  },
+  "11": {
+   "as_fact": "ok",
+   "corrected_as_fact": "wrong: identical to as_fact (officially_sealed). ch2 says 'The passage was still officially sealed, though its door had been painted over'; nothing in the text corrects the claim, so there is no corrected fact (should be null)."
+  },
+  "12": {
+   "as_fact": "ok",
+   "corrected_as_fact": "ok"
+  },
+  "14": {
+   "as_fact": "ok",
+   "corrected_as_fact": "ok"
+  },
+  "17": {
+   "as_fact": "ok"
+  }
+ },
+ "knowledge": {
+  "0": {
+   "as_fact": "ok"
+  },
+  "4": {
+   "as_fact": "ok"
+  },
+  "5": {
+   "as_fact": "ok"
+  },
+  "6": {
+   "as_fact": "ok"
+  },
+  "9": {
+   "as_fact": "ok"
+  },
+  "10": {
+   "as_fact": "wrong: literal 'the same three notes' is a relative phrase that does not stand alone (same as what?). ch2: 'the thread repeated the same three notes' as the song he heard; the literal should name the song/three notes, e.g. repeats 'the song'."
+  },
+  "11": {
+   "as_fact": "ok"
+  },
+  "13": {
+   "as_fact": "ok"
+  },
+  "14": {
+   "as_fact": "ok"
+  },
+  "16": {
+   "as_fact": "wrong: ch2 'moved the tooth beneath the moth in the hidden chamber' -- the tooth lies under the moth, not inside it; a chalk moth is a flat creature, not a container. Location should be the hidden chamber (first_house) or an 'under' relation."
+  },
+  "17": {
+   "as_fact": "ok"
+  },
+  "18": {
+   "as_fact": "ok"
+  },
+  "19": {
+   "as_fact": "ok"
+  }
+ }
+}

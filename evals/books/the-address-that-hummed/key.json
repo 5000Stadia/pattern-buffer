@@ -2271,121 +2271,213 @@
       "who": "ivara",
       "learns": "Alis had not been buried and had been hidden in the first house; her survival is confirmed later.",
       "chapter": 3,
-      "evidence": "Tovan had helped hide her in the first house"
+      "evidence": "Tovan had helped hide her in the first house",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "in",
+        "value": {
+          "entity": "first_house"
+        }
+      }
     },
     {
       "who": "nima",
       "learns": "Her grandmother did not make the Latch alone; she kept one side from falling while four children made the room.",
       "chapter": 4,
-      "evidence": "I found this below the empty ring. It has my grandmother's handwriting, but it says the room was made by four children."
+      "evidence": "I found this below the empty ring. It has my grandmother's handwriting, but it says the room was made by four children.",
+      "as_fact": null
     },
     {
       "who": "eren_vey",
       "learns": "The brass map records who can remember places, not just physical locations.",
       "chapter": 3,
-      "evidence": "This is not a map of places,” he said. “It's a map of who can remember them."
+      "evidence": "This is not a map of places,” he said. “It's a map of who can remember them.",
+      "as_fact": null
     },
     {
       "who": "eren_vey",
       "learns": "Eren Vell is Pell Aven, the former apprentice.",
       "chapter": 2,
-      "evidence": "You were the apprentice who stole the seventh tooth."
+      "evidence": "You were the apprentice who stole the seventh tooth.",
+      "as_fact": null
     },
     {
       "who": "tovan",
       "learns": "The Latch can open again.",
       "chapter": 3,
-      "evidence": "That belief had lasted for years. It fell now"
+      "evidence": "That belief had lasted for years. It fell now",
+      "as_fact": {
+        "entity": "first_house",
+        "attribute": "can_open_again",
+        "value": {
+          "literal": true
+        }
+      }
     },
     {
       "who": "ivara",
       "learns": "Pell had been the child Pell Aven before the Hall narrowed his identity to Eren Vell.",
       "chapter": 2,
-      "evidence": "The porter was the same person, and he had carried the name Eren Vell for eight years."
+      "evidence": "The porter was the same person, and he had carried the name Eren Vell for eight years.",
+      "as_fact": {
+        "entity": "pell",
+        "attribute": "name",
+        "value": {
+          "literal": "Pell Aven"
+        }
+      }
     },
     {
       "who": "ivara",
       "learns": "Alis was Ivara’s sister by address, not by blood; Tovan knew her and hid her in the first house. Her survival is confirmed in Chapter 4.",
       "chapter": 3,
-      "evidence": "She was not your sister by blood. She was your sister by address."
+      "evidence": "She was not your sister by blood. She was your sister by address.",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "relation_to_ivara",
+        "value": {
+          "literal": "sister_by_address"
+        }
+      }
     },
     {
       "who": "eren_vey",
       "learns": "He had spent one night in the first house as a child and the voice at the end of the spool was his own name.",
       "chapter": 3,
-      "evidence": "He heard a name nobody else could hear."
+      "evidence": "He heard a name nobody else could hear.",
+      "as_fact": null
     },
     {
       "who": "ivara",
       "learns": "The first house can return as a shared room and be joined rather than divided.",
       "chapter": 5,
-      "evidence": "The room could now reach the Hall, the Orchard, and the stair."
+      "evidence": "The room could now reach the Hall, the Orchard, and the stair.",
+      "as_fact": null
     },
     {
       "who": "pell",
       "learns": "His childhood name Pell Aven remains his alongside Eren Vell.",
       "chapter": 5,
-      "evidence": "Now he had the old name as well, not as a replacement but as a piece of his history."
+      "evidence": "Now he had the old name as well, not as a replacement but as a piece of his history.",
+      "as_fact": {
+        "entity": "pell",
+        "attribute": "name",
+        "value": {
+          "literal": "Pell Aven"
+        }
+      }
     },
     {
       "who": "eren_vey",
       "learns": "The song he thought was his mother humming is also repeated by the black thread in the Sump.",
       "chapter": 2,
-      "evidence": "Now, in the Sump, the thread repeated the same three notes."
+      "evidence": "Now, in the Sump, the thread repeated the same three notes.",
+      "as_fact": {
+        "entity": "black_thread",
+        "attribute": "repeats",
+        "value": {
+          "literal": "the same three notes"
+        }
+      }
     },
     {
       "who": "ivara",
       "learns": "The red key was her mother’s promise to return, not an unclaimed tool.",
       "chapter": 5,
-      "evidence": "her mother's promise to come back"
+      "evidence": "her mother's promise to come back",
+      "as_fact": {
+        "entity": "red_key",
+        "attribute": "meaning",
+        "value": {
+          "literal": "Mara's promise to return"
+        }
+      }
     },
     {
       "who": "ivara",
       "learns": "Tovan wrote the false burial claim in the old ledger.",
       "chapter": 5,
-      "evidence": "he had written “buried in the niche” on the old ledger"
+      "evidence": "he had written “buried in the niche” on the old ledger",
+      "as_fact": null
     },
     {
       "who": "ivara",
       "learns": "Her sister was unplaced at birth, but that was not a defect to correct.",
       "chapter": 5,
-      "evidence": "The Hall's record was accurate about Alis being unplaced at birth, but wrong to treat that as a defect to be corrected."
+      "evidence": "The Hall's record was accurate about Alis being unplaced at birth, but wrong to treat that as a defect to be corrected.",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "status",
+        "value": {
+          "literal": "unplaced_at_birth"
+        }
+      }
     },
     {
       "who": "eren_vey",
       "learns": "He was assigned examiner for six days of each week.",
       "chapter": 6,
-      "evidence": "assigned the other six to Eren Vey."
+      "evidence": "assigned the other six to Eren Vey.",
+      "as_fact": {
+        "entity": "eren_vey",
+        "attribute": "role",
+        "value": {
+          "literal": "examiner"
+        }
+      }
     },
     {
       "who": "tovan",
       "learns": "The chalk moth assigned the red key to the youngest hand, the comb to the one who divided, and the thread to the one who hears.",
       "chapter": 3,
-      "evidence": "The key goes to the youngest hand. The comb goes to the one who divided. The thread goes to the one who hears."
+      "evidence": "The key goes to the youngest hand. The comb goes to the one who divided. The thread goes to the one who hears.",
+      "as_fact": null
     },
     {
       "who": "everyone_present",
       "learns": "Tovan had hidden the seventh tooth in the tin box false bottom; Pell found it and moved it beneath the moth.",
       "chapter": 2,
-      "evidence": "Tovan had hidden the seventh tooth in the false bottom. Pell found it there, then moved it beneath the moth"
+      "evidence": "Tovan had hidden the seventh tooth in the false bottom. Pell found it there, then moved it beneath the moth",
+      "as_fact": null
     },
     {
       "who": "ivara",
       "learns": "She had been the baby in the first house and one of the four children whose names were written there.",
       "chapter": 4,
-      "evidence": "You were the baby in the house. They wrote your name on the wall before you could speak."
+      "evidence": "You were the baby in the house. They wrote your name on the wall before you could speak.",
+      "as_fact": {
+        "entity": "ivara",
+        "attribute": "in",
+        "value": {
+          "entity": "first_house"
+        }
+      }
     },
     {
       "who": "alis",
       "learns": "Mara brought her through the Mouth Room as a baby after finding her in a room without an address.",
       "chapter": 5,
-      "evidence": "Mara brought her through the Mouth Room as a baby, after finding her alone in a room that had lost its address."
+      "evidence": "Mara brought her through the Mouth Room as a baby, after finding her alone in a room that had lost its address.",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "brought_by",
+        "value": {
+          "entity": "mara"
+        }
+      }
     },
     {
       "who": "ivara",
       "learns": "Lio is the first house name heard at the Orchard; this identity is clarified in chapter 5.",
       "chapter": 5,
-      "evidence": "First House was what Mara called it."
+      "evidence": "First House was what Mara called it.",
+      "as_fact": {
+        "entity": "first_house",
+        "attribute": "name",
+        "value": {
+          "literal": "Lio"
+        }
+      }
     }
   ],
   "false_beliefs": [
@@ -2393,67 +2485,114 @@
       "who": "nima",
       "believes": "Her grandmother built the Latch and it belonged to her family.",
       "from_chapter": 1,
-      "corrected_chapter": 4
+      "corrected_chapter": 4,
+      "as_fact": null
     },
     {
       "who": "ivara",
       "believes": "Alis was buried in the family niche.",
       "from_chapter": 3,
-      "corrected_chapter": 3
+      "corrected_chapter": 3,
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "status",
+        "value": {
+          "literal": "buried"
+        }
+      }
     },
     {
       "who": "eren_vey",
       "believes": "The door that scarred him belonged to a wall that no longer existed.",
       "from_chapter": 1,
-      "corrected_chapter": 5
+      "corrected_chapter": 5,
+      "as_fact": null
     },
     {
       "who": "tovan",
       "believes": "The Latch could not open again.",
       "from_chapter": 3,
-      "corrected_chapter": 3
+      "corrected_chapter": 3,
+      "as_fact": {
+        "entity": "first_house",
+        "attribute": "can_open_again",
+        "value": {
+          "literal": false
+        }
+      }
     },
     {
       "who": "ivara",
       "believes": "The red key was an unclaimed tool.",
       "from_chapter": 5,
-      "corrected_chapter": 5
+      "corrected_chapter": 5,
+      "as_fact": {
+        "entity": "red_key",
+        "attribute": "status",
+        "value": {
+          "literal": "unclaimed"
+        }
+      }
     },
     {
       "who": "ivara",
       "believes": "“Unplaced at birth” meant Alis had not taken a first breath.",
       "from_chapter": 3,
-      "corrected_chapter": 5
+      "corrected_chapter": 5,
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "is_alive",
+        "value": {
+          "literal": false
+        }
+      }
     },
     {
       "who": "pell",
       "believes": "The porter name Eren Vell was the only name the Hall would let him keep.",
       "from_chapter": 5,
-      "corrected_chapter": 5
+      "corrected_chapter": 5,
+      "as_fact": null
     },
     {
       "who": "ivara",
       "believes": "Alis was Ivara's sister by blood.",
       "from_chapter": 1,
-      "corrected_chapter": 3
+      "corrected_chapter": 3,
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "relation_to_ivara",
+        "value": {
+          "literal": "sister_by_blood"
+        }
+      }
     },
     {
       "who": "ivara",
       "believes": "“In the niche” meant Alis had been buried.",
       "from_chapter": 4,
-      "corrected_chapter": 5
+      "corrected_chapter": 5,
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "status",
+        "value": {
+          "literal": "buried"
+        }
+      }
     },
     {
       "who": "eren_vey",
       "believes": "The song he heard was his mother's humming.",
       "from_chapter": 2,
-      "corrected_chapter": 3
+      "corrected_chapter": 3,
+      "as_fact": null
     },
     {
       "who": "ivara",
       "believes": "She had never met Pell before he became Eren Vell.",
       "from_chapter": 2,
-      "corrected_chapter": 3
+      "corrected_chapter": 3,
+      "as_fact": null
     }
   ],
   "corrections": [
@@ -2461,109 +2600,253 @@
       "claim": "Nima believes the Latch was built by her grandmother and belongs to her family.",
       "stated_chapter": 1,
       "corrected_chapter": 4,
-      "evidence": "My grandmother didn't make the room. She kept one side from falling away."
+      "evidence": "My grandmother didn't make the room. She kept one side from falling away.",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Ivara assumes Alis had died and was buried in the family niche.",
       "stated_chapter": 3,
       "corrected_chapter": 3,
-      "evidence": "The correction struck like a dropped stone. Ivara had believed Alis dead and buried. She had not been buried."
+      "evidence": "The correction struck like a dropped stone. Ivara had believed Alis dead and buried. She had not been buried.",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "status",
+        "value": {
+          "literal": "buried"
+        }
+      },
+      "corrected_as_fact": null
     },
     {
       "claim": "Eren Vey believes his scar came from a door in a wall that no longer exists.",
       "stated_chapter": 1,
       "corrected_chapter": 5,
-      "evidence": "The door that had scarred Eren Vey had not belonged to a vanished wall, as he had believed; it was one of the first house's thresholds, folded away when the room divided."
+      "evidence": "The door that had scarred Eren Vey had not belonged to a vanished wall, as he had believed; it was one of the first house's thresholds, folded away when the room divided.",
+      "as_fact": null,
+      "corrected_as_fact": {
+        "entity": "door_passage",
+        "attribute": "in",
+        "value": {
+          "entity": "first_house"
+        }
+      }
     },
     {
       "claim": "Tovan believed the Latch could not open again.",
       "stated_chapter": 3,
       "corrected_chapter": 3,
-      "evidence": "I believed the Latch could not open again."
+      "evidence": "I believed the Latch could not open again.",
+      "as_fact": {
+        "entity": "first_house",
+        "attribute": "can_open_again",
+        "value": {
+          "literal": false
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "first_house",
+        "attribute": "can_open_again",
+        "value": {
+          "literal": true
+        }
+      }
     },
     {
       "claim": "Ivara believed she had never met Pell before he became Eren Vell.",
       "stated_chapter": 2,
       "corrected_chapter": 3,
-      "evidence": "and the baby Ivara had slept in a drawer padded with old bark."
+      "evidence": "and the baby Ivara had slept in a drawer padded with old bark.",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Ivara believed the red key was an unclaimed tool.",
       "stated_chapter": 5,
       "corrected_chapter": 5,
-      "evidence": "Ivara had carried the key ever since, believing it to be an unclaimed tool."
+      "evidence": "Ivara had carried the key ever since, believing it to be an unclaimed tool.",
+      "as_fact": {
+        "entity": "red_key",
+        "attribute": "status",
+        "value": {
+          "literal": "unclaimed"
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "red_key",
+        "attribute": "meaning",
+        "value": {
+          "literal": "Mara's promise to return"
+        }
+      }
     },
     {
       "claim": "Ivara misread “unplaced at birth” as meaning Alis had not taken a first breath.",
       "stated_chapter": 3,
       "corrected_chapter": 5,
-      "evidence": "The Hall's record was accurate about Alis being unplaced at birth, but wrong to treat that as a defect to be corrected."
+      "evidence": "The Hall's record was accurate about Alis being unplaced at birth, but wrong to treat that as a defect to be corrected.",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Tovan told Pell that the seventh tooth was lost.",
       "stated_chapter": 4,
       "corrected_chapter": 4,
-      "evidence": "Tovan had lied to Pell about the tooth being lost"
+      "evidence": "Tovan had lied to Pell about the tooth being lost",
+      "as_fact": {
+        "entity": "seventh_tooth",
+        "attribute": "status",
+        "value": {
+          "literal": "lost"
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "seventh_tooth",
+        "attribute": "in",
+        "value": {
+          "entity": "false_bottom"
+        }
+      }
     },
     {
       "claim": "Tovan claimed he knew Alis only from her file, but he had known her.",
       "stated_chapter": 3,
       "corrected_chapter": 3,
-      "evidence": "The red key warmed. This was another practiced answer. Tovan had known the child."
+      "evidence": "The red key warmed. This was another practiced answer. Tovan had known the child.",
+      "as_fact": null,
+      "corrected_as_fact": {
+        "entity": "tovan",
+        "attribute": "knew",
+        "value": {
+          "entity": "alis"
+        }
+      }
     },
     {
       "claim": "Pell believed Eren Vell was the only name the Hall would let him keep.",
       "stated_chapter": 5,
       "corrected_chapter": 5,
-      "evidence": "Now he had the old name as well, not as a replacement but as a piece of his history."
+      "evidence": "Now he had the old name as well, not as a replacement but as a piece of his history.",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Ivara mistook the petition name Lio for a woman who signed it.",
       "stated_chapter": 1,
       "corrected_chapter": 1,
-      "evidence": "Ivara understood that the petition had mistaken a room's name for its signer."
+      "evidence": "Ivara understood that the petition had mistaken a room's name for its signer.",
+      "as_fact": {
+        "entity": "petition",
+        "attribute": "signed_by",
+        "value": {
+          "literal": "Lio"
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "petition",
+        "attribute": "refers_to",
+        "value": {
+          "entity": "first_house"
+        }
+      }
     },
     {
       "claim": "The Understair was officially sealed.",
       "stated_chapter": 1,
       "corrected_chapter": 2,
-      "evidence": "The passage was still officially sealed, though its door had been painted over"
+      "evidence": "The passage was still officially sealed, though its door had been painted over",
+      "as_fact": {
+        "entity": "understair",
+        "attribute": "status",
+        "value": {
+          "literal": "officially_sealed"
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "understair",
+        "attribute": "status",
+        "value": {
+          "literal": "officially_sealed"
+        }
+      }
     },
     {
       "claim": "Tovan claimed he had borrowed the bone comb from the Hall collection.",
       "stated_chapter": 2,
       "corrected_chapter": 2,
-      "evidence": "Ivara understood that Tovan had lied about borrowing the comb: it had not come from the collection."
+      "evidence": "Ivara understood that Tovan had lied about borrowing the comb: it had not come from the collection.",
+      "as_fact": {
+        "entity": "bone_comb",
+        "attribute": "borrowed_by",
+        "value": {
+          "entity": "tovan"
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "bone_comb",
+        "attribute": "from_collection",
+        "value": {
+          "literal": false
+        }
+      }
     },
     {
       "claim": "Pell claimed he did not know about the note and did not write.",
       "stated_chapter": 2,
       "corrected_chapter": 2,
-      "evidence": "The red key warmed: Pell was lying."
+      "evidence": "The red key warmed: Pell was lying.",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Ivara believed Alis was her sister by blood.",
       "stated_chapter": 1,
       "corrected_chapter": 3,
-      "evidence": "She was not your sister by blood. She was your sister by address."
+      "evidence": "She was not your sister by blood. She was your sister by address.",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "relation_to_ivara",
+        "value": {
+          "literal": "sister_by_blood"
+        }
+      },
+      "corrected_as_fact": {
+        "entity": "alis",
+        "attribute": "relation_to_ivara",
+        "value": {
+          "literal": "sister_by_address"
+        }
+      }
     },
     {
       "claim": "Nima heard her grandmother say the Latch was “ours to protect” as “ours to own.”",
       "stated_chapter": 4,
       "corrected_chapter": 4,
-      "evidence": "Nima had mistaken the words for “ours to own.”"
+      "evidence": "Nima had mistaken the words for “ours to own.”",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Eren Vey believed the song was only his mother's humming.",
       "stated_chapter": 2,
       "corrected_chapter": 3,
-      "evidence": "he had stopped believing the song belonged only to his mother."
+      "evidence": "he had stopped believing the song belonged only to his mother.",
+      "as_fact": null,
+      "corrected_as_fact": null
     },
     {
       "claim": "Ivara read “in the niche” as “buried.”",
       "stated_chapter": 4,
       "corrected_chapter": 4,
-      "evidence": "Ivara had read “in the niche” as “buried” because the Hall's register had used the word unplaced."
+      "evidence": "Ivara had read “in the niche” as “buried” because the Hall's register had used the word unplaced.",
+      "as_fact": {
+        "entity": "alis",
+        "attribute": "status",
+        "value": {
+          "literal": "buried"
+        }
+      },
+      "corrected_as_fact": null
     }
   ]
 }

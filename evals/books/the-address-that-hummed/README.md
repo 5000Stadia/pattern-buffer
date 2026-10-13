@@ -22,7 +22,7 @@ out, run only on frozen designs (Kabe, gate g936be9, accepting consult c4bb1f2 p
 | `graded.json`, `dropped.md` | the entries both final readers confirmed, and the rest with their notes (`book_gold.py`) | never (the grader only) |
 | `provenance/` | the briefs, the earlier rounds' verdicts, the writer's change notes | no |
 
-The key's sha256 is `bd914c39d776fc82e590da2269c0643aa2309e5c5b7d815e245b42efeee436bc`.
+The key's sha256 is `34bd5facb48f8c158ea3c4de5d9108675cde4419357e687e5315bc8e64a93c3b`. The key before the `as_fact` pass is kept as `provenance/key-before-asfact.json` (`bd914c39…`), and the two differ only in `as_fact` and `corrected_as_fact` fields.
 
 ## How the key was checked
 
@@ -57,7 +57,20 @@ At most two revision rounds were allowed, the same exit rule as R27's book (moni
      converts those lists into GRADE-LEAKS-V1 per-field verdicts: an unlisted alias of an `ok`
      entity is `ok`, and a listed one is `wrong` with the reader's reason.
 
-## Not yet in the key
+## Structured fact forms (GRADE-LEAKS-V1 §2)
 
-`as_fact` structured forms for beliefs, corrections and knowledge (GRADE-LEAKS-V1 §2). They come
-from a separate authoring pass, verified per field by two readers, after GRADE-LEAKS-V1 is merged.
+1. **The pass.** ChatGPT added `as_fact` and `corrected_as_fact` forms (`provenance/ASFACT.md`,
+   with its notes in `ASFACT-NOTES.md`). A script confirmed that nothing else in the key changed.
+   Where an entry couldn't honestly be stated as one fact, the form is null.
+2. **The check.** Two fresh readers, Claude Sonnet and Claude Opus, judged every non-null field
+   (`provenance/asfact_fields_*.json`). Both found the same main errors:
+   - a correction placed on the wrong door;
+   - a "correction" that repeats its claim;
+   - the seventh tooth's location.
+
+   Those fields are dropped.
+3. **One blanked entry.** `knowledge[16]` names "everyone_present" as its learner, which is not an
+   entity, so no frame can grade it. Its form is blanked by
+   `provenance/null_ungradable_asfact.py`; both readers had marked it wrong anyway.
+4. **Graded:** 3 false beliefs, 11 correction fields and 9 knowledge entries, as both readers
+   confirmed, on entries both readers also confirmed. The rest are in `dropped.md`.
