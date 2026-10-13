@@ -126,7 +126,12 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 ## Later
 
 - [ ] R50 Served facts under the canonical id: after a merge, `state`, `snapshot` and `facts` serve each row under the id it was written on (`person:daniel`), while `entities` lists only the representative (`person:dan`). So one merged person reads as two in a host's notebook. Construct relabels by closure today (m38e73c), so nothing is broken. The fix is a read-surface contract change: serve the representative as `entity` and keep the written id beside it. It needs a spec, pbr, and every host's read.
-- [ ] R51 Animals and other non-human characters: a non-human in the `person:` namespace now gets `kind = person` with its species as a role (construct's `person:kip`, a dog; m38e73c). A rule for animals waits until a book needs one.
+- [ ] R51 Beings, not only persons. Kabe (2026-10-13, via construct m5bc622), on R49 making a dog in `person:` read as kind person, role dog: "If a dog is a kind of person and what is the point of identifying term person? Isn't it more of a sentient entity have either type person or type dog." And: "In the future, this should be allowed as a hostile enemy if the engine actually develops into that direction." My reading:
+  - Three layers: a **being** class (anything that acts and knows, and can be met); a **type** (person, dog, wraith…), rarely changed; and R49's dated **roles**, unchanged.
+  - The identity kind check compares type, so a man and a dog both called Rex can never merge on the name.
+  - Non-human beings are full characters, with knowledge frames and the people layer, including hostile ones (a beast or monster as an enemy), not only companions.
+  - Open design question: how a type word is told from a role word (the extraction prompt, or a list of type words), and what happens to the `person:` namespace and the person test (VIEW-EXPORT-V1 §2, R49's gate).
+  - Nothing to build until Kabe brings the item forward.
 - [ ] R43 A containment read that says each item's edge (`worn_by`, `held_by`, `in`), so a narrator can say "wearing the grey coat" rather than "on your person". Construct's nice-to-have from E3's shape read (me79b81), not a blocker.
 - [ ] R44 A repeated `attr:*` declaration after data exists: an identical one becomes a no-op receipt and a conflicting one a skip, instead of raising and dropping the host's whole batch (construct run 7, mfbd59d: a re-sent `attr:keeps arity set_valued` dropped a turn's ingest)
 - [ ] R28 Simplify the connection facade to a small gated API; back through pbr (`docs/AUDIT-2026-10.md` decision 6)
