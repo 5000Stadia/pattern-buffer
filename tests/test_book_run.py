@@ -539,7 +539,17 @@ def test_the_grader_grades_a_built_world_from_the_command_line(built, tmp_path):
     path = tmp_path / "graded.json"
     path.write_text(json.dumps(graded))
     out = tmp_path / "grades"
-    assert gb.main(["--run", str(built["out"]), "--graded", str(path), "--out", str(out)]) == 0
+    world_file = built["out"] / "fresh_ingest.world"
+    before = (world_file.read_bytes(), world_file.stat().st_mtime_ns)
+    siblings = sorted(p.name for p in world_file.parent.iterdir())
+    world_file.chmod(0o444)                       # a write handle would fail on it
+    try:
+        assert gb.main(["--run", str(built["out"]), "--graded", str(path), "--out", str(out)]) == 0
+    finally:
+        world_file.chmod(0o644)
+    # the grader read a sealed copy: the artifact is untouched, and no journal appeared
+    assert (world_file.read_bytes(), world_file.stat().st_mtime_ns) == before
+    assert sorted(p.name for p in world_file.parent.iterdir()) == siblings
     card_ = json.loads((out / "book_scorecard.json").read_text())
     assert card_["summary"]["identity_b3_f1"] == 1.0
     assert card_["summary"]["order"] == 1.0 and card_["summary"]["final"] == 1.0

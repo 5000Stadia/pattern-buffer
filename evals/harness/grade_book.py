@@ -298,11 +298,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", default=None, help="where to write (default: the run directory)")
     ap.add_argument("--world-id", default=None, help="default: the run's meta.json")
     args = ap.parse_args(argv)
-    from patternbuffer import World
+    from patternbuffer.mirror import open_read_only_copy
 
     run = Path(args.run)
     world_id = args.world_id or json.loads((run / "meta.json").read_text())["world_id"]
-    world = World(run / "fresh_ingest.world", world_id=world_id)
+    # a sealed in-memory copy taken through `mode=ro`: the build artifact is
+    # never opened for writing (bytes and mtime unchanged)
+    world = open_read_only_copy(run / "fresh_ingest.world", world_id)
     try:
         card = grade_book(world, world.registry, json.loads(Path(args.graded).read_text()))
     finally:
