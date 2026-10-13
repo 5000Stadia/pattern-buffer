@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -87,6 +87,7 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
   - `persona_name_is_alias`: a persona name that also appears as a plain alias of any entry
     (consult c33a2ae);
   - `persona_reveal_before_entry`;
+  - `persona_reveal_before_intro` *(r1.3)*;
   - `namesake_unknown_key`.
 
 ### 2. `Registry.from_manifest(manifest, text_by_chapter)`: ids minted by code
@@ -140,10 +141,22 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
 ### 3. `plan(text_by_chapter, registry, *, max_words=1500)`: the chunks
 
 - **The cuts.** Chapters are cut into chunks at paragraph breaks, under `max_words`, as today.
-- **Reveal splits.** A chunk that holds a persona's reveal sentence is **split at that sentence**,
-  so the text after the reveal starts a new chunk. No chunk straddles a reveal.
-- **Per chunk:** `{index, chapter, first_sentence, text, candidates}`, where `candidates` are the
-  registry entries and personas gated in by the chunk's first sentence.
+- **Reveal splits.** A chunk that holds a persona's reveal sentence is **split before that
+  sentence**: the reveal sentence opens the new chunk, and the earlier chunk ends just before it.
+  No chunk holds both pre-reveal and reveal text.
+- **The candidate gate is the chunk's last sentence** *(r1.3, pbr)*. A chunk's `candidates` are the
+  entries whose `anchor_quote`, and the personas whose `intro_quote`, is at or before the chunk's
+  **last** sentence.
+  - **Why this leaks nothing.** An entry's anchor and a persona's intro are their first appearance
+    in the text. A chunk holding that sentence reads the name itself, so receiving the candidate
+    gives it nothing its own text doesn't hold.
+  - **What does carry hidden knowledge** is a reveal, the join of a persona to its entry. That is
+    never given to a chunk as a candidate, only written by commit's `correlate`. And no chunk spans
+    a reveal.
+  - So the per-sentence gate in `resolve()` and the per-chunk gate in `plan()` agree at the
+    granularity that matters. Within a chunk, an entry introduced mid-chunk is a candidate for the
+    whole chunk.
+- **Per chunk:** `{index, chapter, first_sentence, last_sentence, text, candidates}`.
 - **Deterministic:** the same text and manifest give the same plan, byte for byte.
 
 ### 4. `extract(plan, registry, model, *, workers=4)`: facts, in parallel
@@ -183,11 +196,19 @@ omitted, chunk *i* is committed at `i + 1`. `ingest_kwargs` (for example `cursor
 or `classify="defer"`) pass through to every `ingest_structured` call, unchanged.
 
 **The writes, in this order** *(r1.2, pbr: ids are allocated before any fact is written)*:
+0. **The shape writer** *(r1.3, pbr)*. Every minted id, whether manifest entry, persona, escape or
+   mention, gets its **shape rows first**, timeless and canon, from one function
+   `shape_rows(id, type, species=None)`:
+   - **a being** (`person`, `animal`, `creature`): `kind = person`, then `being_type = <type>`,
+     then `species` when given;
+   - **anything else:** `kind = <type>`.
+
+   No other path writes `kind` on a minted id. So R49's reclassification never fires on a manifest,
+   persona, escape or mention id, and the Rex result holds.
 1. **The manifest.**
-   - **For every minted id, its type fact first** *(c6)*: `kind = <type>`, timeless, canon. A
-     being's kind is its type, never a role, so R49's gate sees a person from the first row.
-   - Then its `name` and `alias` rows, and its `role` when given.
-   - Then each persona id: its type fact first, then its name.
+   - For every entry: its shape rows *(c6)*, then its `name` and `alias` rows, then its `role`
+     when given.
+   - Then each persona id: its shape rows (its entry's type and species), then its name.
 2. **Allocation, before any fact.** Each chunk's handles are visited in (chunk index, handle
    number) order, and each gets an id and its type fact:
    - **a pick handle** gets a **provisional id** `mention:<slug>_<n>`, minted by code (step 2a);
@@ -195,15 +216,16 @@ or `classify="defer"`) pass through to every `ingest_structured` call, unchanged
 
    Every item's handles are then **rewritten** to their ids. No fact is written under a handle,
    and no handle can attach to an id other than the one allocated here.
-2a. **Mention type facts.** A pick's provisional id gets:
+2a. **Mention shape.** A pick's provisional id gets its shape rows through the shape writer, with
+    the type chosen like this:
    - first, a type fact *(k3)*:
-     - when every candidate has one type, that type;
-     - otherwise, when every candidate is a being (person, animal, creature), `kind = person`,
-       so R49's role move still applies to an extracted role word;
-     - otherwise, no type fact, and the proposal carries the candidates;
+     - when every candidate has one type, that type, with species only when all agree;
+     - otherwise, when every candidate is a being, only `kind = person` and no `being_type`, so
+       R49's role move still applies to an extracted role word;
+     - otherwise, no shape rows, and the proposal carries the candidates;
    - then the facts the chunk wrote for that surface.
 3. **Chunk facts,** with handles already rewritten, in chunk order, each chunk at `time_of(i)`.
-4. **Escapes.** New entities are minted like manifest entries, type fact first.
+4. **Escapes.** New entities are minted like manifest entries, shape rows first (step 0).
    - *(k4)* **A role word as the type** ("guard", "condemned man"), which is not in the closed set,
      is coerced at the library edge: `type = person` plus `role = <the word>`, R49's rule. It is
      never refused, because refusing would drop a real entity.
@@ -297,8 +319,13 @@ For a book with no author (construct passes its author's manifest instead):
 2. **Namesakes:** two Johns stay two ids, and a `distinct_from` row exists between them.
 3. **Quote anchors:** a quote found once resolves, and quotes found 0 or 2 times are refused. A
    `ManifestError` lists every problem at once: three planted problems give three items.
-4. **Time gate:** the duke's entry anchored in chapter 3 is never a candidate for a chapter-2
-   chunk. A persona's reveal mid-chunk splits the chunk at the reveal sentence.
+4. **Time gate:**
+   - the duke's entry anchored in chapter 3 is never a candidate for a chapter-2 chunk;
+   - *(r1.3)* an entry whose anchor falls mid-chunk is a candidate for that whole chunk, and not
+     for the chunk before it;
+   - a persona's reveal mid-chunk splits the chunk before the reveal sentence, so the reveal
+     sentence opens the next chunk;
+   - *(r1.3)* a persona introduced mid-chunk is a candidate in that chunk.
 5. **Personas:**
    - *(r1.2)* before its `intro_quote` the persona is not a candidate. Between intro and reveal,
      "the hooded stranger" resolves to the persona id;
@@ -336,9 +363,13 @@ For a book with no author (construct passes its author's manifest instead):
 7c. *(k7)* **The persona link:** after commit, the only row linking a persona id and its entry id is
     the `aka`. No `name` or `alias` row on the entry carries the persona name, and the entry's
     default reads before the reveal time show none of the persona's facts.
-8. **Type first:** for every minted id (manifest, persona, mention, escape), the first row about it
-   in the log is its `kind` row. A being whose chunk writes `kind = condemned man` ends up with a
-   `role` (R49), never a kind conflict.
+8. **Shape first** *(r1.3)*:
+   - for every minted id (manifest, persona, mention, escape), its first rows in the log are its
+     shape rows;
+   - beings carry `kind = person` and `being_type`, and no minted id ever gets a `role` row from
+     R49's reclassification of a shape row;
+   - a being whose chunk writes `kind = condemned man` ends up with a `role` (R49), never a kind
+     conflict.
 9. **No leaks by construction:** a fake build of a toy book with one reveal, graded by
    GRADE-LEAKS-V1, has zero chunk leaks and zero registry leaks.
 10. **`time_of` and `ingest_kwargs`** pass through: rows carry the mapped times, and the kwargs reach
