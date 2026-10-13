@@ -189,6 +189,9 @@ def claude_model(prompt: str, schema: dict) -> dict:
             last_err = ModelShimError(f"claude reported num_turns={turns}; one turn expected")
             logger.warning("model shim multi-turn answer rejected (attempt %d): "
                            "num_turns=%s", attempt, turns)
+            # the parse-failure path's counterpart: the retry says what was wrong
+            full += ("\n\nYour previous reply took more than one turn. Answer in this "
+                     "one reply with the JSON object ONLY.")
             continue
         if proc.returncode != 0:
             stdout_lower = proc.stdout.lower()

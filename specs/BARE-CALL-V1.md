@@ -1,6 +1,6 @@
 # BARE-CALL-V1: every build model call is one bare call
 
-**Status:** r1.1 (pbr r1 RED: a multi-turn answer is rejected through the retry path; every *attempt* is bare; the child's environment is trimmed to what authentication needs). For pbr review. Author: pb, 2026-10-13. Harness only.
+**Status:** r1.2 (a multi-turn retry carries its own corrective sentence, like the parse-failure retry). r1.1 (pbr r1 RED: a multi-turn answer is rejected through the retry path; every *attempt* is bare; the child's environment is trimmed to what authentication needs). For pbr review. Author: pb, 2026-10-13. Harness only.
 **Source:** consult c4bb1f2, point 1, accepted by Kabe on gate g936be9 (2026-10-13). Kabe also
 said yes to a 2-chapter profiling build on the practice book once this is merged. The point:
 "Each 'model call' is a whole Claude Code agent session … the 176–282 s pass-0 calls and the
@@ -63,7 +63,10 @@ The prompt still goes on stdin.
   - its receipt is recorded, with the call line's `outcome: "multi_turn"`;
   - it is logged at `WARNING`;
   - the attempt then fails through the existing path, exactly like a parse failure: the next
-    attempt runs, and after the last one `ModelShimError` is raised.
+    attempt runs, and after the last one `ModelShimError` is raised;
+  - *(r1.2, pbr code review)* like a parse failure, the retry's input gains one corrective
+    sentence: "Your previous reply took more than one turn. Answer in this one reply with the
+    JSON object ONLY." The test asserts the second attempt's input carries it.
 
   Its JSON is never returned to the pipeline. An envelope without `num_turns` (an older CLI) is
   accepted, and its call line says `num_turns: null`.

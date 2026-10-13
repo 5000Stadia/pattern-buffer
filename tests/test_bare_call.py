@@ -125,10 +125,13 @@ def test_3_multi_turn_on_every_attempt_raises_and_returns_no_json(monkeypatch, t
 
 
 def test_3_multi_turn_first_then_one_turn_returns_the_second(monkeypatch, tmp_path, caplog):
-    _patch(monkeypatch, Fake([_env_line('{"leak": 1}', num_turns=2),
-                              _env_line('{"good": 2}', num_turns=1)]))
+    fake = _patch(monkeypatch, Fake([_env_line('{"leak": 1}', num_turns=2),
+                                     _env_line('{"good": 2}', num_turns=1)]))
     with caplog.at_level("WARNING", logger=model_shim.logger.name):
         assert model_shim.claude_model("p", {}) == {"good": 2}
+    # the retry's input says what was wrong, as the parse-failure path does
+    assert "more than one turn" in fake.calls[1]["kw"]["input"]
+    assert "more than one turn" not in fake.calls[0]["kw"]["input"]
     assert [l["outcome"] for l in _lines(tmp_path)] == ["multi_turn", "ok"]
     assert any("multi-turn" in r.message and r.levelname == "WARNING" for r in caplog.records)
 
