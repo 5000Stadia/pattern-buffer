@@ -1,6 +1,6 @@
 # VIEW-JS-V1: a small `patternbuffer` JS module for the browser
 
-**Status:** r1, for pbr review and for Photonic's and holo-emitter's review as the two clients.
+**Status:** r2. r1.1 took holo-emitter's review (m47f6b9: eviction, cross-tab locks, apply off the frame loop). r2 answers pbr's r1.1 RED (a viewer session for `sync`; queues namespaced by world; the queue's role and `onRefused` are parameters) and drops `queue.lost` (see §3). For pbr review and for Photonic's and holo-emitter's review as the two clients.
 Author: pb, 2026-10-13.
 **Source:** roadmap R47. Photonic m019da7: "By Kabe's rule (each element used from its home
 project), the JS store is yours: your contract, your vectors, your spec. Will you own a small
@@ -28,8 +28,8 @@ as they are.
 
 ```
 js/patternbuffer/view.mjs     apply(document, answer) -> document    (pure; VIEW-EXPORT-V1 §3, VIEW-PEOPLE-V1 §3)
-js/patternbuffer/store.mjs    openView({backend, seed}) -> View       (one persisted document per world + view frame)
-js/patternbuffer/queue.mjs    openQueue({backend, session}) -> Queue  (a persisted, ordered queue of record calls)
+js/patternbuffer/store.mjs    openView({backend, worldId, viewFrame, session, seed}) -> View
+js/patternbuffer/queue.mjs    openQueue({backend, worldId, session, role, onRefused}) -> Queue
 js/patternbuffer/idb.mjs      idbBackend(dbName) -> Backend           (IndexedDB; the browser's backend)
 js/patternbuffer/index.mjs    re-exports
 js/test/*.test.mjs            node --test
@@ -43,6 +43,9 @@ js/test/*.test.mjs            node --test
   - the same errors, which `apply` throws as `Error` with the Python message text.
 - **It is pure.** It returns a new document and never mutates its input. It uses
   `structuredClone`, available in Safari 15.4+ and node 17+.
+- *(r1.1, holo-emitter 3)* **`apply` is not for every frame.** It clones the whole document for
+  each answer. Call `sync` when the game wants fresh state (on arrival, on a timer of seconds,
+  after a flush), never from a render loop.
 - **Equality is structural.**
   - Documents compare as JSON values: object key order is free, as the vectors' `about` already
     says.
@@ -60,7 +63,12 @@ js/test/*.test.mjs            node --test
 
 ### 2. The persisted view (store.mjs)
 
-`openView({backend, worldId, viewFrame, seed})`:
+`openView({backend, worldId, viewFrame, session, seed})`:
+
+- *(r2, pbr P1)* `session` is the runner session name the view's `feed` calls use. Any role can
+  read the view. Every `feed` request is the body
+  `{"session": session, "verb": "feed", "args": {"since": cursor}}`. `since` is omitted when the
+  cursor is `null`.
 
 - **Loading.** It loads the persisted document for `(worldId, viewFrame)`. If there is none, it
   starts from `seed`: the static `view.json` the page ships (VIEW-EXPORT-V1 §6), or the empty
@@ -76,19 +84,41 @@ js/test/*.test.mjs            node --test
   answered with `clear`.
 - **`view.replace(document)`** persists a fresh export, for a page that downloads a new
   `view.json`.
-- **Writes are serialized.** One sync runs at a time per view, and a second call awaits the
-  first. One document per page is the agreed shape (holo-emitter, m019da7).
+- **Writes are serialized across tabs** *(r1.1, holo-emitter 2)*.
+  - `sync` and `replace` run inside `navigator.locks.request(key, ...)`, where `key` is the view's
+    backend key (§4). The lock exists in Safari 15.4+, the same floor as `structuredClone`.
+  - Inside the lock, `sync` re-reads the persisted document before calling `feed`. Two tabs on one
+    world (the lab and the manor) therefore sync one after the other, and the second carries on
+    from the first's cursor instead of overwriting it.
+  - Where `navigator.locks` is absent (node, old browsers), a per-object promise chain serializes
+    the calls instead.
+  - One document per page is still the agreed shape (holo-emitter, m019da7).
+- **A fresh start is reported** *(r1.1, holo-emitter 1)*. `view.reseeded` is `true` when
+  `openView` found no persisted document and started from `seed`. That covers a first visit, and
+  Safari evicting script-written storage after seven days without a visit. The view itself
+  recovers: the seed loads, and its stale cursor gets a `clear`.
 
 ### 3. The queued record (queue.mjs)
 
 Photonic's on-device writes wait in a queue until a service is reachable.
 
-- `openQueue({backend, session})` gives a persisted FIFO of calls `{verb: "record", args}`.
-  `session` is the name the runner knows as a recorder or an author.
+- `openQueue({backend, worldId, session, role, onRefused})` gives a persisted FIFO of calls
+  `{verb: "record", args}` *(r2, pbr P1 ×2)*:
+  - `worldId` namespaces the queue's key and lock, so two worlds using the same session name (say,
+    `author`) never share a queue.
+  - `session` is the name the runner knows as a recorder or an author; every flushed body names
+    it.
+  - `role` is `"recorder"` or `"author"`, as the host configured that session. It is required, and
+    any other value throws.
+  - `onRefused(call)` is an optional callback. Without one, a refused call is dropped and logged
+    with `console.warn`.
 - `queue.add(items, {at, frame})`:
   - validates the shape locally against the recorder's key rules (`_RECORD_KEYS`, no item
     `frame`/`status`), so a malformed call fails at once rather than at flush;
-  - `frame` is passed only when given; it is valid for an author session only;
+  - `frame` is passed only when given. With `role: "recorder"`, `add` throws when `frame` is
+    given, because the recorder refuses it. With `role: "author"`, a `frame` other than `"canon"`
+    or `"knows:"` followed by a whole id (the engine's `ID_RE`) throws. The server checks again;
+    the local check only fails early;
   - then persists the call.
 - `queue.flush(transport)` sends calls in order, one at a time:
   - `{"status": "recorded"}` → the call is dropped;
@@ -97,6 +127,18 @@ Photonic's on-device writes wait in a queue until a service is reachable.
   - a transport failure, or a 5xx or 504 → the flush stops, keeping this call and everything after
     it, and resolves with how many it sent. The next flush resumes.
   - a 400 → handled as refused, because the server read the call and declined it.
+- **Eviction** *(r1.1, holo-emitter 1; r2)*.
+  - Safari can evict IndexedDB after seven days without a visit, unless the site is on the home
+    screen. That would lose pending calls silently.
+  - `openQueue` and `openView` call `navigator.storage.persist()` where it exists, and expose the
+    outcome as `.persisted` (`true`, `false`, or `null` when the API is absent). That is the
+    defence.
+  - Detection is limited to `view.reseeded`. Eviction clears the whole origin, every marker
+    included, so after it the module cannot tell eviction from a first visit. r1.1's `queue.lost`
+    marker could never fire in the case it was for, so r2 drops it. The game, which knows whether
+    the player has been here before, decides what to say.
+- `flush` runs inside `navigator.locks.request(<the queue's key>, ...)` (or the promise-chain
+  fallback), so two tabs never send the same call twice.
 - `queue.pending()` lists the waiting calls, so the game can draw its own overlay. **The queue
   never applies its calls to the document.** The document holds only the server's answers;
   the overlay is the game's.
@@ -117,10 +159,13 @@ Photonic's on-device writes wait in a queue until a service is reachable.
 - **`backend`** is `{get(key), put(key, value), del(key)}`, async.
   - `idbBackend(dbName)` is IndexedDB: one object store, structured-cloned values.
   - `memoryBackend()` is for tests.
-  - Keys:
-    - `view:<worldId>:<viewFrame>` for a document;
-    - `queue:<session>` for a queue, holding the whole array, rewritten on each change. Writes
-      are rare.
+  - Keys *(r2, pbr P1)*. Every part is `encodeURIComponent`-encoded, so a `:` inside a world id
+    or frame name can't make two keys collide:
+    - `pb:view:<worldId>:<viewFrame>` for a document;
+    - `pb:queue:<worldId>:<session>` for a queue, holding the whole array, rewritten on each
+      change. Writes are rare.
+
+    The lock names are the same strings.
 
 ### 5. Ownership and drift
 
@@ -163,14 +208,29 @@ Photonic's on-device writes wait in a queue until a service is reachable.
 3. **Store.**
    - A view opens from its seed, syncs through a fake transport, persists, and reopens to the
      same document.
+   - *(r2)* The fake transport asserts each body: `{"session": s, "verb": "feed", "args":
+     {"since": c}}`, with `since` absent on a null cursor.
    - A throwing `apply` leaves the persisted document unchanged.
    - Two concurrent `sync` calls run one after the other.
+3a. *(r1.1)* **Cross-tab and fresh start.**
+   - With a fake `navigator.locks`, two views on one backend key run `sync` one after the other,
+     and the second feeds from the first's cursor.
+   - `reseeded` is `true` on a first open and `false` on a reopen.
 4. **Queue.**
    - Calls flush in order.
    - `recorded` drops a call; `refused` and a 400 drop it and call `onRefused`.
    - A transport error or a 5xx stops the flush and keeps the rest, and a reopened queue still
      holds them.
    - `add` refuses a `delta` item, an item `frame`, and an unknown key.
+   - *(r1.1)* `persisted` reflects a fake `navigator.storage.persist()`, or is `null` without one.
+   - *(r2, pbr P1)* Two worlds with one session name on one backend keep separate queues and
+     locks, and each flush sends only its own world's calls. A world id containing `:` doesn't
+     collide.
+   - *(r2, pbr P1)* With `role: "recorder"`, `add` with a `frame` throws. With `role: "author"`,
+     `frame: "knows:person:bram"` is accepted and sent in `args`, while `frame: "knows:"` and
+     `frame: "plot:x"` throw. A missing or unknown `role` throws at `openQueue`.
+   - `onRefused` receives the refused call. Without it, a `console.warn` is recorded.
+   - Two flushes under a fake lock never send one call twice.
 5. **End to end** (Python test, node present): a `Runner` on a fixture world with an author
    session.
    - The JS view syncs over `httpTransport` to the runner, and its document equals the Python
