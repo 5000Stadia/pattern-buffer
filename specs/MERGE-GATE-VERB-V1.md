@@ -1,6 +1,6 @@
 # MERGE-GATE-VERB-V1: the measured merge gate as a report-only engine verb (roadmap R48)
 
-**Status:** r1.1 (2026-10-13), for pbr's spec review. r1.1 adds construct's two report fields (m892d62): a per-call id with a no-cache contract, and the pairs exactly as requested (marked *(r1.1)*). Author: pb.
+**Status:** r1.2 (2026-10-13). It answers pbr's r1.1 RED: the no-model call gets a full report, and the not-asked statuses get a fixed order (marked *(r1.2)*). r1.1 was for pbr's spec review. r1.1 adds construct's two report fields (m892d62): a per-call id with a no-cache contract, and the pairs exactly as requested (marked *(r1.1)*). Author: pb.
 **Source:** construct asked for it (mba5a02): its build stops when one load-bearing character comes
 out under two ids ("Tomas Breck" and "Breck"). cr refused a second, construct-made adjudicator:
 a lexical rule can't tell "Breck the baker" from Tomas Breck, and one cheap verdict is a proposal,
@@ -26,8 +26,12 @@ porcelain.merge_gate(pairs, *, context=None, batch_size=25) -> dict
   through `porcelain.merge` itself, with its own receipt checks. There is no `apply` argument.
 - **Off by default.** Nothing calls it. `Pipeline`'s own gate stays as it is (`merge_gate=False`
   by default), and the verb adds no automatic path.
-- **The model** is the world's injected callable, the one `ask` uses. With no model injected, the
-  verb returns `{"status": "no_model"}` and calls nothing.
+- **The model** is the world's injected callable, the one `ask` uses. *(r1.2)* With no model
+  injected, the verb calls nothing and still returns the full report (below), with top-level
+  `"status": "no_model"`. Every pair that would have been asked is listed in `not_asked` with
+  status `no_model`, so `pairs` and `components` are empty, `requested_as` still covers every
+  request, and `call_id` and `cached: false` are present as on every call. A call that asked the
+  model has top-level `"status": "asked"`.
 - **`pairs`**: a non-empty list of two-id lists or tuples. Each id is resolved to its closure's
   served representative. More than 500 pairs, or anything that is not a pair of non-empty
   strings, raises `ValueError` before any read.
@@ -48,12 +52,15 @@ The asked pairs pass the measured gate's own candidate rules, apart from the lex
 host chose these pairs):
 1. Each pair becomes `(a, b)` with `a < b` over the representatives. Duplicates collapse to one.
    The asked pairs are sorted, and numbered `p0001` onward.
-2. A pair that is not asked gets a `status` and no verdict:
+2. A pair that is not asked gets one `status` and no verdict. *(r1.2)* The statuses are tested
+   in this order and the first that applies is the pair's status, so overlapping conditions
+   give one answer:
    - `already_one`: both ids are in one closure;
    - `held_apart`: `distinct_between(a, b)` is non-empty;
    - `class_mismatch`: person against non-person, or event against non-event (r2.2's test, by
      namespace or folded canon kind);
-   - `no_names`: either side has no canon `name` or `alias` row (the gate's cards are names).
+   - `no_names`: either side has no canon `name` or `alias` row (the gate's cards are names);
+   - `no_model` *(r1.2)*: the pair passed all of the above, but no model is injected.
 
 ### The question and the answer: one shared implementation
 
@@ -77,7 +84,7 @@ unchanged.
 ### The report
 
 ```json
-{"gate": "merge_gate", "call_id": "<32 hex>", "cached": false,
+{"gate": "merge_gate", "status": "asked", "call_id": "<32 hex>", "cached": false,
  "model": "<identity or null>", "batch_size": 25,
  "requested": [["…", "…"]],
  "counts": {"requested": 4, "asked": 3, "not_asked": {"already_one": 1},
@@ -125,7 +132,9 @@ unchanged.
 2. **Report-only.** On a world with a scripted model answering `same` for every pair, the log's
    head and row count are identical before and after the call.
 3. **Not asked:** one pair of each status (`already_one`, `held_apart`, `class_mismatch` both
-   ways, `no_names`) is reported and never reaches the model.
+   ways, `no_names`) is reported and never reaches the model. *(r1.2)* Overlaps take the first
+   status in order: a pair both held apart and person against object is `held_apart`, and a
+   pair with no names that is also person against object is `class_mismatch`.
 4. **Canonicalization:** `(b, a)`, `(a, b)` and a member-id spelling of the same pair are asked
    once, as `p0001`, with `a < b` by representative.
 5. **Context:** member-keyed sentences land on the representative, capped at 2 and trimmed; the
@@ -136,8 +145,10 @@ unchanged.
    elected representative (pass mark 7's vote case reused). One `different` inside makes it
    `conflicting_component`.
 8. **Failures:** a model that raises on batch 1 of 2 leaves batch 1's pairs `batch_unparseable`
-   and batch 2 answered. No model injected gives `no_model`, and the scripted model is never
-   called.
+   and batch 2 answered. *(r1.2)* With no model injected, the report has `status: no_model`,
+   every askable pair is in `not_asked` as `no_model`, an `already_one` pair keeps
+   `already_one`, `requested_as` covers every request, and `call_id` and `cached: false` are
+   present.
 9. *(r1.1)* **Call identity and coverage:** two calls on the same pairs give different
    `call_id`s, both with `cached: false`, and the scripted model is called anew by the second.
    The `requested_as` indexes cover every requested index exactly once, including the duplicates
