@@ -117,6 +117,9 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 - [x] R41 E3: worn things are objects (`worn_by`), promoted like furniture, after R35
 - [x] R42 A host-only `closure(entity, asserted_as_of=None)` read (plus `distinct_between` if construct's swap needs it), so construct stops copying the engine's identity walk; after R40 merges. *Monitor's call for Kabe (gate gc857b5, note ne26319).*
 - [x] R42a `facts(..., bookkeeping=False)`: a frame scan without the engine's bookkeeping rows, so construct holds no copy of `META_ATTRIBUTES` (cr's boundary finding). *Monitor's call for Kabe (gate g4d7cf0, note n7052ef).*
+- [ ] R45 Author-side `record`: a session that writes canon (or a named frame) without writing the player's view, for Photonic's people positions and activity (Photonic SEAM a, m019da7). *Waiting on gate.*
+- [ ] R46 People on the device: persons' canon position and activity in the offline mirror, so walking into an unseen room finds them where the world says (VIEW-EXPORT-V1 §2; Photonic SEAM b). *Waiting on gate.*
+- [ ] R47 A small `patternbuffer` JS module: view/1 `apply()` passing `tests/vectors/view-feed-v1.json`, IndexedDB-persisted, plus a queued `record`; Python stays the reference (Kabe's rule on g1eeae0: each element used from its home). *Waiting on gate.*
 
 ## Later
 
