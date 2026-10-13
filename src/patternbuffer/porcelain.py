@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from decimal import Decimal
@@ -1490,3 +1491,25 @@ class Porcelain:
             ("unresolved references" if asks else "no folded facts on the asked keys"),
             asks=asks, unresolved=unresolved, conflicted=conflicted,
         )
+
+    # ------------------------------------- MERGE-GATE-VERB-V1 (the host's check)
+
+    def merge_gate(self, pairs: Sequence[Sequence[str]], *,
+                   context: Mapping[str, Sequence[str]] | None = None,
+                   batch_size: int = 25) -> dict:
+        """Reaches the model, writes nothing: ask the injected model whether
+        each pair of entities names the same thing, and report its verdicts
+        (`same` with a `keep` side, `different`, `unsure`) and the components
+        the `same` verdicts would make. The host merges for itself through
+        `merge`; this verb never merges, proposes or records. `pairs` is a
+        non-empty list of at most 500 `[id, id]` pairs (each id any member of
+        its closure); `context` is the host's optional `{id: [sentence, ...]}`
+        (two sentences per closure reach the model); `batch_size` a positive
+        int. A pair that is never asked (already one closure, held apart, a
+        person against a non-person, an event against a non-event, no names,
+        or no model injected) is listed in `not_asked` with its reason. The
+        report's top-level `status` is `asked`, `nothing_to_ask` or
+        `no_model`; nothing is cached between calls."""
+        from patternbuffer import merge_gate as _gate  # lazy: the core never imports it
+        return _gate.report(self._w, self._w.ingestor._model, pairs,
+                            context=context, batch_size=batch_size)

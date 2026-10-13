@@ -1856,7 +1856,7 @@ def test_s11_completeness_still_classifies_every_verb():
     public = {n for n, _ in inspect.getmembers(Porcelain, inspect.isfunction)
               if not n.startswith("_")}
     assert {"refer", "canonical_attribute"} <= public
-    unclassified = public - set(V1_TOOLS) - {"extract", "ingest", "ask", "resolve"} \
+    unclassified = public - set(V1_TOOLS) - {"extract", "ingest", "ask", "resolve", "merge_gate"} \
         - {"build"}
     assert not unclassified
 
