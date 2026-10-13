@@ -96,9 +96,13 @@ def claude_model(prompt: str, schema: dict) -> dict:
                 timeout=TIMEOUT,
             )
         except subprocess.TimeoutExpired as exc:
+            usage_ledger.record("claude", MODEL, None, None)   # spent, amount unknown
             last_err = exc
             logger.warning("model shim timeout (attempt %d)", attempt)
             continue
+        # every completed invocation leaves a receipt, whatever its exit code
+        text, usage, cost = _cli_result(proc.stdout)
+        usage_ledger.record("claude", MODEL, usage, cost)
         if proc.returncode != 0:
             stdout_lower = proc.stdout.lower()
             if "hit your" in stdout_lower and "limit" in stdout_lower:
@@ -112,8 +116,6 @@ def claude_model(prompt: str, schema: dict) -> dict:
             )
             logger.warning("model shim attempt %d failed: %s", attempt, last_err)
             continue
-        text, usage, cost = _cli_result(proc.stdout)
-        usage_ledger.record("claude", MODEL, usage, cost)   # spent, parsed or not
         try:
             return _extract_json(text)
         except (ModelShimError, json.JSONDecodeError) as exc:

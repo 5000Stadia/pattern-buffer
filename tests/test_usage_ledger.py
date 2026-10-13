@@ -127,3 +127,51 @@ def test_parallel_records_are_all_counted():
     snap = usage_ledger.snapshot()
     assert snap["calls"] == 1600 and snap["input_tokens"] == 1600
     assert snap["output_tokens"] == 3200 and snap["cost_usd"] == pytest.approx(800.0)
+
+
+def test_a_nonzero_exit_with_an_envelope_counts_its_spend(monkeypatch):
+    def run(argv, **kwargs):
+        return subprocess.CompletedProcess(argv, 1, stdout=_envelope("boom"), stderr="")
+    monkeypatch.setattr(model_shim.subprocess, "run", run)
+    monkeypatch.setattr(model_shim.time, "sleep", lambda s: None)
+    with pytest.raises(model_shim.ModelShimError):
+        model_shim.claude_model("p", {})
+    snap = usage_ledger.snapshot()
+    assert snap["calls"] == 3 and snap["input_tokens"] == 360
+    assert snap["cost_usd"] == pytest.approx(0.036)
+
+
+def test_a_nonzero_exit_with_plain_output_is_an_unknown_receipt(monkeypatch):
+    def run(argv, **kwargs):
+        return subprocess.CompletedProcess(argv, 2, stdout="crashed", stderr="x")
+    monkeypatch.setattr(model_shim.subprocess, "run", run)
+    monkeypatch.setattr(model_shim.time, "sleep", lambda s: None)
+    with pytest.raises(model_shim.ModelShimError):
+        model_shim.claude_model("p", {})
+    snap = usage_ledger.snapshot()
+    assert snap["calls"] == 3 and snap["calls_without_usage"] == 3
+    assert snap["cost_known"] is False
+
+
+def test_the_quota_path_leaves_a_receipt(monkeypatch):
+    out = json.dumps({"type": "result", "is_error": True,
+                      "result": "You've hit your session limit", "total_cost_usd": 0,
+                      "usage": {"input_tokens": 0, "output_tokens": 0}})
+
+    def run(argv, **kwargs):
+        return subprocess.CompletedProcess(argv, 1, stdout=out, stderr="")
+    monkeypatch.setattr(model_shim.subprocess, "run", run)
+    with pytest.raises(model_shim.QuotaExhausted):
+        model_shim.claude_model("p", {})
+    assert usage_ledger.snapshot()["calls"] == 1
+
+
+def test_a_timeout_is_counted_with_unknown_usage(monkeypatch):
+    def run(argv, **kwargs):
+        raise subprocess.TimeoutExpired(argv, 1)
+    monkeypatch.setattr(model_shim.subprocess, "run", run)
+    monkeypatch.setattr(model_shim.time, "sleep", lambda s: None)
+    with pytest.raises(model_shim.ModelShimError):
+        model_shim.claude_model("p", {})
+    snap = usage_ledger.snapshot()
+    assert snap["calls"] == 3 and snap["calls_without_usage"] == 3
