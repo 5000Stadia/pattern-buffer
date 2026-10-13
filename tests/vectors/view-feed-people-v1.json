@@ -1,0 +1,4222 @@
+{
+ "about": "Replay each sequence: start from `start`, apply every step's `answer` in order, and compare the document to `expect` after each. Documents compare as JSON values (object key order is free). Cursors are opaque: carry them, never read them. These answers carry `people_on`; a document has a `people` key exactly while its latest answer said so.",
+ "schema": "patternbuffer.view/1",
+ "sequences": [
+  {
+   "name": "keyed, people on: every op",
+   "start": {
+    "at": null,
+    "cursor": null,
+    "known": {},
+    "present": null,
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:people"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 2.0,
+      "cursor": "eyJkIjoiMWJiNjg5MTJjM2Y5MDcyNDY2YjA2MGU2N2I2MWI3OGE4MDJiZDVlNmIzZTRlOGI5ZGI4NTEzM2RhMDM4ZDkxMiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc2LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjIuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.PtYmG4zjjfi0XVMrMJyodB52VNZi-bzyoKzO-3qQ09Q",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "npc:smuggler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "leaning",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "npc:thief",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "lurking",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "person:baby",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "asleep",
+           "lit"
+          ]
+         ],
+         "in": [
+          "carried_by",
+          "person:nanny"
+         ],
+         "place": "place:kitchen"
+        }
+       },
+       {
+        "key": "person:butler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "crouching",
+           "lit"
+          ]
+         ],
+         "in": [
+          "in",
+          "h:a2b297defdff0e739719"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:cook",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "activity",
+           "peeling",
+           "lit"
+          ],
+          [
+           "heading",
+           "place:hall",
+           "id"
+          ],
+          [
+           "holding",
+           "h:6109129fc040cb3c18f2",
+           "id"
+          ],
+          [
+           "name",
+           "Cookie",
+           "lit"
+          ],
+          [
+           "name",
+           "Mrs Cook",
+           "lit"
+          ],
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ],
+          [
+           "pursuing",
+           "person:butler",
+           "id"
+          ],
+          [
+           "watching",
+           "obj:desk",
+           "id"
+          ]
+         ],
+         "place": "place:kitchen"
+        }
+       },
+       {
+        "key": "person:drifter",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "standing",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:ghost",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "obj:annex"
+        }
+       },
+       {
+        "key": "person:guard",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "heading",
+           "h:a8ef72a3a17eabb1bb54",
+           "id"
+          ],
+          [
+           "posture",
+           "kneeling",
+           "lit"
+          ]
+         ],
+         "in": [
+          "in",
+          "h:a8ef72a3a17eabb1bb54"
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "standing",
+           "lit"
+          ]
+         ],
+         "place": "place:study"
+        }
+       },
+       {
+        "key": "person:nanny",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "gold",
+           15,
+           "lit"
+          ]
+         ],
+         "place": "place:kitchen"
+        }
+       },
+       {
+        "key": "person:twin",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 2.0,
+      "cursor": "eyJkIjoiMWJiNjg5MTJjM2Y5MDcyNDY2YjA2MGU2N2I2MWI3OGE4MDJiZDVlNmIzZTRlOGI5ZGI4NTEzM2RhMDM4ZDkxMiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc2LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjIuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.PtYmG4zjjfi0XVMrMJyodB52VNZi-bzyoKzO-3qQ09Q",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:kitchen"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:drifter": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ]
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "reset from nothing (no cursor)"
+    },
+    {
+     "answer": {
+      "at": 2.0,
+      "cursor": "eyJkIjoiMWJiNjg5MTJjM2Y5MDcyNDY2YjA2MGU2N2I2MWI3OGE4MDJiZDVlNmIzZTRlOGI5ZGI4NTEzM2RhMDM4ZDkxMiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc2LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjIuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.PtYmG4zjjfi0XVMrMJyodB52VNZi-bzyoKzO-3qQ09Q",
+      "ops": [],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 2.0,
+      "cursor": "eyJkIjoiMWJiNjg5MTJjM2Y5MDcyNDY2YjA2MGU2N2I2MWI3OGE4MDJiZDVlNmIzZTRlOGI5ZGI4NTEzM2RhMDM4ZDkxMiIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc2LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjIuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.PtYmG4zjjfi0XVMrMJyodB52VNZi-bzyoKzO-3qQ09Q",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:kitchen"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:drifter": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ]
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "nothing changed: empty ops"
+    },
+    {
+     "answer": {
+      "at": 5.0,
+      "cursor": "eyJkIjoiOTI5NThjNGI5NTRmMDI0NWVjODU2MzA0ZTA5ZGJjM2Q3NjI4OTQyOTgxZThjOGMyMWIwMjJiMDc1MjIzMjFhNSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc3LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjUuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.utXyWM6dbgiPnCh6zapgD77f1JJFxSV7kocesxfjCXA",
+      "ops": [
+       {
+        "key": "person:cook",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "activity",
+           "peeling",
+           "lit"
+          ],
+          [
+           "heading",
+           "place:hall",
+           "id"
+          ],
+          [
+           "holding",
+           "h:6109129fc040cb3c18f2",
+           "id"
+          ],
+          [
+           "name",
+           "Cookie",
+           "lit"
+          ],
+          [
+           "name",
+           "Mrs Cook",
+           "lit"
+          ],
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ],
+          [
+           "pursuing",
+           "person:butler",
+           "id"
+          ],
+          [
+           "watching",
+           "obj:desk",
+           "id"
+          ]
+         ],
+         "place": "place:bedroom"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 5.0,
+      "cursor": "eyJkIjoiOTI5NThjNGI5NTRmMDI0NWVjODU2MzA0ZTA5ZGJjM2Q3NjI4OTQyOTgxZThjOGMyMWIwMjJiMDc1MjIzMjFhNSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc3LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjUuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.utXyWM6dbgiPnCh6zapgD77f1JJFxSV7kocesxfjCXA",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:kitchen"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:drifter": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ]
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "an author moves the cook: put people, no known op"
+    },
+    {
+     "answer": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiMjllZDNmMjA1MjdjNzIyMDFiZTQ2M2ZjZWE4YTBjODZiN2EwMmY1MjFhZDI1MzRlMmMyYmRjNDRjODY3ZGI4MSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc4LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjYuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.9DuHkDm9ThuQq3zqeAn-gKeq600wrr76UzGzwRgf_P8",
+      "ops": [
+       {
+        "key": "person:mara",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ]
+         ],
+         "place": "place:study"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 6.0,
+      "cursor": "eyJkIjoiMjllZDNmMjA1MjdjNzIyMDFiZTQ2M2ZjZWE4YTBjODZiN2EwMmY1MjFhZDI1MzRlMmMyYmRjNDRjODY3ZGI4MSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc4LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjYuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.9DuHkDm9ThuQq3zqeAn-gKeq600wrr76UzGzwRgf_P8",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:kitchen"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:drifter": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ]
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "a person's fact changes: put people"
+    },
+    {
+     "answer": {
+      "at": 7.0,
+      "cursor": "eyJkIjoiODk2MGQ0ZDI5NjE2MGM2ZDQ2ZGE3ZDIzZGY5MjI4NTAzNTJjMzUzMzE0MGZmNzE1MTEyZjQ2ZGNmNTg0OGU2ZCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc5LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjcuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.ssXcoOZcVbCyPEavAAWbQqb_U1x-zWKToy5aCFpAEEQ",
+      "ops": [
+       {
+        "key": "person:baby",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "asleep",
+           "lit"
+          ]
+         ],
+         "in": [
+          "carried_by",
+          "person:nanny"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:nanny",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "gold",
+           15,
+           "lit"
+          ]
+         ],
+         "place": "place:bedroom"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 7.0,
+      "cursor": "eyJkIjoiODk2MGQ0ZDI5NjE2MGM2ZDQ2ZGE3ZDIzZGY5MjI4NTAzNTJjMzUzMzE0MGZmNzE1MTEyZjQ2ZGNmNTg0OGU2ZCIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjc5LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjcuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.ssXcoOZcVbCyPEavAAWbQqb_U1x-zWKToy5aCFpAEEQ",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:drifter": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ]
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "a person is carried into another room: place follows the carrier"
+    },
+    {
+     "answer": {
+      "at": 7.0,
+      "cursor": "eyJkIjoiMDY3NmNkZjdjZDg1ZTFiNjU2YjJlZjc0YjYwNTFlYjRlZGIwNDJlM2FkZTBlYmRkZDI4YWQ5YzI1OThiNjA3MyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjgyLCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjcuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.5ozGzt67euAXk5sX5N4R3rMoc_O41Zrt_89OijKy_i8",
+      "ops": [
+       {
+        "key": "person:maid",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "dusting",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 7.0,
+      "cursor": "eyJkIjoiMDY3NmNkZjdjZDg1ZTFiNjU2YjJlZjc0YjYwNTFlYjRlZGIwNDJlM2FkZTBlYmRkZDI4YWQ5YzI1OThiNjA3MyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjgyLCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjcuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.5ozGzt67euAXk5sX5N4R3rMoc_O41Zrt_89OijKy_i8",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:drifter": {
+        "facts": [
+         [
+          "posture",
+          "standing",
+          "lit"
+         ]
+        ]
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:maid": {
+        "facts": [
+         [
+          "posture",
+          "dusting",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "a new person appears: put people"
+    },
+    {
+     "answer": {
+      "at": 7.0,
+      "cursor": "eyJkIjoiMDQ4Yzk5ZTY3YTBjMTNkZjM1NzU1OTk4NGQ2OTQ4MzQxYjA0NmZhZTFiNjhhMjY3NWUyMzlkZjVkNjMxOTc0ZSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjgzLCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjcuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.4zbj2JziBmYnc6rnJj2RQKO7E7P9ceknll6iE2YlV38",
+      "ops": [
+       {
+        "key": "person:drifter",
+        "layer": "people",
+        "op": "del"
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 7.0,
+      "cursor": "eyJkIjoiMDQ4Yzk5ZTY3YTBjMTNkZjM1NzU1OTk4NGQ2OTQ4MzQxYjA0NmZhZTFiNjhhMjY3NWUyMzlkZjVkNjMxOTc0ZSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjgzLCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjcuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.4zbj2JziBmYnc6rnJj2RQKO7E7P9ceknll6iE2YlV38",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:maid": {
+        "facts": [
+         [
+          "posture",
+          "dusting",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "the drifter's only fact is retracted: del people"
+    },
+    {
+     "answer": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiNjI1ZDE3MzY2MGQ2MjhiMzk1ZGVhYzAzY2ViZDY0YTE4NTk3OTQ4YzVkNzFlYTY2ZDE2NzdkMTkzMzNlMzAzMSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.eNIDWYTmbvY-8Wm59OdY3RlY0V6GwW0UCAFJCFZ4-8c",
+      "ops": [
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:maid",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "dusting",
+           "lit"
+          ]
+         ],
+         "place": "place:kitchen"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiNjI1ZDE3MzY2MGQ2MjhiMzk1ZGVhYzAzY2ViZDY0YTE4NTk3OTQ4YzVkNzFlYTY2ZDE2NzdkMTkzMzNlMzAzMSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.eNIDWYTmbvY-8Wm59OdY3RlY0V6GwW0UCAFJCFZ4-8c",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:maid": {
+        "facts": [
+         [
+          "posture",
+          "dusting",
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "the view gains a fact and a person moves: put known and put people"
+    }
+   ]
+  },
+  {
+   "name": "mode change: people on, then off",
+   "start": {
+    "at": 8.0,
+    "cursor": "eyJkIjoiNjI1ZDE3MzY2MGQ2MjhiMzk1ZGVhYzAzY2ViZDY0YTE4NTk3OTQ4YzVkNzFlYTY2ZDE2NzdkMTkzMzNlMzAzMSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.eNIDWYTmbvY-8Wm59OdY3RlY0V6GwW0UCAFJCFZ4-8c",
+    "known": {
+     "obj:desk": {
+      "conflicted": [],
+      "facts": [
+       [
+        "colour",
+        "oak",
+        "lit"
+       ],
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "desk",
+        "lit"
+       ]
+      ]
+     },
+     "person:mara": {
+      "conflicted": [],
+      "facts": [
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "person",
+        "lit"
+       ]
+      ]
+     },
+     "place:study": {
+      "conflicted": [],
+      "facts": [
+       [
+        "kind",
+        "room",
+        "lit"
+       ]
+      ]
+     }
+    },
+    "people": {
+     "npc:smuggler": {
+      "facts": [
+       [
+        "posture",
+        "leaning",
+        "lit"
+       ]
+      ],
+      "place": "place:hall"
+     },
+     "npc:thief": {
+      "facts": [
+       [
+        "posture",
+        "lurking",
+        "lit"
+       ]
+      ],
+      "place": "place:hall"
+     },
+     "person:baby": {
+      "facts": [
+       [
+        "posture",
+        "asleep",
+        "lit"
+       ]
+      ],
+      "in": [
+       "carried_by",
+       "person:nanny"
+      ],
+      "place": "place:bedroom"
+     },
+     "person:butler": {
+      "facts": [
+       [
+        "posture",
+        "crouching",
+        "lit"
+       ]
+      ],
+      "in": [
+       "in",
+       "h:a2b297defdff0e739719"
+      ],
+      "place": "place:bedroom"
+     },
+     "person:cook": {
+      "facts": [
+       [
+        "activity",
+        "peeling",
+        "lit"
+       ],
+       [
+        "heading",
+        "place:hall",
+        "id"
+       ],
+       [
+        "holding",
+        "h:6109129fc040cb3c18f2",
+        "id"
+       ],
+       [
+        "name",
+        "Cookie",
+        "lit"
+       ],
+       [
+        "name",
+        "Mrs Cook",
+        "lit"
+       ],
+       [
+        "posture",
+        "sitting",
+        "lit"
+       ],
+       [
+        "pursuing",
+        "person:butler",
+        "id"
+       ],
+       [
+        "watching",
+        "obj:desk",
+        "id"
+       ]
+      ],
+      "place": "place:bedroom"
+     },
+     "person:ghost": {
+      "facts": [],
+      "place": "obj:annex"
+     },
+     "person:guard": {
+      "facts": [
+       [
+        "heading",
+        "h:a8ef72a3a17eabb1bb54",
+        "id"
+       ],
+       [
+        "posture",
+        "kneeling",
+        "lit"
+       ]
+      ],
+      "in": [
+       "in",
+       "h:a8ef72a3a17eabb1bb54"
+      ]
+     },
+     "person:maid": {
+      "facts": [
+       [
+        "posture",
+        "dusting",
+        "lit"
+       ]
+      ],
+      "place": "place:kitchen"
+     },
+     "person:mara": {
+      "facts": [
+       [
+        "posture",
+        "sitting",
+        "lit"
+       ]
+      ],
+      "place": "place:study"
+     },
+     "person:nanny": {
+      "facts": [
+       [
+        "gold",
+        15,
+        "lit"
+       ]
+      ],
+      "place": "place:bedroom"
+     },
+     "person:twin": {
+      "facts": [],
+      "place": "place:hall"
+     }
+    },
+    "present": {},
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:people"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiMDBkNGU4NjdiODZkNmYwYWU0YjQwZDFlNDM3MGQyNWZjZGY5Yzk0OTYzZTI5NGVlNGExYWZlOTQ1YzU4MTc2NSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo4LjAsInYiOjEsInciOiJ3OnBlb3BsZSJ9.4m0wIurZ7MVG3eAvGwNykHYOaTIJvipg3GIgilgzBGk",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       }
+      ],
+      "present_on": true
+     },
+     "expect": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiMDBkNGU4NjdiODZkNmYwYWU0YjQwZDFlNDM3MGQyNWZjZGY5Yzk0OTYzZTI5NGVlNGExYWZlOTQ1YzU4MTc2NSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo4LjAsInYiOjEsInciOiJ3OnBlb3BsZSJ9.4m0wIurZ7MVG3eAvGwNykHYOaTIJvipg3GIgilgzBGk",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "reset, the people key is removed"
+    }
+   ]
+  },
+  {
+   "name": "mode change: people off, then on",
+   "start": {
+    "at": 8.0,
+    "cursor": "eyJkIjoiMDBkNGU4NjdiODZkNmYwYWU0YjQwZDFlNDM3MGQyNWZjZGY5Yzk0OTYzZTI5NGVlNGExYWZlOTQ1YzU4MTc2NSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJzIjoiZXhhY3QiLCJ0Ijo4LjAsInYiOjEsInciOiJ3OnBlb3BsZSJ9.4m0wIurZ7MVG3eAvGwNykHYOaTIJvipg3GIgilgzBGk",
+    "known": {
+     "obj:desk": {
+      "conflicted": [],
+      "facts": [
+       [
+        "colour",
+        "oak",
+        "lit"
+       ],
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "desk",
+        "lit"
+       ]
+      ]
+     },
+     "person:mara": {
+      "conflicted": [],
+      "facts": [
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "person",
+        "lit"
+       ]
+      ]
+     },
+     "place:study": {
+      "conflicted": [],
+      "facts": [
+       [
+        "kind",
+        "room",
+        "lit"
+       ]
+      ]
+     }
+    },
+    "present": {},
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:people"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiNjI1ZDE3MzY2MGQ2MjhiMzk1ZGVhYzAzY2ViZDY0YTE4NTk3OTQ4YzVkNzFlYTY2ZDE2NzdkMTkzMzNlMzAzMSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.eNIDWYTmbvY-8Wm59OdY3RlY0V6GwW0UCAFJCFZ4-8c",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "npc:smuggler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "leaning",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "npc:thief",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "lurking",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "person:baby",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "asleep",
+           "lit"
+          ]
+         ],
+         "in": [
+          "carried_by",
+          "person:nanny"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:butler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "crouching",
+           "lit"
+          ]
+         ],
+         "in": [
+          "in",
+          "h:a2b297defdff0e739719"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:cook",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "activity",
+           "peeling",
+           "lit"
+          ],
+          [
+           "heading",
+           "place:hall",
+           "id"
+          ],
+          [
+           "holding",
+           "h:6109129fc040cb3c18f2",
+           "id"
+          ],
+          [
+           "name",
+           "Cookie",
+           "lit"
+          ],
+          [
+           "name",
+           "Mrs Cook",
+           "lit"
+          ],
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ],
+          [
+           "pursuing",
+           "person:butler",
+           "id"
+          ],
+          [
+           "watching",
+           "obj:desk",
+           "id"
+          ]
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:ghost",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "obj:annex"
+        }
+       },
+       {
+        "key": "person:guard",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "heading",
+           "h:a8ef72a3a17eabb1bb54",
+           "id"
+          ],
+          [
+           "posture",
+           "kneeling",
+           "lit"
+          ]
+         ],
+         "in": [
+          "in",
+          "h:a8ef72a3a17eabb1bb54"
+         ]
+        }
+       },
+       {
+        "key": "person:maid",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "dusting",
+           "lit"
+          ]
+         ],
+         "place": "place:kitchen"
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ]
+         ],
+         "place": "place:study"
+        }
+       },
+       {
+        "key": "person:nanny",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "gold",
+           15,
+           "lit"
+          ]
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:twin",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiNjI1ZDE3MzY2MGQ2MjhiMzk1ZGVhYzAzY2ViZDY0YTE4NTk3OTQ4YzVkNzFlYTY2ZDE2NzdkMTkzMzNlMzAzMSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.eNIDWYTmbvY-8Wm59OdY3RlY0V6GwW0UCAFJCFZ4-8c",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "activity",
+          "peeling",
+          "lit"
+         ],
+         [
+          "heading",
+          "place:hall",
+          "id"
+         ],
+         [
+          "holding",
+          "h:6109129fc040cb3c18f2",
+          "id"
+         ],
+         [
+          "name",
+          "Cookie",
+          "lit"
+         ],
+         [
+          "name",
+          "Mrs Cook",
+          "lit"
+         ],
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ],
+         [
+          "pursuing",
+          "person:butler",
+          "id"
+         ],
+         [
+          "watching",
+          "obj:desk",
+          "id"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "heading",
+          "h:a8ef72a3a17eabb1bb54",
+          "id"
+         ],
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:maid": {
+        "facts": [
+         [
+          "posture",
+          "dusting",
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [
+         [
+          "gold",
+          15,
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "reset, the people layer appears"
+    }
+   ]
+  },
+  {
+   "name": "attribute list changes",
+   "start": {
+    "at": 8.0,
+    "cursor": "eyJkIjoiNjI1ZDE3MzY2MGQ2MjhiMzk1ZGVhYzAzY2ViZDY0YTE4NTk3OTQ4YzVkNzFlYTY2ZDE2NzdkMTkzMzNlMzAzMSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiZjlmYWQzMzg5OWNkNDM4MDk5NWFmYTdhN2I2YzlmZTQzMDg3NDBjZmFjNjE0NDgyODFkZmE4MGZlNWI5YzEwMiIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.eNIDWYTmbvY-8Wm59OdY3RlY0V6GwW0UCAFJCFZ4-8c",
+    "known": {
+     "obj:desk": {
+      "conflicted": [],
+      "facts": [
+       [
+        "colour",
+        "oak",
+        "lit"
+       ],
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "desk",
+        "lit"
+       ]
+      ]
+     },
+     "person:mara": {
+      "conflicted": [],
+      "facts": [
+       [
+        "in",
+        "place:study",
+        "id"
+       ],
+       [
+        "kind",
+        "person",
+        "lit"
+       ]
+      ]
+     },
+     "place:study": {
+      "conflicted": [],
+      "facts": [
+       [
+        "kind",
+        "room",
+        "lit"
+       ]
+      ]
+     }
+    },
+    "people": {
+     "npc:smuggler": {
+      "facts": [
+       [
+        "posture",
+        "leaning",
+        "lit"
+       ]
+      ],
+      "place": "place:hall"
+     },
+     "npc:thief": {
+      "facts": [
+       [
+        "posture",
+        "lurking",
+        "lit"
+       ]
+      ],
+      "place": "place:hall"
+     },
+     "person:baby": {
+      "facts": [
+       [
+        "posture",
+        "asleep",
+        "lit"
+       ]
+      ],
+      "in": [
+       "carried_by",
+       "person:nanny"
+      ],
+      "place": "place:bedroom"
+     },
+     "person:butler": {
+      "facts": [
+       [
+        "posture",
+        "crouching",
+        "lit"
+       ]
+      ],
+      "in": [
+       "in",
+       "h:a2b297defdff0e739719"
+      ],
+      "place": "place:bedroom"
+     },
+     "person:cook": {
+      "facts": [
+       [
+        "activity",
+        "peeling",
+        "lit"
+       ],
+       [
+        "heading",
+        "place:hall",
+        "id"
+       ],
+       [
+        "holding",
+        "h:6109129fc040cb3c18f2",
+        "id"
+       ],
+       [
+        "name",
+        "Cookie",
+        "lit"
+       ],
+       [
+        "name",
+        "Mrs Cook",
+        "lit"
+       ],
+       [
+        "posture",
+        "sitting",
+        "lit"
+       ],
+       [
+        "pursuing",
+        "person:butler",
+        "id"
+       ],
+       [
+        "watching",
+        "obj:desk",
+        "id"
+       ]
+      ],
+      "place": "place:bedroom"
+     },
+     "person:ghost": {
+      "facts": [],
+      "place": "obj:annex"
+     },
+     "person:guard": {
+      "facts": [
+       [
+        "heading",
+        "h:a8ef72a3a17eabb1bb54",
+        "id"
+       ],
+       [
+        "posture",
+        "kneeling",
+        "lit"
+       ]
+      ],
+      "in": [
+       "in",
+       "h:a8ef72a3a17eabb1bb54"
+      ]
+     },
+     "person:maid": {
+      "facts": [
+       [
+        "posture",
+        "dusting",
+        "lit"
+       ]
+      ],
+      "place": "place:kitchen"
+     },
+     "person:mara": {
+      "facts": [
+       [
+        "posture",
+        "sitting",
+        "lit"
+       ]
+      ],
+      "place": "place:study"
+     },
+     "person:nanny": {
+      "facts": [
+       [
+        "gold",
+        15,
+        "lit"
+       ]
+      ],
+      "place": "place:bedroom"
+     },
+     "person:twin": {
+      "facts": [],
+      "place": "place:hall"
+     }
+    },
+    "present": {},
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:people"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiZGEyZDg3OGEwYTE1OTcxMmFjNzg0YmY2OTk3OTRkZWI0Mzg4M2I2ZTgzNzk2Y2EwNDBiNzQ1NjNlMWZmMWI5YSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiNTViNWVhNmE4MzJiODc4YjFhMDExMWIwMzA0YTAwNDIyOGViYzUzNmFlZGE4MmVhN2Y4NGVmOWNlZTFmODg2NCIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.Z-eLo1ASGrFCFGs5R3mHhd4qDJCVIQN2_qhKhKBMr64",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "npc:smuggler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "leaning",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "npc:thief",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "lurking",
+           "lit"
+          ]
+         ],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "person:baby",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "asleep",
+           "lit"
+          ]
+         ],
+         "in": [
+          "carried_by",
+          "person:nanny"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:butler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "crouching",
+           "lit"
+          ]
+         ],
+         "in": [
+          "in",
+          "h:a2b297defdff0e739719"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:cook",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ]
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:ghost",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "obj:annex"
+        }
+       },
+       {
+        "key": "person:guard",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "kneeling",
+           "lit"
+          ]
+         ],
+         "in": [
+          "in",
+          "h:a8ef72a3a17eabb1bb54"
+         ]
+        }
+       },
+       {
+        "key": "person:maid",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "dusting",
+           "lit"
+          ]
+         ],
+         "place": "place:kitchen"
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "sitting",
+           "lit"
+          ]
+         ],
+         "place": "place:study"
+        }
+       },
+       {
+        "key": "person:nanny",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:twin",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 8.0,
+      "cursor": "eyJkIjoiZGEyZDg3OGEwYTE1OTcxMmFjNzg0YmY2OTk3OTRkZWI0Mzg4M2I2ZTgzNzk2Y2EwNDBiNzQ1NjNlMWZmMWI5YSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg1LCJwIjp0cnVlLCJxIjoiNTViNWVhNmE4MzJiODc4YjFhMDExMWIwMzA0YTAwNDIyOGViYzUzNmFlZGE4MmVhN2Y4NGVmOWNlZTFmODg2NCIsInMiOiJleGFjdCIsInQiOjguMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.Z-eLo1ASGrFCFGs5R3mHhd4qDJCVIQN2_qhKhKBMr64",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:maid": {
+        "facts": [
+         [
+          "posture",
+          "dusting",
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "reset, only posture crosses"
+    },
+    {
+     "answer": {
+      "at": 9.0,
+      "cursor": "eyJkIjoiMDllOTRkY2NiMmRlZWRhNTRjODZkZDQyNTYwYjA1NTYxODM5YjMwMDAyYWVmNWM4ZDg4OGUwNGIzNmZlNTdlYyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg2LCJwIjp0cnVlLCJxIjoiNTViNWVhNmE4MzJiODc4YjFhMDExMWIwMzA0YTAwNDIyOGViYzUzNmFlZGE4MmVhN2Y4NGVmOWNlZTFmODg2NCIsInMiOiJleGFjdCIsInQiOjkuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.53DbMMMESMGTiwUo5aU9Uj9GrmPe4r3CZERARg6DO7k",
+      "ops": [
+       {
+        "key": "person:mara",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [
+          [
+           "posture",
+           "leaning",
+           "lit"
+          ]
+         ],
+         "place": "place:study"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": true
+     },
+     "expect": {
+      "at": 9.0,
+      "cursor": "eyJkIjoiMDllOTRkY2NiMmRlZWRhNTRjODZkZDQyNTYwYjA1NTYxODM5YjMwMDAyYWVmNWM4ZDg4OGUwNGIzNmZlNTdlYyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg2LCJwIjp0cnVlLCJxIjoiNTViNWVhNmE4MzJiODc4YjFhMDExMWIwMzA0YTAwNDIyOGViYzUzNmFlZGE4MmVhN2Y4NGVmOWNlZTFmODg2NCIsInMiOiJleGFjdCIsInQiOjkuMCwidiI6MSwidyI6Inc6cGVvcGxlIn0.53DbMMMESMGTiwUo5aU9Uj9GrmPe4r3CZERARg6DO7k",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [
+         [
+          "posture",
+          "lurking",
+          "lit"
+         ]
+        ],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [
+         [
+          "posture",
+          "asleep",
+          "lit"
+         ]
+        ],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [
+         [
+          "posture",
+          "crouching",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a2b297defdff0e739719"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [
+         [
+          "posture",
+          "sitting",
+          "lit"
+         ]
+        ],
+        "place": "place:bedroom"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:guard": {
+        "facts": [
+         [
+          "posture",
+          "kneeling",
+          "lit"
+         ]
+        ],
+        "in": [
+         "in",
+         "h:a8ef72a3a17eabb1bb54"
+        ]
+       },
+       "person:maid": {
+        "facts": [
+         [
+          "posture",
+          "dusting",
+          "lit"
+         ]
+        ],
+        "place": "place:kitchen"
+       },
+       "person:mara": {
+        "facts": [
+         [
+          "posture",
+          "leaning",
+          "lit"
+         ]
+        ],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": {},
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "a person's posture changes: put people"
+    }
+   ]
+  },
+  {
+   "name": "keyless, position only",
+   "start": {
+    "at": null,
+    "cursor": null,
+    "known": {},
+    "present": null,
+    "schema": "patternbuffer.view/1",
+    "view_frame": "knows:person:mara",
+    "world_id": "w:people"
+   },
+   "steps": [
+    {
+     "answer": {
+      "at": 9.0,
+      "cursor": "eyJkIjoiOTQwMjI2N2JhZjYzOTgwNGY3OWRjYTlkNmUxNjkzZGQ4ZjI0NzAxNTY0YWJiYTBlYjAzNWEwM2RlZWQ0NzMwOSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg2LCJwIjpmYWxzZSwicSI6IjRmNTNjZGExOGMyYmFhMGMwMzU0YmI1ZjlhM2VjYmU1ZWQxMmFiNGQ4ZTExYmE4NzNjMmYxMTE2MTIwMmI5NDUiLCJzIjoiZXhhY3QiLCJ0Ijo5LjAsInYiOjEsInciOiJ3OnBlb3BsZSJ9.",
+      "ops": [
+       {
+        "op": "clear"
+       },
+       {
+        "key": "obj:desk",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "colour",
+           "oak",
+           "lit"
+          ],
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "desk",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "in",
+           "place:study",
+           "id"
+          ],
+          [
+           "kind",
+           "person",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "place:study",
+        "layer": "known",
+        "op": "put",
+        "value": {
+         "conflicted": [],
+         "facts": [
+          [
+           "kind",
+           "room",
+           "lit"
+          ]
+         ]
+        }
+       },
+       {
+        "key": "npc:smuggler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "npc:thief",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       },
+       {
+        "key": "person:baby",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "in": [
+          "carried_by",
+          "person:nanny"
+         ],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:butler",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:cook",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:ghost",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "obj:annex"
+        }
+       },
+       {
+        "key": "person:maid",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:kitchen"
+        }
+       },
+       {
+        "key": "person:mara",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:study"
+        }
+       },
+       {
+        "key": "person:nanny",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:bedroom"
+        }
+       },
+       {
+        "key": "person:twin",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": false
+     },
+     "expect": {
+      "at": 9.0,
+      "cursor": "eyJkIjoiOTQwMjI2N2JhZjYzOTgwNGY3OWRjYTlkNmUxNjkzZGQ4ZjI0NzAxNTY0YWJiYTBlYjAzNWEwM2RlZWQ0NzMwOSIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg2LCJwIjpmYWxzZSwicSI6IjRmNTNjZGExOGMyYmFhMGMwMzU0YmI1ZjlhM2VjYmU1ZWQxMmFiNGQ4ZTExYmE4NzNjMmYxMTE2MTIwMmI5NDUiLCJzIjoiZXhhY3QiLCJ0Ijo5LjAsInYiOjEsInciOiJ3OnBlb3BsZSJ9.",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:maid": {
+        "facts": [],
+        "place": "place:kitchen"
+       },
+       "person:mara": {
+        "facts": [],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": null,
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "reset from nothing: no handles, no present layer"
+    },
+    {
+     "answer": {
+      "at": 10.0,
+      "cursor": "eyJkIjoiNTAwOGJkNWVmZTVkZDI0YTljMGI5OGRiN2M1ZjEzNmEzMjUwM2E2OWM3YzUxMDNlMjc2Y2IzYzhhZjcyNTU1MyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg3LCJwIjpmYWxzZSwicSI6IjRmNTNjZGExOGMyYmFhMGMwMzU0YmI1ZjlhM2VjYmU1ZWQxMmFiNGQ4ZTExYmE4NzNjMmYxMTE2MTIwMmI5NDUiLCJzIjoiZXhhY3QiLCJ0IjoxMC4wLCJ2IjoxLCJ3IjoidzpwZW9wbGUifQ.",
+      "ops": [
+       {
+        "key": "person:cook",
+        "layer": "people",
+        "op": "put",
+        "value": {
+         "facts": [],
+         "place": "place:hall"
+        }
+       }
+      ],
+      "people_on": true,
+      "present_on": false
+     },
+     "expect": {
+      "at": 10.0,
+      "cursor": "eyJkIjoiNTAwOGJkNWVmZTVkZDI0YTljMGI5OGRiN2M1ZjEzNmEzMjUwM2E2OWM3YzUxMDNlMjc2Y2IzYzhhZjcyNTU1MyIsImYiOiJrbm93czpwZXJzb246bWFyYSIsImgiOjg3LCJwIjpmYWxzZSwicSI6IjRmNTNjZGExOGMyYmFhMGMwMzU0YmI1ZjlhM2VjYmU1ZWQxMmFiNGQ4ZTExYmE4NzNjMmYxMTE2MTIwMmI5NDUiLCJzIjoiZXhhY3QiLCJ0IjoxMC4wLCJ2IjoxLCJ3IjoidzpwZW9wbGUifQ.",
+      "known": {
+       "obj:desk": {
+        "conflicted": [],
+        "facts": [
+         [
+          "colour",
+          "oak",
+          "lit"
+         ],
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "desk",
+          "lit"
+         ]
+        ]
+       },
+       "person:mara": {
+        "conflicted": [],
+        "facts": [
+         [
+          "in",
+          "place:study",
+          "id"
+         ],
+         [
+          "kind",
+          "person",
+          "lit"
+         ]
+        ]
+       },
+       "place:study": {
+        "conflicted": [],
+        "facts": [
+         [
+          "kind",
+          "room",
+          "lit"
+         ]
+        ]
+       }
+      },
+      "people": {
+       "npc:smuggler": {
+        "facts": [],
+        "place": "place:hall"
+       },
+       "npc:thief": {
+        "facts": [],
+        "place": "place:hall"
+       },
+       "person:baby": {
+        "facts": [],
+        "in": [
+         "carried_by",
+         "person:nanny"
+        ],
+        "place": "place:bedroom"
+       },
+       "person:butler": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:cook": {
+        "facts": [],
+        "place": "place:hall"
+       },
+       "person:ghost": {
+        "facts": [],
+        "place": "obj:annex"
+       },
+       "person:maid": {
+        "facts": [],
+        "place": "place:kitchen"
+       },
+       "person:mara": {
+        "facts": [],
+        "place": "place:study"
+       },
+       "person:nanny": {
+        "facts": [],
+        "place": "place:bedroom"
+       },
+       "person:twin": {
+        "facts": [],
+        "place": "place:hall"
+       }
+      },
+      "present": null,
+      "schema": "patternbuffer.view/1",
+      "view_frame": "knows:person:mara",
+      "world_id": "w:people"
+     },
+     "name": "a person moves: put people"
+    }
+   ]
+  }
+ ],
+ "view_frame": "knows:person:mara",
+ "world_id": "w:people"
+}

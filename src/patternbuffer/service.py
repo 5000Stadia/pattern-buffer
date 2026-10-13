@@ -39,7 +39,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from patternbuffer import AtomicAbort, World, mirror
 from patternbuffer.mcp import FORCED_PARAMS, V1_READS, dispatch
@@ -110,7 +110,7 @@ _VIEWER_FORCED: dict[tuple[str, str], Any] = {
 
 # Arguments no viewer may name on any verb. `frame_scope` (FRAME-CONTINUITY-V1
 # §5) is the host's, set at `attach`: a viewer cannot widen its own view.
-_REFUSED_ARGS = ("frame", "frame_scope")
+_REFUSED_ARGS = ("frame", "frame_scope", "people")
 
 DEFAULT_WAIT = 2.0
 DEFAULT_RETRY_AFTER = 1.0
@@ -234,10 +234,16 @@ class WorldService:
                  rate: RateCap | None = None, *, standalone: bool = False,
                  retry_after: float = DEFAULT_RETRY_AFTER,
                  read_timeout: float = 30.0,
-                 mirror_key: bytes | None = None) -> None:
+                 mirror_key: bytes | None = None,
+                 people: Sequence[str] | None = None) -> None:
         # the host's key for the offline mirror's present layer and cursors
         # (VIEW-EXPORT-V1 §5); it never reaches a client
         self._mirror_key = mirror._check_key(mirror_key)
+        # the host's people layer (VIEW-PEOPLE-V1 §4): None is off, else the
+        # person facts. Validated here without a world (no alias map); `attach`
+        # canonicalizes it against the world and validates again.
+        self._people_given = mirror.normalize_people(people)
+        self._people = self._people_given
         # The full outcome of the latest `record` call, for the trusted host. The
         # wire carries only `recorded` / `refused` (VIEW-EXPORT-V1 §5 r3).
         self.last_record_outcome: dict[str, Any] | None = None
@@ -302,6 +308,8 @@ class WorldService:
             logger.warning(
                 "this World's model is not svc.gated(...): the rate cap is inactive, "
                 "and a model-bound viewer resolve answers no_rate_cap")
+        self._people = mirror.normalize_people(self._people_given, world.canonical_attribute,
+                                               world.semantics.containment_family())
         self._frame_scope = frame_scope
         self._world = world
         self._owner = threading.get_ident()
@@ -513,7 +521,7 @@ class WorldService:
                 else:
                     req.result = _run_read(snap, self._view_frame, req.verb, req.args,
                                            self._frame_scope, now=self.now(),
-                                           key=self._mirror_key)
+                                           key=self._mirror_key, people=self._people)
             except BaseException as exc:       # noqa: BLE001 - handed to the caller
                 req.error = exc
             finally:
@@ -837,12 +845,13 @@ assert set(VIEWER_READS) <= set(V1_READS)       # the allowlist is a subset of M
 
 def _run_read(snap: World, view_frame: str, verb: str, args: dict,
               frame_scope: str = "exact", *, now: float | None = None,
-              key: bytes | None = None) -> Any:
+              key: bytes | None = None, people: Sequence[str] | None = None) -> Any:
     if verb == "export":
-        return mirror.export(snap, view_frame, at=now, key=key, frame_scope=frame_scope)
+        return mirror.export(snap, view_frame, at=now, key=key, frame_scope=frame_scope,
+                             people=people)
     if verb == "feed":
         return mirror.feed(snap, view_frame, args.get("since"), at=now, key=key,
-                           frame_scope=frame_scope)
+                           frame_scope=frame_scope, people=people)
     return ADAPTERS[verb](snap, view_frame, args, frame_scope)
 
 
@@ -1053,7 +1062,8 @@ class Runner:
                  authors: tuple[str, ...] = (),
                  rate: RateCap | None = None,
                  model_route: Callable[[dict], str] | None = None,
-                 mirror_key: bytes | None = None) -> None:
+                 mirror_key: bytes | None = None,
+                 people: Sequence[str] | None = None) -> None:
         # A World is bound to the thread that opened it, so the runner opens
         # it ON its pump thread (the owner thread) and closes it there.
         # `open_world(gated)` builds it with `model=gated(host_callable)`.
@@ -1066,7 +1076,8 @@ class Runner:
             raise ValueError(f"a session is a recorder or an author, not both: "
                              f"{sorted(both)}")
         self.service = WorldService(model_route=model_route, rate=rate,
-                                    standalone=True, mirror_key=mirror_key)
+                                    standalone=True, mirror_key=mirror_key,
+                                    people=people)
         self._view_frame = view_frame
         self._stop = threading.Event()
         self._sessions: dict[str, Session] = {}
@@ -1236,6 +1247,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mirror-key-file", default=None, metavar="PATH",
                         help="a file of raw key bytes (at least 16): turns on the "
                              "offline mirror's present layer and signs its cursors")
+    parser.add_argument("--people", action="store_true",
+                        help="turn on the offline mirror's people layer (persons' canon "
+                             "whereabouts on the device; single-player hosts only)")
+    parser.add_argument("--people-attr", action="append", default=[], metavar="NAME",
+                        help="a person fact to cross in the people layer (repeatable; "
+                             "needs --people)")
     parser.add_argument("--rate", type=int, default=None, metavar="N",
                         help="cap model-routed viewer resolves at N per minute")
     args = parser.parse_args(argv)
@@ -1243,6 +1260,13 @@ def main(argv: list[str] | None = None) -> int:
     if both:
         parser.error(f"a session is a recorder or an author, not both: {sorted(both)}")
 
+    if args.people_attr and not args.people:
+        parser.error("--people-attr needs --people")
+    people = tuple(args.people_attr) if args.people else None
+    try:
+        mirror.normalize_people(people)
+    except (TypeError, ValueError) as exc:
+        parser.error(str(exc))
     generator = _load_generator(args.generator) if args.generator else None
     mirror_key = Path(args.mirror_key_file).read_bytes() if args.mirror_key_file else None
     model, route = make_runner_callable(generator)
@@ -1251,7 +1275,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.view_frame, port=args.port,
                     recorders=tuple(args.recorder), authors=tuple(args.author),
                     rate=RateCap(args.rate) if args.rate is not None else None,
-                    model_route=route, mirror_key=mirror_key)
+                    model_route=route, mirror_key=mirror_key, people=people)
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())
