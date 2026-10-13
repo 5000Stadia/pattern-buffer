@@ -1,6 +1,6 @@
 # GRADE-LEAKS-V1: grading that sees the ending leak, false beliefs and points of view
 
-**Status:** r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
+**Status:** r2.2 (pbr r2.1 RED: binding by log position, not chapter; `map(R) = E` required; the exact tokenizer and stoplist; every row's position counts). r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
 bookkeeping); no engine change.
 **Source:** consult c4bb1f2 point 3, accepted by Kabe on gate g936be9. Redesigned after round two
 (ce0ba1f); see `docs/SPEED-PLAN-2026-10-13.md` step 2.
@@ -90,23 +90,33 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
      - c's text contains P;
      - c's text contains no other graded alias of E.
 
-     *(r2.1, pbr)* **"Contains" is a whole-token match.** Both texts are `book_normalize`d and
-     split into word tokens, and the alias's tokens must occur as a contiguous run.
-     **Common-word aliases** take no part in chunk classification:
-     - a single-token alias of three characters or fewer (R27's `Or`);
-     - an alias whose one token is in the grader's small fixed stoplist of English function
-       words.
+     *(r2.2, exact)* **"Contains" is a whole-token match.**
+     - **Tokenizer:** `tokens(x) = re.findall(r"[a-z0-9]+(?:'[a-z0-9]+)*", book_normalize(x))`.
+     - An alias is contained when its token list occurs as a contiguous run in the chunk's token
+       list.
+     - **Common-word aliases** take no part in chunk classification:
+       - an alias with exactly one token of three characters or fewer (R27's `Or`);
+       - an alias with exactly one token in this stoplist, which is normative and complete: `a,
+         about, after, all, an, and, any, as, at, be, before, but, by, can, for, from, he, her,
+         here, him, his, i, if, in, is, it, its, me, my, no, nor, not, now, of, on, one, or, our,
+         she, so, than, that, the, them, then, there, they, this, to, up, us, was, we, were, what,
+         when, who, will, with, yet, you, your`.
 
-     They still count in `names(R)`. The report lists the aliases left out.
-  4. **When an id became E's** *(r2.1, pbr)*. Raw id R is **bound to E at chapter b(R, E)**: the
-     earliest chapter at which R holds a `name` or `alias` row matching a graded alias of E other
-     than P. A seed row from the pass-0 registry counts as chapter 0, and a chunk row counts as its
-     source chunk's chapter. A raw id never bound to E has no b.
-  5. **A chunk leak** is a row with all three of:
+       They still count in `names(R)`. The report lists the aliases left out.
+  4. **When an id became E's** *(r2.2, by log position)*. Raw id R is **bound to E at seq b(R, E)**:
+     the lowest `seq` of any `name` or `alias` row on R matching a graded alias of E other than P.
+     - Every row counts by its own position, whatever wrote it: seed rows from the pass-0
+       registry, chunk rows, gate rows and audit rows.
+     - Positions are the log's total order. A row written in the same chunk as the binding name,
+       but after it, comes after it.
+     - A raw id never bound to E has no b.
+  5. **A chunk leak** *(r2.2)* is a row with all three of:
      - its source chunk is pre-reveal for (E, P, r);
-     - it is written on a raw id R with `b(R, E) <` that chunk's chapter, or `b(R, E) = 0`;
-     - the chunk saw only P, and the id was already E's under another name.
+     - it is written on a raw id R with `map(R) = E` (an ambiguous or unmapped R is never
+       charged, and is counted as before);
+     - `b(R, E) ≤` the row's own `seq`.
 
+     That includes the binding row itself, when a pre-reveal chunk names R as E unprompted.
      Whether R also holds P doesn't matter. Two cases stay safe:
      - **separate id, merged later:** a visitor id that gains an E name only at or after r, or
        only through a later `same_as` merge (which writes no name row on the raw id), was bound
@@ -206,10 +216,19 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
     - **Safe:** raw id V holds only "the hooded visitor" before r, a chapter-9 chunk adds
       `alias "mara"` on V, and V's chapter-3 rows are no leak.
     - **Safe:** V is merged into Mara's id by `same_as` after r. No leak.
+3e. *(r2.2, pbr)* **Same-chunk binding:** Mara first appears in chapter 1, the reveal is chapter 4,
+    and a chapter-3 chunk whose text holds only "the hooded visitor" writes `name "Mara"` on R and
+    then `in place:x` on R. Both rows are leaks: b is the name row's position, and each row's
+    position is at or after it.
+3f. *(r2.2, pbr)* **Ambiguity holds.** An R named both by an early Mara alias and by another
+    entity's alias is ambiguous, so its pre-reveal rows are counted as ambiguous and not charged.
 3d. *(r2.1, pbr)* **Token matching:**
     - "Or" never classifies a chunk, and is listed as left out;
     - "the hooded visitor" matches as a phrase, and "hooded visitors" does not;
-    - prose containing "or" doesn't make a chunk pre-reveal or not.
+    - prose containing "or" doesn't make a chunk pre-reveal or not;
+    - *(r2.2)* an alias "The One" (two tokens) classifies chunks, while an alias "One" (stoplisted)
+      does not;
+    - the tokenizer keeps "o'brien" as one token and splits "copper-hand" into two.
 3a. *(r2)* **Raw mapping:**
     - an id named both by "mara" and by an alias of another key entity is ambiguous, and its rows
       are counted and not charged;
