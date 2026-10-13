@@ -16,6 +16,11 @@ Usage (repo root):
 estimate, and imports no model. A real run is metered; run it only when it has
 been approved.
 
+With profiling on (the default; ``--no-profile`` turns it off) the build also
+writes ``objectives.jsonl`` (one line per unit of work, with its attempts) and
+every ``usage.jsonl`` line carries its stage, unit and attempt (BUILD-PROFILE-V1);
+``profile_build.py DIR`` turns them into ``profile.md``.
+
 ``DIR`` receives ``timings.json`` and ``receipt.json`` (rewritten as each stage
 finishes, so a failed run keeps what it spent), ``usage.jsonl`` (one line per
 model call, this run only), ``meta.json``, the registry, the staged chunks, the
@@ -180,15 +185,16 @@ _COUNTS = ("calls", "calls_without_usage", "input_tokens", "output_tokens",
            "cache_read_tokens", "cache_write_tokens")
 
 
-def fresh_usage_log(run_dir: Path) -> Path:
+def fresh_usage_log(run_dir: Path, name: str = "usage.jsonl") -> Path:
     """Move any existing ``usage.jsonl`` aside (to ``usage.jsonl.<n>``, the next
-    free n) and start an empty one, so the log holds only this run."""
-    log = run_dir / "usage.jsonl"
+    free n) and start an empty one, so the log holds only this run. ``name``
+    picks another per-run log (``objectives.jsonl``) with the same rule."""
+    log = run_dir / name
     if log.exists():
         n = 1
-        while (run_dir / f"usage.jsonl.{n}").exists():
+        while (run_dir / f"{name}.{n}").exists():
             n += 1
-        log.rename(run_dir / f"usage.jsonl.{n}")
+        log.rename(run_dir / f"{name}.{n}")
     log.write_text("")
     return log
 
@@ -252,7 +258,7 @@ class Receipt:
 
 def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
              pass0: str = "sequential", merge_gate: bool = False, glean: bool = False,
-             model_name: str = "injected") -> dict[str, Any]:
+             model_name: str = "injected", profile: bool = True) -> dict[str, Any]:
     """Build the book in ``book_dir`` into ``out_dir`` with ``model``; return meta.
 
     Raises ``BookRefused`` before any model call for a book it will not build,
@@ -268,7 +274,10 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
     prior_env = os.environ.get(USAGE_ENV)
     os.environ[USAGE_ENV] = str(log)
     usage_ledger.reset()
-    pipe = Pipeline(model, world_id, run_dir, max_workers=4, merge_gate=merge_gate)
+    if profile:
+        fresh_usage_log(run_dir, "objectives.jsonl")
+    pipe = Pipeline(model, world_id, run_dir, max_workers=4, merge_gate=merge_gate,
+                    profile=profile)
     timings: dict[str, float] = {}
 
     def flush_timings() -> None:  # rewritten as stages finish, so a failed run keeps its split
@@ -307,7 +316,9 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
             world = pipe.commit(world_path, registry)
 
         with receipt.stage("audit"):
-            audit_report = run_audit(world, registry, model)
+            with usage_ledger.label(stage="audit"):
+                audit_report = run_audit(world, registry,
+                                         pipe.audit_model(model) if profile else model)
         (run_dir / "ingest_dump.jsonl").write_text(dump(world.buffer))
         timings["total_s"] = round(sum(v for k, v in timings.items() if k != "total_s"), 1)
         flush_timings()
@@ -355,6 +366,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     help="run the R25 merge gate at commit (one more model call per 25 candidates)")
     ap.add_argument("--glean", action="store_true",
                     help="after each segment's registry, one call for missed E| lines")
+    ap.add_argument("--no-profile", action="store_true",
+                    help="skip objectives.jsonl (calls are still labelled in usage.jsonl)")
     ap.add_argument("--dry-run", action="store_true",
                     help="read the book and print counts and an estimate; import no model")
     args = ap.parse_args(argv)
@@ -380,7 +393,8 @@ def main(argv: list[str] | None = None,
         else:
             model_name = "injected"
         meta = run_book(args.book, args.out, model, pass0=args.pass0,
-                        merge_gate=args.merge_gate, glean=args.glean, model_name=model_name)
+                        merge_gate=args.merge_gate, glean=args.glean, model_name=model_name,
+                        profile=not args.no_profile)
     except (BookRefused, BookRunAborted) as exc:
         raise SystemExit(f"ABORT: {exc}") from exc
     print(json.dumps(meta, indent=2))

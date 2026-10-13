@@ -114,7 +114,30 @@ def codex_model(prompt: str, schema: dict) -> dict:
 
 
 def _call_once(prompt: str, schema: dict) -> dict:
+    """One backend call. Every call that reaches the backend leaves one ledger
+    line with its latency: a success with its usage, a failure (``timeout`` or
+    ``error``) with none, as the claude shim's timeout does. A 401 and a missing
+    credential file leave none (nothing was spent)."""
     access_token, account_id = _credentials()
+    started, t0 = time.time(), time.perf_counter()
+    recorded: list[bool] = []
+    try:
+        return _call_backend(prompt, schema, access_token, account_id, started, t0, recorded)
+    except CodexAuthError:
+        raise
+    except CodexShimError as exc:
+        if not recorded:
+            low = str(exc).lower()
+            timed_out = "bound" in low or "stalled" in low or "timed out" in low
+            usage_ledger.record("codex", MODEL, None, None, started=started,
+                                latency_s=time.perf_counter() - t0,
+                                outcome="timeout" if timed_out else "error",
+                                prompt_chars=len(prompt), response_chars=0)
+        raise
+
+
+def _call_backend(prompt: str, schema: dict, access_token: str, account_id: str,
+                  started: float, t0: float, recorded: list[bool]) -> dict:
     body = {
         "model": MODEL,
         "instructions": _INSTRUCTIONS,
@@ -197,7 +220,7 @@ def _call_once(prompt: str, schema: dict) -> dict:
         # mid-stream stalls into retryable shim errors (letter 021 rule 2).
         raise CodexShimError(f"stream read failed/stalled: {exc}") from exc
 
-    usage_ledger.record("codex", MODEL, _usage_from_final(final), None)
+    latency = time.perf_counter() - t0
     text = ""
     if final:
         for item in final.get("output", []):
@@ -209,6 +232,10 @@ def _call_once(prompt: str, schema: dict) -> dict:
                 text += item.get("text", "")
     if not text:
         text = "".join(deltas)
+    usage_ledger.record("codex", MODEL, _usage_from_final(final), None, started=started,
+                        latency_s=latency, outcome="ok" if text else "error",
+                        prompt_chars=len(prompt), response_chars=len(text))
+    recorded.append(True)
     if not text:
         raise CodexShimError("stream ended with no output text")
     try:

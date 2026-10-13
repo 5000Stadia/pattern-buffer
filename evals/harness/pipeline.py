@@ -9,6 +9,7 @@ rows) and leaves its staging directory as the resumable state.
 
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import json
 import logging
@@ -22,9 +23,11 @@ from patternbuffer import World
 
 try:
     import grammar
+    import objectives
+    import usage_ledger
     from registry import RegistryWorldMismatch, WorldRegistry, establish, glean, seed_items
 except ImportError:  # imported as evals.harness.pipeline (e.g. via grade_registry)
-    from evals.harness import grammar
+    from evals.harness import grammar, objectives, usage_ledger
     from evals.harness.registry import (RegistryWorldMismatch, WorldRegistry, establish,
                                         glean, seed_items)
 
@@ -228,6 +231,7 @@ class Pipeline:
         reconcile: Any = "auto",
         merge_gate: bool = False,
         merge_gate_batch_size: int = 25,
+        profile: bool = False,
     ) -> None:
         self.model = model
         self.world_id = world_id
@@ -264,6 +268,36 @@ class Pipeline:
         # R26 BUILD-TIMINGS-V1: wall seconds per stage, filled by pass0 and
         # commit (the runner adds the rest). Observation only.
         self.timings: dict[str, Any] = {}
+        # BUILD-PROFILE-V1: with ``profile`` on, every objective (a segment, a
+        # chunk, a repair, a classification or gate batch, the audit) is written
+        # to ``run_dir/objectives.jsonl`` with its attempts. Observation only;
+        # calls are labelled (stage, unit, attempt) either way.
+        self.objective_log = (objectives.ObjectiveLog(self.run_dir / objectives.OBJECTIVES_FILE)
+                              if profile else None)
+
+    # ------------------------------------------------- profiling (BUILD-PROFILE-V1)
+
+    def _submit(self, pool: ThreadPoolExecutor, stage: str, unit: str, fn: Callable, *args: Any,
+                **kwargs: Any):
+        """Submit ``fn`` with its unit's label. A pool worker does not inherit the
+        submitter's context, so the label is entered, the context copied (one
+        copy per submission, never shared) and the task run inside that copy."""
+        with usage_ledger.label(stage=stage, unit=unit):
+            ctx = contextvars.copy_context()
+        return pool.submit(ctx.run, lambda: fn(*args, **kwargs))
+
+    def audit_model(self, model: Callable[[str, dict], Any]) -> Callable[[str, dict], Any]:
+        """``model`` for the audit's one review call: one objective, unit ``audit``."""
+        return objectives.ObjectiveModel(model, self.objective_log, "audit", stage="audit",
+                                         numbered=False)
+
+    def _batch_model(self, model: Callable[[str, dict], Any],
+                     kind: str) -> Callable[[str, dict], Any]:
+        """``model`` with each call one objective (``classify:NN``, ``gate:NN``),
+        or ``model`` itself when profiling is off."""
+        if self.objective_log is None:
+            return model
+        return objectives.ObjectiveModel(model, self.objective_log, kind)
 
     # ------------------------------------------------------------- pass 0
 
@@ -292,14 +326,17 @@ class Pipeline:
             registry = prior
             seg_s: list[float] = []
             glean_s: list[float] = []
-            for part in parts:
-                t = time.perf_counter()
-                registry = establish(part, self.model, self.world_id, prior=registry)
-                seg_s.append(round(time.perf_counter() - t, 2))
-                if glean:
+            for i, part in enumerate(parts):
+                with objectives.track(self.objective_log, "pass0", f"segment:{i:02d}") as obj:
                     t = time.perf_counter()
-                    registry = _glean(part, registry, self.model, self.world_id)
-                    glean_s.append(round(time.perf_counter() - t, 2))
+                    with obj.attempt(1):
+                        registry = establish(part, self.model, self.world_id, prior=registry)
+                    seg_s.append(round(time.perf_counter() - t, 2))
+                    if glean:
+                        t = time.perf_counter()
+                        with obj.attempt(2):
+                            registry = _glean(part, registry, self.model, self.world_id)
+                        glean_s.append(round(time.perf_counter() - t, 2))
             self.timings["pass0_segment_s"] = seg_s
             if glean:
                 self.timings["pass0_glean_s"] = glean_s
@@ -310,15 +347,19 @@ class Pipeline:
         write_source_segments(self.run_dir, parts)
         return registry
 
-    def _pass0_one(self, part: str, glean: bool) -> tuple[WorldRegistry, float, float]:
-        t = time.perf_counter()
-        reg = establish(part, self.model, self.world_id, prior=None)
-        call_s = round(time.perf_counter() - t, 2)
-        glean_s = 0.0
-        if glean:
+    def _pass0_one(self, part: str, glean: bool,
+                   index: int = 0) -> tuple[WorldRegistry, float, float]:
+        with objectives.track(self.objective_log, "pass0", f"segment:{index:02d}") as obj:
             t = time.perf_counter()
-            reg = _glean(part, reg, self.model, self.world_id)
-            glean_s = round(time.perf_counter() - t, 2)
+            with obj.attempt(1):
+                reg = establish(part, self.model, self.world_id, prior=None)
+            call_s = round(time.perf_counter() - t, 2)
+            glean_s = 0.0
+            if glean:
+                t = time.perf_counter()
+                with obj.attempt(2):
+                    reg = _glean(part, reg, self.model, self.world_id)
+                glean_s = round(time.perf_counter() - t, 2)
         return reg, call_s, glean_s
 
     def _pass0_parallel(
@@ -331,7 +372,8 @@ class Pipeline:
         t0 = time.perf_counter()
         pool = ThreadPoolExecutor(max_workers=self.max_workers)
         try:
-            futures = [pool.submit(self._pass0_one, part, glean) for part in parts]
+            futures = [self._submit(pool, "pass0", f"segment:{i:02d}", self._pass0_one,
+                                    part, glean, i) for i, part in enumerate(parts)]
             done = [f.result() for f in futures]  # segment order; first failure raises
         except BaseException:
             pool.shutdown(wait=True, cancel_futures=True)  # QuotaExhausted etc. propagate
@@ -390,7 +432,8 @@ class Pipeline:
         )
 
     def _extract_chunk(
-        self, chunk_id: int, text: str, cursor: float, registry: WorldRegistry
+        self, chunk_id: int, text: str, cursor: float, registry: WorldRegistry,
+        stage: str = "pass1",
     ) -> ChunkResult:
         prompt = _PASS1_PROMPT.format(
             timeline=f"{registry.timeline.origin} | anchors: {registry.timeline.anchors}",
@@ -399,22 +442,26 @@ class Pipeline:
             text=text,
         )
         result = ChunkResult(chunk_id=chunk_id)
-        for attempt in (1, 2):
-            try:
-                out = self.model(prompt, _PASS1_SCHEMA)
-            except Exception as exc:
-                if type(exc).__name__ == "QuotaExhausted":
-                    raise
-                result.error = str(exc)
-                continue
-            items, orphans, rejects = grammar.parse(out["lines"], registry, cursor)
-            if grammar.reject_rate(items, orphans, rejects) > self.reject_threshold:
-                result.error = f"reject rate over threshold ({len(rejects)} rejects)"
-                continue
-            result.items, result.orphans, result.rejects = items, orphans, rejects
+        with objectives.track(self.objective_log, stage, f"chunk:{chunk_id:02d}") as obj:
+            for attempt in (1, 2):
+                with obj.attempt(attempt) as at:
+                    try:
+                        out = self.model(prompt, _PASS1_SCHEMA)
+                    except Exception as exc:
+                        if type(exc).__name__ == "QuotaExhausted":
+                            raise
+                        result.error = str(exc)
+                        at.fail(exc)
+                        continue
+                    items, orphans, rejects = grammar.parse(out["lines"], registry, cursor)
+                    if grammar.reject_rate(items, orphans, rejects) > self.reject_threshold:
+                        result.error = f"reject rate over threshold ({len(rejects)} rejects)"
+                        at.reject(result.error)
+                        continue
+                    result.items, result.orphans, result.rejects = items, orphans, rejects
+                    return result
+            result.failed = True
             return result
-        result.failed = True
-        return result
 
     def pass1(
         self,
@@ -425,7 +472,8 @@ class Pipeline:
         results: dict[int, ChunkResult] = {}
         with ThreadPoolExecutor(max_workers=self.max_workers) as pool:
             futures = {
-                pool.submit(self._extract_chunk, i, text, cursor, registry): i
+                self._submit(pool, "pass1", f"chunk:{i:02d}", self._extract_chunk,
+                             i, text, cursor, registry): i
                 for i, (cursor, text) in enumerate(chunks)
             }
             for fut in as_completed(futures):
@@ -484,7 +532,9 @@ class Pipeline:
         source = "\n\n".join(chunks[r.chunk_id][1] for r in orphaned)
         logger.info("registry escapes: %d orphan(s) across %d chunk(s); extending",
                     escape_count, len(orphaned))
-        establish(source, self.model, self.world_id, prior=registry)
+        with objectives.track(self.objective_log, "escape_repair", "registry_extend") as obj:
+            with obj.attempt(1):
+                establish(source, self.model, self.world_id, prior=registry)
         registry.save(self.run_dir / "registry.json")
         for r in orphaned:
             cursor, text = chunks[r.chunk_id]
@@ -492,7 +542,8 @@ class Pipeline:
             items, still_orphaned, rejects = grammar.parse(lines, registry, cursor)
             if still_orphaned or rejects:
                 logger.info("chunk %d: re-parse insufficient; re-extracting", r.chunk_id)
-                repaired = self._extract_chunk(r.chunk_id, text, cursor, registry)
+                repaired = self._extract_chunk(r.chunk_id, text, cursor, registry,
+                                               stage="escape_repair")
             else:
                 repaired = ChunkResult(
                     chunk_id=r.chunk_id,
@@ -591,7 +642,8 @@ class Pipeline:
             raise RuntimeError(f"commit target {world_path} already exists")
         t_seed = time.perf_counter()
         registry.save(self.run_dir / "registry.json")  # the artifact always
-        w = World(world_path, world_id=self.world_id, model=self.model)  # rides beside the dump
+        w = World(world_path, world_id=self.world_id,   # rides beside the dump
+                  model=self._batch_model(self.model, "classify"))
         w.ingestor.classify_inline = False
         seed_world(w, registry)
         alias_s = 0.0
@@ -641,17 +693,20 @@ class Pipeline:
                 json.dumps(quarantined, indent=0, sort_keys=True))
             logger.info("commit: %d item(s) quarantined at the gate", len(quarantined))
         t_classify = time.perf_counter()
-        w.classifier.classify_all(batch_size=40)
+        with usage_ledger.label(stage="commit"):
+            w.classifier.classify_all(batch_size=40)
         t_promote = time.perf_counter()
         # 036: gate same_as now proposes; promotion happens HERE, where the
         # whole world is in view. IDENTITY-ROOT-CAUSES-V1 §4: the engine leaves
         # a pair that owns a `knows:` frame to the host; a book world's host is
         # this pipeline. ALIAS-INDEX-V1 r4: the shared finalization, with
         # `reconcile` per the mode (Part B's rows are already in the log).
-        gate_report = finalize_identity(
-            w, reconcile=do_reconcile, gate=self.model if self.merge_gate else None,
-            segments=gate_source, gate_batch_size=self.merge_gate_batch_size,
-            gate_source=gate_source_kind)
+        with usage_ledger.label(stage="commit"):
+            gate_report = finalize_identity(
+                w, reconcile=do_reconcile,
+                gate=self._batch_model(self.model, "gate") if self.merge_gate else None,
+                segments=gate_source, gate_batch_size=self.merge_gate_batch_size,
+                gate_source=gate_source_kind)
         if gate_report is not None:
             (self.run_dir / MERGE_GATE_FILE).write_text(
                 json.dumps(gate_report, indent=2, sort_keys=True) + "\n")

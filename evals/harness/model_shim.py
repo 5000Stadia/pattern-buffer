@@ -75,6 +75,24 @@ def _cli_result(stdout: str) -> tuple[str, dict | None, float | None]:
     return stdout, None, None
 
 
+def _cli_extras(stdout: str) -> dict:
+    """The envelope's own run figures (BUILD-PROFILE-V1): ``num_turns``,
+    ``cli_duration_ms`` (``duration_ms``) and ``api_duration_ms``. A field the
+    envelope lacks, or output with no envelope, gives ``None``."""
+    for line in reversed(stdout.strip().splitlines()):
+        try:
+            env = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(env, dict) and env.get("type") == "result":
+            def num(key: str):
+                v = env.get(key)
+                return v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
+            return {"num_turns": num("num_turns"), "cli_duration_ms": num("duration_ms"),
+                    "api_duration_ms": num("duration_api_ms")}
+    return {"num_turns": None, "cli_duration_ms": None, "api_duration_ms": None}
+
+
 def claude_model(prompt: str, schema: dict) -> dict:
     """One model call. Retries once on JSON-parse failure."""
     full = (
@@ -86,6 +104,7 @@ def claude_model(prompt: str, schema: dict) -> dict:
     for attempt in (1, 2, 3):
         if attempt > 1:
             time.sleep(15 * (attempt - 1))  # transient rate pressure backs off
+        started, t0 = time.time(), time.perf_counter()
         try:
             proc = subprocess.run(
                 ["claude", "-p", "--model", MODEL, "--max-turns", "8",
@@ -96,13 +115,19 @@ def claude_model(prompt: str, schema: dict) -> dict:
                 timeout=TIMEOUT,
             )
         except subprocess.TimeoutExpired as exc:
-            usage_ledger.record("claude", MODEL, None, None)   # spent, amount unknown
+            usage_ledger.record("claude", MODEL, None, None, started=started,
+                                latency_s=time.perf_counter() - t0, outcome="timeout",
+                                prompt_chars=len(full), response_chars=0)  # spent, amount unknown
             last_err = exc
             logger.warning("model shim timeout (attempt %d)", attempt)
             continue
         # every completed invocation leaves a receipt, whatever its exit code
+        latency = time.perf_counter() - t0
         text, usage, cost = _cli_result(proc.stdout)
-        usage_ledger.record("claude", MODEL, usage, cost)
+        usage_ledger.record("claude", MODEL, usage, cost, started=started, latency_s=latency,
+                            outcome="ok" if proc.returncode == 0 else "error",
+                            prompt_chars=len(full), response_chars=len(text),
+                            **_cli_extras(proc.stdout))
         if proc.returncode != 0:
             stdout_lower = proc.stdout.lower()
             if "hit your" in stdout_lower and "limit" in stdout_lower:
