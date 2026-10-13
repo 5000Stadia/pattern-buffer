@@ -24,7 +24,9 @@ every ``usage.jsonl`` line carries its stage, unit and attempt (BUILD-PROFILE-V1
 ``DIR`` receives ``timings.json`` and ``receipt.json`` (rewritten as each stage
 finishes, so a failed run keeps what it spent), ``usage.jsonl`` (one line per
 model call, this run only), ``meta.json``, the registry, the staged chunks, the
-world (``fresh_ingest.world``) and its dump.
+world (``fresh_ingest.world``) and its dump, and ``chunk_spans.json`` (GRADE-LEAKS-V1 §1:
+per chunk, its chapter, cursor and inclusive ``seq`` span in the log), which
+``grade_book.py`` reads to date every row.
 """
 
 from __future__ import annotations
@@ -87,6 +89,12 @@ class BookPlan:
     slug: str
     chapters: list[tuple[int, str]]            # (chapter number, text)
     chunks: list[tuple[float, str]]            # (cursor = chapter number, text)
+
+    @property
+    def chunk_plan(self) -> list[tuple[int, int, float]]:
+        """``(chunk_id, chapter, cursor)`` per chunk, in source order: what
+        ``Pipeline.commit`` records in ``chunk_spans.json`` (GRADE-LEAKS-V1 §1)."""
+        return [(i, int(cursor), cursor) for i, (cursor, _) in enumerate(self.chunks)]
 
     @property
     def segments(self) -> list[str]:
@@ -313,7 +321,7 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
         world_path = run_dir / "fresh_ingest.world"
         world_path.unlink(missing_ok=True)
         with receipt.stage("commit"):
-            world = pipe.commit(world_path, registry)
+            world = pipe.commit(world_path, registry, chunk_plan=plan.chunk_plan)
 
         with receipt.stage("audit"):
             with usage_ledger.label(stage="audit"):

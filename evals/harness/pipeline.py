@@ -17,7 +17,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from patternbuffer import World
 
@@ -86,6 +86,7 @@ _PASS1_SCHEMA = {
 SOURCE_SEGMENTS_FILE = "source_segments.json"
 ALIAS_INDEX_FILE = "alias_index.json"
 MERGE_GATE_FILE = "merge_gate.json"
+CHUNK_SPANS_FILE = "chunk_spans.json"   # GRADE-LEAKS-V1 §1
 
 
 def canonical_sha256(obj: Any) -> str:
@@ -599,11 +600,28 @@ class Pipeline:
             return read_source_segments(path), "file"
         return None, "none"
 
+    @staticmethod
+    def _chunk_plan(chunk_plan: Sequence[tuple[Any, ...]],
+                    results: list[ChunkResult]) -> dict[int, tuple[int, float]]:
+        """``{chunk_id: (chapter, cursor)}`` from commit's ``chunk_plan``;
+        raises ``ValueError`` for a malformed entry or a staged chunk it misses."""
+        plan: dict[int, tuple[int, float]] = {}
+        for entry in chunk_plan:
+            if len(entry) not in (2, 3):
+                raise ValueError(f"chunk_plan entry {entry!r} is not (chunk_id, chapter[, cursor])")
+            chunk_id, chapter = int(entry[0]), int(entry[1])
+            plan[chunk_id] = (chapter, float(entry[2]) if len(entry) == 3 else float(chapter))
+        missing = sorted(r.chunk_id for r in results if r.chunk_id not in plan)
+        if missing:
+            raise ValueError(f"chunk_plan names no chapter for staged chunks {missing}")
+        return plan
+
     def commit(
         self,
         world_path: str | Path,
         registry: WorldRegistry,
         segments: list[str] | None = None,
+        chunk_plan: Sequence[tuple[Any, ...]] | None = None,
     ) -> World:
         """The single commit (spec §3.3): seed registry -> (Part B) -> replay
         chunks in order. Refuses if any chunk failed or still carries orphans.
@@ -617,7 +635,15 @@ class Pipeline:
         written. The source is ``segments`` if given, else the verified
         ``run_dir/source_segments.json``; with neither, Part B is skipped (a
         warning, a ``skipped`` report) and, under ``reconcile="auto"``, nothing
-        reconciles either: the log is exactly the pre-Part-B log. A source that fails its sha256 raises before anything is written."""
+        reconciles either: the log is exactly the pre-Part-B log. A source that fails its sha256 raises before anything is written.
+
+        GRADE-LEAKS-V1 §1: with ``chunk_plan`` (one ``(chunk_id, chapter)`` pair
+        per chunk, or ``(chunk_id, chapter, cursor)``; the cursor defaults to
+        the chapter number, as ``run_book`` commits it), commit writes
+        ``run_dir/chunk_spans.json`` after the replay: per chunk, the first and
+        last ``seq`` it appended (inclusive; ``null`` when it appended nothing),
+        its chapter and its cursor. Bookkeeping only; the log is unchanged. A
+        staged chunk the plan does not name raises before anything is written."""
         if registry.world_id != self.world_id:
             raise RegistryWorldMismatch(
                 f"registry is for {registry.world_id!r}; commit target is "
@@ -637,6 +663,7 @@ class Pipeline:
                 f"noncanonical run: chunks {[r.chunk_id for r in bad]} failed or "
                 "orphaned; nothing committed (staging retained)"
             )
+        plan_of = self._chunk_plan(chunk_plan, results) if chunk_plan is not None else None
         world_path = Path(world_path)
         if world_path.exists():
             raise RuntimeError(f"commit target {world_path} already exists")
@@ -671,7 +698,9 @@ class Pipeline:
         # quarantine the offenders — like orphans/rejects — rather than let
         # one bad row abort the whole world build.
         quarantined: list[dict] = []
+        spans: list[dict[str, Any]] = []
         for r in results:
+            seq_before = w.buffer.head()
             for item in r.items:
                 try:
                     w.ingest_structured([item])
@@ -688,6 +717,15 @@ class Pipeline:
                         quarantined.append({"item": item, "error": s.reason})
                         logger.warning("commit quarantine (chunk %d): skipped %s — %s",
                                        r.chunk_id, item, s.reason)
+            if plan_of is not None:
+                seq_after = w.buffer.head()
+                chapter, cursor = plan_of[r.chunk_id]
+                spans.append({"chunk": r.chunk_id, "chapter": chapter, "cursor": cursor,
+                              "seq": [seq_before + 1, seq_after] if seq_after > seq_before
+                              else None})
+        if plan_of is not None:
+            (self.run_dir / CHUNK_SPANS_FILE).write_text(
+                json.dumps({"chunks": spans}, indent=2, sort_keys=True) + "\n")
         if quarantined:
             (self.run_dir / "quarantined.json").write_text(
                 json.dumps(quarantined, indent=0, sort_keys=True))
