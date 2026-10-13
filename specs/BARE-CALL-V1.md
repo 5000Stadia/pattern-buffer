@@ -1,6 +1,6 @@
 # BARE-CALL-V1: every build model call is one bare call
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-13. Harness only.
+**Status:** r1.1 (pbr r1 RED: a multi-turn answer is rejected through the retry path; every *attempt* is bare; the child's environment is trimmed to what authentication needs). For pbr review. Author: pb, 2026-10-13. Harness only.
 **Source:** consult c4bb1f2, point 1, accepted by Kabe on gate g936be9 (2026-10-13). Kabe also
 said yes to a 2-chapter profiling build on the practice book once this is merged. The point:
 "Each 'model call' is a whole Claude Code agent session … the 176–282 s pass-0 calls and the
@@ -25,7 +25,7 @@ leaves the answer keys reachable in principle.
 
 ## The shape
 
-`claude_model(prompt, schema)` makes exactly this call:
+Every **attempt** `claude_model(prompt, schema)` makes is exactly this call. The unchanged retry loop can make up to three attempts per model call, and each one is bare:
 
 ```
 claude -p --model M --output-format json
@@ -42,8 +42,12 @@ The prompt still goes on stdin.
   (`tempfile.TemporaryDirectory`) and removed after it.
   - No `CLAUDE.md`, project memory or repo file is in reach. The project memory path is keyed by
     the working directory, so an empty temporary directory has none.
-  - The environment is inherited, so authentication (OAuth) still works. `--bare` is not used
-    because it refuses OAuth.
+  - *(r1.1, pbr)* **The child's environment is trimmed** to what the CLI and authentication need:
+    - `HOME`, which locates the OAuth credentials, `PATH`, `USER`, `LANG`, `LC_ALL` and `TMPDIR`;
+    - any `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or `ANTHROPIC_BASE_URL` that is set.
+
+    Nothing else from the caller reaches the child: no `PB_*` variable and no `CLAUDE_*` setting.
+    `--bare` is not used, because it refuses OAuth.
 - **`BARE_SYSTEM_PROMPT`** is a short, fixed module constant: "You answer with one JSON object
   that matches the schema in the user message. No prose, no code fences, no tools." It replaces
   Claude Code's default system prompt.
@@ -54,9 +58,15 @@ The prompt still goes on stdin.
   - the quota detection;
   - the timeout;
   - the receipts and the profile fields.
-- **Turns are checked on every call.** A result envelope reporting `num_turns > 1` is logged at
-  `WARNING`, and its call line gets `outcome: "multi_turn"`. It is counted, never silently
-  accepted.
+- *(r1.1, pbr)* **A multi-turn answer is rejected.** A result envelope reporting `num_turns > 1`
+  violates the one-turn guarantee:
+  - its receipt is recorded, with the call line's `outcome: "multi_turn"`;
+  - it is logged at `WARNING`;
+  - the attempt then fails through the existing path, exactly like a parse failure: the next
+    attempt runs, and after the last one `ModelShimError` is raised.
+
+  Its JSON is never returned to the pipeline. An envelope without `num_turns` (an older CLI) is
+  accepted, and its call line says `num_turns: null`.
 - **The shim exposes its argv** as one function, `bare_argv(model) -> list[str]`, so the test can
   assert it without running `claude`.
 - `PB_SHIM_LEGACY=1` restores the old command line, for one comparison run if ever wanted. The
@@ -82,8 +92,15 @@ merge (covered by Kabe's yes on the profiling build). Its output goes into the p
    - passes `cwd` as a directory that exists during the call and is empty;
    - removes that directory afterwards, on success and on failure;
    - passes the prompt on stdin.
-3. A patched envelope with `num_turns: 3` returns its JSON, logs a warning, and writes a call line
-   with `outcome: "multi_turn"`. An envelope with `num_turns: 1` gives `"ok"`.
+3. *(r1.1)* **The turn guarantee:**
+   - a patched envelope with `num_turns: 3` on every attempt raises `ModelShimError` after the
+     last attempt, writing three call lines with `outcome: "multi_turn"`, and no JSON reaches the
+     caller;
+   - a multi-turn first attempt followed by a one-turn second returns the second's JSON;
+   - `num_turns: 1` gives `"ok"`, and an absent `num_turns` is accepted with `null`.
+3a. *(r1.1)* **The environment:** the child's environment holds only the listed variables.
+    `PB_EVAL_USAGE_LOG` and an arbitrary `CLAUDE_FOO` set in the parent are absent, and `HOME` is
+    present.
 4. `PB_SHIM_LEGACY=1` gives the old argv and no `cwd`.
 5. The retry, quota and timeout paths behave as before, and `tests/test_usage_ledger.py` and
    `tests/test_build_profile.py` pass unchanged.
