@@ -508,6 +508,28 @@ def test_a_person_by_folded_kind_is_a_person(tmp_path):
     w.close()
 
 
+def test_event_against_non_event_is_never_a_candidate(tmp_path):
+    # the metered run's rep 2 merged event:memory_core_theft into the core (r2.2)
+    reg = registry({"event:core_theft": card("event", ["the memory core theft"]),
+                    "obj:core": card("object", ["the memory core"]),
+                    "obj:core_case": card("object", ["the memory core case"]),
+                    "event:theft_night": card("event", ["the night of the core theft"])})
+    w = make_world(tmp_path, reg)
+    got = mg.candidate_pairs(w)
+    assert ("event:core_theft", "obj:core") not in got
+    assert ("event:core_theft", "event:theft_night") in got     # event against event stays
+    assert ("obj:core", "obj:core_case") in got
+    w.close()
+
+
+def test_an_event_by_folded_kind_is_an_event(tmp_path):
+    reg = registry({"obj:the_fire": card("event", ["the warehouse fire"]),
+                    "place:warehouse": card("room", ["the warehouse"])})
+    w = make_world(tmp_path, reg)
+    assert mg.candidate_pairs(w) == []
+    w.close()
+
+
 def test_the_r24_vault_pair_is_never_a_candidate(tmp_path):
     reg = registry({
         "place:records_vault": card("room", ["Records Vault"], ["the vault"]),
@@ -754,9 +776,10 @@ STORED = {
 }
 #: candidates after R24's finalization, with the pair ``distinct_from`` holds apart
 #: left out. The spec's 84, 98, 92, 287, 285 counted that one pair (the vaults) in
-#: four registries (r23 run1, run2, par1b, par2b).
-CANDIDATES = {"r23-run1": 83, "r23-run2": 97, "r26-seq": 92, "r26-par1b": 286, "r26-par2b": 284}
-BATCHES = {"r23-run1": 4, "r23-run2": 4, "r26-seq": 4, "r26-par1b": 12, "r26-par2b": 12}
+#: four registries (r23 run1, run2, par1b, par2b). r2.2 bars event against
+#: non-event; before it the counts were 83, 97, 92, 286, 284.
+CANDIDATES = {"r23-run1": 65, "r23-run2": 77, "r26-seq": 73, "r26-par1b": 228, "r26-par2b": 208}
+BATCHES = {"r23-run1": 3, "r23-run2": 4, "r26-seq": 3, "r26-par1b": 10, "r26-par2b": 9}
 GOLD_DIFFERENT = {"r23-run1": 4, "r23-run2": 8, "r26-seq": 4, "r26-par1b": 15, "r26-par2b": 8}
 SPLIT_PAIRS = {"r23-run1": 0, "r23-run2": 0, "r26-seq": 0, "r26-par1b": 4, "r26-par2b": 7}
 ORACLE_F1_FLOOR = {"r26-par1b": 0.8483, "r26-par2b": 0.8339}
@@ -846,8 +869,8 @@ def test_dry_run_counts_the_metered_run_without_a_model(story_segments, monkeypa
     monkeypatch.setitem(sys.modules, "model_shim", None)   # importing the real model would fail
     out = rm.dry_run({"r26-par2b": rm.REGISTRIES["r26-par2b"]}, 2, 25, story_segments)
     c = out["per_registry"]["r26-par2b"]
-    assert (c["candidates"], c["batches"], c["calls"]) == (284, 12, 12)
-    assert out["total"]["calls"] == 24 and out["est_tokens_total"] > 0
+    assert (c["candidates"], c["batches"], c["calls"]) == (208, 9, 9)
+    assert out["total"]["calls"] == 18 and out["est_tokens_total"] > 0
     assert "DRY RUN (no model is called)" in capsys.readouterr().out
 
 
@@ -863,7 +886,7 @@ def test_metered_run_and_scoring_with_the_oracle_standing_in_for_the_model(tmp_p
         assert r["unlabelled_same"] == 0
     assert scoring["run_to_run_differing_pairs"] == [] and scoring["sample"] == []
     meta = json.loads((tmp_path / "out" / "meta.json").read_text())
-    assert meta["calls"] == 24 and meta["model"] == "gold-oracle"      # 12 batches x 2 reps
+    assert meta["calls"] == 18 and meta["model"] == "gold-oracle"      # 9 batches x 2 reps
     rep = json.loads((tmp_path / "out" / "rep1" / "r26-par2b.json").read_text())
     assert rep["gate_report"]["model"] == "gold-oracle"
     assert (tmp_path / "out" / "SCORING.md").exists()
