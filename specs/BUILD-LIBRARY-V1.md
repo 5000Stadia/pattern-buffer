@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1, for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.1, adding construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -66,6 +66,9 @@ Persona(name: str, reveal_quote: str)
   - **Matching:** after whitespace collapse and quote folding, the quote must occur **exactly once**
     in the whole text. Zero occurrences or two or more are refused.
   - This is also the "check the manifest against the prose" step.
+  - *(k6)* **The expected quote is a whole sentence.** Phrases like "the gate" repeat, so hosts
+    should prompt their author for full sentences. A shorter quote is accepted only when it is
+    unique.
 - **Sentences** are split deterministically. A chapter's text splits after `.`, `!`, `?` or `…`,
   optionally followed by closing quotes or brackets, then whitespace. A quote's sentence is the one
   holding its first character.
@@ -124,7 +127,11 @@ Persona(name: str, reveal_quote: str)
 ### 4. `extract(plan, registry, model, *, workers=4)`: facts, in parallel
 
 - **One labelled call per chunk** (BUILD-PROFILE-V1: `stage="extract"`, `unit="chunk:NN"`), in a
-  pool, with the label copied per submission. `PB_EVAL_STAGE_MODELS` routes it (STAGE-MODELS-V1),
+  pool.
+  - *(k1)* **Every submission runs in its own `contextvars.copy_context().run(...)`,** taken at
+    submission time inside the chunk's label. Every context variable the caller has set (the build
+    label, and also a host's own, such as construct's timing log) follows into the worker.
+  - *(k2)* `workers` is a free keyword argument, defaulting to 4. Construct passes 8. `PB_EVAL_STAGE_MODELS` routes it (STAGE-MODELS-V1),
   and the injected `model` is called as `(prompt, schema)`.
 - **What the model sees:** the chunk text and its candidates (ids, types, names), never any later
   entry. It writes INGEST-V2's line grammar on candidate ids.
@@ -155,12 +162,24 @@ or `classify="defer"`) pass through to every `ingest_structured` call, unchanged
    - Then its `name` and `alias` rows, and its `role` when given.
    - Then each persona id: its type fact first, then its name.
 2. **Mentions.** A `Pick`'s facts go on a **provisional id** `mention:<slug>_<n>`, minted by code:
-   - first, a type fact taken from the candidates' common type;
+   - first, a type fact *(k3)*:
+     - when every candidate has one type, that type;
+     - otherwise, when every candidate is a being (person, animal, creature), `kind = person`,
+       so R49's role move still applies to an extracted role word;
+     - otherwise, no type fact, and the proposal carries the candidates;
    - then the facts the chunk wrote for that surface.
 3. **Chunk facts,** in chunk order, each chunk at `time_of(i)`.
-4. **Escapes.** New entities are **joined by code** across chunks on (type, normalized name), so
-   two chunks that meet the same new barmaid converge on one id.
-   - Each is minted like a manifest entry, type fact first.
+4. **Escapes.** New entities are minted like manifest entries, type fact first.
+   - *(k4)* **A role word as the type** ("guard", "condemned man"), which is not in the closed set,
+     is coerced at the library edge: `type = person` plus `role = <the word>`, R49's rule. It is
+     never refused, because refusing would drop a real entity.
+   - *(k5)* **Joining across chunks by code is limited, to avoid over-merging:**
+     - **A proper name** (an escape whose name is not a definite or indefinite description) joins on
+       (type, normalized name) across the whole build. Two chunks meeting "Mira Vell" converge.
+     - **A description** ("the guard", "a ferryman": a name starting with an article, or made only
+       of lowercase common words) joins only **within one chapter**. Across chapters, each
+       chapter's description gets its own id, and a same-text description in a later chapter
+       becomes a same_as **proposal**, never a join.
    - A name that collides with a manifest entry of a compatible type does **not** auto-join. It
      becomes a `Pick`-style proposal (step 5).
 5. **Proposals, never merges.** For each `Pick`, and each colliding escape, an item with a
@@ -168,6 +187,13 @@ or `classify="defer"`) pass through to every `ingest_structured` call, unchanged
    quote. The host, or `merge_gate`, decides later.
 6. **Hidden personas.** `correlate(persona_id, entry_id, evidence=<reveal quote>,
    at=time_of(reveal_chunk))`. That is a dated `aka`, never a collapse (consult point P2).
+   - *(k7)* **This `correlate` is the only write that links a persona to its entry.** No alias,
+     name or other row ties the persona's name to the entry id, and the entry's own names never
+     include a persona name. Step 1 writes the persona's name on the persona id only. The validator
+     already refuses a persona name that is also an alias (`persona_name_is_alias`).
+   - So a narrator reading the entry before the reveal can't reach the persona, and vice versa. A
+     host's hidden arc, authored after the commit, gets the link and the reveal anchor from
+     `entries()`, never from the log's default reads.
 7. **Namesakes.** `reject(key_a_id, key_b_id)` for each listed pair, so `distinct_from` keeps the
    auto-gate off them.
 
@@ -238,8 +264,23 @@ For a book with no author (construct passes its author's manifest instead):
      first, and a canon `maybe_same_as` to Sherlock carrying the evidence quote;
    - nothing is merged;
    - a pick outside its candidates is refused.
-7. **Escapes:** two chunks escaping "the barmaid" converge on one minted id. An escape colliding
-   with a manifest entry becomes a proposal, not a join.
+7. **Escapes:**
+   - two chunks in one chapter escaping "the barmaid" converge on one minted id;
+   - *(k5)* "the guard" escaped in chapter 1 and again in chapter 3 stays two ids, with a same_as
+     proposal between them;
+   - "Mira Vell" escaped in chapters 1 and 3 converges;
+   - an escape colliding with a manifest entry becomes a proposal, not a join;
+   - *(k4)* an escape typed "condemned man" is minted `type = person` with `role = condemned man`.
+7a. *(k3)* **A mixed-type pick:**
+    - "Rex" picked among a man and a dog, with no type hint, puts `kind = person` on the mention,
+      since both are beings;
+    - "the Rex" picked among a person and a ship (an object) puts no type fact on the mention, and
+      the proposal carries both candidates.
+7b. *(k1)* **Context in workers:** a host context variable set before `extract()` is visible inside
+    every worker call, checked by a fake model that reads it.
+7c. *(k7)* **The persona link:** after commit, the only row linking a persona id and its entry id is
+    the `aka`. No `name` or `alias` row on the entry carries the persona name, and the entry's
+    default reads before the reveal time show none of the persona's facts.
 8. **Type first:** for every minted id (manifest, persona, mention, escape), the first row about it
    in the log is its `kind` row. A being whose chunk writes `kind = condemned man` ends up with a
    `role` (R49), never a kind conflict.
