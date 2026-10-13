@@ -209,6 +209,12 @@ def check_verdicts(verdicts: Mapping[str, Any], key: Mapping[str, Any], key_sha:
         _check_field_verdicts(verdicts["fields"], key, where)
 
 
+def field_verdict_ok(v: Any) -> bool:
+    """Whether ``v`` is a valid per-field verdict (GRADE-LEAKS-V1 r2.4): exactly ``"ok"``, or
+    ``"wrong: "`` followed by a non-empty reason. Nothing else is accepted."""
+    return isinstance(v, str) and (v == "ok" or (v.startswith("wrong: ") and bool(v[len("wrong: "):].strip())))
+
+
 def _check_field_verdicts(fields: Any, key: Mapping[str, Any], where: str) -> None:
     """Refuse a malformed per-field verdict object (GRADE-LEAKS-V1 §2): it must
     name only fields the key has, each with a string verdict."""
@@ -223,9 +229,12 @@ def _check_field_verdicts(fields: Any, key: Mapping[str, Any], where: str) -> No
         if not isinstance(by_alias, Mapping) or not isinstance(afc, Mapping):
             raise VerdictError(f"{where}: fields.alias_first_chapter.{kid} names no such field in the key")
         for alias, v in by_alias.items():
-            if alias not in afc or not isinstance(v, str):
-                raise VerdictError(f"{where}: fields.alias_first_chapter.{kid}[{alias!r}] is not a "
-                                   "string verdict for an alias the key maps")
+            if alias not in afc:
+                raise VerdictError(f"{where}: fields.alias_first_chapter.{kid}[{alias!r}] names an "
+                                   "alias the key does not map")
+            if not field_verdict_ok(v):
+                raise VerdictError(f"{where}: fields.alias_first_chapter.{kid}[{alias!r}] is {v!r}, "
+                                   "not 'ok' or 'wrong: <reason>'")
     for section, names in FACT_FIELDS.items():
         entries = _section(key, section)
         for idx, by_name in (fields.get(section) or {}).items():
@@ -233,9 +242,12 @@ def _check_field_verdicts(fields: Any, key: Mapping[str, Any], where: str) -> No
             if not ok_idx or not isinstance(by_name, Mapping):
                 raise VerdictError(f"{where}: fields.{section}[{idx!r}] names no such entry")
             for name, v in by_name.items():
-                if name not in names or name not in entries[int(idx)] or not isinstance(v, str):
-                    raise VerdictError(f"{where}: fields.{section}[{idx}].{name} is not a string "
-                                       "verdict for a field the entry has")
+                if name not in names or name not in entries[int(idx)]:
+                    raise VerdictError(f"{where}: fields.{section}[{idx}].{name} names a field "
+                                       "the entry does not have")
+                if not field_verdict_ok(v):
+                    raise VerdictError(f"{where}: fields.{section}[{idx}].{name} is {v!r}, "
+                                       "not 'ok' or 'wrong: <reason>'")
 
 
 def _by_index(verdicts: Mapping[str, Any], section: str) -> dict[int, Mapping[str, Any]]:
@@ -259,8 +271,7 @@ def _field_verdict(doc: Mapping[str, Any], section: str, where: Sequence[Any]) -
         return "missing", "no verdict"
     if node == "ok":
         return "ok", ""
-    why = node.split(":", 1)[1].strip() if node.startswith("wrong:") else node
-    return "wrong", why
+    return "wrong", node[len("wrong: "):].strip()
 
 
 def _field_gold(key: Mapping[str, Any], docs: Sequence[Mapping[str, Any]], readers: Sequence[str],

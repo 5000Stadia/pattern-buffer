@@ -635,6 +635,60 @@ def test_6a_never_learns_one_violation_when_the_frame_holds_the_fact_at_any_time
     assert clean["violations"] == 0 and clean["entries"] == 1
 
 
+def test_4a_the_exposure_clock_follows_log_positions_not_valid_times(tmp_path):
+    """Chapter 3 writes a belief with a valid_from earlier than chapter 1's rows (a flashback);
+    chapter 4 states a future-dated fact. Verdicts follow when the build wrote each row."""
+    belief = lit("person:mara", "status", "dead", valid_from=1.0, frame="knows:person:oruva")
+    future = lit("person:mara", "status", "alive", valid_from=999.0, frame="knows:person:oruva")
+    b = chapters_world(tmp_path, "exposure", {1: [lit("person:mara", "mood", "calm", valid_from=10.0)],
+                                              3: [belief], 4: [future]})
+    graded = belief_graded()
+    graded["beliefs"] = [
+        {"id": "false_beliefs[0]", "who": "oruva", "fact": fact("mara", "status", "dead"),
+         "from_chapter": 1, "corrected_chapter": 4},      # the window includes chapter 3
+        {"id": "false_beliefs[1]", "who": "oruva", "fact": fact("mara", "status", "dead"),
+         "from_chapter": 1, "corrected_chapter": 3}]      # ends before the row was written
+    graded["knowledge"] = [
+        {"id": "knowledge[0]", "who": "oruva", "mode": "learns", "chapter": 4,
+         "fact": fact("mara", "status", "alive")},
+        {"id": "knowledge[1]", "who": "oruva", "mode": "learns", "chapter": 3,
+         "fact": fact("mara", "status", "alive")},
+        {"id": "knowledge[2]", "who": "oruva", "mode": "never_learns", "chapter": None,
+         "fact": fact("mara", "status", "alive")}]
+    result = b.grade(graded)
+    spans = gl.Spans(b.spans)
+    b.close()
+    # hi(k): the greatest seq of chapter k's chunks; a chapter with no rows keeps the previous hi
+    assert [spans.hi(k) for k in (0, 1, 2, 3, 4)] == [spans.head0, spans.hi(1), spans.hi(1), spans.hi(3), spans.hi(4)]
+    assert spans.head0 < spans.hi(1) < spans.hi(3) < spans.hi(4)
+    held = {i["id"]: i["held_by_believer"] for i in result["beliefs"]["false_beliefs"]["items"]}
+    assert held == {"false_beliefs[0]": 1, "false_beliefs[1]": 0}
+    assert result["beliefs"]["false_beliefs"]["false_in_canon"] == 0
+    learns = {i["id"]: i for i in result["point_of_view"]["learns"]["items"]}
+    # known from chapter 4, not from its valid time (999) and not from chapter 1's valid times
+    assert learns["knowledge[0]"]["too_early"] == 0 and learns["knowledge[0]"]["held_by_end"] == 1
+    assert learns["knowledge[1]"]["too_early"] == 0       # not yet in the log after chapter 2
+    assert result["point_of_view"]["never_learns"]["violations"] == 1
+    # the same future-dated row in chapter 2 would be too early for a chapter-3 learner
+    early = chapters_world(tmp_path, "exposure_early", {2: [future]})
+    got = early.grade(graded)["point_of_view"]["learns"]["items"][1]
+    early.close()
+    assert got["too_early"] == 1
+
+
+def test_4a_no_check_reads_the_recorded_cursor(tmp_path):
+    row = lit("person:mara", "status", "alive", valid_from=3.0, frame="knows:person:oruva")
+    plain = chapters_world(tmp_path, "cur_a", {3: [row]})
+    skewed = chapters_world(tmp_path, "cur_b", {3: [row]})
+    for chunk in skewed.chunks:
+        chunk["cursor"] = -50.0 * chunk["chapter"]
+    a, c = plain.grade(belief_graded()), skewed.grade(belief_graded())
+    plain.close()
+    skewed.close()
+    for section in ("beliefs", "point_of_view"):
+        assert a[section] == c[section]
+
+
 # -------------------------------------------------- matching: unmatched, never a pass
 
 
@@ -805,6 +859,28 @@ def test_7_malformed_fields_are_refused():
     bad["fields"]["beliefs"] = {}
     with pytest.raises(bg.VerdictError, match="unknown sections"):
         bg.build_gold(kb, [reader(kb, "A"), bad])
+
+
+@pytest.mark.parametrize("bad", ["okay", "wrong", "unclear", "", "wrong: ", "wrong:  ", "wrong:reason",
+                                 "OK", " ok", None, 3, True, ["ok"], {"verdict": "ok"}])
+def test_7_a_field_verdict_that_is_not_exactly_ok_or_wrong_with_a_reason_refuses_the_file(bad):
+    kb = json.dumps(gold_key()).encode()
+    for path, named in (("alias_first_chapter/mara/Mara", "alias_first_chapter.mara['Mara']"),
+                        ("false_beliefs/0/as_fact", "false_beliefs[0].as_fact"),
+                        ("corrections/0/corrected_as_fact", "corrections[0].corrected_as_fact"),
+                        ("knowledge/1/as_fact", "knowledge[1].as_fact")):
+        broken = reader(kb, "B", **{path: bad})
+        with pytest.raises(bg.VerdictError, match="reader 'B'") as err:
+            bg.build_gold(kb, [reader(kb, "A"), broken])
+        assert named in str(err.value) and "not 'ok' or 'wrong: <reason>'" in str(err.value)
+
+
+def test_7_the_two_valid_field_verdict_forms_are_accepted():
+    kb = json.dumps(gold_key()).encode()
+    b = reader(kb, "B", **{"false_beliefs/0/as_fact": "wrong: the text says missing",
+                           "alias_first_chapter/mara/Mara": "ok"})
+    gold = bg.build_gold(kb, [reader(kb, "A"), b])
+    assert gold["beliefs"] == []
 
 
 def test_7_gold_is_deterministic_and_its_sections_feed_the_grader(tmp_path):

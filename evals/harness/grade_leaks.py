@@ -16,6 +16,11 @@ scorecard, read from a world copy that is never written:
 Positions are the log's ``seq``. A chunk's rows are found from
 ``chunk_spans.json`` (``Pipeline.commit``, GRADE-LEAKS-V1 §1). Without spans,
 nothing is inferred: the sections say ``"unmeasured"``.
+
+``beliefs`` and ``point_of_view`` run on the narrative-exposure clock (r2.4):
+"by chapter k" is a read as the log stood after chapter k's last chunk
+(``asserted_as_of = hi(k)``), valid time unpinned. Story time is the model's
+and is never inferred; the recorded cursor is not read by any check.
 """
 
 from __future__ import annotations
@@ -80,11 +85,34 @@ class Spans:
         self._los = [s[0] for s in spans]
         self._spans = spans
         self.chapter_of_chunk: dict[int, int] = {c["chunk"]: c["chapter"] for c in self.chunks}
-        times: dict[int, float] = {}
-        for c in self.chunks:
-            times[c["chapter"]] = max(times.get(c["chapter"], c["cursor"]), c["cursor"])
-        #: a chapter's time is the latest cursor of its chunks
-        self.chapter_time: dict[int, float] = dict(sorted(times.items()))
+        self.chapters: list[int] = sorted(set(self.chapter_of_chunk.values()))
+        #: chapter 0 is the seed: the log head before the first chunk
+        self.head0: int = (spans[0][0] - 1) if spans else 0
+        self._hi: dict[int, int] = {0: self.head0}
+        best = self.head0
+        for chapter in self.chapters:
+            best = max([best] + [s[1] for s in spans if s[3] == chapter])
+            self._hi[chapter] = best      # a chapter with no rows keeps the previous hi
+
+    def hi(self, chapter: int) -> int:
+        """``hi(k)``: the greatest ``seq`` in the spans of chapter ``k``'s chunks (the
+        previous chapter's ``hi`` when it appended nothing; chapter 0, or any chapter
+        before the first, is the log head before the first chunk)."""
+        known = [c for c in self._hi if c <= chapter]
+        return self._hi[max(known)]
+
+    def marks(self, lo: int | None = None, hi: int | None = None, *, lo_inclusive: bool = True,
+              hi_inclusive: bool = True, seed: bool = False) -> list[int]:
+        """Log positions ``hi(c)`` for the chapters ``c`` within the bounds (an open end is
+        ``None``), plus the seed position when ``seed``."""
+        out = [self._hi[0]] if seed else []
+        for chapter in self.chapters:
+            if lo is not None and (chapter < lo or (chapter == lo and not lo_inclusive)):
+                continue
+            if hi is not None and (chapter > hi or (chapter == hi and not hi_inclusive)):
+                continue
+            out.append(self._hi[chapter])
+        return out
 
     def chunk_of(self, seq: int) -> int | None:
         """The chunk whose inclusive span holds ``seq``; ``None`` for a seed,
@@ -348,41 +376,34 @@ class Reader:
             return isinstance(value, str) and self.ident.resolve(value) in resolved["value_roots"]
         return _lit(value) == resolved["literal"]
 
-    def holds(self, resolved: Mapping[str, Any], t: float, *, observer: Sequence[str] | None = None) -> bool:
-        """Whether the fact is served at valid time ``t``: the canon fold, or, with ``observer``
-        (closure representatives of a believer), each ``knows:`` frame read with
-        ``frame_scope="merged"``. A set-valued key holds it when any member does."""
-        pb = self.world.porcelain
+    def merged_frame(self, observer: str) -> Any:
+        """The ``knows:`` frame of ``observer`` read with ``frame_scope="merged"``: the frame
+        itself, then the frames of every other member of its closure at the end of the run."""
+        frame = KNOWS_PREFIX + observer
+        others = sorted(KNOWS_PREFIX + m for m in self.ident.closure(observer) if m != observer)
+        return (frame, *others) if others else frame
+
+    def holds(self, resolved: Mapping[str, Any], asserted_as_of: int | None, *,
+              observer: Sequence[str] | None = None) -> bool:
+        """Whether the fact is served as the log stood at ``asserted_as_of`` (``None``: the end),
+        valid time unpinned: the canon fold, or, with ``observer`` (closure representatives
+        of a believer), each merged ``knows:`` frame. A set-valued key holds it when any member does."""
+        w = self.world
         for root in resolved["roots"]:
             for who in (observer if observer is not None else [None]):
-                if who is None:
-                    payload = pb.state(root, resolved["attribute"], frame=CANON, as_of=t)
-                else:
-                    payload = pb.state(root, resolved["attribute"], frame=KNOWS_PREFIX + who,
-                                       as_of=t, frame_scope="merged")
-                if payload.get("status") not in ("known", "conflicted"):
+                frame = CANON if who is None else self.merged_frame(who)
+                fold = w.state(root, resolved["attribute"], frame, asserted_as_of=asserted_as_of)
+                if fold.winner is None:     # an event's own attributes come from its record
+                    fold = w.indexes.event_attribute(root, resolved["attribute"], frame, None, asserted_as_of)
+                if fold.winner is None or fold.winner.value_type == "unresolved":
                     continue
-                served = [payload["fact"]["value"]] + [f["value"] for f in payload.get("values", [])]
-                if any(self._matches(resolved, v) for v in served):
+                if any(self._matches(resolved, v) for v in [fold.winner.value, *fold.values]):
                     return True
         return False
 
-    def holds_ever(self, resolved: Mapping[str, Any], times: Iterable[float], *,
+    def holds_ever(self, resolved: Mapping[str, Any], marks: Iterable[int], *,
                    observer: Sequence[str] | None = None) -> bool:
-        return any(self.holds(resolved, t, observer=observer) for t in times)
-
-
-def _times(spans: Spans, lo: int | None = None, hi: int | None = None, *,
-           lo_inclusive: bool = True, hi_inclusive: bool = True) -> list[float]:
-    """Chapter time anchors for chapters within ``[lo, hi]`` (either end open when ``None``)."""
-    out = []
-    for chapter, t in spans.chapter_time.items():
-        if lo is not None and (chapter < lo or (chapter == lo and not lo_inclusive)):
-            continue
-        if hi is not None and (chapter > hi or (chapter == hi and not hi_inclusive)):
-            continue
-        out.append(t)
-    return out
+        return any(self.holds(resolved, m, observer=observer) for m in marks)
 
 
 def _unmatched(*resolved: Mapping[str, Any] | None) -> list[str]:
@@ -395,7 +416,6 @@ def grade_beliefs(world: Any, graded: Mapping[str, Any], reader: Reader | None) 
     if reader is None:
         return UNMEASURED
     spans = reader.spans
-    end = max(spans.chapter_time.values(), default=None)
     belief_items = []
     for entry in graded.get("beliefs", []):
         res = reader.resolve(entry["fact"])
@@ -408,9 +428,9 @@ def grade_beliefs(world: Any, graded: Mapping[str, Any], reader: Reader | None) 
             item.update(status="unmatched", unmatched=sorted(set(problems)),
                         false_in_canon=None, held_by_believer=None)
         else:
-            canon_times = _times(spans, entry["from_chapter"])
-            held_times = _times(spans, entry["from_chapter"], entry["corrected_chapter"],
-                                hi_inclusive=entry["corrected_chapter"] is None)
+            canon_times = spans.marks(entry["from_chapter"])
+            held_times = spans.marks(entry["from_chapter"], entry["corrected_chapter"],
+                                     hi_inclusive=entry["corrected_chapter"] is None)
             item.update(status="measured", unmatched=[],
                         false_in_canon=int(reader.holds_ever(res, canon_times)),
                         held_by_believer=int(reader.holds_ever(res, held_times, observer=who)))
@@ -424,16 +444,16 @@ def grade_beliefs(world: Any, graded: Mapping[str, Any], reader: Reader | None) 
                 "corrected_chapter": entry["corrected_chapter"],
                 "ends_correct": None, "claim_after_correction": None, "unmatched": []}
         if fixed is not None:
-            if fixed["problems"] or end is None:
-                item["unmatched"] += [f"corrected:{p}" for p in fixed["problems"]] or ["no chapter time"]
+            if fixed["problems"]:
+                item["unmatched"] += [f"corrected:{p}" for p in fixed["problems"]]
             else:
-                item["ends_correct"] = int(reader.holds(fixed, end))
+                item["ends_correct"] = int(reader.holds(fixed, None))
         if claim is not None:
             if claim["problems"]:
                 item["unmatched"] += [f"claim:{p}" for p in claim["problems"]]
             else:
                 item["claim_after_correction"] = int(reader.holds_ever(
-                    claim, _times(spans, entry["corrected_chapter"], lo_inclusive=False)))
+                    claim, spans.marks(entry["corrected_chapter"], lo_inclusive=False)))
         correction_items.append(item)
     ends = [i for i in correction_items if i["ends_correct"] is not None]
     after = [i for i in correction_items if i["claim_after_correction"] is not None]
@@ -471,7 +491,6 @@ def grade_point_of_view(world: Any, graded: Mapping[str, Any],
     if reader is None:
         return UNMEASURED
     spans = reader.spans
-    end = max(spans.chapter_time.values(), default=None)
     learns, never = [], []
     for entry in graded.get("knowledge", []):
         res = reader.resolve(entry["fact"])
@@ -482,13 +501,13 @@ def grade_point_of_view(world: Any, graded: Mapping[str, Any],
             item.update(status="unmatched", unmatched=problems)
         elif entry["mode"] == "never_learns":
             item.update(status="measured", unmatched=[],
-                        violation=int(reader.holds_ever(res, _times(spans), observer=who)))
+                        violation=int(reader.holds_ever(res, spans.marks(seed=True), observer=who)))
         else:
             chapter = entry.get("chapter")
             early = None if chapter is None else int(reader.holds_ever(
-                res, _times(spans, hi=chapter, hi_inclusive=False), observer=who))
+                res, spans.marks(hi=chapter, hi_inclusive=False, seed=True), observer=who))
             item.update(status="measured", unmatched=[], too_early=early,
-                        held_by_end=int(end is not None and reader.holds(res, end, observer=who)))
+                        held_by_end=int(reader.holds(res, None, observer=who)))
         (never if entry["mode"] == "never_learns" else learns).append(item)
     held = sum(i["held_by_end"] for i in learns if i["status"] == "measured")
     return {

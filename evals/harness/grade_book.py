@@ -386,7 +386,7 @@ def _beliefs_md(beliefs: Any) -> list[str]:
         return []
     lines = ["", "## Beliefs", ""]
     if isinstance(beliefs, str):
-        return lines + [f"- {beliefs}: no chunk_spans.json, so no chapter has a time"]
+        return lines + [f"- {beliefs}: no chunk_spans.json, so no chapter has a log position"]
     fb, co = beliefs["false_beliefs"], beliefs["corrections"]
     lines += [f"- false beliefs: {fb['entries']} verified entries, {fb['measured']} measured, "
               f"{fb['unmatched']} unmatched; false in canon {fb['false_in_canon']} (target 0); "
@@ -406,7 +406,7 @@ def _pov_md(pov: Any) -> list[str]:
         return []
     lines = ["", "## Point of view", ""]
     if isinstance(pov, str):
-        return lines + [f"- {pov}: no chunk_spans.json, so no chapter has a time"]
+        return lines + [f"- {pov}: no chunk_spans.json, so no chapter has a log position"]
     ln, nv = pov["learns"], pov["never_learns"]
     lines += [f"- learns: {ln['entries']} entries, held by the end {ln['held']} ({_count(ln['held_rate'])}), "
               f"learned too early {ln['learned_too_early']}, unmatched {ln['unmatched']}",
