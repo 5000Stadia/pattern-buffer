@@ -1,6 +1,6 @@
 # MERGE-GATE-V1: a yes/no check on lexical merge candidates (roadmap R25, part A)
 
-**Status:** r2.1 (2026-10-12). A `same` verdict's `keep` is a **vote** for the component's
+**Status:** r2.2 (2026-10-13). After the real-model measurement (`evals/results/2026-10-13-r25-merge-gate-metered/REPORT.md`), an event is never a candidate against a non-event, as a person against a non-person already is: rep 2 merged `event:memory_core_theft` into `obj:master_meter_memory_core`, a fusion gold does not cover (marked *(r2.2)*). r2.1 (2026-10-12). A `same` verdict's `keep` is a **vote** for the component's
 representative, and pass mark 7 follows the election (pbr r2). r2: It answers pbr's r1 RED with two additions: the exact call
 envelope and its validation, and one deterministic way to apply overlapping `same` verdicts with
 no repoints (marked *(r2)*). r1 was for pbr's spec review. The monitor approved specifying R25 for Kabe
@@ -57,6 +57,7 @@ each pair of distinct closure representatives, `(a, b)`, that:
   kinship/address stoplist. **Or** the two cards share an exact normalized name or alias string,
   even a stoplisted one: "the clerk" is how the Ilsa pair is found;
 - **is not person against non-person**;
+- **is not event against non-event** *(r2.2)*. A closure is an event when any member's id is in the `event:` namespace or any member's folded canon `kind` is `event`, the same test as for a person;
 - **is not already held apart.** The pass skips any pair with `distinct_between(a, b) != []`
   (R42), whether written by R24's pass or by anyone else;
 - **is not already one closure.**
@@ -166,7 +167,9 @@ All on the five stored registries, through the shared path, with no model calls:
 
 1. **Candidate recall.** Every pair of ids that the grader reports as one split gold entity after
    R24 is a candidate: **11 of 11** (par1b 4, par2b 7). The candidate count is reported: 83, 97,
-   92, 286 and 284 today, which is 4, 4, 4, 12 and 12 batches of 25.
+   92, 286 and 284 today, which is 4, 4, 4, 12 and 12 batches of 25. *(r2.2)* With event against
+   non-event barred they are 65, 77, 73, 228 and 208 (3, 4, 3, 10 and 9 batches), and recall and
+   the oracle ceiling are unchanged.
 2. **Oracle ceiling.** A test gate answers `same` exactly for the candidates whose two cards
    resolve to the same single gold entity, and `unsure` for every other pair. With it:
    - split entities are **0** in all five registries;
@@ -195,6 +198,7 @@ All on the five stored registries, through the shared path, with no model calls:
    original `Pipeline` and from a fresh one on the same `run_dir`.
 6. **Persons and vetoes.**
    - A person×non-person pair is never a candidate.
+   - An event×non-event pair is never a candidate, by namespace or by folded kind *(r2.2)*.
    - A pair already held apart by `distinct_from` is never a candidate. The R24 vault pair is the
      witness.
    - A `same` verdict that the engine vetoes writes nothing, and is reported with the veto's
@@ -216,6 +220,8 @@ All on the five stored registries, through the shared path, with no model calls:
   - Each call carries about 25 pairs, roughly 4–6 k tokens in and under 1 k out: about **0.4 M
     tokens** in all.
   - It takes about 10–20 minutes of wall clock, at the R26 runs' observed call latency.
+  - *(r2.2, measured 2026-10-13)* The run took 47 minutes (about 38 s a call). From r2.2, a
+    repetition is 29 calls.
   - The build reports the exact counts before asking.
 - **Judged against:**
   - **Precision.** No `same` on any pair whose cards resolve to different gold entities, in

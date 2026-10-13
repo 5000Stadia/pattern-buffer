@@ -12,7 +12,7 @@ The shape (specs/MERGE-GATE-V1.md r2.1):
   qualify when they share a content token (lowercased, possessive removed, at
   least three characters, not a stop word, not on the alias index's stoplist) or
   an exact normalized name or alias string; they are not person against
-  non-person, not already held apart by ``distinct_between`` and not already one
+  non-person nor event against non-event, not already held apart by ``distinct_between`` and not already one
   closure. Sorted by ``(a, b)`` and numbered ``p0001`` onwards over the whole
   list.
 - **The call** (``build_batches``, ``gate_schema``, ``gate_prompt``): the engine's
@@ -115,21 +115,25 @@ def _tokens(text: str) -> set[str]:
             if len(w) >= 3 and w not in STOP_WORDS and not stoplist_class(w)}
 
 
-def _is_person(w: Any, members: Sequence[str]) -> bool:
-    """A closure is a person when any member's id is in the ``person:`` namespace
-    or any member's folded canon ``kind`` is ``person``."""
+def _is_class(w: Any, members: Sequence[str], cls: str) -> bool:
+    """A closure is of class ``cls`` (``person``, ``event``) when any member's id
+    is in the ``cls:`` namespace or any member's folded canon ``kind`` is ``cls``."""
     for m in members:
-        if m.partition(":")[0] == "person":
+        if m.partition(":")[0] == cls:
             return True
         winner = getattr(w.state(m, "kind"), "winner", None)
-        if winner is not None and str(winner.value).strip().lower() == "person":
+        if winner is not None and str(winner.value).strip().lower() == cls:
             return True
     return False
 
 
+def _is_person(w: Any, members: Sequence[str]) -> bool:
+    return _is_class(w, members, "person")
+
+
 def read_sides(w: Any) -> dict[str, dict[str, Any]]:
     """Every closure that carries a canon ``name`` or ``alias`` row, keyed by its
-    served representative: ``{id, kind, members, names, aliases, person}``.
+    served representative: ``{id, kind, members, names, aliases, person, event}``.
 
     Names and aliases are the world's own rows over the whole closure (generated
     rows excluded: invention is never evidence), sorted and de-duplicated."""
@@ -150,6 +154,7 @@ def read_sides(w: Any) -> dict[str, dict[str, Any]]:
             "names": sorted(strings["name"]),
             "aliases": sorted(strings["alias"] - strings["name"]),
             "person": _is_person(w, members),
+            "event": _is_class(w, members, "event"),
         }
     return sides
 
@@ -175,6 +180,8 @@ def candidate_pairs(w: Any, sides: Mapping[str, Mapping[str, Any]] | None = None
     for a, b in sorted(found):
         if sides[a]["person"] != sides[b]["person"]:
             continue  # never person against non-person
+        if sides[a].get("event", False) != sides[b].get("event", False):
+            continue  # never event against non-event (r2.2)
         if w.porcelain.distinct_between(a, b):
             continue  # already held apart, by anyone (R42)
         out.append((a, b))  # distinct representatives are never one closure
