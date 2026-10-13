@@ -74,9 +74,11 @@ def full_world(conn: sqlite3.Connection, wid: str) -> World:
     return world
 
 
-def check_world(path: Path, key: bytes, n: int = 20) -> dict:
+def check_world(path: Path, key: bytes, n: int = 20,
+                people: tuple[str, ...] | None = None) -> dict:
     """The defining property over one host world file, at `n` positions, with
-    and without the present layer. Returns counts and any mismatch."""
+    and without the present layer (and with the people layer on, given `people`).
+    Returns counts and any mismatch."""
     conn = copy_read_only(path)
     wid = world_id_of(conn)
     frame = busiest_knows_frame(conn)
@@ -91,10 +93,10 @@ def check_world(path: Path, key: bytes, n: int = 20) -> dict:
             old_world = truncated(conn, seq, wid)
             try:
                 for k in (None, key):
-                    old_doc = mirror.export(old_world, frame, key=k)
-                    answer = mirror.feed(full, frame, old_doc["cursor"], key=k)
+                    old_doc = mirror.export(old_world, frame, key=k, people=people)
+                    answer = mirror.feed(full, frame, old_doc["cursor"], key=k, people=people)
                     got = mirror.canonical_json(mirror.apply(old_doc, answer))
-                    want = mirror.canonical_json(mirror.export(full, frame, key=k))
+                    want = mirror.canonical_json(mirror.export(full, frame, key=k, people=people))
                     out["checks"] += 1
                     is_reset = any(op["op"] == "clear" for op in answer["ops"])
                     out["resets" if is_reset else "diffs"] += 1
