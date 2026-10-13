@@ -121,6 +121,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 - [ ] R46 People on the device: persons' canon position and activity in the offline mirror, so walking into an unseen room finds them where the world says (VIEW-EXPORT-V1 §2; Photonic SEAM b). *Waiting on gate.*
 - [ ] R47 A small `patternbuffer` JS module: view/1 `apply()` passing `tests/vectors/view-feed-v1.json`, IndexedDB-persisted, plus a queued `record`; Python stays the reference (Kabe's rule on g1eeae0: each element used from its home). *Waiting on gate.*
 - [ ] R48 The merge gate as an engine verb: `porcelain.merge_gate(...)` using the world's injected model, with `apply=False` for verdicts only, so construct uses the measured gate instead of growing its own (construct mba5a02, run 8's identity stop). *Waiting on gate.*
+- [ ] R49 Kind is a type, not a role: the engine's extraction prompt (`ingest.py`, both prompts) says only "'kind' for what a thing is", so a person comes out as kind 'condemned man' beside 'person', and identity declines the merge (`kind_conflict`). Persons get kind `person`, and the role goes to its own attribute. Existing worlds are unchanged. Construct's run-8 pairs then become `alias_not_specific` and can go to R48's gate (construct m02bdb6). *Waiting on gate.*
 
 ## Later
 
