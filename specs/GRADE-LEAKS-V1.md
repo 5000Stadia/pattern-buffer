@@ -1,6 +1,6 @@
 # GRADE-LEAKS-V1: grading that sees the ending leak, false beliefs and points of view
 
-**Status:** r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
+**Status:** r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
 bookkeeping); no engine change.
 **Source:** consult c4bb1f2 point 3, accepted by Kabe on gate g936be9. Redesigned after round two
 (ce0ba1f); see `docs/SPEED-PLAN-2026-10-13.md` step 2.
@@ -87,12 +87,33 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
   3. **Pre-reveal chunks.** For a `same_as` entry (E, pre-alias P, reveal chapter r), chunk c is
      *pre-reveal for it* when:
      - c's chapter is earlier than r;
-     - c's text (the plan's chunk, `book_normalize`d) contains P;
+     - c's text contains P;
      - c's text contains no other graded alias of E.
-  4. **A chunk leak** is a row whose source chunk is pre-reveal for (E, P, r), written on a raw id
-     R with `map(R) = E` and P not in `names(R)`. The chunk saw only "the hooded visitor" but wrote
-     on an id known only by the revealed name.
-  5. **A registry leak** is a raw id in `registry_pass0.json` whose aliases include both P and
+
+     *(r2.1, pbr)* **"Contains" is a whole-token match.** Both texts are `book_normalize`d and
+     split into word tokens, and the alias's tokens must occur as a contiguous run.
+     **Common-word aliases** take no part in chunk classification:
+     - a single-token alias of three characters or fewer (R27's `Or`);
+     - an alias whose one token is in the grader's small fixed stoplist of English function
+       words.
+
+     They still count in `names(R)`. The report lists the aliases left out.
+  4. **When an id became E's** *(r2.1, pbr)*. Raw id R is **bound to E at chapter b(R, E)**: the
+     earliest chapter at which R holds a `name` or `alias` row matching a graded alias of E other
+     than P. A seed row from the pass-0 registry counts as chapter 0, and a chunk row counts as its
+     source chunk's chapter. A raw id never bound to E has no b.
+  5. **A chunk leak** is a row with all three of:
+     - its source chunk is pre-reveal for (E, P, r);
+     - it is written on a raw id R with `b(R, E) <` that chunk's chapter, or `b(R, E) = 0`;
+     - the chunk saw only P, and the id was already E's under another name.
+
+     Whether R also holds P doesn't matter. Two cases stay safe:
+     - **separate id, merged later:** a visitor id that gains an E name only at or after r, or
+       only through a later `same_as` merge (which writes no name row on the raw id), was bound
+       when a reader would bind it;
+     - **id reused after the reveal:** the same raw id carried on with E's name added by a chunk
+       at or after r is the same.
+  6. **A registry leak** is a raw id in `registry_pass0.json` whose aliases include both P and
      another graded alias of E that the text first uses at or after r. Pass-0 joined them before
      any chunk ran. It is counted once per `same_as` entry.
 - **Reported:** per `same_as` entry, chunk-leak rows, the first leaking chapter and the
@@ -177,6 +198,18 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
    section payloads (identity, reveals, look-alikes, order, final, ever, containers) are
    byte-identical before and after this change. `ungraded_counts` and the report text change by
    design.
+3c. *(r2.1, pbr)* **Binding time:**
+    - **Unsafe:** a chapter-1 chunk names raw id R "mara", and a chapter-3 pre-reveal chunk
+      (text: "the hooded visitor" only) writes on R. That is a leak, even if R also gets
+      `alias "the hooded visitor"`.
+    - **Unsafe:** the same, with R's "mara" name coming from a seed row (chapter 0).
+    - **Safe:** raw id V holds only "the hooded visitor" before r, a chapter-9 chunk adds
+      `alias "mara"` on V, and V's chapter-3 rows are no leak.
+    - **Safe:** V is merged into Mara's id by `same_as` after r. No leak.
+3d. *(r2.1, pbr)* **Token matching:**
+    - "Or" never classifies a chunk, and is listed as left out;
+    - "the hooded visitor" matches as a phrase, and "hooded visitors" does not;
+    - prose containing "or" doesn't make a chunk pre-reveal or not.
 3a. *(r2)* **Raw mapping:**
     - an id named both by "mara" and by an alias of another key entity is ambiguous, and its rows
       are counted and not charged;
