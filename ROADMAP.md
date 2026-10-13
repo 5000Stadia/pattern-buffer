@@ -131,6 +131,11 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
   - The identity kind check compares type, so a man and a dog both called Rex can never merge on the name.
   - Non-human beings are full characters, with knowledge frames and the people layer, including hostile ones (a beast or monster as an enemy), not only companions.
   - Open design question: how a type word is told from a role word (the extraction prompt, or a list of type words), and what happens to the `person:` namespace and the person test (VIEW-EXPORT-V1 §2, R49's gate).
+  - Kabe added (via construct m703401): "So in many ways, the disposition of the entity matters as well." My reading, a fourth layer:
+    - A **stance** held toward someone (hostile, wary, loyal). It is dated and directional, and it changes: an enemy turned ally, a dog that comes to trust you.
+    - It is apart from type (a dog can be either) and from role (a guard can be either).
+    - In the engine it is a dated entity-valued fact from one being to another, which the log already holds. What's missing is the vocabulary and the reads.
+    - The word: the lexicon already uses DISPOSITIONAL for a durability class, so this concept takes another name, "stance" proposed, before it is used twice.
   - Nothing to build until Kabe brings the item forward.
 - [ ] R43 A containment read that says each item's edge (`worn_by`, `held_by`, `in`), so a narrator can say "wearing the grey coat" rather than "on your person". Construct's nice-to-have from E3's shape read (me79b81), not a blocker.
 - [ ] R44 A repeated `attr:*` declaration after data exists: an identical one becomes a no-op receipt and a conflicting one a skip, instead of raising and dropping the host's whole batch (construct run 7, mfbd59d: a re-sent `attr:keeps arity set_valued` dropped a turn's ingest)
