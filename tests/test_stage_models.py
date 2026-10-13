@@ -5,7 +5,6 @@ and the grader reads hand-built worlds."""
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import subprocess
@@ -23,7 +22,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import book_gold as bg  # noqa: E402
 import grade_book as gb  # noqa: E402
-import grade_leaks as gl  # noqa: E402
 import merge_gate as mg  # noqa: E402
 import model_shim  # noqa: E402
 import profile_build as pb  # noqa: E402
@@ -572,7 +570,7 @@ def test_6_book_gold_without_the_flag_is_byte_identical():
         assert whole[section] == full[section], section
 
 
-# ---- the world: chapters 1-4 with a gate and audit after chapter 2's last chunk
+# ---- a short build: the world holds exactly chapters 1..N
 
 
 def seed_cards() -> dict:
@@ -586,7 +584,8 @@ def seed_cards() -> dict:
             "place:attic": c("place", ["attic"])}
 
 
-def build_world(tmp_path, name, *, chapters=4, post=False):
+def build_world(tmp_path, name, *, chapters=2):
+    """A build of exactly chapters 1..``chapters`` (2 or 3)."""
     at, lit, nm = tl.at, tl.lit, tl.name
     b = tl.Built(tmp_path, seed_cards(), name=name)
     b.chunk(1, "one", [
@@ -598,15 +597,10 @@ def build_world(tmp_path, name, *, chapters=4, post=False):
         nm("person:mara", "the hooded visitor", "alias"), at("obj:ring", "within", "obj:box", 2.0),
         lit("obj:coin", "color", "tin", valid_from=2.0),
         lit("obj:coin", "color", "tin", valid_from=2.0, frame="knows:person:oruva")])
-    if post:        # the merge gate and the audit write after chapter 2's last chunk
-        b.world.ingest_structured([at("obj:lamp", "in", "place:dock", 50.0)])
-        assert b.world.registry.merge("obj:twin_b", "obj:twin_a", "gate", decided_by="host",
-                                      representative="obj:twin_a")
     if chapters >= 3:
         b.chunk(3, "three", [lit("person:mara", "status", "alive", valid_from=3.0),
                              at("person:vael", "in", "place:attic", 3.0),
                              at("obj:coin", "within", "obj:chest", 3.0)])
-        b.chunk(4, "four", [lit("person:oruva", "mood", "calm", valid_from=4.0)])
     return b
 
 
@@ -617,141 +611,121 @@ def grade(b, graded, n=None):
 
 
 @pytest.fixture(scope="module")
-def gates(tmp_path_factory, key_bytes):
-    """The same book built twice: once clean, once with the gate's rows after chapter 2."""
-    base = tmp_path_factory.mktemp("gates")
-    clean, gated = build_world(base, "clean"), build_world(base, "gated", post=True)
-    yield {"clean": clean, "gated": gated, "g2": gold(key_bytes, 2), "full": gold(key_bytes)}
-    clean.close()
-    gated.close()
+def short(tmp_path_factory, key_bytes):
+    """A 2-chapter build and a 3-chapter build of the same book, with their windowed golds."""
+    base = tmp_path_factory.mktemp("short")
+    out = {"b2": build_world(base, "b2"), "b3": build_world(base, "b3", chapters=3),
+           "g1": gold(key_bytes, 1), "g2": gold(key_bytes, 2), "g3": gold(key_bytes, 3),
+           "full": gold(key_bytes)}
+    yield out
+    out["b2"].close()
+    out["b3"].close()
 
 
-def test_6_a_belief_corrected_in_chapter_3_is_held_through_chapter_2(gates):
-    card = grade(gates["clean"], gates["g2"], 2)
+def test_6_a_2_chapter_build_graded_through_2_equals_the_existing_grader_on_the_same_gold(short):
+    """The flag only checks and labels: the grading is the existing grader's, unchanged."""
+    b, g2 = short["b2"], short["g2"]
+    flagged = grade(b, g2, 2)
+    unstamped = {k: v for k, v in g2.items() if k != "through_chapter"}
+    existing = grade(b, unstamped)
+    added = {"through_chapter", "pending_corrections"}
+    assert added <= set(flagged) and not added & set(existing)
+    assert {k: v for k, v in flagged.items() if k not in added} == existing
+    assert flagged["through_chapter"] == 2 and flagged["pending_corrections"] == 1
+    for key in ("summary", "identity", "reveals", "look_alikes", "order", "final", "leaks", "beliefs",
+                "point_of_view"):
+        assert flagged[key] == existing[key]
+
+
+def test_6_grading_never_calls_the_private_fold_from_the_harness(short, monkeypatch):
+    """The harness reaches no private engine method. (The engine's own ``fold_key`` runs its
+    fold through ``_fold_over_closure``, so the check is on who calls it.)"""
+    from patternbuffer.indexes.fold import FoldMixin
+    real, outsiders = FoldMixin._fold_over_closure, []
+
+    def spy(self, *a, **k):
+        caller = sys._getframe(1).f_code.co_filename
+        if "/src/patternbuffer/" not in caller.replace("\\", "/"):
+            outsiders.append(caller)
+        return real(self, *a, **k)
+    monkeypatch.setattr(FoldMixin, "_fold_over_closure", spy)
+    calls = []
+    real_fold_key = FoldMixin.fold_key
+
+    def counting_fold_key(self, *a, **k):
+        calls.append(1)
+        return real_fold_key(self, *a, **k)
+    monkeypatch.setattr(FoldMixin, "fold_key", counting_fold_key)
+    grade(short["b2"], short["g2"], 2)
+    assert calls and outsiders == []     # folds ran, all through the engine's own entry points
+    for path in HARNESS.glob("*.py"):
+        assert "_fold_over_closure" not in path.read_text(), path.name
+        assert "Horizon" not in path.read_text(), path.name
+
+
+def test_6_a_belief_corrected_in_chapter_3_is_held_through_chapter_2(short):
+    card = grade(short["b2"], short["g2"], 2)
     item = card["beliefs"]["false_beliefs"]["items"][0]
     assert item["id"] == "false_beliefs[0]" and item["corrected_chapter"] is None
     assert item["status"] == "measured" and item["held_by_believer"] == 1 and item["false_in_canon"] == 0
     assert card["beliefs"]["false_beliefs"]["entries"] == 1       # vael's belief starts in chapter 3
 
 
-def test_6_pending_corrections_are_outside_items_and_denominators(gates, key_bytes):
-    c2 = grade(gates["clean"], gates["g2"], 2)
+def test_6_pending_corrections_are_outside_items_and_denominators(short):
+    c2 = grade(short["b2"], short["g2"], 2)
     co = c2["beliefs"]["corrections"]
     assert [i["id"] for i in co["items"]] == ["corrections[1]"]
     assert co["entries"] == 1 and co["ends_correct_entries"] == 1 and co["ends_correct"] == 1
     assert c2["pending_corrections"] == 1
-    # at N = 3 the correction's checks are made
-    c3 = grade(gates["clean"], gold(key_bytes, 3), 3)
+    # at N = 3 (a 3-chapter build) the correction's checks are made
+    c3 = grade(short["b3"], short["g3"], 3)
     co3 = c3["beliefs"]["corrections"]
     assert [i["id"] for i in co3["items"]] == ["corrections[0]", "corrections[1]"]
     assert co3["entries"] == 2 and co3["ends_correct_entries"] == 2 and c3["pending_corrections"] == 0
     assert co3["items"][0]["ends_correct"] == 1 and co3["items"][0]["unmatched"] == []
-    # the belief is read to its correction at N = 3
     assert [i["corrected_chapter"] for i in c3["beliefs"]["false_beliefs"]["items"]] == [3, None]
 
 
-def test_6_open_ranges_count_for_final_and_a_range_closed_by_n_does_not(gates):
-    card = grade(gates["clean"], gates["g2"], 2)
+def test_6_open_ranges_count_for_final_and_a_range_closed_by_n_does_not(short):
+    card = grade(short["b2"], short["g2"], 2)
     # lamp 1..null and coin 1..4 are both open at 2; ring 1..2 is closed
     assert sorted(card["final"]["objects"]) == ["coin", "lamp", "twin_a", "twin_b"]
     assert all(o["ok"] for o in card["final"]["objects"].values()) and card["final"]["score"] == 1.0
     assert "ring" in card["order"]["objects"] and "ring" not in card["final"]["objects"]
 
 
-def test_6_final_reads_come_from_chapter_2s_position(gates):
-    b = gates["gated"]
-    card = grade(b, gates["g2"], 2)
-    hi2 = gl.Spans(b.spans).hi(2)
-    assert card["through_chapter"] == 2 and card["asserted_as_of"] == hi2 == card["final"]["asserted_as_of"]
-    assert hi2 < b.world.buffer.head()
-    assert card["final"]["as_of"] == 2.0         # the anchor ignores the gate row stamped 50.0
-
-
-def test_6_a_gate_row_moving_an_object_does_not_change_the_n2_final(gates):
-    gated = grade(gates["gated"], gates["g2"], 2)
-    assert gated["final"]["objects"]["lamp"] == {"expected": "cellar", "got": ["cellar"], "ok": True}
-    # the same row is seen by a full-book read of the same world
-    unbounded = grade(gates["gated"], gates["full"])
-    assert unbounded["final"]["objects"]["lamp"]["got"] == ["dock"]
-    assert unbounded["final"]["objects"]["lamp"]["ok"] is False
-
-
-def test_6_a_merge_after_chapter_2_changes_nothing_at_n2_and_the_full_book_sees_it(gates):
-    clean = grade(gates["clean"], gates["g2"], 2)
-    gated = grade(gates["gated"], gates["g2"], 2)
-    assert gated == clean                                  # the whole scorecard, bit for bit
-    assert gated["identity"]["mapping"]["fused"] == {} and gated["look_alikes"]["score"] == 1.0
-    assert gated["look_alikes"]["fusions"] == []
-    for key in ("twin_a", "twin_b"):                       # a final read on either id
-        assert gated["final"]["objects"][key]["ok"]
-    assert gated["final"]["objects"]["twin_a"]["got"] == ["dock"]
-    assert gated["final"]["objects"]["twin_b"]["got"] == ["cellar"]
-    # the full-book grade of the gated world sees the merge
-    full = grade(gates["gated"], gates["full"])
-    assert full["look_alikes"]["fusions"] and full["look_alikes"]["score"] < 1.0
-    assert full["identity"]["mapping"]["fused"]
-    assert grade(gates["clean"], gates["full"])["look_alikes"]["fusions"] == []
-
-
-def test_6_a_reveal_is_read_at_the_horizon_too(gates, key_bytes, tmp_path):
-    """A same_as written after chapter 2 does not join the chapter-2 reveal; one inside
-    chapter 2's chunk does."""
-    g2 = gates["g2"]
-    assert grade(gates["clean"], g2, 2)["reveals"]["score"] == 1.0
-    late = tl.Built(tmp_path, seed_cards(), name="late")
-    late.chunk(1, "one", [tl.at("obj:lamp", "in", "place:cellar", 1.0)])
-    late.chunk(2, "two", [tl.at("obj:coin", "in", "place:dock", 2.0)])
-    late.chunk(3, "three", [tl.name("person:mara", "the hooded visitor", "alias")])
-    try:
-        card = grade(late, g2, 2)
-        assert card["reveals"]["score"] == 0.0
-        joined = [i["joined"] for i in grade(late, gold(key_bytes, 3), 3)["reveals"]["items"]]
-        assert joined == [True, False]      # Mara's alias row is chapter 3's; the other has none
-    finally:
-        late.close()
-
-
-def test_6_the_report_states_the_window_on_its_first_line(gates):
-    card = grade(gates["clean"], gates["g2"], 2)
+def test_6_the_report_states_the_window_on_its_first_line(short):
+    card = grade(short["b2"], short["g2"], 2)
     md = gb.scorecard_md(card, "Book scorecard (run)")
     assert md.splitlines()[0] == "# Book scorecard (run) [through_chapter: 2]"
     assert "1 correction(s) pending" in md
-    assert gb.scorecard_md(grade(gates["clean"], gates["full"]), "Book scorecard (run)").splitlines()[0] \
+    assert gb.scorecard_md(grade(short["b2"], short["full"]), "Book scorecard (run)").splitlines()[0] \
         == "# Book scorecard (run)"
 
 
-def test_6_the_refusals(gates, key_bytes):
-    b, g2, full = gates["clean"], gates["g2"], gates["full"]
+def test_6_the_refusals(short):
+    b, g1, g2, g3, full = short["b2"], short["g1"], short["g2"], short["g3"], short["full"]
     with pytest.raises(gb.WindowRefused, match="not windowed"):                # flag, no stamp
         grade(b, full, 2)
     with pytest.raises(gb.WindowRefused, match="is windowed"):                 # stamp, no flag
         grade(b, g2)
     with pytest.raises(gb.WindowRefused, match="not 3"):                       # another N
         grade(b, g2, 3)
-    stamped = {**g2, "through_chapter": 0}
     with pytest.raises(gb.WindowRefused, match="outside the book's chapters"):  # N = 0
-        grade(b, stamped, 0)
-    beyond = {**g2, "through_chapter": 5}
-    with pytest.raises(gb.WindowRefused, match="beyond the last chapter"):     # past the spans
-        grade(b, beyond, 5)
-    spans = b.spans
+        grade(b, {**g2, "through_chapter": 0}, 0)
+    with pytest.raises(gb.WindowRefused, match="not the last chapter the run built \\(2\\)"):
+        grade(b, g1, 1)                                                        # N below the build
+    with pytest.raises(gb.WindowRefused, match="not the last chapter the run built \\(2\\)"):
+        grade(b, g3, 3)                                                        # N above the build
     with pytest.raises(gb.WindowRefused, match="chunk_spans"):                 # no spans
         gb.grade_book(b.world, b.world.registry, g2, spans=None, through_chapter=2)
     with pytest.raises(gb.WindowRefused, match="not a chapter number"):
-        gb.check_window(g2, True, spans)
+        gb.check_window(g2, True, b.spans)
     with pytest.raises(gb.WindowRefused, match="outside the book's chapters"):  # past the book
-        gb.check_window({**g2, "through_chapter": 6}, 6, spans, chapters=4)
-    gb.check_window(g2, 2, spans, chapters=4)                                   # and a good one passes
-
-
-def test_6_a_window_shorter_than_the_build_reads_only_its_chapters(gates, key_bytes):
-    """N = 3 on a four-chapter build: chapter 4's rows exist and are never read."""
-    b = gates["clean"]
-    c3 = grade(b, gold(key_bytes, 3), 3)
-    assert c3["asserted_as_of"] == gl.Spans(b.spans).hi(3) < b.world.buffer.head()
-    s = gl.Spans(b.spans, through=3)
-    assert s.chapters == [1, 2, 3] and s.marks() == [s.hi(1), s.hi(2), s.hi(3)]
-    assert s.hi(4) == s.hi(3)
+        gb.check_window({**g2, "through_chapter": 6}, 6, b.spans, chapters=4)
+    with pytest.raises(gb.WindowRefused, match="not the run's chapter count"):  # meta says 4
+        gb.check_window(g2, 2, b.spans, chapters=4)
+    gb.check_window(g2, 2, b.spans, chapters=2)                                 # and a good one passes
 
 
 def test_6_without_the_flag_the_output_is_byte_identical_to_the_current_grader(tmp_path):
@@ -759,7 +733,6 @@ def test_6_without_the_flag_the_output_is_byte_identical_to_the_current_grader(t
     assert {k: tl.legacy_digest(c) for k, c in cards.items()} == tl.LEGACY_DIGESTS
     for card in cards.values():
         assert not {"through_chapter", "asserted_as_of", "pending_corrections"} & set(card)
-        assert "asserted_as_of" not in card["final"]
     (tmp_path / "again").mkdir()
     explicit = tl.legacy_cards(tmp_path / "again",
                                lambda w, reg, g: gb.grade_book(w, reg, g, through_chapter=None))
@@ -806,28 +779,25 @@ def run_cli(toy_run, which, *extra, out="grades"):
                     "--book", str(toy_run["book"]), "--out", str(toy_run["base"] / out), *extra])
 
 
-def test_6_the_command_line_grades_a_window_shorter_than_the_build(toy_run):
-    assert run_cli(toy_run, "w2", "--through-chapter", "2", out="g2") == 0
-    card = json.loads((toy_run["base"] / "g2" / "book_scorecard.json").read_text())
-    md = (toy_run["base"] / "g2" / "book_scorecard.md").read_text()
-    assert md.splitlines()[0].endswith("[through_chapter: 2]")
-    assert card["through_chapter"] == 2 and card["final"]["asserted_as_of"] == card["asserted_as_of"]
-    # chapter 2 ends with the lamp in Orin's hands (holding 2..3 is open at 2)
-    assert card["final"]["objects"]["lamp"] == {"expected": "orin", "got": ["orin"], "ok": True}
-    assert card["order"]["objects"]["lamp"]["expected"] == ["cellar", "orin"]
-    # the full-book grade of the same run reads chapter 3's return to the cellar
+def test_6_the_command_line_grades_a_window_equal_to_the_build(toy_run):
+    assert run_cli(toy_run, "w3", "--through-chapter", "3", out="g3") == 0
+    card = json.loads((toy_run["base"] / "g3" / "book_scorecard.json").read_text())
+    md = (toy_run["base"] / "g3" / "book_scorecard.md").read_text()
+    assert md.splitlines()[0].endswith("[through_chapter: 3]")
+    assert card["through_chapter"] == 3 and card["final"]["objects"]["lamp"]["ok"] is True
+    assert "asserted_as_of" not in card and "asserted_as_of" not in card["final"]
+    # the full-book grade of the same run has no window
     assert run_cli(toy_run, "full", out="gfull") == 0
     full = json.loads((toy_run["base"] / "gfull" / "book_scorecard.json").read_text())
     assert "through_chapter" not in full
-    assert full["final"]["objects"]["lamp"] == {"expected": "cellar", "got": ["cellar"], "ok": True}
     assert (toy_run["base"] / "gfull" / "book_scorecard.md").read_text().startswith("# Book scorecard (out)")
 
 
 def test_6_the_command_line_refuses_before_grading(toy_run):
-    for which, extra, reason in (("w2", (), "is windowed"),
-                                 ("full", ("--through-chapter", "2"), "not windowed"),
-                                 ("w2", ("--through-chapter", "3"), "not 3"),
-                                 ("w3", ("--through-chapter", "4"), "not 4"),
+    for which, extra, reason in (("w3", (), "is windowed"),
+                                 ("full", ("--through-chapter", "3"), "not windowed"),
+                                 ("w3", ("--through-chapter", "2"), "not 2"),
+                                 ("w2", ("--through-chapter", "2"), "not the last chapter the run built"),
                                  ("w2", ("--through-chapter", "0"), "not 0")):
         with pytest.raises(SystemExit, match=f"ABORT: .*{reason}"):
             run_cli(toy_run, which, *extra, out="refused")
