@@ -126,6 +126,14 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
 ## Later
 
 - [ ] R50 Served facts under the canonical id: after a merge, `state`, `snapshot` and `facts` serve each row under the id it was written on (`person:daniel`), while `entities` lists only the representative (`person:dan`). So one merged person reads as two in a host's notebook. Construct relabels by closure today (m38e73c), so nothing is broken. The fix is a read-surface contract change: serve the representative as `entity` and keep the written id beside it. It needs a spec, pbr, and every host's read.
+- [ ] R53 Beats as tracked world structure. Kabe (holo-emitter's R79 gate, 2026-10-13, relayed in mf409d7): "it makes sense that the system of ingesting the plot/story beat/puzzle chains ... is assimilated and ingested functionally at the same time that pattern buffer ingest its objects and it may be efficient to consider where those two mechanisms overlap, and if this should actually exist as a tracking mechanism in pattern buffer itself". pb's reading, given to holo-emitter:
+  - A beat is an ordinary entity with declared conditions and effects over facts, entered through the gate.
+  - Availability ("available, or which condition is missing") is derived, as in RFC-003's traversability.
+  - The host writes the "happened" event and its effects; the engine never fires effects.
+  - Clocks are derived from deadline facts, and the condition language stays small.
+  - The phone gets a precomputed trigger table, applied as a pending overlay that the feed confirms.
+  - The solvability proof is construct's, over the engine's graph read.
+  - New scope: Kabe places it.
 - [ ] R52 Tag or relationship: refine R49's extraction rule so `role` is only what a person is on their own (prisoner, widow, hero). A title that needs another party (father of, mayor of, captain of, hostile toward) is extracted as a dated entity-valued relationship to that party, and the title is derived from it when read. Today's rule lists "captain" among its examples, which nudges relational titles into flat tags. It is a prompt change, so it needs a metered extraction check against the chapter test before merging (Kabe's yes), alongside the speed work. Source: Kabe via construct m5b3ed1, R51's reading.
 - [ ] R51 Beings, not only persons. Kabe (2026-10-13, via construct m5bc622), on R49 making a dog in `person:` read as kind person, role dog: "If a dog is a kind of person and what is the point of identifying term person? Isn't it more of a sentient entity have either type person or type dog." And: "In the future, this should be allowed as a hostile enemy if the engine actually develops into that direction." My reading:
   - Three layers: a **being** class (anything that acts and knows, and can be met); a **type** (person, dog, wraith…), rarely changed; and R49's dated **roles**, unchanged.
