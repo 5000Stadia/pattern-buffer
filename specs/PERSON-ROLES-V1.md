@@ -1,6 +1,6 @@
 # PERSON-ROLES-V1: a person is a person for life; what they are at a time is a role
 
-**Status:** r1.1. It answers pbr's r1 RED (P1: a distinct gate reclassification receipt, never `canonicalized_from`; P2: the synthesized `kind = person` is `inferred`). It also takes construct's shape read (m9a8701: no role in force answers `unknown`). For pbr review. Author: pb, 2026-10-13.
+**Status:** r1.2 (from the build: roles never count as a durable contradiction). r1.1. It answers pbr's r1 RED (P1: a distinct gate reclassification receipt, never `canonicalized_from`; P2: the synthesized `kind = person` is `inferred`). It also takes construct's shape read (m9a8701: no role in force answers `unknown`). For pbr review. Author: pb, 2026-10-13.
 **Source:** roadmap R49 (construct m02bdb6). Kabe's answer on gate g9c3792 (2026-10-13), in his
 words: "imagine a character whose spans a story of a lifetime there may be different erad of that
 character they may be a prisoner, one chapter and a hero the next, so build an elegant structure
@@ -42,6 +42,12 @@ Three parts. None changes an existing world.
     store).
 - A host may still declare `role` differently, or pin its durability. The usual declaration rules
   apply.
+- *(r1.2, found in the build)* **Roles never veto a merge.**
+  - `identity.durable_contradictions` already skips `name`, `alias` and `kind`. It now skips `role`
+    too.
+  - Two ids for one person, `prisoner` in chapter 1 and `hero` in chapter 7, are eras of one life.
+    If a classifier (or a host's pin) made `role` CONSTITUTIVE or DISPOSITIONAL, those differing
+    values would otherwise block the merge: exactly the lifetime case Kabe described.
 
 ### 2. The ingest gate moves a person's non-person kind into `role`
 
@@ -165,6 +171,8 @@ Nothing is rewritten. Append-only rules out any migration that edits rows.
 7. **Prompts.** Both prompt constants contain the new rule. The rule text is identical in both.
 8. **Existing worlds.** A world file built before the change reads byte-identically after it.
    Only new ingests are affected.
+8a. *(r1.2)* **No veto.** With `role` pinned CONSTITUTIVE, two person ids with differing roles have
+    no durable contradiction. The test fails without the change.
 9. **The entity-valued kind** on a person is left alone and logged.
 10. **Full suite green.** The ingestion-fidelity and chapter-test fixtures are unchanged, or any
     movement is reported and explained in the build note.

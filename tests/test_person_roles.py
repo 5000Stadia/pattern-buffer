@@ -476,3 +476,23 @@ def test_9_the_entity_valued_kind_on_a_non_person_is_silent(world, caplog):
         world.ingest_structured([
             item("obj:lamp", "kind", "obj:lamp_type", value_type="entity")])
     assert not [r for r in caplog.records if "PERSON-ROLES-V1" in r.getMessage()]
+
+
+def test_roles_never_veto_a_merge_as_a_durable_contradiction(tmp_path):
+    """A role pinned CONSTITUTIVE (a classifier's worst case) still never
+    counts as a durable contradiction: differing roles are eras of one life."""
+    w = World(tmp_path / "veto.world", world_id="w:veto",
+              model=StubModel(fallback=rule_classifier_fallback()))
+    try:
+        w.porcelain.ingest_structured([
+            {"entity": "attr:role", "attribute": "durability", "value": "CONSTITUTIVE",
+             "timeless": True}], classify="rules")
+        w.ingest_structured([
+            {"entity": "person:tomas_breck", "attribute": "kind", "value": "prisoner",
+             "valid_from": 1.0},
+            {"entity": "person:breck", "attribute": "kind", "value": "hero",
+             "valid_from": 7.0},
+        ], classify="rules")
+        assert w.registry.durable_contradictions("person:tomas_breck", "person:breck") == []
+    finally:
+        w.close()
