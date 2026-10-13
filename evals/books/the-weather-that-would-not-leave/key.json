@@ -1,0 +1,2270 @@
+{
+  "title": "The Weather That Would Not Leave",
+  "chapters": [
+    {
+      "n": 1,
+      "file": "ch01.md",
+      "words": 2127
+    },
+    {
+      "n": 2,
+      "file": "ch02.md",
+      "words": 2208
+    },
+    {
+      "n": 3,
+      "file": "ch03.md",
+      "words": 2234
+    },
+    {
+      "n": 4,
+      "file": "ch04.md",
+      "words": 2008
+    },
+    {
+      "n": 5,
+      "file": "ch05.md",
+      "words": 2050
+    },
+    {
+      "n": 6,
+      "file": "ch06.md",
+      "words": 2067
+    },
+    {
+      "n": 7,
+      "file": "ch07.md",
+      "words": 2187
+    },
+    {
+      "n": 8,
+      "file": "ch08.md",
+      "words": 2086
+    },
+    {
+      "n": 9,
+      "file": "ch09.md",
+      "words": 2025
+    },
+    {
+      "n": 10,
+      "file": "ch10.md",
+      "words": 1914
+    },
+    {
+      "n": 11,
+      "file": "ch11.md",
+      "words": 1897
+    },
+    {
+      "n": 12,
+      "file": "ch12.md",
+      "words": 2048
+    }
+  ],
+  "entities": {
+    "oruva": {
+      "kind": "person",
+      "aliases": [
+        "Oruva Senn",
+        "Or",
+        "Oruva",
+        "the third Listener",
+        "the third ear"
+      ],
+      "first_chapter": 1
+    },
+    "vael": {
+      "kind": "person",
+      "aliases": [
+        "Vael Senn",
+        "Vael",
+        "senior weather clerk",
+        "the senior weather clerk",
+        "Oruva’s aunt"
+      ],
+      "first_chapter": 2
+    },
+    "nemi": {
+      "kind": "person",
+      "aliases": [
+        "Nemi Tallow",
+        "Nemi"
+      ],
+      "first_chapter": 1
+    },
+    "cale": {
+      "kind": "person",
+      "aliases": [
+        "Cale Rusk",
+        "Cale",
+        "keeper of the Bell Orchard",
+        "the copper-gloved keeper"
+      ],
+      "first_chapter": 1
+    },
+    "iven": {
+      "kind": "person",
+      "aliases": [
+        "Iven Orri",
+        "Iven",
+        "appointed Listener",
+        "the town’s appointed Listener"
+      ],
+      "first_chapter": 2
+    },
+    "vey": {
+      "kind": "person",
+      "aliases": [
+        "Vey Orin",
+        "Vey",
+        "the woman with a copper hand",
+        "the stranger",
+        "the other Listener",
+        "the first Listener",
+        "the copper-handed woman",
+        "The woman on the causeway",
+        "Vey of the Orchard",
+        "the woman in the orchard",
+        "the missing first Listener"
+      ],
+      "first_chapter": 3
+    },
+    "mara": {
+      "kind": "person",
+      "aliases": [
+        "Mara Senn",
+        "Mara",
+        "the hooded visitor",
+        "the shadow in the corridor",
+        "the hooded person",
+        "the person you called mother",
+        "assistant who had died in a fever",
+        "the hooded clerk who carried jars",
+        "the person who never answered when Or spoke",
+        "Or’s mother",
+        "the hooded, scarred figure"
+      ],
+      "first_chapter": 1
+    },
+    "tavin": {
+      "kind": "person",
+      "aliases": [
+        "Tavin Rell",
+        "Tavin",
+        "junior clerk",
+        "the junior clerk",
+        "a narrow boy"
+      ],
+      "first_chapter": 1
+    },
+    "pell": {
+      "kind": "person",
+      "aliases": [
+        "Pell",
+        "Pell of the Fourth Stair",
+        "roof tender",
+        "the roof tender"
+      ],
+      "first_chapter": 1
+    },
+    "ors": {
+      "kind": "place",
+      "aliases": [
+        "Ors"
+      ],
+      "first_chapter": 1
+    },
+    "house": {
+      "kind": "place",
+      "aliases": [
+        "House of Folded Water",
+        "the House",
+        "the House of Folded Water"
+      ],
+      "first_chapter": 1
+    },
+    "room_below_mouth": {
+      "kind": "place",
+      "aliases": [
+        "Room Below Mouth",
+        "the Room Below Mouth"
+      ],
+      "first_chapter": 1
+    },
+    "silt_choir": {
+      "kind": "place",
+      "aliases": [
+        "Silt Choir",
+        "the Silt Choir",
+        "the Choir"
+      ],
+      "first_chapter": 1
+    },
+    "low_weather": {
+      "kind": "place",
+      "aliases": [
+        "Low Weather"
+      ],
+      "first_chapter": 2
+    },
+    "counting_room": {
+      "kind": "place",
+      "aliases": [
+        "Counting Room",
+        "the Counting Room"
+      ],
+      "first_chapter": 2
+    },
+    "bell_orchard": {
+      "kind": "place",
+      "aliases": [
+        "Bell Orchard",
+        "the Bell Orchard",
+        "the orchard"
+      ],
+      "first_chapter": 1
+    },
+    "drowned_stair": {
+      "kind": "place",
+      "aliases": [
+        "Drowned Stair",
+        "the Drowned Stair"
+      ],
+      "first_chapter": 4
+    },
+    "red_channel": {
+      "kind": "place",
+      "aliases": [
+        "Red Channel",
+        "the Red Channel"
+      ],
+      "first_chapter": 3
+    },
+    "dye_house": {
+      "kind": "place",
+      "aliases": [
+        "old dye-house",
+        "the old dye-house",
+        "dye-house"
+      ],
+      "first_chapter": 6
+    },
+    "market_court": {
+      "kind": "place",
+      "aliases": [
+        "market court",
+        "the market court"
+      ],
+      "first_chapter": 1
+    },
+    "tide_spoon": {
+      "kind": "object",
+      "aliases": [
+        "brass tide spoon",
+        "the brass tide spoon",
+        "the tide spoon"
+      ],
+      "first_chapter": 1
+    },
+    "first_jar": {
+      "kind": "object",
+      "aliases": [
+        "First North Drizzle",
+        "FIRST NORTH DRIZZLE, YEAR 41",
+        "first jar",
+        "the first jar"
+      ],
+      "first_chapter": 1
+    },
+    "blue_tooth": {
+      "kind": "object",
+      "aliases": [
+        "blue tooth",
+        "the blue tooth"
+      ],
+      "first_chapter": 1
+    },
+    "tin_case": {
+      "kind": "object",
+      "aliases": [
+        "tin case",
+        "the tin case",
+        "Nemi’s tin case"
+      ],
+      "first_chapter": 2
+    },
+    "black_seed": {
+      "kind": "object",
+      "aliases": [
+        "black seed",
+        "the black seed"
+      ],
+      "first_chapter": 6
+    },
+    "rain_vial": {
+      "kind": "object",
+      "aliases": [
+        "rain vial",
+        "the rain vial",
+        "red-thread vial",
+        "the red-thread vial"
+      ],
+      "first_chapter": 6
+    },
+    "six_lidded_box": {
+      "kind": "object",
+      "aliases": [
+        "six-lidded box",
+        "Nemi’s six-lidded box",
+        "the six-lidded box"
+      ],
+      "first_chapter": 6
+    },
+    "black_iron_key": {
+      "kind": "object",
+      "aliases": [
+        "black iron key",
+        "the black iron key"
+      ],
+      "first_chapter": 5
+    },
+    "old_map": {
+      "kind": "object",
+      "aliases": [
+        "old map",
+        "the old map"
+      ],
+      "first_chapter": 7
+    },
+    "roof_chart": {
+      "kind": "object",
+      "aliases": [
+        "Pell’s tile chart",
+        "tile chart",
+        "old tile chart"
+      ],
+      "first_chapter": 8
+    },
+    "broken_branch": {
+      "kind": "object",
+      "aliases": [
+        "broken branch",
+        "the broken branch"
+      ],
+      "first_chapter": 1
+    },
+    "copper_ring": {
+      "kind": "object",
+      "aliases": [
+        "copper ring",
+        "the copper ring"
+      ],
+      "first_chapter": 6
+    },
+    "old_ledger": {
+      "kind": "object",
+      "aliases": [
+        "original bargain ledger",
+        "the original bargain ledger"
+      ],
+      "first_chapter": 8
+    },
+    "listening_road": {
+      "kind": "place",
+      "aliases": [
+        "listening road",
+        "the listening road"
+      ],
+      "first_chapter": 7
+    },
+    "oldest_tree": {
+      "kind": "object",
+      "aliases": [
+        "oldest bell tree",
+        "the oldest bell tree",
+        "oldest tree",
+        "the oldest tree"
+      ],
+      "first_chapter": 1
+    },
+    "tree_flask": {
+      "kind": "object",
+      "aliases": [
+        "small glass flask",
+        "tree flask",
+        "the tree flask"
+      ],
+      "first_chapter": 3
+    },
+    "answer_flask": {
+      "kind": "object",
+      "aliases": [
+        "Iven’s green flask",
+        "Iven’s flask"
+      ],
+      "first_chapter": 6
+    },
+    "blue_paper": {
+      "kind": "object",
+      "aliases": [
+        "folded sheet of blue paper",
+        "folded blue paper",
+        "blue paper"
+      ],
+      "first_chapter": 6
+    },
+    "thread_spool": {
+      "kind": "object",
+      "aliases": [
+        "tiny spool of thread",
+        "spool of thread"
+      ],
+      "first_chapter": 6
+    },
+    "white_salt": {
+      "kind": "object",
+      "aliases": [
+        "pinch of white salt",
+        "white salt",
+        "pinch of salt"
+      ],
+      "first_chapter": 6
+    },
+    "carved_chamber": {
+      "kind": "place",
+      "aliases": [
+        "room under the room",
+        "the room under the room",
+        "carved-names chamber",
+        "the carved-names chamber"
+      ],
+      "first_chapter": 5
+    },
+    "mara_room": {
+      "kind": "place",
+      "aliases": [
+        "room above the dye-house"
+      ],
+      "first_chapter": 12
+    },
+    "vey_room": {
+      "kind": "place",
+      "aliases": [
+        "Vey’s chair room"
+      ],
+      "first_chapter": 7
+    },
+    "blue_bowl": {
+      "kind": "object",
+      "aliases": [
+        "blue-black bowl",
+        "blue bowl",
+        "the blue bowl"
+      ],
+      "first_chapter": 2
+    },
+    "flour_sack": {
+      "kind": "object",
+      "aliases": [
+        "flour sack",
+        "the flour sack"
+      ],
+      "first_chapter": 1
+    },
+    "nameless_jar": {
+      "kind": "object",
+      "aliases": [
+        "nameless jar",
+        "the nameless jar"
+      ],
+      "first_chapter": 5
+    },
+    "salt_basin": {
+      "kind": "place",
+      "aliases": [
+        "basin of packed salt",
+        "salt basin"
+      ],
+      "first_chapter": 3
+    },
+    "old_cistern": {
+      "kind": "place",
+      "aliases": [
+        "cistern beneath the tree",
+        "old cistern beneath the tree",
+        "the old cistern beneath the tree"
+      ],
+      "first_chapter": 3
+    },
+    "causeway": {
+      "kind": "place",
+      "aliases": [
+        "causeway",
+        "the causeway"
+      ],
+      "first_chapter": 3
+    },
+    "west_court": {
+      "kind": "place",
+      "aliases": [
+        "west court",
+        "the west court"
+      ],
+      "first_chapter": 6
+    },
+    "west_gate": {
+      "kind": "place",
+      "aliases": [
+        "west gate",
+        "the west gate"
+      ],
+      "first_chapter": 8
+    },
+    "public_hall": {
+      "kind": "place",
+      "aliases": [
+        "public hall",
+        "the public hall"
+      ],
+      "first_chapter": 2
+    },
+    "archive_alcove": {
+      "kind": "place",
+      "aliases": [
+        "archive alcove",
+        "the archive alcove",
+        "old archive alcove"
+      ],
+      "first_chapter": 2
+    },
+    "portrait": {
+      "kind": "object",
+      "aliases": [
+        "scratched portrait",
+        "the scratched portrait",
+        "portrait of the first Listener"
+      ],
+      "first_chapter": 4
+    },
+    "wooden_stool": {
+      "kind": "object",
+      "aliases": [
+        "old wooden stool",
+        "wooden stool"
+      ],
+      "first_chapter": 5
+    },
+    "copper_wire_spool": {
+      "kind": "object",
+      "aliases": [
+        "spool of copper wire",
+        "copper-wire spool"
+      ],
+      "first_chapter": 7
+    },
+    "copper_plate": {
+      "kind": "object",
+      "aliases": [
+        "copper plate",
+        "the copper plate"
+      ],
+      "first_chapter": 9
+    },
+    "letter": {
+      "kind": "object",
+      "aliases": [
+        "a letter addressed to “the child in the House.”"
+      ],
+      "first_chapter": 9
+    },
+    "mara_cup": {
+      "kind": "object",
+      "aliases": [
+        "repaired childhood cup"
+      ],
+      "first_chapter": 9
+    },
+    "tavin_cup": {
+      "kind": "object",
+      "aliases": [
+        "unallotted clay cup",
+        "the unallotted clay cup"
+      ],
+      "first_chapter": 2
+    },
+    "child_cup": {
+      "kind": "object",
+      "aliases": [
+        "chipped cup"
+      ],
+      "first_chapter": 11
+    },
+    "notice": {
+      "kind": "object",
+      "aliases": [
+        "THE BELL ORCHARD IS OUT OF TUNE. DO NOT OPEN THE CISTERNS."
+      ],
+      "first_chapter": 1
+    },
+    "first_shelf": {
+      "kind": "place",
+      "aliases": [
+        "first shelf",
+        "the first shelf",
+        "lowest shelf"
+      ],
+      "first_chapter": 1
+    },
+    "hollow_under_shelf": {
+      "kind": "place",
+      "aliases": [
+        "hollow beneath the shelf"
+      ],
+      "first_chapter": 1
+    },
+    "mara_bundle": {
+      "kind": "object",
+      "aliases": [
+        "paper bundle",
+        "the paper bundle"
+      ],
+      "first_chapter": 9
+    },
+    "stone_disk": {
+      "kind": "object",
+      "aliases": [
+        "black glass disk"
+      ],
+      "first_chapter": 7
+    },
+    "tavin_jar": {
+      "kind": "object",
+      "aliases": [
+        "his jar with a crack in its base"
+      ],
+      "first_chapter": 7
+    },
+    "market_basin": {
+      "kind": "place",
+      "aliases": [
+        "old market basin",
+        "market basin"
+      ],
+      "first_chapter": 6
+    },
+    "wall_behind_portrait": {
+      "kind": "object",
+      "aliases": [
+        "wall behind the scratched portrait"
+      ],
+      "first_chapter": 6
+    },
+    "house_map": {
+      "kind": "object",
+      "aliases": [
+        "map of the House"
+      ],
+      "first_chapter": 9
+    },
+    "seed_pot": {
+      "kind": "object",
+      "aliases": [
+        "seed pot"
+      ],
+      "first_chapter": 12
+    },
+    "paper_boat": {
+      "kind": "object",
+      "aliases": [
+        "paper boat"
+      ],
+      "first_chapter": 7
+    },
+    "paving_stone": {
+      "kind": "object",
+      "aliases": [
+        "one stone sat slightly lower than the rest"
+      ],
+      "first_chapter": 7
+    },
+    "roof_room": {
+      "kind": "place",
+      "aliases": [
+        "roof tender’s small room"
+      ],
+      "first_chapter": 1
+    },
+    "western_corridor": {
+      "kind": "place",
+      "aliases": [
+        "western corridor",
+        "the House’s western corridor"
+      ],
+      "first_chapter": 5
+    },
+    "tool_drawer": {
+      "kind": "object",
+      "aliases": [
+        "drawer with ordinary tools"
+      ],
+      "first_chapter": 12
+    },
+    "mara_hidden_chamber": {
+      "kind": "place",
+      "aliases": [
+        "Mara’s hidden chamber"
+      ],
+      "first_chapter": 9
+    },
+    "rain_notice": {
+      "kind": "object",
+      "aliases": [
+        "lantern notice",
+        "her lantern notice"
+      ],
+      "first_chapter": 4
+    },
+    "blue_bead": {
+      "kind": "object",
+      "aliases": [
+        "blue bead",
+        "a single blue bead"
+      ],
+      "first_chapter": 4
+    },
+    "dry_copper_bell": {
+      "kind": "object",
+      "aliases": [
+        "A dry copper bell"
+      ],
+      "first_chapter": 3
+    },
+    "roof_color_chart": {
+      "kind": "object",
+      "aliases": [
+        "roof’s old color chart"
+      ],
+      "first_chapter": 2
+    },
+    "sleeping_alcove": {
+      "kind": "place",
+      "aliases": [
+        "sleeping alcove",
+        "her sleeping alcove"
+      ],
+      "first_chapter": 1
+    },
+    "comb": {
+      "kind": "object",
+      "aliases": [
+        "small wooden comb",
+        "wooden comb"
+      ],
+      "first_chapter": 9
+    },
+    "gray_thread": {
+      "kind": "object",
+      "aliases": [
+        "spool of gray thread",
+        "gray thread"
+      ],
+      "first_chapter": 9
+    },
+    "cale_grandmother": {
+      "kind": "person",
+      "aliases": [
+        "Cale’s grandmother",
+        "the orchard’s last keeper"
+      ],
+      "first_chapter": 3
+    },
+    "nemi_mother": {
+      "kind": "person",
+      "aliases": [
+        "Nemi’s mother was a different dye-house worker from Mara"
+      ],
+      "first_chapter": 6
+    },
+    "name_list": {
+      "kind": "object",
+      "aliases": [
+        "The list of names",
+        "list of names",
+        "copied names"
+      ],
+      "first_chapter": 7
+    }
+  },
+  "same_as": [
+    [
+      "mara",
+      "the hooded visitor",
+      8
+    ],
+    [
+      "mara",
+      "the hooded person",
+      8
+    ],
+    [
+      "mara",
+      "the visitor",
+      8
+    ],
+    [
+      "mara",
+      "assistant who had died in a fever",
+      7
+    ],
+    [
+      "mara",
+      "the person you called mother",
+      7
+    ],
+    [
+      "mara",
+      "Or’s mother",
+      7
+    ],
+    [
+      "oruva",
+      "the third Listener",
+      8
+    ],
+    [
+      "oruva",
+      "the third ear",
+      7
+    ],
+    [
+      "vey",
+      "the woman with a copper hand",
+      8
+    ],
+    [
+      "vey",
+      "the other Listener",
+      4
+    ],
+    [
+      "vey",
+      "Vey Orin",
+      8
+    ],
+    [
+      "vey",
+      "the first Listener",
+      8
+    ],
+    [
+      "vey",
+      "The woman on the causeway",
+      8
+    ],
+    [
+      "mara",
+      "the hooded clerk who carried jars",
+      9
+    ],
+    [
+      "mara",
+      "the shadow in the corridor",
+      9
+    ],
+    [
+      "mara",
+      "the hooded, scarred figure",
+      9
+    ],
+    [
+      "mara",
+      "the hooded person who had walked into the Room Below Mouth",
+      9
+    ]
+  ],
+  "not_same": [
+    [
+      "oruva",
+      "vael",
+      "Oruva Senn and Vael Senn share a surname, but are separate people."
+    ],
+    [
+      "oruva",
+      "mara",
+      "Oruva Senn is Mara Senn’s daughter, not another name for her."
+    ],
+    [
+      "iven",
+      "vey",
+      "Iven Orri and Vey Orin have near-identical surnames and are both called Listener."
+    ],
+    [
+      "vael",
+      "mara",
+      "Vael Senn and Mara Senn share a surname but are separate people."
+    ],
+    [
+      "cale",
+      "vey",
+      "Cale wears a copper glove on his right hand; Vey’s right hand is plated copper."
+    ],
+    [
+      "cale",
+      "mara",
+      "Cale’s copper glove is on his right hand; Mara has a copper plate on her left thumb."
+    ],
+    [
+      "vey",
+      "mara",
+      "Vey and Mara are separate Listeners despite sharing a crescent scar."
+    ],
+    [
+      "pell",
+      "tavin",
+      "Pell is the roof tender; Tavin Rell is a junior clerk."
+    ],
+    [
+      "mara_cup",
+      "child_cup",
+      "Mara’s repaired cup and the child’s chipped cup are separate objects."
+    ],
+    [
+      "tree_flask",
+      "answer_flask",
+      "The tree flask is beneath the orchard bark; Iven’s green flask held the storm’s voice."
+    ],
+    [
+      "iven",
+      "mara",
+      "Iven Orri and Mara Senn are separate people who both held the title Listener."
+    ],
+    [
+      "tavin_jar",
+      "first_jar",
+      "Tavin’s cracked jar and the first jar are separate vessels."
+    ],
+    [
+      "nameless_jar",
+      "first_jar",
+      "The nameless jar found behind the Counting Room ledgers is separate from the First North Drizzle jar."
+    ],
+    [
+      "tavin_cup",
+      "mara_cup",
+      "Tavin’s unallotted clay cup and Mara’s repaired childhood cup are separate objects."
+    ],
+    [
+      "tavin_cup",
+      "child_cup",
+      "Tavin’s unallotted clay cup and the child’s market cup are separate objects."
+    ],
+    [
+      "mara_cup",
+      "child_cup",
+      "Mara’s repaired childhood cup and the child’s market cup are separate objects."
+    ],
+    [
+      "carved_chamber",
+      "mara_hidden_chamber",
+      "The carved-names chamber and Mara’s hidden living chamber are separate rooms."
+    ],
+    [
+      "mara_hidden_chamber",
+      "vey_room",
+      "Mara’s hidden chamber and Vey’s chair room are separate rooms."
+    ],
+    [
+      "house_map",
+      "old_map",
+      "Mara’s old map of the House and Vael’s route map are separate maps."
+    ],
+    [
+      "old_map",
+      "roof_chart",
+      "Vael’s route map and Pell’s tile chart are separate records."
+    ],
+    [
+      "notice",
+      "rain_notice",
+      "The first pressed-reed orchard notice and Vael’s later rain notice are separate papers."
+    ],
+    [
+      "salt_basin",
+      "market_basin",
+      "The salt basin around the orchard and the old market basin are separate places."
+    ],
+    [
+      "cale",
+      "tavin",
+      "Cale Rusk and Tavin Rell are separate people."
+    ],
+    [
+      "nemi",
+      "mara",
+      "Nemi’s mother and Mara are separate people."
+    ],
+    [
+      "roof_color_chart",
+      "roof_chart",
+      "Pell’s color chart from chapter 2 and the later tile chart are different records."
+    ],
+    [
+      "house_map",
+      "old_map",
+      "The old House map preserved by Mara is different from Vael’s route map."
+    ],
+    [
+      "vey",
+      "mara",
+      "Vey’s crescent scar curves opposite to Mara’s; they are two different Listeners."
+    ],
+    [
+      "cale",
+      "cale_grandmother",
+      "Cale is the orchard keeper; his grandmother remembered the first storm."
+    ],
+    [
+      "nemi_mother",
+      "mara",
+      "Nemi’s mother was a different dye-house worker from Mara."
+    ]
+  ],
+  "locations": [
+    {
+      "entity": "room_below_mouth",
+      "in": "house",
+      "from_chapter": 1,
+      "to_chapter": null,
+      "evidence": "At dawn she stood in the Room Below Mouth with a wick-lamp in one hand"
+    },
+    {
+      "entity": "counting_room",
+      "in": "low_weather",
+      "from_chapter": 2,
+      "to_chapter": null,
+      "evidence": "The Counting Room sat below a stairwell, at the end of a corridor that smelled of chalk."
+    },
+    {
+      "entity": "drowned_stair",
+      "in": "ors",
+      "from_chapter": 4,
+      "to_chapter": null,
+      "evidence": "passing the Silt Choir and a shuttered stairwell called the Drowned Stair."
+    },
+    {
+      "entity": "red_channel",
+      "in": "ors",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "a narrow waterway that ran through the western side of town."
+    },
+    {
+      "entity": "dye_house",
+      "in": "ors",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "They went to the old dye-house."
+    },
+    {
+      "entity": "listening_road",
+      "in": "ors",
+      "from_chapter": 9,
+      "to_chapter": null,
+      "evidence": "The missing fourth name was not a person. It was the route itself"
+    },
+    {
+      "entity": "carved_chamber",
+      "in": "house",
+      "from_chapter": 5,
+      "to_chapter": null,
+      "evidence": "Behind the door, a staircase descended into a room that smelled of cold clay."
+    },
+    {
+      "entity": "mara_hidden_chamber",
+      "in": "room_below_mouth",
+      "from_chapter": 9,
+      "to_chapter": null,
+      "evidence": "Mara took Or through Mara’s hidden chamber and showed her the objects she had kept there."
+    },
+    {
+      "entity": "vey_room",
+      "in": "drowned_stair",
+      "from_chapter": 7,
+      "to_chapter": null,
+      "evidence": "At the passage’s end stood a small room containing nothing but a wooden chair and a spool of copper wire."
+    },
+    {
+      "entity": "market_basin",
+      "in": "market_court",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "Under it lay the old market basin, round and shallow, lined with black glass."
+    },
+    {
+      "entity": "public_hall",
+      "in": "ors",
+      "from_chapter": 2,
+      "to_chapter": null,
+      "evidence": "the public jars, each one marked for a household"
+    },
+    {
+      "entity": "archive_alcove",
+      "in": "house",
+      "from_chapter": 2,
+      "to_chapter": null,
+      "evidence": "On the way down, Or stopped in the House’s archive alcove."
+    },
+    {
+      "entity": "west_court",
+      "in": "ors",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "The route was closed at the west court."
+    },
+    {
+      "entity": "west_gate",
+      "in": "ors",
+      "from_chapter": 8,
+      "to_chapter": null,
+      "evidence": "then out through the west gate."
+    },
+    {
+      "entity": "black_iron_key",
+      "in": "drowned_stair",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "Vael left the key in its lock."
+    },
+    {
+      "entity": "old_cistern",
+      "in": "bell_orchard",
+      "from_chapter": 2,
+      "to_chapter": null,
+      "evidence": "if the old cisterns hear it, they will open."
+    },
+    {
+      "entity": "market_court",
+      "in": "ors",
+      "from_chapter": 1,
+      "to_chapter": null,
+      "evidence": "leading toward the market court."
+    },
+    {
+      "entity": "blue_bowl",
+      "in": "ors",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "Iven brought the blue bowl from the Counting Room, carrying it between the ledger and the map."
+    },
+    {
+      "entity": "blue_bowl",
+      "in": "market_basin",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "Iven set the blue bowl on its rim."
+    },
+    {
+      "entity": "tree_flask",
+      "in": "bell_orchard",
+      "from_chapter": 10,
+      "to_chapter": null,
+      "evidence": "Cale drew the flask free and left it beside the oldest root"
+    },
+    {
+      "entity": "first_jar",
+      "in": "first_shelf",
+      "from_chapter": 1,
+      "to_chapter": 4,
+      "evidence": "The jar on the lowest shelf rang."
+    },
+    {
+      "entity": "first_jar",
+      "in": "flour_sack",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Or showed her the flour sack, and the jar within it."
+    },
+    {
+      "entity": "black_seed",
+      "in": "six_lidded_box",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Or gave the black seed back to Nemi, who tucked it beneath the sixth lid of her box."
+    },
+    {
+      "entity": "black_seed",
+      "in": "seed_pot",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "In the courtyard, the black seed Nemi had planted in the seed pot had taken hold."
+    },
+    {
+      "entity": "tin_case",
+      "in": "vey_room",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "Nemi had left the empty tin case under the chair."
+    },
+    {
+      "entity": "blue_tooth",
+      "in": "blue_bowl",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "Iven placed the blue tooth in the blue bowl and covered it with the glass lid."
+    },
+    {
+      "entity": "broken_branch",
+      "in": "house",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "After retrieving the broken branch from the cistern mouth, Cale brought it to the House of Folded Water."
+    },
+    {
+      "entity": "blue_paper",
+      "in": "red_channel",
+      "from_chapter": 11,
+      "to_chapter": 11,
+      "evidence": "It flapped once, then slid into the channel."
+    },
+    {
+      "entity": "white_salt",
+      "in": "bell_orchard",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "She scattered it over the wet earth."
+    },
+    {
+      "entity": "stone_disk",
+      "in": "market_court",
+      "from_chapter": 7,
+      "to_chapter": 7,
+      "evidence": "Beneath lay a black glass disk with a hole in the center."
+    },
+    {
+      "entity": "paving_stone",
+      "in": "market_court",
+      "from_chapter": 7,
+      "to_chapter": 7,
+      "evidence": "one stone sat slightly lower than the rest."
+    },
+    {
+      "entity": "mara_cup",
+      "in": "mara_hidden_chamber",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "She left her own childhood cup on the shelf beside the cot in Mara’s hidden chamber, then placed the letter beneath it for whoever might listen next."
+    },
+    {
+      "entity": "letter",
+      "in": "mara_hidden_chamber",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "She left her own childhood cup on the shelf beside the cot in Mara’s hidden chamber, then placed the letter beneath it for whoever might listen next."
+    },
+    {
+      "entity": "child_cup",
+      "in": "market_basin",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "A child brought her own small, chipped cup to the market basin and set it beside the rim."
+    },
+    {
+      "entity": "tide_spoon",
+      "in": "tool_drawer",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "When she returned to the House, she put the tide spoon away in a drawer with ordinary tools."
+    },
+    {
+      "entity": "old_ledger",
+      "in": "counting_room",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "She placed the old ledgers on the table in the Counting Room and opened the windows."
+    },
+    {
+      "entity": "answer_flask",
+      "in": "room_below_mouth",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "It sat on the sill of the Room Below Mouth, empty and ordinary."
+    },
+    {
+      "entity": "blue_bowl",
+      "in": "market_basin",
+      "from_chapter": 11,
+      "to_chapter": 11,
+      "evidence": "Iven set the blue bowl on its rim."
+    },
+    {
+      "entity": "broken_branch",
+      "in": "old_cistern",
+      "from_chapter": 11,
+      "to_chapter": 11,
+      "evidence": "Cale laid the broken branch at the cistern mouth."
+    },
+    {
+      "entity": "nameless_jar",
+      "in": "house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Vael put it on a table beside the House ledger, where the town’s names were recorded."
+    },
+    {
+      "entity": "mara_room",
+      "in": "dye_house",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "Mara moved to a room above the dye-house, separate from her hidden chamber beneath the House."
+    },
+    {
+      "entity": "broken_branch",
+      "in": "house",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "After retrieving the broken branch from the cistern mouth, Cale brought it to the House of Folded Water."
+    },
+    {
+      "entity": "first_jar",
+      "in": "room_below_mouth",
+      "from_chapter": 1,
+      "to_chapter": 4,
+      "evidence": "The jar on the lowest shelf rang."
+    },
+    {
+      "entity": "old_cistern",
+      "in": "bell_orchard",
+      "from_chapter": 3,
+      "to_chapter": null,
+      "evidence": "By the cistern beneath it."
+    },
+    {
+      "entity": "first_jar",
+      "in": "room_below_mouth",
+      "from_chapter": 9,
+      "to_chapter": 9,
+      "evidence": "Or left the cracked jar on the shelf"
+    },
+    {
+      "entity": "first_jar",
+      "in": "bell_orchard",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "Or felt the third name rise from the first jar’s crack, which she had brought from the House."
+    },
+    {
+      "entity": "first_jar",
+      "in": "room_below_mouth",
+      "from_chapter": 11,
+      "to_chapter": 12,
+      "evidence": "In the Room Below Mouth, Or set down the cracked jar."
+    },
+    {
+      "entity": "sleeping_alcove",
+      "in": "house",
+      "from_chapter": 1,
+      "to_chapter": null,
+      "evidence": "returned to her sleeping alcove, which sat behind the House’s second stair"
+    },
+    {
+      "entity": "flour_sack",
+      "in": "sleeping_alcove",
+      "from_chapter": 1,
+      "to_chapter": 5,
+      "evidence": "She found the flour sack beneath her mattress"
+    },
+    {
+      "entity": "first_jar",
+      "in": "sleeping_alcove",
+      "from_chapter": 1,
+      "to_chapter": 5,
+      "evidence": "She had brought it out of the Room Below Mouth because the jar was still making a sound."
+    },
+    {
+      "entity": "mara_cup",
+      "in": "sleeping_alcove",
+      "from_chapter": 9,
+      "to_chapter": 11,
+      "evidence": "Or carried the repaired cup and folded letter to her own sleeping alcove, where she could keep them safe."
+    },
+    {
+      "entity": "letter",
+      "in": "sleeping_alcove",
+      "from_chapter": 9,
+      "to_chapter": 11,
+      "evidence": "Or carried the repaired cup and folded letter to her own sleeping alcove, where she could keep them safe."
+    },
+    {
+      "entity": "comb",
+      "in": "mara_hidden_chamber",
+      "from_chapter": 9,
+      "to_chapter": 9,
+      "evidence": "There was a small wooden comb, a spool of gray thread, a shallow cup with a chipped rim, and a bundle of paper tied with red string."
+    },
+    {
+      "entity": "gray_thread",
+      "in": "mara_hidden_chamber",
+      "from_chapter": 9,
+      "to_chapter": 9,
+      "evidence": "There was a small wooden comb, a spool of gray thread, a shallow cup with a chipped rim, and a bundle of paper tied with red string."
+    },
+    {
+      "entity": "vey",
+      "in": "bell_orchard",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "She returned to the Bell Orchard and slept beneath the oldest tree."
+    },
+    {
+      "entity": "mara",
+      "in": "mara_room",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "Mara moved to a room above the dye-house, separate from her hidden chamber beneath the House."
+    },
+    {
+      "entity": "blue_bowl",
+      "in": "counting_room",
+      "from_chapter": 4,
+      "to_chapter": 10,
+      "evidence": "Vael led the tooth into the Counting Room and placed it in the blue bowl beneath a glass lid."
+    },
+    {
+      "entity": "blue_bowl",
+      "in": "counting_room",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "The town returned the blue bowl from the market basin to the Counting Room, where it stood beside the open ledger."
+    },
+    {
+      "entity": "mara_cup",
+      "in": "mara_hidden_chamber",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "She left her own childhood cup on the shelf beside the cot in Mara’s hidden chamber, then placed the letter beneath it for whoever might listen next."
+    },
+    {
+      "entity": "letter",
+      "in": "mara_hidden_chamber",
+      "from_chapter": 11,
+      "to_chapter": null,
+      "evidence": "She left her own childhood cup on the shelf beside the cot in Mara’s hidden chamber, then placed the letter beneath it for whoever might listen next."
+    },
+    {
+      "entity": "causeway",
+      "in": "salt_basin",
+      "from_chapter": 3,
+      "to_chapter": null,
+      "evidence": "At low tide it lay naked across a basin of packed salt"
+    },
+    {
+      "entity": "copper_ring",
+      "in": "red_channel",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "She placed it on the stone and stepped away."
+    },
+    {
+      "entity": "copper_ring",
+      "in": "drowned_stair",
+      "from_chapter": 9,
+      "to_chapter": 9,
+      "evidence": "The same copper ring Or had left on the Red Channel bridge sat at its center."
+    },
+    {
+      "entity": "copper_ring",
+      "in": "carved_chamber",
+      "from_chapter": 9,
+      "to_chapter": 9,
+      "evidence": "The ring fit into the blank center."
+    },
+    {
+      "entity": "cale",
+      "in": "bell_orchard",
+      "from_chapter": 4,
+      "to_chapter": null,
+      "evidence": "Cale was sent back to the Bell Orchard under guard."
+    },
+    {
+      "entity": "iven",
+      "in": "counting_room",
+      "from_chapter": 4,
+      "to_chapter": 8,
+      "evidence": "Iven remained with it."
+    }
+  ],
+  "holdings": [
+    {
+      "entity": "tide_spoon",
+      "held_by": "oruva",
+      "from_chapter": 1,
+      "to_chapter": null,
+      "evidence": "She used it to lift drops from the measuring basins"
+    },
+    {
+      "entity": "blue_tooth",
+      "held_by": "nemi",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Nemi slid it into the lining of her apron instead."
+    },
+    {
+      "entity": "blue_tooth",
+      "held_by": "oruva",
+      "from_chapter": 2,
+      "to_chapter": 4,
+      "evidence": "The tin case slipped into Or’s coat pocket."
+    },
+    {
+      "entity": "blue_tooth",
+      "held_by": "iven",
+      "from_chapter": 8,
+      "to_chapter": 11,
+      "evidence": "Iven lifted the blue tooth from the blue bowl and held it."
+    },
+    {
+      "entity": "first_jar",
+      "held_by": "oruva",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "She lifted the jar."
+    },
+    {
+      "entity": "black_seed",
+      "held_by": "oruva",
+      "from_chapter": 6,
+      "to_chapter": 10,
+      "evidence": "Nemi put the seed in Or’s palm."
+    },
+    {
+      "entity": "rain_vial",
+      "held_by": "oruva",
+      "from_chapter": 6,
+      "to_chapter": 10,
+      "evidence": "Or slipped it into the inner pocket of her coat."
+    },
+    {
+      "entity": "black_iron_key",
+      "held_by": "vael",
+      "from_chapter": 5,
+      "to_chapter": 11,
+      "evidence": "Vael closed the chamber door, removed the key from its lock, and fastened it inside her collar."
+    },
+    {
+      "entity": "old_map",
+      "held_by": "vael",
+      "from_chapter": 8,
+      "to_chapter": 10,
+      "evidence": "Vael folded the map and slipped it into the inside pocket of her collar."
+    },
+    {
+      "entity": "old_map",
+      "held_by": "oruva",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "Or took the old map from Vael’s collar"
+    },
+    {
+      "entity": "roof_chart",
+      "held_by": "pell",
+      "from_chapter": 8,
+      "to_chapter": 8,
+      "evidence": "Pell gave her the tile chart."
+    },
+    {
+      "entity": "roof_chart",
+      "held_by": "oruva",
+      "from_chapter": 8,
+      "to_chapter": 10,
+      "evidence": "Or rolled Pell’s tile chart and carried it to the Counting Room."
+    },
+    {
+      "entity": "roof_chart",
+      "held_by": "cale",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "Pell’s tile chart went to Cale."
+    },
+    {
+      "entity": "broken_branch",
+      "held_by": "cale",
+      "from_chapter": 1,
+      "to_chapter": 3,
+      "evidence": "Cale Rusk, the keeper of the Bell Orchard, had come through the market with a broken branch under one arm."
+    },
+    {
+      "entity": "broken_branch",
+      "held_by": "cale",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Cale arrived from the island carrying the broken branch."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "nemi",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nemi held the ring out."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "oruva",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Or took it to the edge of the bridge."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "mara",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Or took the copper ring from her coat pocket and gave it to Mara. Mara held it."
+    },
+    {
+      "entity": "six_lidded_box",
+      "held_by": "nemi",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "Nemi’s six-lidded box remained open on the bench"
+    },
+    {
+      "entity": "tin_case",
+      "held_by": "nemi",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Nemi tucked the cloth into a tin case, then pushed the case under the loose hem of her skirt."
+    },
+    {
+      "entity": "tin_case",
+      "held_by": "oruva",
+      "from_chapter": 2,
+      "to_chapter": 11,
+      "evidence": "The tin case slipped into Or’s coat pocket."
+    },
+    {
+      "entity": "tin_case",
+      "held_by": "nemi",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Or handed her the tin case she had carried since the House."
+    },
+    {
+      "entity": "answer_flask",
+      "held_by": "iven",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Iven gave the flask to Or."
+    },
+    {
+      "entity": "answer_flask",
+      "held_by": "oruva",
+      "from_chapter": 6,
+      "to_chapter": 11,
+      "evidence": "Iven gave the flask to Or."
+    },
+    {
+      "entity": "rain_vial",
+      "held_by": "nemi",
+      "from_chapter": 10,
+      "to_chapter": 11,
+      "evidence": "She returned the empty vial to Nemi."
+    },
+    {
+      "entity": "rain_vial",
+      "held_by": "nemi",
+      "from_chapter": 12,
+      "to_chapter": null,
+      "evidence": "The empty red-thread vial still hung from her apron."
+    },
+    {
+      "entity": "copper_plate",
+      "held_by": "mara",
+      "from_chapter": 9,
+      "to_chapter": 10,
+      "evidence": "a copper plate covered the first joint of her left thumb"
+    },
+    {
+      "entity": "copper_plate",
+      "held_by": "vael",
+      "from_chapter": 10,
+      "to_chapter": null,
+      "evidence": "Vael took the plate, then looked at Mara."
+    },
+    {
+      "entity": "black_seed",
+      "held_by": "nemi",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Or gave the black seed back to Nemi, who tucked it beneath the sixth lid of her box."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "mara",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Or took the copper ring from her coat pocket and gave it to Mara. Mara held it."
+    },
+    {
+      "entity": "old_ledger",
+      "held_by": "iven",
+      "from_chapter": 8,
+      "to_chapter": 11,
+      "evidence": "Iven borrowed the original bargain ledger after the gathering."
+    },
+    {
+      "entity": "old_ledger",
+      "held_by": "iven",
+      "from_chapter": 10,
+      "to_chapter": 11,
+      "evidence": "Vael put the original bargain ledger into a waterproof wrap and handed it to Iven."
+    },
+    {
+      "entity": "old_map",
+      "held_by": "vael",
+      "from_chapter": 10,
+      "to_chapter": 11,
+      "evidence": "Vael took the map back and folded it inside her collar."
+    },
+    {
+      "entity": "blue_tooth",
+      "held_by": "vael",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Vael took the tin case from Or and removed the tooth."
+    },
+    {
+      "entity": "first_jar",
+      "held_by": "oruva",
+      "from_chapter": 5,
+      "to_chapter": 9,
+      "evidence": "Or showed her the flour sack, and the jar within it."
+    },
+    {
+      "entity": "tin_case",
+      "held_by": "oruva",
+      "from_chapter": 10,
+      "to_chapter": 11,
+      "evidence": "Or handed her the tin case she had carried since the House."
+    },
+    {
+      "entity": "letter",
+      "held_by": "oruva",
+      "from_chapter": 9,
+      "to_chapter": 11,
+      "evidence": "Mara handed it to Or."
+    },
+    {
+      "entity": "mara_cup",
+      "held_by": "oruva",
+      "from_chapter": 9,
+      "to_chapter": 11,
+      "evidence": "Or carried the repaired cup and folded letter to her own sleeping alcove, where she could keep them safe."
+    },
+    {
+      "entity": "tree_flask",
+      "held_by": "cale",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "Cale drew the flask free and left it beside the oldest root"
+    },
+    {
+      "entity": "old_ledger",
+      "held_by": "vael",
+      "from_chapter": 11,
+      "to_chapter": 11,
+      "evidence": "Vael rested one hand on the copied ledger; Iven still carried the wrapped original."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "oruva",
+      "from_chapter": 9,
+      "to_chapter": 10,
+      "evidence": "Or picked it up."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "mara",
+      "from_chapter": 10,
+      "to_chapter": 12,
+      "evidence": "Or took the copper ring from her coat pocket and gave it to Mara."
+    },
+    {
+      "entity": "black_seed",
+      "held_by": "nemi",
+      "from_chapter": 12,
+      "to_chapter": 12,
+      "evidence": "In the courtyard, the black seed Nemi had planted in the seed pot had taken hold."
+    },
+    {
+      "entity": "blue_bowl",
+      "held_by": "iven",
+      "from_chapter": 10,
+      "to_chapter": 11,
+      "evidence": "Iven brought the blue bowl from the Counting Room, carrying it between the ledger and the map."
+    },
+    {
+      "entity": "copper_ring",
+      "held_by": "vey",
+      "from_chapter": 6,
+      "to_chapter": 9,
+      "evidence": "Vey had taken it from the bridge overnight"
+    },
+    {
+      "entity": "tin_case",
+      "held_by": "oruva",
+      "from_chapter": 4,
+      "to_chapter": 10,
+      "evidence": "Then she handed the empty tin case back to Or."
+    },
+    {
+      "entity": "first_jar",
+      "held_by": "oruva",
+      "from_chapter": 10,
+      "to_chapter": 10,
+      "evidence": "Or felt the third name rise from the first jar’s crack, which she had brought from the House."
+    },
+    {
+      "entity": "tin_case",
+      "held_by": "oruva",
+      "from_chapter": 4,
+      "to_chapter": 10,
+      "evidence": "Then she handed the empty tin case back to Or."
+    },
+    {
+      "entity": "name_list",
+      "held_by": "oruva",
+      "from_chapter": 10,
+      "to_chapter": 11,
+      "evidence": "The list of names went to Or."
+    }
+  ],
+  "containers": [
+    {
+      "container": "oldest_tree",
+      "contents": [
+        "tree_flask"
+      ],
+      "revealed_chapter": 3,
+      "evidence": "Inside lay a small glass flask, green and cloudy, sealed with a plug made from black wax."
+    },
+    {
+      "container": "tin_case",
+      "contents": [
+        "black_seed"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "She put the seed in the tin case."
+    },
+    {
+      "container": "six_lidded_box",
+      "contents": [
+        "blue_paper",
+        "thread_spool",
+        "white_salt",
+        "copper_ring",
+        "black_seed"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "The first, third, fifth, and sixth compartments were empty: the blue paper had gone downstream, the salt had been scattered, the ring was with Mara, and the black seed was planted in the courtyard."
+    },
+    {
+      "container": "tin_case",
+      "contents": [
+        "blue_tooth"
+      ],
+      "revealed_chapter": 2,
+      "evidence": "Nemi tucked the cloth into a tin case, then pushed the case under the loose hem of her skirt."
+    },
+    {
+      "container": "first_jar",
+      "contents": [
+        "blue_tooth"
+      ],
+      "revealed_chapter": 1,
+      "evidence": "A blue tooth fell into her palm."
+    },
+    {
+      "container": "flour_sack",
+      "contents": [
+        "first_jar"
+      ],
+      "revealed_chapter": 5,
+      "evidence": "Or showed her the flour sack, and the jar within it."
+    },
+    {
+      "container": "blue_bowl",
+      "contents": [
+        "blue_tooth"
+      ],
+      "revealed_chapter": 4,
+      "evidence": "Vael led the tooth into the Counting Room and placed it in the blue bowl beneath a glass lid."
+    },
+    {
+      "container": "mara_bundle",
+      "contents": [
+        "house_map",
+        "letter"
+      ],
+      "revealed_chapter": 9,
+      "evidence": "Mara untied the paper bundle."
+    },
+    {
+      "container": "wall_behind_portrait",
+      "contents": [
+        "answer_flask"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "I found it,” he said. “It was in the wall behind the scratched portrait in the Counting Room."
+    },
+    {
+      "container": "seed_pot",
+      "contents": [
+        "black_seed"
+      ],
+      "revealed_chapter": 12,
+      "evidence": "the black seed Nemi had planted in the seed pot had taken hold."
+    },
+    {
+      "container": "tin_case",
+      "contents": [
+        "black_seed"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "She put the seed in the tin case."
+    },
+    {
+      "container": "mara_bundle",
+      "contents": [
+        "house_map",
+        "letter"
+      ],
+      "revealed_chapter": 9,
+      "evidence": "Mara untied the paper bundle."
+    },
+    {
+      "container": "mara_hidden_chamber",
+      "contents": [
+        "comb",
+        "gray_thread",
+        "mara_cup",
+        "mara_bundle"
+      ],
+      "revealed_chapter": 9,
+      "evidence": "There was a small wooden comb, a spool of gray thread, a shallow cup with a chipped rim, and a bundle of paper tied with red string."
+    }
+  ],
+  "knowledge": [
+    {
+      "who": "oruva",
+      "learns": "Nemi carried the key when Mara was put below the House.",
+      "chapter": 6,
+      "evidence": "When Mara was put below the House, I was the child who carried the key."
+    },
+    {
+      "who": "oruva",
+      "learns": "Mara Senn, recorded as dead, is her mother and did not die.",
+      "chapter": 7,
+      "evidence": "Mara was a Listener. She was assigned to the old room after Vey was released from it. She did not die."
+    },
+    {
+      "who": "oruva",
+      "learns": "Her mother Mara Senn is alive.",
+      "chapter": 9,
+      "evidence": "I am still your mother."
+    },
+    {
+      "who": "oruva",
+      "learns": "The hooded visitor was Mara.",
+      "chapter": 8,
+      "evidence": "A clerk called Mara."
+    },
+    {
+      "who": "oruva",
+      "learns": "Oruva Senn is the third Listener.",
+      "chapter": 8,
+      "evidence": "The letters emerged in pale lines: Oruva Senn."
+    },
+    {
+      "who": "oruva",
+      "learns": "The woman with a copper hand is Vey Orin, the first Listener.",
+      "chapter": 8,
+      "evidence": "The woman on the causeway, the stranger in the orchard, and the missing first Listener were the same person."
+    },
+    {
+      "who": "oruva",
+      "learns": "The blue tooth was in the tin case Nemi passed to her.",
+      "chapter": 2,
+      "evidence": "The tin case slipped into Or’s coat pocket."
+    },
+    {
+      "who": "oruva",
+      "learns": "The ring had been placed in the House drain ledge by Vey.",
+      "chapter": 9,
+      "evidence": "Vey did. She wanted the ring to travel, but she didn’t know who would carry it."
+    },
+    {
+      "who": "vael",
+      "learns": "The Bell Orchard held the flask and did not steal rain.",
+      "chapter": 10,
+      "evidence": "Now she understood that the tree was a lid, not a thief."
+    },
+    {
+      "who": "tavin",
+      "learns": "A record can note a temporary observation without claiming it remains true.",
+      "chapter": 2,
+      "evidence": "he wrote “wet” beside the cup’s inventory number, then paused and added “once.”"
+    },
+    {
+      "who": "cale",
+      "never_learns": "Or never tells Cale that Vey warned her not to give him the tooth.",
+      "chapter": 3,
+      "evidence": "She did not tell Cale that the woman with a copper hand had warned her not to give it to him."
+    },
+    {
+      "who": "vael",
+      "never_learns": "At the end of chapter 9, Vael has not learned that Or met Mara in the hidden chamber.",
+      "chapter": 9,
+      "evidence": "“Have you seen anyone?”\n\n“No.”"
+    },
+    {
+      "who": "tavin",
+      "never_learns": "Tavin never learns that Or is the third Listener.",
+      "chapter": 12,
+      "evidence": "neither was told that Or had been the third Listener."
+    },
+    {
+      "who": "pell",
+      "never_learns": "Pell never learns that Or is the third Listener.",
+      "chapter": 12,
+      "evidence": "neither was told that Or had been the third Listener."
+    },
+    {
+      "who": "oruva",
+      "learns": "Vael privately admits the first-drop statement was false.",
+      "chapter": 4,
+      "evidence": "“No. It proves I was wrong to say there was no water.”"
+    },
+    {
+      "who": "oruva",
+      "learns": "Vey Orin is the woman with the copper hand and the missing first Listener.",
+      "chapter": 8,
+      "evidence": "Vey Orin is the woman with the copper hand."
+    },
+    {
+      "who": "oruva",
+      "learns": "The bargain was altered so the town would hold its name.",
+      "chapter": 10,
+      "evidence": "The last clause had been crossed out and amended to read, “The town will hold its name.”"
+    },
+    {
+      "who": "vael",
+      "learns": "Mara is alive and present in the House.",
+      "chapter": 10,
+      "evidence": "Mara came out of the courtyard’s shadow."
+    },
+    {
+      "who": "vael",
+      "learns": "The roots held the tree flask rather than drinking from the cistern.",
+      "chapter": 10,
+      "evidence": "“They were holding the tree flask.”"
+    },
+    {
+      "who": "cale",
+      "learns": "His claim that the old weather took something was wrong.",
+      "chapter": 3,
+      "evidence": "“I was wrong.”"
+    },
+    {
+      "who": "cale",
+      "learns": "The roots were holding the tree flask, not drinking from the cistern.",
+      "chapter": 10,
+      "evidence": "“They were holding the tree flask.”"
+    },
+    {
+      "who": "iven",
+      "learns": "The first drop was rain, not a lantern trick.",
+      "chapter": 8,
+      "evidence": "“You know it rained.”"
+    },
+    {
+      "who": "vael",
+      "learns": "The death entry for Mara was false.",
+      "chapter": 7,
+      "evidence": "The ledger says she died in a fever when you were six, but that was a false entry."
+    },
+    {
+      "who": "oruva",
+      "learns": "The first drop was rain, despite Vael’s denial.",
+      "chapter": 4,
+      "evidence": "Or read it and understood that Vael had lied."
+    },
+    {
+      "who": "iven",
+      "learns": "The first jar had spoken, though he could not hear its voice clearly.",
+      "chapter": 2,
+      "evidence": "Iven, meanwhile, understood that the jar had spoken, but could not hear the voice clearly enough to tell anyone what it said."
+    },
+    {
+      "who": "oruva",
+      "learns": "Nemi’s mother and Mara were different dye-house workers.",
+      "chapter": 6,
+      "evidence": "Nemi’s mother was a different dye-house worker from Mara."
+    },
+    {
+      "who": "oruva",
+      "learns": "The carved-names chamber exists beneath the House.",
+      "chapter": 5,
+      "evidence": "Behind the door, a staircase descended into a room that smelled of cold clay."
+    },
+    {
+      "who": "vael",
+      "learns": "Mara is alive and has entered the courtyard.",
+      "chapter": 10,
+      "evidence": "Mara came out of the courtyard’s shadow."
+    }
+  ],
+  "false_beliefs": [
+    {
+      "who": "vael",
+      "believes": "The Bell Orchard stole rain from the town.",
+      "from_chapter": 2,
+      "corrected_chapter": 10
+    },
+    {
+      "who": "oruva",
+      "believes": "Her mother Mara Senn is dead.",
+      "from_chapter": 1,
+      "corrected_chapter": 7
+    },
+    {
+      "who": "cale",
+      "believes": "The old weather took something from the orchard.",
+      "from_chapter": 1,
+      "corrected_chapter": 3
+    },
+    {
+      "who": "cale",
+      "believes": "The roots were drinking from the cistern.",
+      "from_chapter": 2,
+      "corrected_chapter": 10
+    },
+    {
+      "who": "vael",
+      "believes": "First North Drizzle had always been empty.",
+      "from_chapter": 2,
+      "corrected_chapter": 11
+    },
+    {
+      "who": "vael",
+      "believes": "Mara’s death entry was true.",
+      "from_chapter": 7,
+      "corrected_chapter": 7
+    },
+    {
+      "who": "oruva",
+      "believes": "The hooded visitor was a cleaner.",
+      "from_chapter": 7,
+      "corrected_chapter": 8
+    },
+    {
+      "who": "oruva",
+      "believes": "References to the copper-handed woman, Vey, and the first Listener described different people.",
+      "from_chapter": 7,
+      "corrected_chapter": 8
+    },
+    {
+      "who": "oruva",
+      "believes": "The blue tooth would open the tree flask and release a flood.",
+      "from_chapter": 10,
+      "corrected_chapter": 10
+    },
+    {
+      "who": "nemi",
+      "believes": "The blue paper was only a receipt.",
+      "from_chapter": 11,
+      "corrected_chapter": 11
+    },
+    {
+      "who": "vael",
+      "believes": "The tree flask held lamp oil.",
+      "from_chapter": 3,
+      "corrected_chapter": 4
+    },
+    {
+      "who": "cale",
+      "believes": "The tree flask could restore the orchard.",
+      "from_chapter": 3,
+      "corrected_chapter": 3
+    },
+    {
+      "who": "oruva",
+      "believes": "The copper hand belonged to a stranger separate from Vey.",
+      "from_chapter": 10,
+      "corrected_chapter": 10
+    }
+  ],
+  "corrections": [
+    {
+      "claim": "The orchard stole rain from the town.",
+      "stated_chapter": 2,
+      "corrected_chapter": 10,
+      "evidence": "Now she understood that the tree was a lid, not a thief."
+    },
+    {
+      "claim": "The first drop was a trick of the lanterns.",
+      "stated_chapter": 4,
+      "corrected_chapter": 10,
+      "evidence": "“I was wrong to say it.”"
+    },
+    {
+      "claim": "The old weather took something from the town.",
+      "stated_chapter": 1,
+      "corrected_chapter": 3,
+      "evidence": "“I was wrong.”"
+    },
+    {
+      "claim": "Cale’s roots claim: the tree roots were drinking from the cistern.",
+      "stated_chapter": 2,
+      "corrected_chapter": 3,
+      "evidence": "“I was trying to make her look beneath the tree.”"
+    },
+    {
+      "claim": "The roots were drinking rather than holding the tree flask.",
+      "stated_chapter": 2,
+      "corrected_chapter": 10,
+      "evidence": "“They were holding the tree flask.”"
+    },
+    {
+      "claim": "Mara Senn was dead.",
+      "stated_chapter": 7,
+      "corrected_chapter": 7,
+      "evidence": "She did not die."
+    },
+    {
+      "claim": "The first north drizzle jar had always been empty.",
+      "stated_chapter": 2,
+      "corrected_chapter": 11,
+      "evidence": "It had once contained the first north drizzle, though Vael had insisted it was empty."
+    },
+    {
+      "claim": "The tree flask contained lamp oil.",
+      "stated_chapter": 3,
+      "corrected_chapter": 4,
+      "evidence": "The flask holds the part of the storm the tree could not digest."
+    },
+    {
+      "claim": "The bargain had not been altered.",
+      "stated_chapter": 5,
+      "corrected_chapter": 10,
+      "evidence": "The last clause had been crossed out and amended to read, “The town will hold its name.”"
+    },
+    {
+      "claim": "The first rain was a trick of the lanterns.",
+      "stated_chapter": 8,
+      "corrected_chapter": 11,
+      "evidence": "“There was rain,” she said. “The first drop had been rain.”"
+    }
+  ],
+  "do_not_grade": []
+}
