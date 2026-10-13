@@ -106,7 +106,11 @@ def check_verdicts(verdicts: Mapping[str, Any], key: Mapping[str, Any], key_sha:
         if v.get("verdict") not in VERDICTS:
             raise VerdictError(f"{where}: entities.{k} has verdict {v.get('verdict')!r}")
     # r2.2: the reader's own re-judgement of an entity on its graded fields only
-    fields = verdicts.get("entities_fields", {}) or {}
+    fields = verdicts.get("entities_fields")
+    if fields is None:
+        fields = {}
+    elif not isinstance(fields, Mapping):
+        raise VerdictError(f"{where}: entities_fields must be an object of entity verdicts")
     unknown = sorted(set(fields) - set(key.get("entities", {})))
     if unknown:
         raise VerdictError(f"{where}: entities_fields names unknown entities {unknown}")

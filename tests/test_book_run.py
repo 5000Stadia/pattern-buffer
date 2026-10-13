@@ -684,7 +684,7 @@ def test_entities_fields_for_an_unknown_entity_or_without_a_verdict_is_refused()
     key = toy_key()
     kb = json.dumps(key).encode()
     a = verdict_file(kb, "A")
-    for bad in ({"nobody": {"verdict": "ok"}}, {"ghost": {"note": "x"}}):
+    for bad in ({"nobody": {"verdict": "ok"}}, {"ghost": {"note": "x"}}, ["ghost"], "ghost"):
         b = verdict_file(kb, "B", entities_fields=bad)
         with pytest.raises(bg.VerdictError):
             bg.build_gold(kb, [a, b])
