@@ -1,6 +1,6 @@
 # MERGE-GATE-VERB-V1: the measured merge gate as a report-only engine verb (roadmap R48)
 
-**Status:** r1 (2026-10-13), for pbr's spec review. Author: pb.
+**Status:** r1.1 (2026-10-13), for pbr's spec review. r1.1 adds construct's two report fields (m892d62): a per-call id with a no-cache contract, and the pairs exactly as requested (marked *(r1.1)*). Author: pb.
 **Source:** construct asked for it (mba5a02): its build stops when one load-bearing character comes
 out under two ids ("Tomas Breck" and "Breck"). cr refused a second, construct-made adjudicator:
 a lexical rule can't tell "Breck the baker" from Tomas Breck, and one cheap verdict is a proposal,
@@ -37,6 +37,10 @@ porcelain.merge_gate(pairs, *, context=None, batch_size=25) -> dict
   the measured gate's cap. A sentence is any non-empty string, trimmed and cut to 400 characters.
   Without `context`, every side's `context` is `[]`.
 - **`batch_size`**: a positive int, default 25, as measured.
+- *(r1.1)* **No cache, ever.** Every call asks the model afresh for every asked pair. The verb
+  keeps no memo, and reads no earlier report or row of its own (it writes none). So two calls are
+  two independent askings, as far as the engine is concerned. Whether the injected model caches
+  is the host's business, since the host injects it.
 
 ### Which pairs are asked
 
@@ -73,15 +77,17 @@ unchanged.
 ### The report
 
 ```json
-{"gate": "merge_gate", "model": "<identity or null>", "batch_size": 25,
+{"gate": "merge_gate", "call_id": "<32 hex>", "cached": false,
+ "model": "<identity or null>", "batch_size": 25,
+ "requested": [["…", "…"]],
  "counts": {"requested": 4, "asked": 3, "not_asked": {"already_one": 1},
             "batches": 1, "verdicts": {"same": 2, "unsure": 1},
             "statuses": {"answered": 3}, "stray": 0, "components": 1,
             "conflicting_components": 0},
  "pairs": [{"pair_id": "p0001", "a": "…", "b": "…", "a_names": […], "b_names": […],
             "verdict": "same", "keep": "a", "keep_id": "…", "reason": "…",
-            "status": "answered", "batch": 1}],
- "not_asked": [{"a": "…", "b": "…", "status": "already_one"}],
+            "status": "answered", "batch": 1, "requested_as": [0, 2]}],
+ "not_asked": [{"a": "…", "b": "…", "status": "already_one", "requested_as": [1]}],
  "stray": [], "batch_errors": [],
  "components": [{"members": […], "same_pairs": […], "different_pairs": [],
                  "votes": {"…": 2}, "status": "would_merge", "representative": "…"}]}
@@ -93,6 +99,12 @@ unchanged.
   and the other batches still run. No retries. The harness's `QuotaExhausted` re-raise stays
   harness-only: the engine re-raises nothing by class name.
 - `model` is the injected callable's `identity` or `model_id` attribute, or null.
+- *(r1.1)* `call_id` is a fresh `uuid4().hex` for each call. `cached` is always `false`, and it is
+  in the report so a host can assert it. `requested` is the `pairs` argument echoed exactly as
+  given, each pair as a two-item list. Every asked or not-asked entry lists, in `requested_as`,
+  the indexes into `requested` that collapsed into it, so the indexes across all entries cover
+  `0 … len(requested)-1` exactly once. A host can therefore check that an answer covers exactly
+  the pairs it asked.
 
 ### Surfaces
 
@@ -126,11 +138,15 @@ unchanged.
 8. **Failures:** a model that raises on batch 1 of 2 leaves batch 1's pairs `batch_unparseable`
    and batch 2 answered. No model injected gives `no_model`, and the scripted model is never
    called.
-9. **Bad input:** an empty list, more than 500 pairs, a non-string id, `batch_size=0` or `True`
+9. *(r1.1)* **Call identity and coverage:** two calls on the same pairs give different
+   `call_id`s, both with `cached: false`, and the scripted model is called anew by the second.
+   The `requested_as` indexes cover every requested index exactly once, including the duplicates
+   and the not-asked pairs.
+10. **Bad input:** an empty list, more than 500 pairs, a non-string id, `batch_size=0` or `True`
    each raise `ValueError` before any model call.
-10. **Viewer walk:** `merge_gate` is in `VIEWER_EXCLUDED`, and the existing classification walk
+11. **Viewer walk:** `merge_gate` is in `VIEWER_EXCLUDED`, and the existing classification walk
     passes.
-11. **Construct:** construct's full suite passes against the merged engine (the monitor's
+12. **Construct:** construct's full suite passes against the merged engine (the monitor's
     condition), run by construct on its side, with the result reported back before the merge
     is called done.
 
