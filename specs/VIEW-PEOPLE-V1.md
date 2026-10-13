@@ -1,6 +1,6 @@
 # VIEW-PEOPLE-V1: people on the device, where the world says they are
 
-**Status:** r2.1. r2 answered pbr's r1 RED (P1 a real place predicate, P2 the attribute list normalized). r2.1 takes Photonic's review (m79a495): a short numeric array crosses as a literal, and the names are settled. For pbr review and for Photonic's review as the host that needs it. Author: pb,
+**Status:** r2.2. r2.2 answers pbr's code-review RED (P1): a declared containment relation is refused like `in`. r2 answered pbr's r1 RED (P1 a real place predicate, P2 the attribute list normalized). r2.1 takes Photonic's review (m79a495): a short numeric array crosses as a literal, and the names are settled. For pbr review and for Photonic's review as the host that needs it. Author: pb,
 2026-10-13. Photonic answered the open questions in m79a495.
 **Source:** roadmap R46. Photonic's SEAM (b) (m019da7): "Offline, the phone must know where people
 are in rooms the player hasn't seen, so walking in finds them where the world says. The present
@@ -133,7 +133,14 @@ of strings is refused (`TypeError`).
 
 **Which attributes may be named.** Each normalized name is checked. A name is
 refused (`ValueError` at the call, or at service or runner start) when it is any of these:
-- in the containment family (position is `place` and `in`);
+- in the containment family (position is `place` and `in`). *(r2.2, pbr P1)* That is the
+  **world's** whole family: the built-in members plus every declared
+  `relation_family: containment` (`world.semantics.containment_family()`). It is checked:
+  - at every `export` and `feed`, against the world read;
+  - at service `attach`.
+
+  So a declaration made after the host configured the layer fails closed: the next export or
+  feed raises `ValueError`, and nothing is served;
 - a mechanism, semantics, canon-identity or meta attribute (`_RECORD_BARRED_ATTRIBUTES`);
 - `kind`, which is the person test's own key.
 
@@ -254,6 +261,12 @@ more folded layer through the same diff.
    `apply` adds or removes the `people` key to match.
 7. **Refused names.** `in`, `carried_by`, `kind`, `same_as` and a meta attribute are each refused
    at the call, at service construction and at runner start.
+7b. *(r2.2, pbr P1)* **A declared containment relation.** On a world that declares
+    `attr:lodged_in · relation_family · containment`:
+    - `people=("lodged_in",)` is refused at `export`, `feed` and `attach`;
+    - a person `lodged_in` a room still gets that room as `place`, and `lodged_in` appears nowhere
+      in the document;
+    - a declaration made after a cursor was minted makes the next `feed` raise.
 7a. *(r2, pbr P2)* **Normalization.** `("Posture", "posture")`, `("posture",)` and
     `["posture", "posture"]` give the same document and the same `q`, with one `posture` tuple per
     person. `"posture"` (a bare string) is refused.

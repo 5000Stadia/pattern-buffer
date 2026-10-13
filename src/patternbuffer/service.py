@@ -308,7 +308,8 @@ class WorldService:
             logger.warning(
                 "this World's model is not svc.gated(...): the rate cap is inactive, "
                 "and a model-bound viewer resolve answers no_rate_cap")
-        self._people = mirror.normalize_people(self._people_given, world.canonical_attribute)
+        self._people = mirror.normalize_people(self._people_given, world.canonical_attribute,
+                                               world.semantics.containment_family())
         self._frame_scope = frame_scope
         self._world = world
         self._owner = threading.get_ident()

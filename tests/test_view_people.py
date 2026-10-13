@@ -701,6 +701,49 @@ def test_7_the_mirror_cli_flags(tmp_path, capfd):
     capfd.readouterr()
 
 
+# --------------------------------- 7. a declared containment relation (pbr r2.1 P1)
+
+_LODGED = {"entity": "attr:lodged_in", "attribute": "relation_family",
+           "value": "containment", "timeless": True}
+
+
+def test_7_a_declared_containment_relation_is_refused_and_never_crosses(house):
+    canon(house, _LODGED)
+    assert "lodged_in" in house.semantics.containment_family()
+    canon(house, T("person:lodger", "kind", "person"),
+          E("person:lodger", "lodged_in", "place:bedroom"),
+          T("person:lodger", "posture", "lying"))
+    for attrs in (("lodged_in",), ("posture", "Lodged In")):
+        with pytest.raises(ValueError):
+            mirror.export(house, VF, key=KEY, people=attrs)
+        with pytest.raises(ValueError):
+            mirror.feed(house, VF, None, key=KEY, people=attrs)
+    # position is still place / in: the declared relation places the lodger
+    doc = mirror.export(house, VF, key=KEY, people=("posture",))
+    assert doc["people"]["person:lodger"] == {"facts": [["posture", "lying", "lit"]],
+                                              "place": "place:bedroom"}
+    assert "lodged_in" not in CJ(doc)
+
+
+def test_7_a_declared_containment_relation_is_refused_at_attach(tmp_path):
+    w = build_people(tmp_path)
+    try:
+        canon(w, _LODGED)
+        svc = WorldService(read_timeout=10, mirror_key=KEY, people=("lodged_in",))
+        with pytest.raises(ValueError):
+            svc.attach(w, VF)
+    finally:
+        w.close()
+
+
+def test_7_a_later_containment_declaration_fails_closed(house):
+    attrs = ("posture", "lodged_in")
+    doc = mirror.export(house, VF, key=KEY, people=attrs)     # not yet containment
+    canon(house, _LODGED)
+    with pytest.raises(ValueError):
+        mirror.feed(house, VF, doc["cursor"], key=KEY, people=attrs)
+
+
 # ------------------------------------------------------------ 7a. normalization
 
 

@@ -36,7 +36,7 @@ import sqlite3
 import sys
 import urllib.parse
 from pathlib import Path
-from typing import Any, Callable, NamedTuple, Sequence
+from typing import Any, Callable, Iterable, NamedTuple, Sequence
 
 from patternbuffer.model import (ATTR_PREFIX, CANON, CANON_IDENTITY_EDGES,
                                  CONTAINMENT_FAMILY, MECHANISM_ATTRIBUTES,
@@ -122,8 +122,8 @@ def _numeric_array(value: Any) -> bool:
 
 
 def normalize_people(people: Sequence[str] | None,
-                     canonical: Callable[[str], str] | None = None
-                     ) -> tuple[str, ...] | None:
+                     canonical: Callable[[str], str] | None = None,
+                     containment: Iterable[str] = ()) -> tuple[str, ...] | None:
     """The people layer's person-fact names as ONE tuple (VIEW-PEOPLE-V1 §2): each
     name passed through `canonical` (a world's `canonical_attribute`), then
     deduplicated and sorted. That tuple is what is validated, what the
@@ -132,6 +132,9 @@ def normalize_people(people: Sequence[str] | None,
 
     Without `canonical` (a service not yet attached to a world) a name gets the
     gate's plain normalization (strip, lowercase, spaces to `_`) and no alias map.
+    `containment` is the world's whole containment family (built-in plus every
+    declared `relation_family: containment`, `world.semantics.containment_family()`):
+    a declared containment relation is position too, and is refused like `in`.
 
     A `people` that is not a list or tuple of strings is a `TypeError` (a bare
     `str` included); a name that is blank, or in the containment family, `kind`,
@@ -142,6 +145,7 @@ def normalize_people(people: Sequence[str] | None,
         raise TypeError("people is None or a list or tuple of attribute names "
                         "(a bare str is refused)")
     names: set[str] = set()
+    barred_here = frozenset(containment)
     for name in people:
         if not isinstance(name, str):
             raise TypeError(f"a person fact is named by a str, got {type(name).__name__}")
@@ -149,7 +153,7 @@ def normalize_people(people: Sequence[str] | None,
                   else canonical(name))
         if not folded or not folded.strip():
             raise ValueError("a person fact needs a name")
-        if folded in _PEOPLE_BARRED:
+        if folded in _PEOPLE_BARRED or folded in barred_here:
             raise ValueError(f"{name!r} cannot be a person fact ({folded!r} is position, "
                              "the person test's key, or bookkeeping)")
         names.add(folded)
@@ -566,7 +570,10 @@ def feed(world: Any, view_frame: str, since: str | None = None, *,
     `people` is None (off: nothing changes) or the person facts that cross in the
     people layer (see `export`)."""
     key = _check_key(key)
-    attrs = normalize_people(people, world.canonical_attribute)
+    # validated against the world's containment family on every call, so a later
+    # `relation_family: containment` declaration fails closed (VIEW-PEOPLE-V1 §2)
+    attrs = normalize_people(people, world.canonical_attribute,
+                             world.semantics.containment_family())
     q = _people_q(attrs) if attrs is not None else None
     head = world.buffer.head()
     now_at = _resolve_at(world, at)
