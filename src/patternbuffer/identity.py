@@ -306,10 +306,7 @@ class IdentityRegistry:
             for row in self._buffer.visible(frame=CANON):
                 if row.entity not in clos:
                     continue
-                # `role` (PERSON-ROLES-V1): a person's roles change over a life
-                # (prisoner, then hero), so two ids' differing roles are eras of
-                # one person, never a contradiction that vetoes a merge
-                if row.attribute in ("name", "alias", "kind", "role") \
+                if row.attribute in ("name", "alias", "kind") \
                         or row.attribute in _IDENTITY_ATTRS \
                         or row.attribute in META_ATTRIBUTES \
                         or row.attribute in family:

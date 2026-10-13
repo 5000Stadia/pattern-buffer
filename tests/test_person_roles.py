@@ -478,15 +478,14 @@ def test_9_the_entity_valued_kind_on_a_non_person_is_silent(world, caplog):
     assert not [r for r in caplog.records if "PERSON-ROLES-V1" in r.getMessage()]
 
 
-def test_roles_never_veto_a_merge_as_a_durable_contradiction(tmp_path):
-    """A role pinned CONSTITUTIVE (a classifier's worst case) still never
-    counts as a durable contradiction: differing roles are eras of one life."""
+def test_a_dated_role_is_no_veto_and_a_durable_one_stays_a_soft_veto(tmp_path):
+    """r1.3: eras of one life (dated roles, STATE by default) never veto a merge;
+    a role a classifier or host made durable keeps SHAPE-FIX-V1's soft veto
+    (the auto-gate declines, the host or merge_gate decides), because a wrong
+    fusion of two people is the failure that must not happen."""
     w = World(tmp_path / "veto.world", world_id="w:veto",
               model=StubModel(fallback=rule_classifier_fallback()))
     try:
-        w.porcelain.ingest_structured([
-            {"entity": "attr:role", "attribute": "durability", "value": "CONSTITUTIVE",
-             "timeless": True}], classify="rules")
         w.ingest_structured([
             {"entity": "person:tomas_breck", "attribute": "kind", "value": "prisoner",
              "valid_from": 1.0},
@@ -494,5 +493,8 @@ def test_roles_never_veto_a_merge_as_a_durable_contradiction(tmp_path):
              "valid_from": 7.0},
         ], classify="rules")
         assert w.registry.durable_contradictions("person:tomas_breck", "person:breck") == []
+        for row in w.buffer.visible(attribute="role"):
+            w.classifier.set(row.id, "DISPOSITIONAL")
+        assert w.registry.durable_contradictions("person:tomas_breck", "person:breck")
     finally:
         w.close()

@@ -1,6 +1,6 @@
 # PERSON-ROLES-V1: a person is a person for life; what they are at a time is a role
 
-**Status:** r1.2 (from the build: roles never count as a durable contradiction). r1.1. It answers pbr's r1 RED (P1: a distinct gate reclassification receipt, never `canonicalized_from`; P2: the synthesized `kind = person` is `inferred`). It also takes construct's shape read (m9a8701: no role in force answers `unknown`). For pbr review. Author: pb, 2026-10-13.
+**Status:** r1.3 (r1.2's exclusion of `role` from the durable-contradiction veto is reverted: it broke SHAPE-FIX-V1's guard; a dated role, STATE, never vetoes). r1.1. It answers pbr's r1 RED (P1: a distinct gate reclassification receipt, never `canonicalized_from`; P2: the synthesized `kind = person` is `inferred`). It also takes construct's shape read (m9a8701: no role in force answers `unknown`). For pbr review. Author: pb, 2026-10-13.
 **Source:** roadmap R49 (construct m02bdb6). Kabe's answer on gate g9c3792 (2026-10-13), in his
 words: "imagine a character whose spans a story of a lifetime there may be different erad of that
 character they may be a prisoner, one chapter and a hero the next, so build an elegant structure
@@ -42,12 +42,17 @@ Three parts. None changes an existing world.
     store).
 - A host may still declare `role` differently, or pin its durability. The usual declaration rules
   apply.
-- *(r1.2, found in the build)* **Roles never veto a merge.**
-  - `identity.durable_contradictions` already skips `name`, `alias` and `kind`. It now skips `role`
-    too.
-  - Two ids for one person, `prisoner` in chapter 1 and `hero` in chapter 7, are eras of one life.
-    If a classifier (or a host's pin) made `role` CONSTITUTIVE or DISPOSITIONAL, those differing
-    values would otherwise block the merge: exactly the lifetime case Kabe described.
+- *(r1.3, replacing r1.2)* **Roles and the durable-contradiction veto.** r1.2 excluded `role` from
+  `identity.durable_contradictions`. That undid SHAPE-FIX-V1's guard: two different people with
+  contradictory standing roles (HD 089: "supply lead" against "ward apprentice") were fused before
+  that guard existed, and its test failed. r1.3 restores the guard unchanged:
+  - **A dated role is changeable state, and never vetoes.** The classifier's expected class for a
+    timed role is STATE, and STATE rows are not durable. So the eras of one life (`prisoner` in
+    chapter 1, `hero` in chapter 7) never block a merge. A test pins this.
+  - **A role a classifier or host made durable keeps the soft veto.** Differing DISPOSITIONAL or
+    CONSTITUTIVE roles still make the auto-gate decline (`durable_contradiction`). That decline
+    is soft: the pair stays a proposal, `porcelain.merge_gate` can ask about it, and the host's
+    `merge` can join it. A missed merge is recoverable; a wrong fusion is not (precision first).
 
 ### 2. The ingest gate moves a person's non-person kind into `role`
 
@@ -171,8 +176,9 @@ Nothing is rewritten. Append-only rules out any migration that edits rows.
 7. **Prompts.** Both prompt constants contain the new rule. The rule text is identical in both.
 8. **Existing worlds.** A world file built before the change reads byte-identically after it.
    Only new ingests are affected.
-8a. *(r1.2)* **No veto.** With `role` pinned CONSTITUTIVE, two person ids with differing roles have
-    no durable contradiction. The test fails without the change.
+8a. *(r1.3)* **Eras don't veto; durable roles still do, softly.** Two person ids whose kinds
+    became dated roles (`prisoner` from 1, `hero` from 7) have no durable contradiction. With those
+    role rows classified DISPOSITIONAL, they do, as SHAPE-FIX-V1's test requires.
 9. **The entity-valued kind** on a person is left alone and logged.
 10. **Full suite green.** The ingestion-fidelity and chapter-test fixtures are unchanged, or any
     movement is reported and explained in the build note.
