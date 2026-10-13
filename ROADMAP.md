@@ -142,6 +142,10 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - The choice: a word true of the being alone (prisoner, widow, hero, exile) is a role tag. A word that needs a second party to be true (father of, mayor of, captain of, hostile toward) is a dated relationship, an entity-valued fact to that party, readable from both sides.
     - Where the relationship exists, the tag is derived from it at read time, never stored beside it (P3), so the two can't disagree.
     - The model makes the choice in extraction, not from a word list. That is R52.
+  - Kabe delegated the architecture to construct ("I propose that dilemma to you and trust you with the most elegant architecture"). Construct's proposal: `/home/k/Newproject/docs/design/BEINGS-TYPES-ROLES-RELATIONSHIPS.md` (m5bc622, mabe3e4). It sets two questions per word: does it need a party (then a relationship), and if not, is it by nature (type in `kind`) or for a while (role)?
+    - pb's reply (to mabe3e4): agreed on the rule, derived titles, stance as a relationship family, and a new reverse read.
+    - pb's pushback: make the type-or-role judgment a deferred classifier verdict on a being's kind rows, read as type (CONSTITUTIVE) or role (STATE), not a write-time move at the gate. That keeps model calls off the write path, fixes existing worlds with no rewrite, and keeps a wrong call correctable.
+    - Both placements go to fresh views when it is brought forward.
   - Nothing to build until Kabe brings the item forward.
 - [ ] R43 A containment read that says each item's edge (`worn_by`, `held_by`, `in`), so a narrator can say "wearing the grey coat" rather than "on your person". Construct's nice-to-have from E3's shape read (me79b81), not a blocker.
 - [ ] R44 A repeated `attr:*` declaration after data exists: an identical one becomes a no-op receipt and a conflicting one a skip, instead of raising and dropping the host's whole batch (construct run 7, mfbd59d: a re-sent `attr:keeps arity set_valued` dropped a turn's ingest)
