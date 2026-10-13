@@ -208,7 +208,7 @@ def test_2c_a_private_alias_resolves_only_in_its_frame(world):
 def test_2d_canon_retype_retracts_only_canon_kind_rows(world):
     """2d: `retype` retracts canon kind rows only; Marn's "ghost" survives."""
     world.ingest_structured([
-        {"entity": "obj:crown", "attribute": "kind", "value": "person", "timeless": True},
+        {"entity": "obj:crown", "attribute": "kind", "value": "servant", "timeless": True},
     ])
     marn_row = world.ingest_structured([
         {"entity": "obj:crown", "attribute": "kind", "value": "ghost", "timeless": True},

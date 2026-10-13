@@ -120,6 +120,11 @@ META_ATTRIBUTES = frozenset(
         "relation_family",
         "fold_policy",
         "structural",
+        # PERSON-ROLES-V1: the gate's own receipts, on a row it moved or
+        # derived. Hidden from reads like `canonicalized_from`, but never
+        # replayed: the move is contextual, not a global attribute alias.
+        "reclassified_from",
+        "derived_by",
     }
 )
 
@@ -161,8 +166,11 @@ MECHANISM_ATTRIBUTES = frozenset(MECHANISM_STATUS) | {
 # Set-valued attributes: multiple coexisting values are data, never a
 # contradiction — a conflict requires a functional key (run-4 finding:
 # 62 of 77 flags were names/aliases/edges misread as disputes).
+# `role` (PERSON-ROLES-V1) is what a person is at a time: a person can be a
+# prisoner and a father at once, so several roles coexist.
 SET_VALUED_ATTRIBUTES = frozenset({"name", "alias", "connects_to", "adjacent_to",
-                                   "maybe_same_as", "same_as", "distinct_from", "aka"})
+                                   "maybe_same_as", "same_as", "distinct_from", "aka",
+                                   "role"})
 
 VALUE_TYPES = frozenset({"entity", "literal", "unresolved", "delta"})
 
