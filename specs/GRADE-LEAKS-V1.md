@@ -1,6 +1,6 @@
 # GRADE-LEAKS-V1: grading that sees the ending leak, false beliefs and points of view
 
-**Status:** r2.2 (pbr r2.1 RED: binding by log position, not chapter; `map(R) = E` required; the exact tokenizer and stoplist; every row's position counts). r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
+**Status:** r2.3 (pbr r2.2 RED: chunk classification uses a tokenizer that keeps articles, since `book_normalize` drops a leading article). r2.2 (pbr r2.1 RED: binding by log position, not chapter; `map(R) = E` required; the exact tokenizer and stoplist; every row's position counts). r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
 bookkeeping); no engine change.
 **Source:** consult c4bb1f2 point 3, accepted by Kabe on gate g936be9. Redesigned after round two
 (ce0ba1f); see `docs/SPEED-PLAN-2026-10-13.md` step 2.
@@ -91,7 +91,11 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
      - c's text contains no other graded alias of E.
 
      *(r2.2, exact)* **"Contains" is a whole-token match.**
-     - **Tokenizer:** `tokens(x) = re.findall(r"[a-z0-9]+(?:'[a-z0-9]+)*", book_normalize(x))`.
+     - **Tokenizer** *(r2.3)*:
+       `tokens(x) = re.findall(r"[a-z0-9]+(?:'[a-z0-9]+)*", fold_quotes(x).lower())`.
+       It applies quote folding and lowercase, and **no article stripping**, so
+       `tokens("The One") == ["the", "one"]`. `book_normalize`, which drops one leading article,
+       stays the matcher for raw-name mapping (§3.1–3.2) and nowhere else.
      - An alias is contained when its token list occurs as a contiguous run in the chunk's token
        list.
      - **Common-word aliases** take no part in chunk classification:
@@ -226,8 +230,8 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
     - "Or" never classifies a chunk, and is listed as left out;
     - "the hooded visitor" matches as a phrase, and "hooded visitors" does not;
     - prose containing "or" doesn't make a chunk pre-reveal or not;
-    - *(r2.2)* an alias "The One" (two tokens) classifies chunks, while an alias "One" (stoplisted)
-      does not;
+    - *(r2.2, r2.3)* an alias "The One" tokenizes as `["the", "one"]` (two tokens) and classifies
+      chunks, while an alias "One" (one stoplisted token) does not;
     - the tokenizer keeps "o'brien" as one token and splits "copper-hand" into two.
 3a. *(r2)* **Raw mapping:**
     - an id named both by "mara" and by an alias of another key entity is ambiguous, and its rows
