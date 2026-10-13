@@ -1,6 +1,6 @@
 # BUILD-PROFILE-V1: where a book build's time, turns and tokens go, per model call
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-13. Harness only: the engine is untouched.
+**Status:** r1.1. It answers pbr's r1 RED: objectives in their own file, so the receipt is untouched; per-attempt records; the replay rules and their assumptions stated; contextvar copying per submission; a minimum sample for the fit. For pbr review. Author: pb, 2026-10-13. Harness only: the engine is untouched.
 **Source:** Kabe on gate g10c3af (2026-10-13): "I want to put a little pause right here now, to
 consider optimization for speed of building that story. Do you have thorough benchmarks and
 logging to determine what element takes up what amount of time during the build process? And
@@ -36,9 +36,12 @@ BUILD-TIMINGS-V1 (R26's stage split).
   `contextvars.ContextVar`.
   - Every `record(...)` inside it writes the label into its JSON line.
   - Calls outside any label get `stage: null`. They are counted, never dropped.
-- **Worker threads.** `ThreadPoolExecutor` does not carry context into its workers. The pipeline's
-  submits therefore wrap each task in `contextvars.copy_context().run`, so a pass-1 worker's calls
-  carry their chunk's label.
+- **Worker threads.** `ThreadPoolExecutor` does not carry context into its workers.
+  - *(r1.1)* At each submission, the pipeline enters that unit's label, then takes
+    `contextvars.copy_context()`, and submits `ctx.run(task)`. One copy is taken per submission,
+    never shared.
+  - So every worker's calls carry their own unit's label, including pass-0 segments running in
+    parallel and pass-1 chunks in their pool.
 - **Timing.** `record(...)` gains `started` (epoch seconds) and `latency_s`. Each shim measures
   around its own subprocess or HTTP call: `model_shim` (claude), `codex_shim`, and the merge gate's
   calls through the injected model.
@@ -66,15 +69,23 @@ BUILD-TIMINGS-V1 (R26's stage split).
   - a classification batch;
   - a merge-gate batch;
   - the audit.
-- The pipeline writes one line per objective to the same log when it settles:
+- *(r1.1, pbr P1)* Objectives go to **their own file**, `RUN_DIR/objectives.jsonl`, never
+  `usage.jsonl`. The usage log stays calls only, so the receipt (`Receipt.stage`, `_priced`) and
+  every reader of the usage log are unchanged.
+- The pipeline writes one line per objective when it settles, with **one record per attempt**:
 
   ```json
-  {"event": "objective", "stage": "pass1", "unit": "chunk:07", "attempts": 2,
-   "accepted": true, "seconds": 241.3, "reason": null}
+  {"stage": "pass1", "unit": "chunk:07", "accepted": true, "seconds": 241.3,
+   "attempts": [
+     {"attempt": 1, "started": …, "seconds": 118.0, "outcome": "rejected",
+      "reason": "reject rate over threshold (21 rejects)"},
+     {"attempt": 2, "started": …, "seconds": 123.3, "outcome": "accepted", "reason": null}]}
   ```
 
-  `reason` is the rejection text when `accepted` is false: the reject rate, a parse failure or a
-  timeout.
+  - An attempt's `seconds` covers its model call or calls plus its parse and check, from the
+    attempt's start to its verdict.
+  - `outcome` is one of `accepted`, `rejected`, `timeout` and `error`.
+  - The objective's `seconds` is from the first attempt's start to the final verdict.
 - Nothing in the pipeline's behaviour changes. It only reports what it already decides.
 
 ### 3. The profile report: `evals/harness/profile_build.py RUN_DIR`
@@ -95,17 +106,25 @@ call, and writes `profile.json` and `profile.md`.
   (with reasons), and the seconds spent on retries.
 - **Ceilings, computed from the measured calls with no new run:**
   - the stage's **floor**: its longest single objective, which is the most parallelism can buy;
-  - **what-if wall times**, from a list-scheduling replay of the measured objective durations
-    under:
-    - pass-0 parallel (4 workers);
-    - pass-1 with 8 workers;
-    - classification and audit overlapped with pass-1's tail;
-    - no retries.
-
-  The replay assumes call latency doesn't change with concurrency. The report says so, because R26
-  measured that four parallel pass-0 calls each ran slower.
+  - **what-if wall times**, from a list-scheduling replay (in the measured submission order, each
+    objective given to the first free worker) of the measured objective durations *(r1.1)*:
+    - **pass-0 parallel (4 workers)** and **pass-1 with 8 workers**: each objective's measured
+      `seconds`, all attempts included.
+    - **No retries**: each objective's **first attempt's** `seconds` only. An objective whose first
+      attempt failed is scheduled at that attempt's duration, as if it had been accepted. One that
+      never accepted is shown separately and counted in a "would still fail" line. The replay
+      can't know what a different first answer would have cost.
+    - **Overlapped pipeline** (hypothetical, not today's code): assume a pass-1 chunk's facts can
+      be classified as soon as that chunk is accepted. Classification batches start then, with
+      their measured durations, on a separate worker. Escape repair, commit's engine work and the
+      audit stay serial after the last chunk and its classification, as today. The report states
+      this dependency model next to the number.
+  - **Assumption, printed on every what-if:** call latency doesn't change with concurrency. R26
+    measured four parallel pass-0 calls each running slower, so the what-ifs are lower bounds.
 - **The output-bound test:** a fit of latency against output tokens and against input tokens, with
   R² for each. It answers whether calls are slow because of what they write or what they read.
+  *(r1.1)* A fit with fewer than 5 calls, or zero variance in either variable, is reported as
+  "unmeasured" with the reason, never as a number.
 - **Old runs:** the report reads R25-metered and R26 directories too.
   - R26's lines have no `latency_s` or labels, so it falls back to stage totals and marks the
     fields as unmeasured.
@@ -135,18 +154,32 @@ place for it:
    - Every `usage.jsonl` call line has the right stage, unit and attempt, including lines from
      worker threads.
    - A call outside any label has `stage: null` and is counted.
+1a. *(r1.1)* **Concurrent labels.** pass-0 runs parallel (4 workers) and pass-1 runs with 4
+    workers on fakes that sleep, so calls overlap in time. Every call line carries its own unit,
+    and no two concurrent units' labels cross.
 2. **Timing.** `latency_s` is within 50 ms of the fake's sleep. A fake timeout records
    `outcome: "timeout"` and an error records `outcome: "error"`, both still counted by the receipt.
 3. **Objectives.**
-   - A chunk whose first parse fails the reject check has `attempts: 2, accepted: true`.
-   - One that fails twice has `accepted: false` with its reason, and the run aborts as today.
+   - A chunk whose first parse fails the reject check has two attempt records (`rejected`, then
+     `accepted`) and `accepted: true`.
+   - One that fails twice has `accepted: false`, each attempt's reason, and the run aborts as
+     today.
    - The objective lines' count equals the units the run planned.
+   - `usage.jsonl` contains no objective line.
+3a. *(r1.1, pbr P1)* **The receipt oracle.** A priced fake (every call has a `cost_usd`) runs the
+    toy book twice, profiling on and off. The two `receipt.json` files are identical in every
+    pre-existing field, `cost_known` is true for every stage, and the stage costs and tokens are
+    equal.
 4. **Report.** On the fake run:
    - stage shares sum to 1 (±0.01);
    - utilization is in (0, 1];
    - p50 and p90 match the fake latencies;
    - the floor is the longest objective;
    - the list-scheduling what-if for 8 workers equals a hand-computed schedule;
+   - the no-retries replay uses first-attempt durations, and lists a never-accepted unit
+     separately;
+   - the overlapped what-if equals a hand-computed schedule under the stated dependency model;
+   - a 3-call run marks the fit "unmeasured";
    - the latency fit gives R² near 1 for output tokens on a fake whose sleep is proportional to
      output.
 5. **Old runs.** `profile_build.py` on `evals/results/2026-10-10-r26-build-timings/seq` writes a
