@@ -81,7 +81,8 @@ def test_registry_is_exactly_the_declared_tools():
 def test_registry_completeness_vs_porcelain_surface():
     # every public porcelain verb is either a V1 tool or explicitly classified
     # V1.1 (model-backed) — a NEW verb fails here until classified.
-    V1_1 = {"extract", "ingest", "ask", "resolve"}      # model-backed (sampling)
+    V1_1 = {"extract", "ingest", "ask", "resolve",
+            "merge_gate"}                               # model-backed (sampling)
     PYTHON_SUGAR = {"build"}    # context manager over begin/seal/abort — the
                                 # verbs are the portable surface (BUILD-SESSION-V1)
     public = {n for n, m in inspect.getmembers(Porcelain, inspect.isfunction)
