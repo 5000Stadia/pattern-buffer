@@ -105,6 +105,18 @@ def check_verdicts(verdicts: Mapping[str, Any], key: Mapping[str, Any], key_sha:
     for k, v in entities.items():
         if v.get("verdict") not in VERDICTS:
             raise VerdictError(f"{where}: entities.{k} has verdict {v.get('verdict')!r}")
+    # r2.2: the reader's own re-judgement of an entity on its graded fields only
+    fields = verdicts.get("entities_fields")
+    if fields is None:
+        fields = {}
+    elif not isinstance(fields, Mapping):
+        raise VerdictError(f"{where}: entities_fields must be an object of entity verdicts")
+    unknown = sorted(set(fields) - set(key.get("entities", {})))
+    if unknown:
+        raise VerdictError(f"{where}: entities_fields names unknown entities {unknown}")
+    for k, v in fields.items():
+        if not isinstance(v, Mapping) or v.get("verdict") not in VERDICTS:
+            raise VerdictError(f"{where}: entities_fields.{k} has no valid verdict")
     for section in GRADED_SECTIONS + UNGRADED_SECTIONS:
         want = len(_section(key, section))
         got = [item.get("i") for item in _section(verdicts, section)]
@@ -136,6 +148,12 @@ def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> d
     if readers[0] == readers[1]:
         raise VerdictError(f"the two readers share the label {readers[0]!r}")
 
+    def entity_verdict(d: Mapping[str, Any], kid: str) -> Mapping[str, Any]:
+        """r2.2: an entity is judged on kind and aliases only (first_chapter is
+        never graded); the reader's ``entities_fields`` entry, when present,
+        is that judgement and stands in for the whole-entry verdict."""
+        return (d.get("entities_fields") or {}).get(kid) or d["entities"][kid]
+
     def verdict_of(d: Mapping[str, Any], section: str, i: int) -> tuple[str, str]:
         item = _by_index(d, section)[i]
         return item["verdict"], item.get("note", "") or ""
@@ -145,8 +163,8 @@ def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> d
     # entities: both readers ok
     entity_ok: dict[str, bool] = {}
     for kid in key.get("entities", {}):
-        vs = {r: d["entities"][kid]["verdict"] for r, d in zip(readers, docs)}
-        ns = {r: d["entities"][kid].get("note", "") or "" for r, d in zip(readers, docs)}
+        vs = {r: entity_verdict(d, kid)["verdict"] for r, d in zip(readers, docs)}
+        ns = {r: entity_verdict(d, kid).get("note", "") or "" for r, d in zip(readers, docs)}
         entity_ok[kid] = all(v == "ok" for v in vs.values())
         if not entity_ok[kid]:
             dropped.append({"id": f"entities.{kid}", "verdicts": vs, "notes": ns})
@@ -158,7 +176,7 @@ def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> d
             continue
         flagged: dict[str, list[str]] = {}
         for r, d in zip(readers, docs):
-            for bad in d["entities"][kid].get("bad_aliases", []) or []:
+            for bad in entity_verdict(d, kid).get("bad_aliases", []) or []:
                 flagged.setdefault(book_normalize(bad), []).append(r)
         keep = []
         for alias in ent.get("aliases", []):

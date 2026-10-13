@@ -1,0 +1,1637 @@
+{
+ "entities": {
+  "oruva": {
+   "verdict": "ok",
+   "note": "Alias \"the third ear\" is not clearly Oruva: ch7 says the vial was \"transferred from Mara to 'the third ear.' Or realized the vial had been the one Nemi gave her. Nemi ... it had belonged to her mother\" - third ear may be Nemi's mother or a role, not settled.",
+   "bad_aliases": [
+    "the third ear"
+   ]
+  },
+  "vael": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "nemi": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "cale": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "iven": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "vey": {
+   "verdict": "ok",
+   "note": "Alias \"the other Listener\" (ch2 \"the other had not been seen for years\") is only confirmed as Vey by ch4 (\"I was the other Listener\"). Mara and Oruva are also Listeners, so use with care.",
+   "bad_aliases": []
+  },
+  "mara": {
+   "verdict": "ok",
+   "note": "first_chapter 1 is only the unnamed \"mother\" (ch1 \"her mother's\" spoon); first named in ch5 (\"Vey and Mara appeared together\"), hooded figure first seen ch3. Defensible.",
+   "bad_aliases": []
+  },
+  "tavin": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "pell": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "ors": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "house": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "room_below_mouth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "silt_choir": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "low_weather": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "counting_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "bell_orchard": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "drowned_stair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "red_channel": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "dye_house": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "market_court": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "tide_spoon": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "first_jar": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "blue_tooth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "tin_case": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "black_seed": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "rain_vial": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "six_lidded_box": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "black_iron_key": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "old_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "roof_chart": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "broken_branch": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "copper_ring": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "old_ledger": {
+   "verdict": "ok",
+   "note": "Text has several ledgers (ch8 kelp/horn \"old ledgers\", the \"House ledger\", Vael's copied/\"new\" ledger, the \"open ledger\" of ch12). Only \"original bargain ledger\" is this object; \"old ledgers\" in ch12 is plural and not it.",
+   "bad_aliases": []
+  },
+  "listening_road": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "oldest_tree": {
+   "verdict": "ok",
+   "note": "kind object is odd (a tree) but harmless.",
+   "bad_aliases": []
+  },
+  "tree_flask": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "answer_flask": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "blue_paper": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "thread_spool": {
+   "verdict": "ok",
+   "note": "\"spool of thread\" is easy to confuse with the separate \"spool of gray thread\" (ch9, Mara's chamber) and \"spool of copper wire\" (ch7). Own object: ch6 second lid, ch12 \"The thread spool remained beneath the second lid.\"",
+   "bad_aliases": []
+  },
+  "white_salt": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "carved_chamber": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "mara_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "vey_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "blue_bowl": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "flour_sack": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "nameless_jar": {
+   "verdict": "wrong",
+   "note": "first_chapter should be 2: ch2 \"Or recognized it as the cracked First North Drizzle jar, though the nameless jar beside the ledgers was a different vessel.\" Ch5 re-introduces it (found behind the ledgers, label scratched away).",
+   "bad_aliases": []
+  },
+  "salt_basin": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "old_cistern": {
+   "verdict": "ok",
+   "note": "\"cistern\" is used for several things: ch1 \"high cisterns\" (clerks' rain release), ch5 \"disused cistern door\" (House western corridor) and the cistern beneath the tree. Aliases given are specific to the one beneath the tree; ch11 \"cistern mouth\" is ambiguous.",
+   "bad_aliases": []
+  },
+  "causeway": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "west_court": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "west_gate": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "public_hall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "archive_alcove": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "portrait": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "wooden_stool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "copper_wire_spool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "copper_plate": {
+   "verdict": "ok",
+   "note": "Singular \"copper plate\" = Mara's thumb plate (ch9-10); Vey's hand is also \"coated in thin copper plates\" (ch3), so the bare alias can mislead.",
+   "bad_aliases": []
+  },
+  "letter": {
+   "verdict": "ok",
+   "note": "Alias is a descriptive phrase; fine. ch9 text: unsigned, \"may have been\" Vey.",
+   "bad_aliases": []
+  },
+  "mara_cup": {
+   "verdict": "ok",
+   "note": "Ownership is contradictory in text: ch9 Mara says \"The cup was yours when you were little\" but narration calls it \"Mara's repaired childhood cup\" and ch12 \"Mara's childhood cup\". Identity of the object is stable (shallow chipped-rim cup, handle repaired with copper wire).",
+   "bad_aliases": []
+  },
+  "tavin_cup": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "child_cup": {
+   "verdict": "ok",
+   "note": "Alias \"chipped cup\" is also close to the mara_cup description (\"a shallow cup with a chipped rim\", ch9); the ch11/12 \"small, chipped cup\" is the child's.",
+   "bad_aliases": []
+  },
+  "notice": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "first_shelf": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "hollow_under_shelf": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "mara_bundle": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "stone_disk": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "tavin_jar": {
+   "verdict": "ok",
+   "note": "Identity fine. Text is vague on whether this is distinct from the cracked first jar (ch7 \"The jar was not part of the mystery, as far as she could tell\") but it is presented as a separate ordinary jar.",
+   "bad_aliases": []
+  },
+  "market_basin": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "wall_behind_portrait": {
+   "verdict": "ok",
+   "note": "kind is a place/location (hiding place in a wall), not an object; identity and first_chapter 6 are fine.",
+   "bad_aliases": []
+  },
+  "house_map": {
+   "verdict": "ok",
+   "note": "Mara's old map of the House from before the western corridor; distinct from Vael's route map. first_chapter 9 correct.",
+   "bad_aliases": []
+  },
+  "seed_pot": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "paper_boat": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "paving_stone": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "roof_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "western_corridor": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "tool_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "mara_hidden_chamber": {
+   "verdict": "ok",
+   "note": "Entrance is a panel in the north wall of the Room Below Mouth (ch9); ch12 calls it \"her hidden chamber beneath the House\".",
+   "bad_aliases": []
+  },
+  "rain_notice": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "blue_bead": {
+   "verdict": "ok",
+   "note": "ch4 also has \"A blue bead of water clung to the brass tide spoon\" - a different thing from the round bead found in Or's sleeve thread; alias \"blue bead\" is ambiguous within ch4.",
+   "bad_aliases": []
+  },
+  "dry_copper_bell": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "roof_color_chart": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "sleeping_alcove": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "comb": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "gray_thread": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "cale_grandmother": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "nemi_mother": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": []
+  },
+  "name_list": {
+   "verdict": "ok",
+   "note": "Aliases \"The list of names\"/\"list of names\" collide with Iven's separate list written on the green glass roof (ch10: \"He had written a list of names on the green glass roof\"). \"copied names\" also echoes the ch5 slips copied from the wall.",
+   "bad_aliases": [
+    "The list of names",
+    "list of names"
+   ]
+  }
+ },
+ "same_as": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": "Identity given ch8 (Vael: \"A clerk called Mara\"), seen ch9."
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "unclear",
+   "note": "ch7: \"a red-thread vial transferred from Mara to 'the third ear.' Or realized the vial had been the one Nemi gave her. Nemi had not known what it contained, but it had belonged to her mother.\" The vial reached Or via Nemi, and Nemi says her mother owned it; so \"the third ear\" is not clearly Oruva (could be Nemi's mother). Oruva = third Listener only becomes explicit ch8."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": "Narration calls her \"woman with a copper hand\" from ch3; name Vey ch4; confirmation of identity with Vey Orin ch8 (map reverse) - chapter 8 is the \"full confirmation\"."
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "Vey Orin named by Iven ch5 (\"Her name was Vey Orin ... Perhaps\"); confirmed ch8."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": "Hooded person introduced ch7 (anonymous), identified as Mara ch8, seen ch9."
+  }
+ ],
+ "not_same": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "Both have crescent scars but \"curving opposite\" (ch9, ch3); sloppy wording \"sharing\" but pair is correct."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": "Presented as separate ordinary jar (ch7 \"not part of the mystery\"), though the text is a bit coy (\"a small blue crescent reflected in its base\")."
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": "Duplicate of item 8."
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": "Pair nemi/mara is trivially true; the note text is about nemi_mother (ch6 \"Nemi's mother was a different dye-house worker from Mara\"), mismatched label."
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": "ch8 \"Pell found a separate old tile chart inside a cupboard\" vs ch2 \"the roof's old color chart\"."
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": "Duplicate of item 18."
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": "Duplicate of item 6 (ch9: \"curving opposite to the scar on Vey's face\")."
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "locations": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "Fine, but the road is named \"listening road\" already in ch7 (Or's margin note), so from_chapter 7 is more accurate than 9."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "unclear",
+   "note": "ch9: panel opens in the north wall of the Room Below Mouth onto \"a narrow chamber\"; ch12 \"her hidden chamber beneath the House\". It is a chamber off/behind the room, in the House, not literally \"in\" the room."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": "True, but the basin under the court is already stated ch6/ch8 (\"hidden under three layers of stone\")."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": "ch2 evidence quote does not locate it, but ch2 Vael: \"the tree roots are drinking from the cistern\" ties it to the orchard; ch3 explicit (\"By the cistern beneath it\")."
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": "Weak (everything is in Ors); bowl is carried from the Counting Room ch10."
+  },
+  {
+   "i": 18,
+   "verdict": "wrong",
+   "note": "to_chapter null is wrong: ch12 \"The town returned the blue bowl from the market basin to the Counting Room\" (item 57)."
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": "Flask has been in the oldest tree on the island since ch3; from 10 only marks it being drawn out and left \"beside the oldest root\"."
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": "Tooth placed in bowl end of ch11; ch12 bowl moved back to Counting Room (text silent on the tooth)."
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": "ch11. (ch9: Mara first put it back \"on the shelf in Mara's hidden chamber\" then Or carried it to her alcove, same scene - text muddle.)"
+  },
+  {
+   "i": 32,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 35,
+   "verdict": "unclear",
+   "note": "ch12 evidence says \"old ledgers\" (plural) on the Counting Room table; the original bargain ledger was last carried by Iven (ch11 \"Iven still carried the wrapped original\"). Not stated where it ends."
+  },
+  {
+   "i": 36,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 37,
+   "verdict": "ok",
+   "note": "Duplicate-ish of 18 but correct and correctly ended ch11."
+  },
+  {
+   "i": 38,
+   "verdict": "ok",
+   "note": "ch11 \"Cale laid the broken branch at the cistern mouth\"; which cistern is ambiguous (ch11 route lists the old cistern beneath the tree first)."
+  },
+  {
+   "i": 39,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 40,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 41,
+   "verdict": "ok",
+   "note": "Duplicate of item 26."
+  },
+  {
+   "i": 42,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 43,
+   "verdict": "ok",
+   "note": "Duplicate of 15, correct from ch3."
+  },
+  {
+   "i": 44,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 45,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 46,
+   "verdict": "wrong",
+   "note": "ch11: Or set the cracked jar down in the Room Below Mouth, then \"Or lifted the cracked jar and carried it from the Room Below Mouth through the channel route. At the market basin she set it down\". So it leaves the Room in ch11; ch12 location not stated."
+  },
+  {
+   "i": 47,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 48,
+   "verdict": "unclear",
+   "note": "Sack beneath mattress ch1 and end of ch5, but it travels with the jar in ch5 (Vael \"carried the sack toward the stairwell\") and ch8 (\"carrying the jar wrapped in the flour sack\")."
+  },
+  {
+   "i": 49,
+   "verdict": "wrong",
+   "note": "Jar is not continuously in the alcove ch1-5: ch1 Or returns it to the Room Below Mouth shelf (\"placed the jar on the shelf above it\"), ch4 \"Or checked the jar's shelf one last time. The vessel stood where she had left it.\" Only ch1 night and ch5 morning in alcove."
+  },
+  {
+   "i": 50,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 51,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 52,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 53,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 54,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 55,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 56,
+   "verdict": "ok",
+   "note": "Bowl also taken by Or to the Room Below Mouth in ch4 and returned; ch8 handed to Iven for a windowsill (location not stated); ch10 \"Iven brought the blue bowl from the Counting Room\"."
+  },
+  {
+   "i": 57,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 58,
+   "verdict": "ok",
+   "note": "Duplicate of item 31."
+  },
+  {
+   "i": 59,
+   "verdict": "ok",
+   "note": "Duplicate of item 32."
+  },
+  {
+   "i": 60,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 61,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 62,
+   "verdict": "wrong",
+   "note": "ch9: ring found at \"a blocked drain behind the public hall. At the blocked drain, Mara pushed aside a panel and revealed a narrow ledge. The same copper ring ... sat at its center.\" Not the Drowned Stair."
+  },
+  {
+   "i": 63,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 64,
+   "verdict": "unclear",
+   "note": "Start right (ch4 \"Cale was sent back to the Bell Orchard under guard\"), but null end contradicts: ch10 Cale \"arrived from the island\" at Low Weather, then walks with the group; ch12 at the House."
+  },
+  {
+   "i": 65,
+   "verdict": "unclear",
+   "note": "ch4/5/8 yes, but in between Iven is at the Red Channel bridge (ch6), the House and Drowned Stair (ch7). Not continuous 4-8."
+  }
+ ],
+ "holdings": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": "Spoon in Or's hands throughout; ch12 she puts it in a drawer (item 34 location), so null end is slightly loose."
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "ch5 Iven also touches it; held from ch8; ch10 \"Iven carried the blue tooth\"; ch11 placed in bowl."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "ch6 given to Or; ch10 returned to Nemi."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "ch6 to ch10; Nemi ties vial to apron at the causeway (ch10), Or takes it back at the island to pour it (item 24 covers return)."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "Vael has key ch5-ch11, leaves it in the Drowned Stair lock in ch11 (item 14)."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": "\"Pell's tile chart went to Cale\" ch10."
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "wrong",
+   "note": "to_chapter 11 contradicts ch10: \"Or handed her [Nemi] the tin case she had carried since the House.\" Or's possession ends ch10 (items 21, 45, 47)."
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": "ch10 handover; ch11 Nemi takes it from apron; ch12 she leaves it under the chair in Vey's room."
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": "Iven holds it in ch11 for a moment (\"Iven held the still-sealed green flask up\") and Mara handles it in ch9, but Or is the main holder."
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": "Duplicate of 17."
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 32,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": "ch5 Vael carried the sack briefly; ch8 \"carrying the jar wrapped in the flour sack\"; ch9 left on the shelf."
+  },
+  {
+   "i": 35,
+   "verdict": "wrong",
+   "note": "Evidence \"Or handed her the tin case\" (ch10, to Nemi) contradicts Or holding it 10-11."
+  },
+  {
+   "i": 36,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 37,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 38,
+   "verdict": "ok",
+   "note": "Brief holding only."
+  },
+  {
+   "i": 39,
+   "verdict": "wrong",
+   "note": "ch11: \"Vael rested one hand on the copied ledger; Iven still carried the wrapped original.\" Vael holds the copy, not the original bargain ledger (Iven holds it, item 31)."
+  },
+  {
+   "i": 40,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 41,
+   "verdict": "ok",
+   "note": "Duplicate of 17."
+  },
+  {
+   "i": 42,
+   "verdict": "ok",
+   "note": "Seed with Nemi until planted in the pot in ch12."
+  },
+  {
+   "i": 43,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 44,
+   "verdict": "ok",
+   "note": "ch6 \"Vey had taken it from the bridge\"; ch9 left on the drain ledge. Vey as holder is implicit between."
+  },
+  {
+   "i": 45,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 46,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 47,
+   "verdict": "ok",
+   "note": "Duplicate of 45."
+  },
+  {
+   "i": 48,
+   "verdict": "unclear",
+   "note": "ch10 \"The list of names went to Or\" - but Or already holds her own copy from ch7, and Iven's separate glass-roof list also exists. Likely her list (\"list of the three Listeners, folded small\"), but not certain."
+  }
+ ],
+ "containers": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "Contents as of ch6 are right (blue paper, thread, salt, ring beneath fifth lid, seed sixth). Evidence quoted is from ch12 where they are empty; fourth lid contents never stated."
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "ch2: cloth with tooth tucked into the tin case."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "Bundle also holds a \"list of things left in the first chamber\" (second sheet) - omitted."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": "ch6 Iven: \"It was in the wall behind the scratched portrait in the Counting Room.\""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "Duplicate of 1 (ch6 \"She put the seed in the tin case\"; later given back to Nemi ch10)."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": "Duplicate of 7."
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": "Place as container; items from ch9 list."
+  }
+ ],
+ "knowledge": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "ch7 Vael: \"Mara was a Listener... She did not die.\""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "Confirmed in person ch9; the news that Mara did not die comes ch7."
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "Inferred by Or from the clicking case through her coat (ch2 end); ch3 states it."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": "ch10 narration; Vael herself earlier said in ch4 she was wrong about \"no water\"."
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": "Interpretive but text-supported (ch2: \"the first time Or saw him record something without pretending it would remain true forever\")."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "ch3 text; Or deliberately keeps it from Cale."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": "ch9 \"Have you seen anyone?\" \"No.\" Vael learns Mara is present ch10."
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "wrong",
+   "note": "ch4 Vael only says \"It proves I was wrong to say there was no water\" (about the bowl/orchard water). She still publicly repeats the lantern-trick claim in ch8 (\"There was no drop from the sky\") and privately admits falsehood only in ch10 (\"Yes. I was wrong to say it.\")."
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": "Partly foreshadowed ch8 (versions of the clause); explicit ch10."
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": "Vael learned Mara lived by ch7/ch8 (\"I know she lived. I don't know where she is now\"); ch10 she learns Mara is present in the courtyard. Wording \"alive\" is slightly off."
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "wrong",
+   "note": "Cale does not learn this in ch10: he already knew (ch3 \"I wanted the inspectors to come\" - roots drinking was a lie; ch3 \"The flask is here\"). In ch10 Or tells Vael \"They were holding the tree flask\" before Cale arrives (\"Cale arrived from the island\")."
+  },
+  {
+   "i": 21,
+   "verdict": "wrong",
+   "note": "Iven already knew from ch3/4 (witnessed the drop; ch4 he argues with Vael about a false notice). In ch8 he says \"You know it rained\" to Vael, which is an accusation, not learning."
+  },
+  {
+   "i": 22,
+   "verdict": "unclear",
+   "note": "Vael says she corrected it \"Yesterday\" (ch7) but the learning is off-page; ch8 contradicts (\"your mother asked me not to\"). Reveal is ch7."
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": "Or saw the drop fall on her wrist in ch3; ch4 \"Or ... understood that Vael had lied.\""
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": "ch2 narrator text."
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": "ch6 narrator aside rather than Or being told."
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": "Duplicate of 17."
+  }
+ ],
+ "false_beliefs": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": "ch2 narrator: \"She knew Vael believed the orchard had stolen the rain\"; ch10 Vael concedes."
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "From ch1 (mother lost), explicit ch7 ledger entry; corrected ch7 by Vael, ch9 in person."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "wrong",
+   "note": "Not a belief: Cale admits it was a lie ch3: \"You told Vael the roots were drinking the cistern.\" - \"I wanted the inspectors to come.\" - \"So you lied.\" - \"I was trying to make her look beneath the tree.\" The false belief was Vael's (ch2/10 \"I thought they were drinking\")."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "Vael ch2 (\"It has always been empty\") and ch11 narration; clearer evidence: ch4 water in bowl, ch5 jar smells of rain."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "ch7 \"At the time, she thought the visitor was a cleaner\" - belief in the past (first year), corrected ch8."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "ch7: \"assumed they described different people\" but she already crosses out \"First Listener\" (partial correction in ch7), confirmed ch8."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": "ch10 narrator."
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": "Nemi says \"a receipt from the old bargain\" in ch6 (so from_chapter 6) and \"I thought that was only a receipt\" ch11."
+  },
+  {
+   "i": 10,
+   "verdict": "unclear",
+   "note": "ch3 Vael: \"That is a container for lamp oil\" - a dismissal, never recanted by Vael; ch4 Vey states it holds the storm's part. Belief and correction not clearly attributed."
+  },
+  {
+   "i": 11,
+   "verdict": "unclear",
+   "note": "ch3 narrator: \"Cale believed the flask could restore the orchard. He was mistaken.\" (narratorial). Cale himself only revises it in ch11 (\"I thought the tree was asking me to restore it... I didn't ask what it needed now\")."
+  },
+  {
+   "i": 12,
+   "verdict": "wrong",
+   "note": "Contradicted by ch4 (name \"Vey\" given and scar match) and ch8 (\"The woman on the causeway, the stranger in the orchard, and the missing first Listener were the same person\"). The ch10 line \"Or had thought the copper hand belonged to a stranger\" is a text inconsistency; belief corrected by ch8 at the latest."
+  }
+ ],
+ "corrections": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "ch4 notice, ch8 repeats it, ch10 \"I was wrong to say it\", ch11 public."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "ch1 Cale says the old weather took something (\"taken by the old weather\"); ch3 \"I was wrong.\" He speaks of the orchard, not the town."
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "Cale's claim reported by Vael ch2; admitted a lie ch3."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "Near-duplicate of 0/3; Or's statement to Vael ch10."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "The false entry predates the book; stated in ch7 register text and corrected in the same chapter (and in person ch9)."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "ch2 Vael (\"It has always been empty\"); ch11 narrator contradicts."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "Vael ch3 only says \"That is a container for lamp oil\"; correction is Vey's ch4 statement. Loose but acceptable."
+  },
+  {
+   "i": 8,
+   "verdict": "wrong",
+   "note": "No such claim in ch5. Vael says \"There was a bargain, but no one in this House remembers its exact words\" and \"I did not say there was no bargain.\" The alteration is revealed ch8 (versions) and ch10 (Vael: \"My predecessor\"). Nobody asserts it was unaltered."
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": "Repeats item 1; ch8 public claim, ch10 private admission, ch11 public correction (\"The first drop had been rain\")."
+  }
+ ],
+ "missing": [
+  "ch2 and ch5: the \"nameless jar\" appears in ch2 (\"the nameless jar beside the ledgers was a different vessel\") but the key dates it ch5; its later whereabouts are not tracked (ch5 \"Vael put it on a table beside the House ledger\"; blue road line \"bending from the House toward the west\").",
+  "ch8 and ch11: Vael's copy of the bargain ledger is a distinct object (\"Vael copied the original clause into the new ledger\"; ch11 \"Vael rested one hand on the copied ledger; Iven still carried the wrapped original\") - not in the entity list, which causes the wrong holding for the original ledger.",
+  "ch10: Iven's own list of names written on the green glass roof (\"He had written a list of names on the green glass roof ... Nemi Tallow, Cale Rusk, Vael Senn, Mara Senn, Iven Orri, Oruva Senn. At the bottom, he had written Vey Orin\") is a separate object from Or's name_list.",
+  "ch9 ring location: \"a blocked drain behind the public hall ... a narrow ledge\" is not an entity/location; key mis-files it under the Drowned Stair.",
+  "ch5: Iven names Vey Orin as the first Listener (\"Her name was Vey Orin\"), Or learns Vey was erased from the town records and put in the carved-names chamber; key knowledge only has ch8 for Vey identity.",
+  "ch9: Or learns the fourth name is not a person but the route/\"the listening road\" (\"The missing fourth name was not a person. It was the route itself\"), and that Vey taught Mara and was released after the first winter. No knowledge entry.",
+  "ch11: Iven hears a voice in the green flask but will not repeat it; Vey \"knew the words already\" (\"Iven heard a voice inside it at last, but he did not tell them what it said. He looked at Vey, who nodded once.\") - a classic knowledge asymmetry missing from the key.",
+  "ch3: dry copper bell - Or \"tucked the bell into the hollow root beneath the tree\" - the location of the bell after she picks it up is not in locations.",
+  "ch4 and ch8: Vael publicly repeats the lantern-trick claim in ch8 (\"There was no drop from the sky\") after privately conceding \"no water\" in ch4 - the sequence of her public/private positions is not captured.",
+  "ch6 and ch9: the copper ring's provenance (cut from the old bell tree, worn by Vey, found by child Nemi in the chamber) and its Nemi->Or->bridge->Vey->drain ledge->Or->carved chamber->Mara route; the ch6 hand-off to Or on the bridge vs \"in the morning ... Vey had taken it\" only partly captured.",
+  "ch12: Mara moves \"to a room above the dye-house\" but earlier in the same chapter \"Mara Senn stayed in the House\" and visits the hidden chamber; location timeline for Mara across ch12 is simplified.",
+  "ch2: Pell's roof color chart and the Counting Room tiles; ch1 Or's mother's spoon; both are in the entities but their \"belongs to Or's mother\" relation (ch1 \"The brass tide spoon had been her mother's\"; ch11 \"her mother's object again\") is not a key item."
+ ],
+ "text_contradictions": [
+  "ch2 vs ch4: ch2 \"Or recognized it as the cracked First North Drizzle jar\" but the jar first cracks in ch4 (\"a faint line appeared in its glaze, running from lip to base\").",
+  "ch2 vs ch5: ch2 mentions \"the nameless jar beside the ledgers\" before ch5 introduces it as newly found \"behind the ledgers\".",
+  "ch4 vs ch5: ch4 the portrait \"had been painted over when she [Or] was very young\"; ch5 Iven (described ch2 as \"a slight, old person\") says \"I remember the day they painted over the portrait when I was a child\" - ages cannot both hold.",
+  "ch7 vs ch8: ch7 Vael learned Mara lived \"Yesterday\"; ch8 \"I did not know it was your mother until yesterday\" yet \"Because your mother asked me not to\" (tell Or) implies earlier contact.",
+  "ch8 vs ch1/ch7: Or says \"I was born after Mara was hidden\" but ch1/ch7 have Or raised by her mother until age six (\"her mother, who had taught her ... small enough to sit on the floor beneath the inventory table\"; \"died when Or was six\").",
+  "ch7 vs ch6: ch6 Nemi says the vial \"belonged to my mother\" and her mother was \"a different dye-house worker from Mara\", but the ch7 register says the vial was \"transferred from Mara to 'the third ear'\" and Or concludes it was the vial Nemi gave her.",
+  "ch8 vs ch10: ch8 Or concludes the stranger, causeway woman and first Listener are one person and that Vey is her; ch10 says \"Or had thought the copper hand belonged to a stranger\" as if still unresolved.",
+  "ch9: Mara \"put her repaired childhood cup back on the shelf in Mara's hidden chamber\" and then Or \"carried the repaired cup and folded letter to her own sleeping alcove\"; also the cup is \"yours when you were little\" (Mara to Or) yet narrated as \"Mara's repaired childhood cup\".",
+  "ch6: \"In the morning, the ring was gone; Vey had taken it from the bridge\" (narrator certain) versus later in the chapter \"Nemi said someone had taken it. Or thought the channel might have carried it away.\"",
+  "ch6/ch9: Nemi (ch6) \"When Mara was put below the House, I was the child who carried the key ... I remember someone with a copper hand\" but ch9 Mara says Vey was released before her (\"Vey was there before me ... clerks released her after the first winter\") and Mara has only a thumb plate; ch5 Vael says the carved-names chamber is where \"they put the first Listener\" while ch9 Mara says \"when I was put in the carved-names chamber\".",
+  "ch5 end vs ch8: ch5 \"[the flour sack] was empty now\" under the mattress; ch8 \"carrying the jar wrapped in the flour sack\".",
+  "ch3: \"My grandmother, Cale's grandmother and the orchard's last keeper\" - Cale refers to himself in third person within his own speech."
+ ],
+ "key_sha256": "27fc2aa57144a5922a34f65bfec767f6fcb0699abbd21bc37f46f984f4a165f3",
+ "reader": "A",
+ "entities_fields": {
+  "vey": {
+   "verdict": "ok",
+   "note": "Kind person is right; every alias names her (ch3 'the stranger', ch4 'I was the other Listener', ch5 'the first Listener', ch7 'Vey of the Orchard'/'copper-handed woman', ch8 'missing first Listener'). Only caution: 'the other Listener' is relative (Iven, Mara and Oruva are also Listeners) but ch2-5 consistently mean Vey.",
+   "bad_aliases": []
+  },
+  "old_cistern": {
+   "verdict": "ok",
+   "note": "Kind place is right; 'old cistern beneath the tree' (ch11) and 'cistern beneath it' (ch3) name the cistern under the orchard tree. Bare 'cistern' is used for other things (ch1 'high cisterns', ch5 'disused cistern door') but is not in the alias list.",
+   "bad_aliases": []
+  },
+  "nameless_jar": {
+   "verdict": "ok",
+   "note": "Kind object is right; 'nameless jar' names one jar (ch2 'beside the ledgers', ch5 found behind the ledgers, label scratched away, later 'the nameless jar's label'), distinct from the First North Drizzle jar.",
+   "bad_aliases": []
+  },
+  "western_corridor": {
+   "verdict": "ok",
+   "note": "Kind place is right; 'western corridor' (ch4 bead line, ch5 'the House's western corridor' ending at the disused cistern door, ch9 'before the western corridor had been built') is one House corridor; ch12 'western door' is not an alias.",
+   "bad_aliases": []
+  }
+ }
+}

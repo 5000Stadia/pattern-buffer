@@ -1,6 +1,6 @@
 # BOOK-RUN-V1: build any book and grade it against its answer key (roadmap R27)
 
-**Status:** r2.1 (2026-10-13). It answers pbr's r2 RED (m on b9b20a44): it defines the book normalizer exactly, gives each run a fresh usage log, and adds a head read when no row is timed (marked *(r2.1)*). r2 answers pbr's r1 RED (m on 19ea6444): the key and verdict schemas, stable item ids, the terminal marker, the gold file's shape, receipt deltas and the ordering of timeless rows are now defined (marked *(r2)*). r1 was for pbr's spec review. Author: pb.
+**Status:** r2.2 (2026-10-13). An entity is judged on its graded fields only (kind and aliases). A reader may re-judge an entity on those fields in `entities_fields`, which stands in for the whole-entry verdict (§1.2, marked *(r2.2)*). This came from the novella's gold build: four entities, Vey among them, were dropped for a `first_chapter` objection, a field the grader never reads. r2.1 answers pbr's r2 RED (m on b9b20a44): it defines the book normalizer exactly, gives each run a fresh usage log, and adds a head read when no row is timed (marked *(r2.1)*). r2 answers pbr's r1 RED (m on 19ea6444): the key and verdict schemas, stable item ids, the terminal marker, the gold file's shape, receipt deltas and the ordering of timeless rows are now defined (marked *(r2)*). r1 was for pbr's spec review. Author: pb.
 **Source:** R27 as Kabe revised it on 2026-10-13: "Make chatgpt write the fiction so its
 anonymous and original - tell it to try to make something out there and original." The test book
 is a new novella written by ChatGPT, *The Weather That Would Not Leave* (12 chapters, about 25,300
@@ -82,6 +82,12 @@ The writer's format, as the novella's key has it:
 - `ok` means the text confirms the entry. `wrong` means the text contradicts it. `unclear` means a
   careful reader cannot settle it.
 - `bad_aliases` lists aliases of an otherwise-ok entity that also name something else, or nothing.
+- *(r2.2)* An entity is graded by its `kind` and `aliases` alone. `first_chapter` is never graded.
+  A reader may add `"entities_fields": {"<key_id>": {"verdict", "note", "bad_aliases"}}`, which
+  re-judges that entity on kind and aliases only. When present, it is that reader's verdict for the
+  entity, both for keeping or dropping it and for its `bad_aliases`. Its whole-entry verdict stays
+  in the file, unchanged, for the record. An `entities_fields` key that names no entity, or an
+  entry with no valid verdict, is refused.
 - `i` is the item's index in that section of `key.json`.
 - A verdict file whose `key_sha256` is not the hash of the `key.json` beside it is refused.
   Readers are pointed at a frozen copy of the key and write no hash. pb stamps each file with the

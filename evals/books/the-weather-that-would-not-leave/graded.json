@@ -1,0 +1,1909 @@
+{
+  "containers": [
+    {
+      "container": "oldest_tree",
+      "contents": [
+        "tree_flask"
+      ],
+      "id": "containers[0]"
+    },
+    {
+      "container": "tin_case",
+      "contents": [
+        "black_seed"
+      ],
+      "id": "containers[1]"
+    },
+    {
+      "container": "six_lidded_box",
+      "contents": [
+        "blue_paper",
+        "thread_spool",
+        "white_salt",
+        "copper_ring",
+        "black_seed"
+      ],
+      "id": "containers[2]"
+    },
+    {
+      "container": "tin_case",
+      "contents": [
+        "blue_tooth"
+      ],
+      "id": "containers[3]"
+    },
+    {
+      "container": "first_jar",
+      "contents": [
+        "blue_tooth"
+      ],
+      "id": "containers[4]"
+    },
+    {
+      "container": "flour_sack",
+      "contents": [
+        "first_jar"
+      ],
+      "id": "containers[5]"
+    },
+    {
+      "container": "blue_bowl",
+      "contents": [
+        "blue_tooth"
+      ],
+      "id": "containers[6]"
+    },
+    {
+      "container": "mara_bundle",
+      "contents": [
+        "house_map",
+        "letter"
+      ],
+      "id": "containers[7]"
+    },
+    {
+      "container": "wall_behind_portrait",
+      "contents": [
+        "answer_flask"
+      ],
+      "id": "containers[8]"
+    },
+    {
+      "container": "seed_pot",
+      "contents": [
+        "black_seed"
+      ],
+      "id": "containers[9]"
+    },
+    {
+      "container": "tin_case",
+      "contents": [
+        "black_seed"
+      ],
+      "id": "containers[10]"
+    },
+    {
+      "container": "mara_bundle",
+      "contents": [
+        "house_map",
+        "letter"
+      ],
+      "id": "containers[11]"
+    },
+    {
+      "container": "mara_hidden_chamber",
+      "contents": [
+        "comb",
+        "gray_thread",
+        "mara_cup",
+        "mara_bundle"
+      ],
+      "id": "containers[12]"
+    }
+  ],
+  "dropped": [
+    {
+      "id": "holdings[20]",
+      "notes": {
+        "A": "to_chapter 11 contradicts ch10: \"Or handed her [Nemi] the tin case she had carried since the House.\" Or's possession ends ch10 (items 21, 45, 47).",
+        "B": "Or hands the case to Nemi in ch10 ('Or handed her the tin case she had carried since the House'), and in ch11 'Nemi carried the tin case'. to_chapter should be 10."
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "holdings[34]",
+      "notes": {
+        "A": "ch5 Vael carried the sack briefly; ch8 \"carrying the jar wrapped in the flour sack\"; ch9 left on the shelf.",
+        "B": "In ch5 Vael takes the jar ('Vael lifted the sack ... carried the sack toward the stairwell'), and the sack later comes back empty. The jar is not shown with Or again until ch7. In ch9 it already stands on the Room Below Mouth shelf when she arrives ('placed the black seed on the shelf beside the cracked jar'), and she leaves it there."
+      },
+      "verdicts": {
+        "A": "ok",
+        "B": "unclear"
+      }
+    },
+    {
+      "id": "holdings[35]",
+      "notes": {
+        "A": "Evidence \"Or handed her the tin case\" (ch10, to Nemi) contradicts Or holding it 10-11.",
+        "B": "The evidence is the hand-over to Nemi in ch10, so Or's holding ends at 10. In ch11 'Nemi carried the tin case'."
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "holdings[39]",
+      "notes": {
+        "A": "ch11: \"Vael rested one hand on the copied ledger; Iven still carried the wrapped original.\" Vael holds the copy, not the original bargain ledger (Iven holds it, item 31).",
+        "B": "The evidence itself says Vael's ledger is the copy: 'Vael rested one hand on the copied ledger; Iven still carried the wrapped original.'"
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "holdings[42]",
+      "notes": {
+        "A": "Seed with Nemi until planted in the pot in ch12.",
+        "B": "The seed is planted in the courtyard seed pot by ch12 ('the black seed was planted in the courtyard'). That is a location, not something Nemi holds, unless 'held_by' means ownership ('Nemi\u2019s seed')."
+      },
+      "verdicts": {
+        "A": "ok",
+        "B": "unclear"
+      }
+    },
+    {
+      "id": "holdings[44]",
+      "notes": {
+        "A": "ch6 \"Vey had taken it from the bridge\"; ch9 left on the drain ledge. Vey as holder is implicit between.",
+        "B": "Vey takes the ring off the bridge in ch6 and at some unstated point moves it to the drain ledge. In ch9 it is on the ledge, not in her hands ('Vey had taken it from the bridge overnight and moved it here'), so the end chapter is unknown and 9 is too late."
+      },
+      "verdicts": {
+        "A": "ok",
+        "B": "unclear"
+      }
+    },
+    {
+      "id": "holdings[48]",
+      "notes": {
+        "A": "ch10 \"The list of names went to Or\" - but Or already holds her own copy from ch7, and Iven's separate glass-roof list also exists. Likely her list (\"list of the three Listeners, folded small\"), but not certain.",
+        "B": "Or has carried her copied name list since ch7 ('Or kept the name list tucked inside her coat'). Whether 'The list of names went to Or' (ch10) is that list or another ('the list of the three Listeners') is unclear, so from_chapter 10 is doubtful."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "unclear"
+      }
+    },
+    {
+      "id": "locations[18]",
+      "notes": {
+        "A": "to_chapter null is wrong: ch12 \"The town returned the blue bowl from the market basin to the Counting Room\" (item 57).",
+        "B": "to_chapter null is contradicted by ch12: 'The town returned the blue bowl from the market basin to the Counting Room'. #37 (to 11) and #57 have it right."
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "locations[35]",
+      "notes": {
+        "A": "ch12 evidence says \"old ledgers\" (plural) on the Counting Room table; the original bargain ledger was last carried by Iven (ch11 \"Iven still carried the wrapped original\"). Not stated where it ends.",
+        "B": "The evidence says 'the old ledgers' (plural); presumably this includes the original bargain ledger Iven carried in ch11."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "ok"
+      }
+    },
+    {
+      "id": "locations[46]",
+      "notes": {
+        "A": "ch11: Or set the cracked jar down in the Room Below Mouth, then \"Or lifted the cracked jar and carried it from the Room Below Mouth through the channel route. At the market basin she set it down\". So it leaves the Room in ch11; ch12 location not stated.",
+        "B": "Later in ch11 the jar leaves the room: 'Or lifted the cracked jar and carried it from the Room Below Mouth through the channel route. At the market basin she set it down'. Nothing returns it in ch12, so to_chapter 12 is false."
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "locations[48]",
+      "notes": {
+        "A": "Sack beneath mattress ch1 and end of ch5, but it travels with the jar in ch5 (Vael \"carried the sack toward the stairwell\") and ch8 (\"carrying the jar wrapped in the flour sack\").",
+        "B": "The end is too early. At the end of ch5 'she put the flour sack back beneath the mattress', and the sack stays until ch8, when she wraps the jar in it."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "ok"
+      }
+    },
+    {
+      "id": "locations[49]",
+      "notes": {
+        "A": "Jar is not continuously in the alcove ch1-5: ch1 Or returns it to the Room Below Mouth shelf (\"placed the jar on the shelf above it\"), ch4 \"Or checked the jar's shelf one last time. The vessel stood where she had left it.\" Only ch1 night and ch5 morning in alcove.",
+        "B": "The jar is in the alcove only on the evening of ch1 and again in ch5. That night Or returns it to the Room Below Mouth ('placed the jar on the shelf above it'), and it stays there through ch4 (ch2 'This morning the first jar began to sing'; ch4 'In the Room Below Mouth, she placed the bead beside the jar that had sung'). This contradicts #42."
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "locations[62]",
+      "notes": {
+        "A": "ch9: ring found at \"a blocked drain behind the public hall. At the blocked drain, Mara pushed aside a panel and revealed a narrow ledge. The same copper ring ... sat at its center.\" Not the Drowned Stair.",
+        "B": "The ring sat on a ledge at a blocked drain in the House, not the Drowned Stair. ch9: 'a blocked drain behind the public hall ... At the blocked drain, Mara pushed aside a panel and revealed a narrow ledge. The same copper ring ... sat at its center.'"
+      },
+      "verdicts": {
+        "A": "wrong",
+        "B": "wrong"
+      }
+    },
+    {
+      "id": "locations[64]",
+      "notes": {
+        "A": "Start right (ch4 \"Cale was sent back to the Bell Orchard under guard\"), but null end contradicts: ch10 Cale \"arrived from the island\" at Low Weather, then walks with the group; ch12 at the House.",
+        "B": "This works only as a base location. Cale is in the Low Weather courtyard in ch10 ('Cale arrived from the island carrying the broken branch'), in town by the channel in ch11, and at the House door in ch12."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "ok"
+      }
+    },
+    {
+      "id": "locations[65]",
+      "notes": {
+        "A": "ch4/5/8 yes, but in between Iven is at the Red Channel bridge (ch6), the House and Drowned Stair (ch7). Not continuous 4-8.",
+        "B": "The text shows Iven away from the Counting Room for much of ch5-7: the carved-names chamber in ch5; the Red Channel bridge and archive alcove in ch6; the bridge, Room Below Mouth and Drowned Stair passage in ch7. No ch7 scene puts him in the Counting Room."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "unclear"
+      }
+    },
+    {
+      "id": "locations[7]",
+      "notes": {
+        "A": "ch9: panel opens in the north wall of the Room Below Mouth onto \"a narrow chamber\"; ch12 \"her hidden chamber beneath the House\". It is a chamber off/behind the room, in the House, not literally \"in\" the room.",
+        "B": "The chamber lies beyond a panel in the Room Below Mouth's north wall ('The panel opened inward. Beyond it, a narrow chamber'), next to the room rather than inside it; ch12 calls it 'her hidden chamber beneath the House'."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "ok"
+      }
+    },
+    {
+      "id": "same_as[7]",
+      "notes": {
+        "A": "ch7: \"a red-thread vial transferred from Mara to 'the third ear.' Or realized the vial had been the one Nemi gave her. Nemi had not known what it contained, but it had belonged to her mother.\" The vial reached Or via Nemi, and Nemi says her mother owned it; so \"the third ear\" is not clearly Oruva (could be Nemi's mother). Oruva = third Listener only becomes explicit ch8.",
+        "B": "ch7 'a red-thread vial transferred from Mara to \u201cthe third ear.\u201d ... it had belonged to her mother.' Nemi said 'This vial belonged to my mother' (ch6), and Nemi's mother is explicitly not Mara, so 'the third ear' may be Nemi's mother. Linking it to Or (the third Listener, revealed ch8) is an inference the text never makes."
+      },
+      "verdicts": {
+        "A": "unclear",
+        "B": "unclear"
+      }
+    }
+  ],
+  "dropped_aliases": [
+    {
+      "alias": "The list of names",
+      "by": [
+        "A",
+        "B"
+      ],
+      "entity": "name_list"
+    },
+    {
+      "alias": "list of names",
+      "by": [
+        "A",
+        "B"
+      ],
+      "entity": "name_list"
+    },
+    {
+      "alias": "the third ear",
+      "by": [
+        "A",
+        "B"
+      ],
+      "entity": "oruva"
+    }
+  ],
+  "dropped_contents": [],
+  "entities": {
+    "answer_flask": {
+      "aliases": [
+        "Iven\u2019s green flask",
+        "Iven\u2019s flask"
+      ],
+      "kind": "object"
+    },
+    "archive_alcove": {
+      "aliases": [
+        "archive alcove",
+        "the archive alcove",
+        "old archive alcove"
+      ],
+      "kind": "place"
+    },
+    "bell_orchard": {
+      "aliases": [
+        "Bell Orchard",
+        "the Bell Orchard",
+        "the orchard"
+      ],
+      "kind": "place"
+    },
+    "black_iron_key": {
+      "aliases": [
+        "black iron key",
+        "the black iron key"
+      ],
+      "kind": "object"
+    },
+    "black_seed": {
+      "aliases": [
+        "black seed",
+        "the black seed"
+      ],
+      "kind": "object"
+    },
+    "blue_bead": {
+      "aliases": [
+        "blue bead",
+        "a single blue bead"
+      ],
+      "kind": "object"
+    },
+    "blue_bowl": {
+      "aliases": [
+        "blue-black bowl",
+        "blue bowl",
+        "the blue bowl"
+      ],
+      "kind": "object"
+    },
+    "blue_paper": {
+      "aliases": [
+        "folded sheet of blue paper",
+        "folded blue paper",
+        "blue paper"
+      ],
+      "kind": "object"
+    },
+    "blue_tooth": {
+      "aliases": [
+        "blue tooth",
+        "the blue tooth"
+      ],
+      "kind": "object"
+    },
+    "broken_branch": {
+      "aliases": [
+        "broken branch",
+        "the broken branch"
+      ],
+      "kind": "object"
+    },
+    "cale": {
+      "aliases": [
+        "Cale Rusk",
+        "Cale",
+        "keeper of the Bell Orchard",
+        "the copper-gloved keeper"
+      ],
+      "kind": "person"
+    },
+    "cale_grandmother": {
+      "aliases": [
+        "Cale\u2019s grandmother",
+        "the orchard\u2019s last keeper"
+      ],
+      "kind": "person"
+    },
+    "carved_chamber": {
+      "aliases": [
+        "room under the room",
+        "the room under the room",
+        "carved-names chamber",
+        "the carved-names chamber"
+      ],
+      "kind": "place"
+    },
+    "causeway": {
+      "aliases": [
+        "causeway",
+        "the causeway"
+      ],
+      "kind": "place"
+    },
+    "child_cup": {
+      "aliases": [
+        "chipped cup"
+      ],
+      "kind": "object"
+    },
+    "comb": {
+      "aliases": [
+        "small wooden comb",
+        "wooden comb"
+      ],
+      "kind": "object"
+    },
+    "copper_plate": {
+      "aliases": [
+        "copper plate",
+        "the copper plate"
+      ],
+      "kind": "object"
+    },
+    "copper_ring": {
+      "aliases": [
+        "copper ring",
+        "the copper ring"
+      ],
+      "kind": "object"
+    },
+    "copper_wire_spool": {
+      "aliases": [
+        "spool of copper wire",
+        "copper-wire spool"
+      ],
+      "kind": "object"
+    },
+    "counting_room": {
+      "aliases": [
+        "Counting Room",
+        "the Counting Room"
+      ],
+      "kind": "place"
+    },
+    "drowned_stair": {
+      "aliases": [
+        "Drowned Stair",
+        "the Drowned Stair"
+      ],
+      "kind": "place"
+    },
+    "dry_copper_bell": {
+      "aliases": [
+        "A dry copper bell"
+      ],
+      "kind": "object"
+    },
+    "dye_house": {
+      "aliases": [
+        "old dye-house",
+        "the old dye-house",
+        "dye-house"
+      ],
+      "kind": "place"
+    },
+    "first_jar": {
+      "aliases": [
+        "First North Drizzle",
+        "FIRST NORTH DRIZZLE, YEAR 41",
+        "first jar",
+        "the first jar"
+      ],
+      "kind": "object"
+    },
+    "first_shelf": {
+      "aliases": [
+        "first shelf",
+        "the first shelf",
+        "lowest shelf"
+      ],
+      "kind": "place"
+    },
+    "flour_sack": {
+      "aliases": [
+        "flour sack",
+        "the flour sack"
+      ],
+      "kind": "object"
+    },
+    "gray_thread": {
+      "aliases": [
+        "spool of gray thread",
+        "gray thread"
+      ],
+      "kind": "object"
+    },
+    "hollow_under_shelf": {
+      "aliases": [
+        "hollow beneath the shelf"
+      ],
+      "kind": "place"
+    },
+    "house": {
+      "aliases": [
+        "House of Folded Water",
+        "the House",
+        "the House of Folded Water"
+      ],
+      "kind": "place"
+    },
+    "house_map": {
+      "aliases": [
+        "map of the House"
+      ],
+      "kind": "object"
+    },
+    "iven": {
+      "aliases": [
+        "Iven Orri",
+        "Iven",
+        "appointed Listener",
+        "the town\u2019s appointed Listener"
+      ],
+      "kind": "person"
+    },
+    "letter": {
+      "aliases": [
+        "a letter addressed to \u201cthe child in the House.\u201d"
+      ],
+      "kind": "object"
+    },
+    "listening_road": {
+      "aliases": [
+        "listening road",
+        "the listening road"
+      ],
+      "kind": "place"
+    },
+    "low_weather": {
+      "aliases": [
+        "Low Weather"
+      ],
+      "kind": "place"
+    },
+    "mara": {
+      "aliases": [
+        "Mara Senn",
+        "Mara",
+        "the hooded visitor",
+        "the shadow in the corridor",
+        "the hooded person",
+        "the person you called mother",
+        "assistant who had died in a fever",
+        "the hooded clerk who carried jars",
+        "the person who never answered when Or spoke",
+        "Or\u2019s mother",
+        "the hooded, scarred figure"
+      ],
+      "kind": "person"
+    },
+    "mara_bundle": {
+      "aliases": [
+        "paper bundle",
+        "the paper bundle"
+      ],
+      "kind": "object"
+    },
+    "mara_cup": {
+      "aliases": [
+        "repaired childhood cup"
+      ],
+      "kind": "object"
+    },
+    "mara_hidden_chamber": {
+      "aliases": [
+        "Mara\u2019s hidden chamber"
+      ],
+      "kind": "place"
+    },
+    "mara_room": {
+      "aliases": [
+        "room above the dye-house"
+      ],
+      "kind": "place"
+    },
+    "market_basin": {
+      "aliases": [
+        "old market basin",
+        "market basin"
+      ],
+      "kind": "place"
+    },
+    "market_court": {
+      "aliases": [
+        "market court",
+        "the market court"
+      ],
+      "kind": "place"
+    },
+    "name_list": {
+      "aliases": [
+        "copied names"
+      ],
+      "kind": "object"
+    },
+    "nameless_jar": {
+      "aliases": [
+        "nameless jar",
+        "the nameless jar"
+      ],
+      "kind": "object"
+    },
+    "nemi": {
+      "aliases": [
+        "Nemi Tallow",
+        "Nemi"
+      ],
+      "kind": "person"
+    },
+    "nemi_mother": {
+      "aliases": [
+        "Nemi\u2019s mother was a different dye-house worker from Mara"
+      ],
+      "kind": "person"
+    },
+    "notice": {
+      "aliases": [
+        "THE BELL ORCHARD IS OUT OF TUNE. DO NOT OPEN THE CISTERNS."
+      ],
+      "kind": "object"
+    },
+    "old_cistern": {
+      "aliases": [
+        "cistern beneath the tree",
+        "old cistern beneath the tree",
+        "the old cistern beneath the tree"
+      ],
+      "kind": "place"
+    },
+    "old_ledger": {
+      "aliases": [
+        "original bargain ledger",
+        "the original bargain ledger"
+      ],
+      "kind": "object"
+    },
+    "old_map": {
+      "aliases": [
+        "old map",
+        "the old map"
+      ],
+      "kind": "object"
+    },
+    "oldest_tree": {
+      "aliases": [
+        "oldest bell tree",
+        "the oldest bell tree",
+        "oldest tree",
+        "the oldest tree"
+      ],
+      "kind": "object"
+    },
+    "ors": {
+      "aliases": [
+        "Ors"
+      ],
+      "kind": "place"
+    },
+    "oruva": {
+      "aliases": [
+        "Oruva Senn",
+        "Or",
+        "Oruva",
+        "the third Listener"
+      ],
+      "kind": "person"
+    },
+    "paper_boat": {
+      "aliases": [
+        "paper boat"
+      ],
+      "kind": "object"
+    },
+    "paving_stone": {
+      "aliases": [
+        "one stone sat slightly lower than the rest"
+      ],
+      "kind": "object"
+    },
+    "pell": {
+      "aliases": [
+        "Pell",
+        "Pell of the Fourth Stair",
+        "roof tender",
+        "the roof tender"
+      ],
+      "kind": "person"
+    },
+    "portrait": {
+      "aliases": [
+        "scratched portrait",
+        "the scratched portrait",
+        "portrait of the first Listener"
+      ],
+      "kind": "object"
+    },
+    "public_hall": {
+      "aliases": [
+        "public hall",
+        "the public hall"
+      ],
+      "kind": "place"
+    },
+    "rain_notice": {
+      "aliases": [
+        "lantern notice",
+        "her lantern notice"
+      ],
+      "kind": "object"
+    },
+    "rain_vial": {
+      "aliases": [
+        "rain vial",
+        "the rain vial",
+        "red-thread vial",
+        "the red-thread vial"
+      ],
+      "kind": "object"
+    },
+    "red_channel": {
+      "aliases": [
+        "Red Channel",
+        "the Red Channel"
+      ],
+      "kind": "place"
+    },
+    "roof_chart": {
+      "aliases": [
+        "Pell\u2019s tile chart",
+        "tile chart",
+        "old tile chart"
+      ],
+      "kind": "object"
+    },
+    "roof_color_chart": {
+      "aliases": [
+        "roof\u2019s old color chart"
+      ],
+      "kind": "object"
+    },
+    "roof_room": {
+      "aliases": [
+        "roof tender\u2019s small room"
+      ],
+      "kind": "place"
+    },
+    "room_below_mouth": {
+      "aliases": [
+        "Room Below Mouth",
+        "the Room Below Mouth"
+      ],
+      "kind": "place"
+    },
+    "salt_basin": {
+      "aliases": [
+        "basin of packed salt",
+        "salt basin"
+      ],
+      "kind": "place"
+    },
+    "seed_pot": {
+      "aliases": [
+        "seed pot"
+      ],
+      "kind": "object"
+    },
+    "silt_choir": {
+      "aliases": [
+        "Silt Choir",
+        "the Silt Choir",
+        "the Choir"
+      ],
+      "kind": "place"
+    },
+    "six_lidded_box": {
+      "aliases": [
+        "six-lidded box",
+        "Nemi\u2019s six-lidded box",
+        "the six-lidded box"
+      ],
+      "kind": "object"
+    },
+    "sleeping_alcove": {
+      "aliases": [
+        "sleeping alcove",
+        "her sleeping alcove"
+      ],
+      "kind": "place"
+    },
+    "stone_disk": {
+      "aliases": [
+        "black glass disk"
+      ],
+      "kind": "object"
+    },
+    "tavin": {
+      "aliases": [
+        "Tavin Rell",
+        "Tavin",
+        "junior clerk",
+        "the junior clerk",
+        "a narrow boy"
+      ],
+      "kind": "person"
+    },
+    "tavin_cup": {
+      "aliases": [
+        "unallotted clay cup",
+        "the unallotted clay cup"
+      ],
+      "kind": "object"
+    },
+    "tavin_jar": {
+      "aliases": [
+        "his jar with a crack in its base"
+      ],
+      "kind": "object"
+    },
+    "thread_spool": {
+      "aliases": [
+        "tiny spool of thread",
+        "spool of thread"
+      ],
+      "kind": "object"
+    },
+    "tide_spoon": {
+      "aliases": [
+        "brass tide spoon",
+        "the brass tide spoon",
+        "the tide spoon"
+      ],
+      "kind": "object"
+    },
+    "tin_case": {
+      "aliases": [
+        "tin case",
+        "the tin case",
+        "Nemi\u2019s tin case"
+      ],
+      "kind": "object"
+    },
+    "tool_drawer": {
+      "aliases": [
+        "drawer with ordinary tools"
+      ],
+      "kind": "object"
+    },
+    "tree_flask": {
+      "aliases": [
+        "small glass flask",
+        "tree flask",
+        "the tree flask"
+      ],
+      "kind": "object"
+    },
+    "vael": {
+      "aliases": [
+        "Vael Senn",
+        "Vael",
+        "senior weather clerk",
+        "the senior weather clerk",
+        "Oruva\u2019s aunt"
+      ],
+      "kind": "person"
+    },
+    "vey": {
+      "aliases": [
+        "Vey Orin",
+        "Vey",
+        "the woman with a copper hand",
+        "the stranger",
+        "the other Listener",
+        "the first Listener",
+        "the copper-handed woman",
+        "The woman on the causeway",
+        "Vey of the Orchard",
+        "the woman in the orchard",
+        "the missing first Listener"
+      ],
+      "kind": "person"
+    },
+    "vey_room": {
+      "aliases": [
+        "Vey\u2019s chair room"
+      ],
+      "kind": "place"
+    },
+    "wall_behind_portrait": {
+      "aliases": [
+        "wall behind the scratched portrait"
+      ],
+      "kind": "object"
+    },
+    "west_court": {
+      "aliases": [
+        "west court",
+        "the west court"
+      ],
+      "kind": "place"
+    },
+    "west_gate": {
+      "aliases": [
+        "west gate",
+        "the west gate"
+      ],
+      "kind": "place"
+    },
+    "western_corridor": {
+      "aliases": [
+        "western corridor",
+        "the House\u2019s western corridor"
+      ],
+      "kind": "place"
+    },
+    "white_salt": {
+      "aliases": [
+        "pinch of white salt",
+        "white salt",
+        "pinch of salt"
+      ],
+      "kind": "object"
+    },
+    "wooden_stool": {
+      "aliases": [
+        "old wooden stool",
+        "wooden stool"
+      ],
+      "kind": "object"
+    }
+  },
+  "key_sha256": "27fc2aa57144a5922a34f65bfec767f6fcb0699abbd21bc37f46f984f4a165f3",
+  "moves": {
+    "answer_flask": [
+      {
+        "from_chapter": 12,
+        "id": "locations[36]",
+        "to": "room_below_mouth",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[22]",
+        "to": "iven",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[23]",
+        "to": "oruva",
+        "to_chapter": 11
+      }
+    ],
+    "archive_alcove": [
+      {
+        "from_chapter": 2,
+        "id": "locations[11]",
+        "to": "house",
+        "to_chapter": null
+      }
+    ],
+    "black_iron_key": [
+      {
+        "from_chapter": 11,
+        "id": "locations[14]",
+        "to": "drowned_stair",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[7]",
+        "to": "vael",
+        "to_chapter": 11
+      }
+    ],
+    "black_seed": [
+      {
+        "from_chapter": 10,
+        "id": "locations[22]",
+        "to": "six_lidded_box",
+        "to_chapter": 12
+      },
+      {
+        "from_chapter": 12,
+        "id": "locations[23]",
+        "to": "seed_pot",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[5]",
+        "to": "oruva",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[28]",
+        "to": "nemi",
+        "to_chapter": 12
+      }
+    ],
+    "blue_bowl": [
+      {
+        "from_chapter": 10,
+        "id": "locations[17]",
+        "to": "ors",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 11,
+        "id": "locations[37]",
+        "to": "market_basin",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[56]",
+        "to": "counting_room",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 12,
+        "id": "locations[57]",
+        "to": "counting_room",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[43]",
+        "to": "iven",
+        "to_chapter": 11
+      }
+    ],
+    "blue_paper": [
+      {
+        "from_chapter": 11,
+        "id": "locations[27]",
+        "to": "red_channel",
+        "to_chapter": 11
+      }
+    ],
+    "blue_tooth": [
+      {
+        "from_chapter": 11,
+        "id": "locations[25]",
+        "to": "blue_bowl",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[1]",
+        "to": "nemi",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[2]",
+        "to": "oruva",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 8,
+        "id": "holdings[3]",
+        "to": "iven",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[33]",
+        "to": "vael",
+        "to_chapter": 4
+      }
+    ],
+    "broken_branch": [
+      {
+        "from_chapter": 12,
+        "id": "locations[26]",
+        "to": "house",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 11,
+        "id": "locations[38]",
+        "to": "old_cistern",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 12,
+        "id": "locations[41]",
+        "to": "house",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[13]",
+        "to": "cale",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[14]",
+        "to": "cale",
+        "to_chapter": 12
+      }
+    ],
+    "carved_chamber": [
+      {
+        "from_chapter": 5,
+        "id": "locations[6]",
+        "to": "house",
+        "to_chapter": null
+      }
+    ],
+    "causeway": [
+      {
+        "from_chapter": 3,
+        "id": "locations[60]",
+        "to": "salt_basin",
+        "to_chapter": null
+      }
+    ],
+    "child_cup": [
+      {
+        "from_chapter": 11,
+        "id": "locations[33]",
+        "to": "market_basin",
+        "to_chapter": null
+      }
+    ],
+    "comb": [
+      {
+        "from_chapter": 9,
+        "id": "locations[52]",
+        "to": "mara_hidden_chamber",
+        "to_chapter": 9
+      }
+    ],
+    "copper_plate": [
+      {
+        "from_chapter": 9,
+        "id": "holdings[26]",
+        "to": "mara",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[27]",
+        "to": "vael",
+        "to_chapter": null
+      }
+    ],
+    "copper_ring": [
+      {
+        "from_chapter": 6,
+        "id": "locations[61]",
+        "to": "red_channel",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 9,
+        "id": "locations[63]",
+        "to": "carved_chamber",
+        "to_chapter": 9
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[15]",
+        "to": "nemi",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[16]",
+        "to": "oruva",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[17]",
+        "to": "mara",
+        "to_chapter": 12
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[29]",
+        "to": "mara",
+        "to_chapter": 12
+      },
+      {
+        "from_chapter": 9,
+        "id": "holdings[40]",
+        "to": "oruva",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[41]",
+        "to": "mara",
+        "to_chapter": 12
+      }
+    ],
+    "counting_room": [
+      {
+        "from_chapter": 2,
+        "id": "locations[1]",
+        "to": "low_weather",
+        "to_chapter": null
+      }
+    ],
+    "drowned_stair": [
+      {
+        "from_chapter": 4,
+        "id": "locations[2]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "dye_house": [
+      {
+        "from_chapter": 6,
+        "id": "locations[4]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "first_jar": [
+      {
+        "from_chapter": 1,
+        "id": "locations[20]",
+        "to": "first_shelf",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[21]",
+        "to": "flour_sack",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[42]",
+        "to": "room_below_mouth",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 9,
+        "id": "locations[44]",
+        "to": "room_below_mouth",
+        "to_chapter": 9
+      },
+      {
+        "from_chapter": 10,
+        "id": "locations[45]",
+        "to": "bell_orchard",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[4]",
+        "to": "oruva",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[46]",
+        "to": "oruva",
+        "to_chapter": 10
+      }
+    ],
+    "gray_thread": [
+      {
+        "from_chapter": 9,
+        "id": "locations[53]",
+        "to": "mara_hidden_chamber",
+        "to_chapter": 9
+      }
+    ],
+    "letter": [
+      {
+        "from_chapter": 11,
+        "id": "locations[32]",
+        "to": "mara_hidden_chamber",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 9,
+        "id": "locations[51]",
+        "to": "sleeping_alcove",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 11,
+        "id": "locations[59]",
+        "to": "mara_hidden_chamber",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 9,
+        "id": "holdings[36]",
+        "to": "oruva",
+        "to_chapter": 11
+      }
+    ],
+    "listening_road": [
+      {
+        "from_chapter": 9,
+        "id": "locations[5]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "mara": [
+      {
+        "from_chapter": 12,
+        "id": "locations[55]",
+        "to": "mara_room",
+        "to_chapter": null
+      }
+    ],
+    "mara_cup": [
+      {
+        "from_chapter": 11,
+        "id": "locations[31]",
+        "to": "mara_hidden_chamber",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 9,
+        "id": "locations[50]",
+        "to": "sleeping_alcove",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 11,
+        "id": "locations[58]",
+        "to": "mara_hidden_chamber",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 9,
+        "id": "holdings[37]",
+        "to": "oruva",
+        "to_chapter": 11
+      }
+    ],
+    "mara_room": [
+      {
+        "from_chapter": 12,
+        "id": "locations[40]",
+        "to": "dye_house",
+        "to_chapter": null
+      }
+    ],
+    "market_basin": [
+      {
+        "from_chapter": 11,
+        "id": "locations[9]",
+        "to": "market_court",
+        "to_chapter": null
+      }
+    ],
+    "market_court": [
+      {
+        "from_chapter": 1,
+        "id": "locations[16]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "nameless_jar": [
+      {
+        "from_chapter": 5,
+        "id": "locations[39]",
+        "to": "house",
+        "to_chapter": 5
+      }
+    ],
+    "old_cistern": [
+      {
+        "from_chapter": 2,
+        "id": "locations[15]",
+        "to": "bell_orchard",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 3,
+        "id": "locations[43]",
+        "to": "bell_orchard",
+        "to_chapter": null
+      }
+    ],
+    "old_ledger": [
+      {
+        "from_chapter": 8,
+        "id": "holdings[30]",
+        "to": "iven",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[31]",
+        "to": "iven",
+        "to_chapter": 11
+      }
+    ],
+    "old_map": [
+      {
+        "from_chapter": 8,
+        "id": "holdings[8]",
+        "to": "vael",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[9]",
+        "to": "oruva",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[32]",
+        "to": "vael",
+        "to_chapter": 11
+      }
+    ],
+    "paving_stone": [
+      {
+        "from_chapter": 7,
+        "id": "locations[30]",
+        "to": "market_court",
+        "to_chapter": 7
+      }
+    ],
+    "public_hall": [
+      {
+        "from_chapter": 2,
+        "id": "locations[10]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "rain_vial": [
+      {
+        "from_chapter": 6,
+        "id": "holdings[6]",
+        "to": "oruva",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[24]",
+        "to": "nemi",
+        "to_chapter": 11
+      },
+      {
+        "from_chapter": 12,
+        "id": "holdings[25]",
+        "to": "nemi",
+        "to_chapter": null
+      }
+    ],
+    "red_channel": [
+      {
+        "from_chapter": 6,
+        "id": "locations[3]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "roof_chart": [
+      {
+        "from_chapter": 8,
+        "id": "holdings[10]",
+        "to": "pell",
+        "to_chapter": 8
+      },
+      {
+        "from_chapter": 8,
+        "id": "holdings[11]",
+        "to": "oruva",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[12]",
+        "to": "cale",
+        "to_chapter": 10
+      }
+    ],
+    "room_below_mouth": [
+      {
+        "from_chapter": 1,
+        "id": "locations[0]",
+        "to": "house",
+        "to_chapter": null
+      }
+    ],
+    "six_lidded_box": [
+      {
+        "from_chapter": 6,
+        "id": "holdings[18]",
+        "to": "nemi",
+        "to_chapter": null
+      }
+    ],
+    "sleeping_alcove": [
+      {
+        "from_chapter": 1,
+        "id": "locations[47]",
+        "to": "house",
+        "to_chapter": null
+      }
+    ],
+    "stone_disk": [
+      {
+        "from_chapter": 7,
+        "id": "locations[29]",
+        "to": "market_court",
+        "to_chapter": 7
+      }
+    ],
+    "tide_spoon": [
+      {
+        "from_chapter": 12,
+        "id": "locations[34]",
+        "to": "tool_drawer",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[0]",
+        "to": "oruva",
+        "to_chapter": null
+      }
+    ],
+    "tin_case": [
+      {
+        "from_chapter": 12,
+        "id": "locations[24]",
+        "to": "vey_room",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[19]",
+        "to": "nemi",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[21]",
+        "to": "nemi",
+        "to_chapter": 12
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[45]",
+        "to": "oruva",
+        "to_chapter": 10
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[47]",
+        "to": "oruva",
+        "to_chapter": 10
+      }
+    ],
+    "tree_flask": [
+      {
+        "from_chapter": 10,
+        "id": "locations[19]",
+        "to": "bell_orchard",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 10,
+        "id": "holdings[38]",
+        "to": "cale",
+        "to_chapter": 10
+      }
+    ],
+    "vey": [
+      {
+        "from_chapter": 12,
+        "id": "locations[54]",
+        "to": "bell_orchard",
+        "to_chapter": null
+      }
+    ],
+    "vey_room": [
+      {
+        "from_chapter": 7,
+        "id": "locations[8]",
+        "to": "drowned_stair",
+        "to_chapter": null
+      }
+    ],
+    "west_court": [
+      {
+        "from_chapter": 6,
+        "id": "locations[12]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "west_gate": [
+      {
+        "from_chapter": 8,
+        "id": "locations[13]",
+        "to": "ors",
+        "to_chapter": null
+      }
+    ],
+    "white_salt": [
+      {
+        "from_chapter": 10,
+        "id": "locations[28]",
+        "to": "bell_orchard",
+        "to_chapter": 10
+      }
+    ]
+  },
+  "not_same": [
+    {
+      "a": "oruva",
+      "b": "vael",
+      "id": "not_same[0]"
+    },
+    {
+      "a": "oruva",
+      "b": "mara",
+      "id": "not_same[1]"
+    },
+    {
+      "a": "iven",
+      "b": "vey",
+      "id": "not_same[2]"
+    },
+    {
+      "a": "vael",
+      "b": "mara",
+      "id": "not_same[3]"
+    },
+    {
+      "a": "cale",
+      "b": "vey",
+      "id": "not_same[4]"
+    },
+    {
+      "a": "cale",
+      "b": "mara",
+      "id": "not_same[5]"
+    },
+    {
+      "a": "vey",
+      "b": "mara",
+      "id": "not_same[6]"
+    },
+    {
+      "a": "pell",
+      "b": "tavin",
+      "id": "not_same[7]"
+    },
+    {
+      "a": "mara_cup",
+      "b": "child_cup",
+      "id": "not_same[8]"
+    },
+    {
+      "a": "tree_flask",
+      "b": "answer_flask",
+      "id": "not_same[9]"
+    },
+    {
+      "a": "iven",
+      "b": "mara",
+      "id": "not_same[10]"
+    },
+    {
+      "a": "tavin_jar",
+      "b": "first_jar",
+      "id": "not_same[11]"
+    },
+    {
+      "a": "nameless_jar",
+      "b": "first_jar",
+      "id": "not_same[12]"
+    },
+    {
+      "a": "tavin_cup",
+      "b": "mara_cup",
+      "id": "not_same[13]"
+    },
+    {
+      "a": "tavin_cup",
+      "b": "child_cup",
+      "id": "not_same[14]"
+    },
+    {
+      "a": "mara_cup",
+      "b": "child_cup",
+      "id": "not_same[15]"
+    },
+    {
+      "a": "carved_chamber",
+      "b": "mara_hidden_chamber",
+      "id": "not_same[16]"
+    },
+    {
+      "a": "mara_hidden_chamber",
+      "b": "vey_room",
+      "id": "not_same[17]"
+    },
+    {
+      "a": "house_map",
+      "b": "old_map",
+      "id": "not_same[18]"
+    },
+    {
+      "a": "old_map",
+      "b": "roof_chart",
+      "id": "not_same[19]"
+    },
+    {
+      "a": "notice",
+      "b": "rain_notice",
+      "id": "not_same[20]"
+    },
+    {
+      "a": "salt_basin",
+      "b": "market_basin",
+      "id": "not_same[21]"
+    },
+    {
+      "a": "cale",
+      "b": "tavin",
+      "id": "not_same[22]"
+    },
+    {
+      "a": "nemi",
+      "b": "mara",
+      "id": "not_same[23]"
+    },
+    {
+      "a": "roof_color_chart",
+      "b": "roof_chart",
+      "id": "not_same[24]"
+    },
+    {
+      "a": "house_map",
+      "b": "old_map",
+      "id": "not_same[25]"
+    },
+    {
+      "a": "vey",
+      "b": "mara",
+      "id": "not_same[26]"
+    },
+    {
+      "a": "cale",
+      "b": "cale_grandmother",
+      "id": "not_same[27]"
+    },
+    {
+      "a": "nemi_mother",
+      "b": "mara",
+      "id": "not_same[28]"
+    }
+  ],
+  "readers": [
+    "A",
+    "B"
+  ],
+  "same_as": [
+    {
+      "alias": "the hooded visitor",
+      "chapter": 8,
+      "entity": "mara",
+      "id": "same_as[0]"
+    },
+    {
+      "alias": "the hooded person",
+      "chapter": 8,
+      "entity": "mara",
+      "id": "same_as[1]"
+    },
+    {
+      "alias": "the visitor",
+      "chapter": 8,
+      "entity": "mara",
+      "id": "same_as[2]"
+    },
+    {
+      "alias": "assistant who had died in a fever",
+      "chapter": 7,
+      "entity": "mara",
+      "id": "same_as[3]"
+    },
+    {
+      "alias": "the person you called mother",
+      "chapter": 7,
+      "entity": "mara",
+      "id": "same_as[4]"
+    },
+    {
+      "alias": "Or\u2019s mother",
+      "chapter": 7,
+      "entity": "mara",
+      "id": "same_as[5]"
+    },
+    {
+      "alias": "the third Listener",
+      "chapter": 8,
+      "entity": "oruva",
+      "id": "same_as[6]"
+    },
+    {
+      "alias": "the woman with a copper hand",
+      "chapter": 8,
+      "entity": "vey",
+      "id": "same_as[8]"
+    },
+    {
+      "alias": "the other Listener",
+      "chapter": 4,
+      "entity": "vey",
+      "id": "same_as[9]"
+    },
+    {
+      "alias": "Vey Orin",
+      "chapter": 8,
+      "entity": "vey",
+      "id": "same_as[10]"
+    },
+    {
+      "alias": "the first Listener",
+      "chapter": 8,
+      "entity": "vey",
+      "id": "same_as[11]"
+    },
+    {
+      "alias": "The woman on the causeway",
+      "chapter": 8,
+      "entity": "vey",
+      "id": "same_as[12]"
+    },
+    {
+      "alias": "the hooded clerk who carried jars",
+      "chapter": 9,
+      "entity": "mara",
+      "id": "same_as[13]"
+    },
+    {
+      "alias": "the shadow in the corridor",
+      "chapter": 9,
+      "entity": "mara",
+      "id": "same_as[14]"
+    },
+    {
+      "alias": "the hooded, scarred figure",
+      "chapter": 9,
+      "entity": "mara",
+      "id": "same_as[15]"
+    },
+    {
+      "alias": "the hooded person who had walked into the Room Below Mouth",
+      "chapter": 9,
+      "entity": "mara",
+      "id": "same_as[16]"
+    }
+  ],
+  "ungraded_counts": {
+    "corrections": 10,
+    "false_beliefs": 13,
+    "knowledge": 28
+  }
+}

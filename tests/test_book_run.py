@@ -659,6 +659,37 @@ def test_an_entity_one_reader_rejects_takes_its_items_with_it():
     assert [m["id"] for m in gold["moves"]["lamp"]] == ["holdings[0]"]    # the one not touching it
 
 
+def test_a_readers_fields_only_rejudgement_stands_in_for_the_entity_verdict():
+    # r2.2: an entity is graded on kind and aliases; a first_chapter objection
+    # re-judged on those fields alone does not drop it
+    key = toy_key()
+    kb = json.dumps(key).encode()
+    a = verdict_file(kb, "A")
+    b = verdict_file(kb, "B")
+    b["entities"]["ghost"] = {"verdict": "wrong", "note": "first_chapter is 1", "bad_aliases": []}
+    b["entities_fields"] = {"ghost": {"verdict": "ok", "note": "kind and aliases check out",
+                                      "bad_aliases": ["the ghost"]}}
+    gold = bg.build_gold(kb, [a, b])
+    assert "ghost" in gold["entities"] and gold["entities"]["ghost"]["aliases"] == []
+    assert gold["dropped_aliases"] == [{"entity": "ghost", "alias": "the ghost", "by": ["B"]}]
+    assert "entities.ghost" not in {d["id"] for d in gold["dropped"]}
+    assert [s["id"] for s in gold["same_as"]] == ["same_as[0]", "same_as[1]"]
+    # a fields-only verdict can also drop: it is the whole judgement for that entity
+    b["entities"]["ghost"] = {"verdict": "ok", "note": "", "bad_aliases": []}
+    b["entities_fields"] = {"ghost": {"verdict": "unclear", "note": "", "bad_aliases": []}}
+    assert "ghost" not in bg.build_gold(kb, [a, b])["entities"]
+
+
+def test_entities_fields_for_an_unknown_entity_or_without_a_verdict_is_refused():
+    key = toy_key()
+    kb = json.dumps(key).encode()
+    a = verdict_file(kb, "A")
+    for bad in ({"nobody": {"verdict": "ok"}}, {"ghost": {"note": "x"}}, ["ghost"], "ghost"):
+        b = verdict_file(kb, "B", entities_fields=bad)
+        with pytest.raises(bg.VerdictError):
+            bg.build_gold(kb, [a, b])
+
+
 def test_book_gold_is_deterministic(tmp_path):
     key = toy_key()
     kb = json.dumps(key).encode()
