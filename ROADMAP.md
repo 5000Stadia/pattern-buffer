@@ -146,6 +146,8 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - pb's reply (to mabe3e4): agreed on the rule, derived titles, stance as a relationship family, and a new reverse read.
     - pb's pushback: make the type-or-role judgment a deferred classifier verdict on a being's kind rows, read as type (CONSTITUTIVE) or role (STATE), not a write-time move at the gate. That keeps model calls off the write path, fixes existing worlds with no rewrite, and keeps a wrong call correctable.
     - Both placements go to fresh views when it is brought forward.
+    - Construct adopted the derived placement in its proposal r2 (m5bcedb).
+    - A check for the build: identity's build stages (reconcile, the auto-gate) must read the type only after the build's classification has run (`seal_build`). Before that, the kind check would still see the raw kind word. Test it on a build-session ingest.
   - Nothing to build until Kabe brings the item forward.
 - [ ] R43 A containment read that says each item's edge (`worn_by`, `held_by`, `in`), so a narrator can say "wearing the grey coat" rather than "on your person". Construct's nice-to-have from E3's shape read (me79b81), not a blocker.
 - [ ] R44 A repeated `attr:*` declaration after data exists: an identical one becomes a no-op receipt and a conflicting one a skip, instead of raising and dropping the host's whole batch (construct run 7, mfbd59d: a re-sent `attr:keeps arity set_valued` dropped a turn's ingest)
