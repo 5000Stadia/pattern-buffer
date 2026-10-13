@@ -1,0 +1,1047 @@
+{
+  "beliefs": {
+    "corrections": {
+      "claim_after_correction": 0,
+      "ends_correct": 0,
+      "ends_correct_entries": 1,
+      "ends_correct_rate": 0.0,
+      "entries": 2,
+      "items": [
+        {
+          "claim_after_correction": null,
+          "corrected_chapter": 1,
+          "ends_correct": null,
+          "id": "corrections[10]",
+          "stated_chapter": 1,
+          "unmatched": [
+            "claim:entity"
+          ]
+        },
+        {
+          "claim_after_correction": null,
+          "corrected_chapter": 2,
+          "ends_correct": null,
+          "id": "corrections[12]",
+          "stated_chapter": 2,
+          "unmatched": [
+            "corrected:attribute",
+            "claim:attribute"
+          ]
+        }
+      ],
+      "target": 0,
+      "unmatched": 2
+    },
+    "false_beliefs": {
+      "entries": 0,
+      "false_in_canon": 0,
+      "held_by_believer": 0,
+      "held_by_believer_rate": null,
+      "items": [],
+      "measured": 0,
+      "target": 0,
+      "unmatched": 0
+    }
+  },
+  "containers": {
+    "items": [
+      {
+        "container": "tin_box",
+        "id": "containers[0]",
+        "placed": {
+          "brass_map": true,
+          "glass_thimble": true,
+          "paper_note": false
+        },
+        "score": 0.6667
+      },
+      {
+        "container": "glass_thimble",
+        "id": "containers[1]",
+        "placed": {
+          "black_thread": true
+        },
+        "score": 1.0
+      },
+      {
+        "container": "satchel",
+        "id": "containers[4]",
+        "placed": {
+          "tin_box": false
+        },
+        "score": 0.0
+      },
+      {
+        "container": "address_tag",
+        "id": "containers[5]",
+        "placed": {
+          "alis_name": false
+        },
+        "score": 0.0
+      },
+      {
+        "container": "stone_basin",
+        "id": "containers[8]",
+        "placed": {
+          "tin_box": true
+        },
+        "score": 1.0
+      },
+      {
+        "container": "false_bottom",
+        "id": "containers[10]",
+        "placed": {
+          "seventh_tooth": false
+        },
+        "score": 0.0
+      },
+      {
+        "container": "false_bottom",
+        "id": "containers[11]",
+        "placed": {
+          "brass_map": false,
+          "glass_thimble": true,
+          "paper_note": true
+        },
+        "score": 0.6667
+      }
+    ],
+    "score": 0.4762
+  },
+  "dropped": 15,
+  "dropped_fields": 13,
+  "ever": {
+    "objects": {
+      "blue_thread": {
+        "expected": [
+          "pell",
+          "tin_orchard"
+        ],
+        "found": []
+      },
+      "bone_comb": {
+        "expected": [
+          "tovan"
+        ],
+        "found": [
+          "tovan"
+        ]
+      },
+      "brass_map": {
+        "expected": [
+          "tin_box",
+          "tovan"
+        ],
+        "found": [
+          "tin_box"
+        ]
+      },
+      "eren_tag": {
+        "expected": [
+          "eren_vey",
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "eren_vey": {
+        "expected": [
+          "tin_orchard",
+          "understair",
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "false_bottom": {
+        "expected": [
+          "tin_box"
+        ],
+        "found": []
+      },
+      "glass_thimble": {
+        "expected": [
+          "ivara",
+          "pell",
+          "tin_box"
+        ],
+        "found": [
+          "ivara",
+          "tin_box"
+        ]
+      },
+      "hall_map": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "handprint_strip": {
+        "expected": [
+          "ivara",
+          "tin_orchard"
+        ],
+        "found": [
+          "ivara",
+          "tin_orchard"
+        ]
+      },
+      "hinge": {
+        "expected": [
+          "tin_orchard"
+        ],
+        "found": []
+      },
+      "ivara": {
+        "expected": [
+          "tin_orchard",
+          "understair",
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "ledger": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "nima": {
+        "expected": [
+          "tin_orchard"
+        ],
+        "found": []
+      },
+      "paper_note": {
+        "expected": [
+          "tin_box"
+        ],
+        "found": []
+      },
+      "pell": {
+        "expected": [
+          "understair",
+          "vellum_hall"
+        ],
+        "found": [
+          "understair"
+        ]
+      },
+      "petition": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "pocket_strip": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "red_key": {
+        "expected": [
+          "ivara",
+          "tin_orchard",
+          "vellum_hall"
+        ],
+        "found": [
+          "ivara"
+        ]
+      },
+      "red_key_tooth": {
+        "expected": [
+          "ivara"
+        ],
+        "found": []
+      },
+      "registry": {
+        "expected": [
+          "oru"
+        ],
+        "found": []
+      },
+      "round_door": {
+        "expected": [
+          "sump"
+        ],
+        "found": [
+          "sump"
+        ]
+      },
+      "satchel": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "sleeping_gallery": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": [
+          "vellum_hall"
+        ]
+      },
+      "tin_box": {
+        "expected": [
+          "ivara",
+          "pell",
+          "tin_orchard",
+          "understair",
+          "vellum_hall"
+        ],
+        "found": [
+          "ivara",
+          "pell"
+        ]
+      },
+      "tovan": {
+        "expected": [
+          "vellum_hall"
+        ],
+        "found": []
+      },
+      "tree_fruit": {
+        "expected": [
+          "tin_orchard"
+        ],
+        "found": []
+      },
+      "washers": {
+        "expected": [
+          "nima",
+          "tin_orchard"
+        ],
+        "found": []
+      }
+    },
+    "score": 0.2667
+  },
+  "field_counts": {
+    "alias_first_chapter": {
+      "dropped": 1,
+      "entries": 112,
+      "verified": 111
+    },
+    "beliefs": {
+      "dropped": 5,
+      "entries": 5,
+      "verified": 0
+    },
+    "corrections": {
+      "dropped": 4,
+      "entries": 7,
+      "verified": 3
+    },
+    "knowledge": {
+      "dropped": 3,
+      "entries": 4,
+      "verified": 1
+    }
+  },
+  "final": {
+    "as_of": 2.0,
+    "objects": {
+      "bone_comb": {
+        "expected": "tovan",
+        "got": [
+          "tovan"
+        ],
+        "ok": true
+      },
+      "eren_vey": {
+        "expected": "understair",
+        "got": [
+          "sump"
+        ],
+        "ok": false
+      },
+      "glass_thimble": {
+        "expected": "ivara",
+        "got": [
+          "false_bottom"
+        ],
+        "ok": false
+      },
+      "hall_map": {
+        "expected": "vellum_hall",
+        "got": [],
+        "ok": false
+      },
+      "ivara": {
+        "expected": "understair",
+        "got": [
+          "sump"
+        ],
+        "ok": false
+      },
+      "pell": {
+        "expected": "understair",
+        "got": [
+          "registry"
+        ],
+        "ok": false
+      },
+      "registry": {
+        "expected": "oru",
+        "got": [],
+        "ok": false
+      },
+      "round_door": {
+        "expected": "sump",
+        "got": [
+          "sump"
+        ],
+        "ok": true
+      },
+      "tin_box": {
+        "expected": "pell",
+        "got": [
+          "ivara"
+        ],
+        "ok": false
+      },
+      "tree_fruit": {
+        "expected": "tin_orchard",
+        "got": [],
+        "ok": false
+      },
+      "washers": {
+        "expected": "nima",
+        "got": [],
+        "ok": false
+      }
+    },
+    "read": "as_of",
+    "score": 0.1818
+  },
+  "headline": [
+    {
+      "measure": "wrong merges across look-alike pairs",
+      "rank": 1,
+      "target": 0,
+      "value": 0
+    },
+    {
+      "measure": "leaks",
+      "rank": 2,
+      "target": 0,
+      "unmeasured_parts": [],
+      "value": 1
+    },
+    {
+      "measure": "false beliefs in canon",
+      "rank": 3,
+      "target": 0,
+      "value": 0
+    },
+    {
+      "measure": "existing scores",
+      "rank": 4,
+      "value": {
+        "containers": 0.4762,
+        "ever": 0.2667,
+        "final": 0.1818,
+        "identity_b3_f1": 0.7695,
+        "look_alikes": 1.0,
+        "order": 0.2297,
+        "reveals": 1.0
+      }
+    },
+    {
+      "measure": "time and cost",
+      "rank": 5,
+      "value": {
+        "cost_known": true,
+        "cost_usd": 0.377235,
+        "seconds": 103.1
+      }
+    }
+  ],
+  "identity": {
+    "b3_f1": 0.7695,
+    "b3_precision": 1.0,
+    "b3_recall": 0.6253,
+    "fused": {},
+    "gold_entities": 45,
+    "mapping": {
+      "fused": {},
+      "missing": [
+        "address_tag",
+        "alis_name",
+        "chamber_note",
+        "eren_tag",
+        "hall_map",
+        "hall_old_keeper",
+        "hinge",
+        "ledger",
+        "petition",
+        "pocket_strip",
+        "recipe_sheet",
+        "red_key_tooth",
+        "satchel",
+        "tree_fruit",
+        "washers",
+        "winter_roll"
+      ],
+      "split": {
+        "first_house": [
+          "place:first_house",
+          "place:the_latch"
+        ]
+      }
+    },
+    "mentions": 79,
+    "missing": [
+      "address_tag",
+      "alis_name",
+      "eren_tag",
+      "hall_map",
+      "hall_old_keeper",
+      "hinge",
+      "ledger",
+      "petition",
+      "pocket_strip",
+      "recipe_sheet",
+      "satchel",
+      "tree_fruit",
+      "washers",
+      "winter_roll"
+    ],
+    "split": {
+      "first_house": [
+        "place:first_house",
+        "place:the_latch"
+      ]
+    }
+  },
+  "key_sha256": "34bd5facb48f8c158ea3c4de5d9108675cde4419357e687e5315bc8e64a93c3b",
+  "leaks": {
+    "alias_leaks": {
+      "count": 0,
+      "measured": true,
+      "rows": []
+    },
+    "identity_leaks": {
+      "ambiguous_rows": 0,
+      "chunk_leak_rows": 0,
+      "entries": [
+        {
+          "ambiguous_rows": 0,
+          "chunk_leak_rows": 0,
+          "entity": "pell",
+          "first_leaking_chapter": null,
+          "id": "same_as[0]",
+          "pre_alias": "eren vell",
+          "pre_reveal_chunks": [],
+          "registry_leak": true,
+          "registry_leak_ids": [
+            "person:eren_vell"
+          ],
+          "reveal_chapter": 2,
+          "rows": [],
+          "unmapped_rows": 0
+        }
+      ],
+      "excluded_aliases": [],
+      "registry_leaks": 1,
+      "unclassified_chunks": [],
+      "unmapped_rows": 0
+    },
+    "target": 0,
+    "total": 1,
+    "unmeasured_parts": []
+  },
+  "look_alikes": {
+    "fusions": [],
+    "items": [
+      {
+        "a": "eren_vey",
+        "b": "pell",
+        "closures": [],
+        "fused": false,
+        "id": "not_same[0]"
+      },
+      {
+        "a": "red_key",
+        "b": "seventh_tooth",
+        "closures": [],
+        "fused": false,
+        "id": "not_same[1]"
+      },
+      {
+        "a": "black_thread",
+        "b": "numbered_spool",
+        "closures": [],
+        "fused": false,
+        "id": "not_same[2]"
+      },
+      {
+        "a": "brass_map",
+        "b": "hall_map",
+        "closures": [],
+        "fused": false,
+        "id": "not_same[3]"
+      },
+      {
+        "a": "black_thread",
+        "b": "blue_thread",
+        "closures": [],
+        "fused": false,
+        "id": "not_same[4]"
+      },
+      {
+        "a": "tovan",
+        "b": "hall_old_keeper",
+        "closures": [],
+        "fused": false,
+        "id": "not_same[5]"
+      }
+    ],
+    "score": 1.0
+  },
+  "order": {
+    "mean": 0.2297,
+    "objects": {
+      "blue_thread": {
+        "ever_found": [],
+        "expected": [
+          "tin_orchard",
+          "pell"
+        ],
+        "last_to": "pell",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "bone_comb": {
+        "ever_found": [
+          "tovan"
+        ],
+        "expected": [
+          "tovan"
+        ],
+        "last_to": "tovan",
+        "last_to_chapter": null,
+        "lcs": 1,
+        "score": 1.0,
+        "world": [
+          "tovan"
+        ]
+      },
+      "brass_map": {
+        "ever_found": [
+          "tin_box"
+        ],
+        "expected": [
+          "tin_box",
+          "tovan"
+        ],
+        "last_to": "tovan",
+        "last_to_chapter": 2,
+        "lcs": 1,
+        "score": 0.5,
+        "world": [
+          "tin_box"
+        ]
+      },
+      "eren_tag": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall",
+          "eren_vey"
+        ],
+        "last_to": "eren_vey",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "eren_vey": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall",
+          "tin_orchard",
+          "vellum_hall",
+          "understair"
+        ],
+        "last_to": "understair",
+        "last_to_chapter": null,
+        "lcs": 0,
+        "score": 0.0,
+        "world": [
+          "sump"
+        ]
+      },
+      "false_bottom": {
+        "ever_found": [],
+        "expected": [
+          "tin_box"
+        ],
+        "last_to": "tin_box",
+        "last_to_chapter": 2,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "glass_thimble": {
+        "ever_found": [
+          "ivara",
+          "tin_box"
+        ],
+        "expected": [
+          "tin_box",
+          "pell",
+          "ivara"
+        ],
+        "last_to": "ivara",
+        "last_to_chapter": null,
+        "lcs": 2,
+        "score": 0.6667,
+        "world": [
+          "false_bottom",
+          "tin_box",
+          "ivara"
+        ]
+      },
+      "hall_map": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": null,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "handprint_strip": {
+        "ever_found": [
+          "ivara",
+          "tin_orchard"
+        ],
+        "expected": [
+          "tin_orchard",
+          "ivara"
+        ],
+        "last_to": "ivara",
+        "last_to_chapter": 1,
+        "lcs": 2,
+        "score": 1.0,
+        "world": [
+          "tin_orchard",
+          "ivara",
+          "vellum_hall"
+        ]
+      },
+      "hinge": {
+        "ever_found": [],
+        "expected": [
+          "tin_orchard"
+        ],
+        "last_to": "tin_orchard",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "ivara": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall",
+          "tin_orchard",
+          "understair"
+        ],
+        "last_to": "understair",
+        "last_to_chapter": null,
+        "lcs": 0,
+        "score": 0.0,
+        "world": [
+          "sleeping_gallery",
+          "sump"
+        ]
+      },
+      "ledger": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "nima": {
+        "ever_found": [],
+        "expected": [
+          "tin_orchard"
+        ],
+        "last_to": "tin_orchard",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "paper_note": {
+        "ever_found": [],
+        "expected": [
+          "tin_box"
+        ],
+        "last_to": "tin_box",
+        "last_to_chapter": 2,
+        "lcs": 0,
+        "score": 0.0,
+        "world": [
+          "false_bottom"
+        ]
+      },
+      "pell": {
+        "ever_found": [
+          "understair"
+        ],
+        "expected": [
+          "vellum_hall",
+          "understair"
+        ],
+        "last_to": "understair",
+        "last_to_chapter": null,
+        "lcs": 1,
+        "score": 0.5,
+        "world": [
+          "understair",
+          "sump",
+          "registry"
+        ]
+      },
+      "petition": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "pocket_strip": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "red_key": {
+        "ever_found": [
+          "ivara"
+        ],
+        "expected": [
+          "vellum_hall",
+          "tin_orchard",
+          "vellum_hall",
+          "ivara"
+        ],
+        "last_to": "ivara",
+        "last_to_chapter": 2,
+        "lcs": 1,
+        "score": 0.25,
+        "world": [
+          "ivara",
+          "stone_basin"
+        ]
+      },
+      "red_key_tooth": {
+        "ever_found": [],
+        "expected": [
+          "ivara"
+        ],
+        "last_to": "ivara",
+        "last_to_chapter": 2,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "registry": {
+        "ever_found": [],
+        "expected": [
+          "oru"
+        ],
+        "last_to": "oru",
+        "last_to_chapter": null,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "round_door": {
+        "ever_found": [
+          "sump"
+        ],
+        "expected": [
+          "sump"
+        ],
+        "last_to": "sump",
+        "last_to_chapter": null,
+        "lcs": 1,
+        "score": 1.0,
+        "world": [
+          "sump"
+        ]
+      },
+      "satchel": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": 1,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "sleeping_gallery": {
+        "ever_found": [
+          "vellum_hall"
+        ],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": 1,
+        "lcs": 1,
+        "score": 1.0,
+        "world": [
+          "vellum_hall"
+        ]
+      },
+      "tin_box": {
+        "ever_found": [
+          "ivara",
+          "pell"
+        ],
+        "expected": [
+          "vellum_hall",
+          "tin_orchard",
+          "ivara",
+          "pell",
+          "vellum_hall",
+          "understair",
+          "pell"
+        ],
+        "last_to": "pell",
+        "last_to_chapter": null,
+        "lcs": 2,
+        "score": 0.2857,
+        "world": [
+          "?obj:lost_property_shelf",
+          "?obj:ivara_satchel",
+          "ivara",
+          "stone_basin",
+          "pell",
+          "sump"
+        ]
+      },
+      "tovan": {
+        "ever_found": [],
+        "expected": [
+          "vellum_hall"
+        ],
+        "last_to": "vellum_hall",
+        "last_to_chapter": 2,
+        "lcs": 0,
+        "score": 0.0,
+        "world": [
+          "mouth_room",
+          "sump"
+        ]
+      },
+      "tree_fruit": {
+        "ever_found": [],
+        "expected": [
+          "tin_orchard"
+        ],
+        "last_to": "tin_orchard",
+        "last_to_chapter": null,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      },
+      "washers": {
+        "ever_found": [],
+        "expected": [
+          "tin_orchard",
+          "nima"
+        ],
+        "last_to": "nima",
+        "last_to_chapter": null,
+        "lcs": 0,
+        "score": 0.0,
+        "world": []
+      }
+    },
+    "pooled": 0.2449
+  },
+  "pending_corrections": 0,
+  "point_of_view": {
+    "learns": {
+      "entries": 1,
+      "held": 0,
+      "held_rate": 0.0,
+      "items": [
+        {
+          "chapter": 2,
+          "held_by_end": 0,
+          "id": "knowledge[5]",
+          "status": "measured",
+          "too_early": 0,
+          "unmatched": [],
+          "who": "ivara"
+        }
+      ],
+      "learned_too_early": 0,
+      "unmatched": 0
+    },
+    "never_learns": {
+      "entries": 0,
+      "items": [],
+      "target": 0,
+      "unmatched": 0,
+      "violations": 0
+    }
+  },
+  "readers": [
+    "A (Claude Sonnet, final)",
+    "B (Claude Opus, final)"
+  ],
+  "reveals": {
+    "items": [
+      {
+        "alias": "eren vell",
+        "chapter": 2,
+        "entity": "pell",
+        "id": "same_as[0]",
+        "joined": true
+      }
+    ],
+    "score": 1.0
+  },
+  "summary": {
+    "containers": 0.4762,
+    "ever": 0.2667,
+    "final": 0.1818,
+    "identity_b3_f1": 0.7695,
+    "look_alikes": 1.0,
+    "order": 0.2297,
+    "reveals": 1.0
+  },
+  "through_chapter": 2,
+  "ungraded_counts": {
+    "corrections": 2,
+    "false_beliefs": 5,
+    "knowledge": 3
+  }
+}

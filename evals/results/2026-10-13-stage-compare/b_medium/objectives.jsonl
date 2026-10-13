@@ -1,0 +1,8 @@
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 107.632, "started": 1791934130.316}], "seconds": 107.632, "stage": "pass0", "unit": "segment:00"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 75.866, "started": 1791934237.948}], "seconds": 75.866, "stage": "pass0", "unit": "segment:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 101.639, "started": 1791934313.876}], "seconds": 101.639, "stage": "pass1", "unit": "chunk:03"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 118.091, "started": 1791934313.872}], "seconds": 118.091, "stage": "pass1", "unit": "chunk:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 120.555, "started": 1791934313.87}], "seconds": 120.555, "stage": "pass1", "unit": "chunk:00"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 199.524, "started": 1791934313.874}], "seconds": 199.524, "stage": "pass1", "unit": "chunk:02"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 51.26, "started": 1791934513.4}], "seconds": 51.26, "stage": "escape_repair", "unit": "registry_extend"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 106.84, "started": 1791934564.664}], "seconds": 106.841, "stage": "escape_repair", "unit": "chunk:03"}

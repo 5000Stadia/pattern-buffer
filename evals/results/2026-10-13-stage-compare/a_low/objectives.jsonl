@@ -1,0 +1,11 @@
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 28.519, "started": 1791934026.78}], "seconds": 28.519, "stage": "pass0", "unit": "segment:00"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 24.521, "started": 1791934055.299}], "seconds": 24.521, "stage": "pass0", "unit": "segment:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 13.316, "started": 1791934079.88}], "seconds": 13.316, "stage": "pass1", "unit": "chunk:03"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 13.907, "started": 1791934079.876}], "seconds": 13.907, "stage": "pass1", "unit": "chunk:00"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 14.062, "started": 1791934079.877}], "seconds": 14.062, "stage": "pass1", "unit": "chunk:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 18.366, "started": 1791934079.878}], "seconds": 18.366, "stage": "pass1", "unit": "chunk:02"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 8.007, "started": 1791934099.473}], "seconds": 8.007, "stage": "commit", "unit": "classify:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 8.023, "started": 1791934107.581}], "seconds": 8.023, "stage": "commit", "unit": "classify:02"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 8.01, "started": 1791934115.717}], "seconds": 8.01, "stage": "commit", "unit": "classify:03"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 3.365, "started": 1791934123.845}], "seconds": 3.365, "stage": "commit", "unit": "classify:04"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 2.649, "started": 1791934127.302}], "seconds": 2.65, "stage": "audit", "unit": "audit"}

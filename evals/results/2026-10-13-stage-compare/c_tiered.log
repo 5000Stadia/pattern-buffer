@@ -1,0 +1,26 @@
+2026-10-13 16:41:30,442 registry registry established: 40 entities, 84 attribute aliases
+2026-10-13 16:43:50,057 registry registry extended: now 58 entities
+2026-10-13 16:43:50,060 run_book pass-0: 58 entities, 150 attr aliases, 12 edges
+2026-10-13 16:43:50,104 alias_index alias index: {'index_strings': 129, 'segments_with_hits': 2, 'ambiguous_strings': 1, 'stoplisted_strings': 1, 'escape_candidates': 11, 'distinct_pairs': 3, 'distinct_pairs_strong': 3, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 16:45:57,777 pipeline chunk 1: ok (18 items, 1 orphans, 0 rejects)
+2026-10-13 16:46:32,422 pipeline chunk 2: ok (35 items, 2 orphans, 0 rejects)
+2026-10-13 16:46:53,524 pipeline chunk 3: ok (17 items, 2 orphans, 0 rejects)
+2026-10-13 16:49:17,844 pipeline chunk 0: ok (48 items, 0 orphans, 0 rejects)
+2026-10-13 16:49:17,845 pipeline registry escapes: 5 orphan(s) across 3 chunk(s); extending
+2026-10-13 16:50:47,653 registry registry extended: now 62 entities
+2026-10-13 16:50:47,655 pipeline chunk 1: re-parse insufficient; re-extracting
+2026-10-13 16:52:04,652 pipeline chunk 2: re-parse insufficient; re-extracting
+2026-10-13 16:55:40,708 pipeline chunk 3: re-parse insufficient; re-extracting
+Traceback (most recent call last):
+  File "/home/k/pattern-buffer/evals/harness/run_book.py", line 425, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/k/pattern-buffer/evals/harness/run_book.py", line 415, in main
+    meta = run_book(args.book, args.out, model, pass0=args.pass0,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/k/pattern-buffer/evals/harness/run_book.py", line 334, in run_book
+    world = pipe.commit(world_path, registry, chunk_plan=plan.chunk_plan)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/k/pattern-buffer/evals/harness/pipeline.py", line 662, in commit
+    raise RuntimeError(
+RuntimeError: noncanonical run: chunks [2] failed or orphaned; nothing committed (staging retained)

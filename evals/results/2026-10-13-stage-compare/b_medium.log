@@ -1,0 +1,24 @@
+2026-10-13 16:30:37,947 registry registry established: 38 entities, 70 attribute aliases
+2026-10-13 16:31:53,813 registry registry extended: now 54 entities
+2026-10-13 16:31:53,816 run_book pass-0: 54 entities, 96 attr aliases, 7 edges
+2026-10-13 16:31:53,865 alias_index alias index: {'index_strings': 117, 'segments_with_hits': 2, 'ambiguous_strings': 1, 'stoplisted_strings': 2, 'escape_candidates': 9, 'distinct_pairs': 3, 'distinct_pairs_strong': 3, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 16:33:35,515 pipeline chunk 3: ok (33 items, 3 orphans, 0 rejects)
+2026-10-13 16:33:51,963 pipeline chunk 1: ok (29 items, 0 orphans, 0 rejects)
+2026-10-13 16:33:54,425 pipeline chunk 0: ok (40 items, 0 orphans, 0 rejects)
+2026-10-13 16:35:13,398 pipeline chunk 2: ok (56 items, 0 orphans, 0 rejects)
+2026-10-13 16:35:13,399 pipeline registry escapes: 3 orphan(s) across 1 chunk(s); extending
+2026-10-13 16:36:04,659 registry registry extended: now 56 entities
+2026-10-13 16:36:04,662 pipeline chunk 3: re-parse insufficient; re-extracting
+Traceback (most recent call last):
+  File "/home/k/pattern-buffer/evals/harness/run_book.py", line 425, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/k/pattern-buffer/evals/harness/run_book.py", line 415, in main
+    meta = run_book(args.book, args.out, model, pass0=args.pass0,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/k/pattern-buffer/evals/harness/run_book.py", line 334, in run_book
+    world = pipe.commit(world_path, registry, chunk_plan=plan.chunk_plan)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/k/pattern-buffer/evals/harness/pipeline.py", line 662, in commit
+    raise RuntimeError(
+RuntimeError: noncanonical run: chunks [3] failed or orphaned; nothing committed (staging retained)

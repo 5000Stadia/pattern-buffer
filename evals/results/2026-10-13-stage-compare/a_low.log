@@ -1,0 +1,66 @@
+2026-10-13 16:27:35,298 registry registry established: 34 entities, 16 attribute aliases
+2026-10-13 16:27:59,819 registry registry extended: now 51 entities
+2026-10-13 16:27:59,824 run_book pass-0: 51 entities, 28 attr aliases, 6 edges
+2026-10-13 16:27:59,872 alias_index alias index: {'index_strings': 59, 'segments_with_hits': 2, 'ambiguous_strings': 0, 'stoplisted_strings': 0, 'escape_candidates': 14, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 16:28:13,196 pipeline chunk 3: ok (34 items, 0 orphans, 0 rejects)
+2026-10-13 16:28:13,783 pipeline chunk 0: ok (38 items, 0 orphans, 0 rejects)
+2026-10-13 16:28:13,938 pipeline chunk 1: ok (23 items, 0 orphans, 1 rejects)
+2026-10-13 16:28:18,244 pipeline chunk 2: ok (50 items, 0 orphans, 0 rejects)
+2026-10-13 16:28:18,683 alias_index alias index: {'index_strings': 59, 'segments_with_hits': 2, 'ambiguous_strings': 0, 'stoplisted_strings': 0, 'escape_candidates': 14, 'distinct_pairs': 1, 'distinct_pairs_strong': 1, 'merge_candidates': 0, 'merge_excluded': 0}
+2026-10-13 16:28:18,683 alias_index alias distinctness: 0 written, 1 report-only
+2026-10-13 16:28:47,254 patternbuffer.tmaint truth maintenance: 9 open conflict(s)
+2026-10-13 16:28:47,255 pipeline committed: 266 rows
+2026-10-13 16:28:47,272 patternbuffer.tmaint truth maintenance: 9 open conflict(s)
+2026-10-13 16:28:49,969 patternbuffer.tmaint truth maintenance: 9 open conflict(s)
+2026-10-13 16:28:49,970 audit audit: +0 adds, 0 retracts, 0 dropped
+{
+  "date": "2026-10-13",
+  "book": "book",
+  "world_id": "w:book_book",
+  "model": "claude-sonnet-4-6",
+  "pipeline": "INGEST-V2 (registry-first)",
+  "chapters": 2,
+  "chunks": 4,
+  "words": 4157,
+  "log_rows": 266,
+  "entities": 53,
+  "registry_escapes": 0,
+  "audit": {
+    "adds": 0,
+    "retracts": 0,
+    "dropped": 0
+  },
+  "pass0_mode": "sequential",
+  "glean": false,
+  "merge_gate": false,
+  "registry_after_commit_entities": 51,
+  "timings": {
+    "pass0_s": 53.0,
+    "pass1_s": 18.4,
+    "escape_repair_s": 0.0,
+    "commit_s": 29.0,
+    "audit_s": 2.7,
+    "total_s": 103.1
+  },
+  "receipt": {
+    "calls": 11,
+    "calls_without_usage": 0,
+    "input_tokens": 907,
+    "output_tokens": 9194,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 39434,
+    "cost_usd": 0.377235,
+    "cost_known": true,
+    "seconds": 103.1
+  },
+  "stage_models": {
+    "applied": true,
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996",
+    "map": {
+      "default": {
+        "model": "claude-sonnet-4-6",
+        "effort": "low"
+      }
+    }
+  }
+}

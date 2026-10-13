@@ -1,0 +1,1001 @@
+{
+  "ambiguous_strings": [],
+  "counts": {
+    "ambiguous_strings": 0,
+    "distinct_pairs": 1,
+    "distinct_pairs_strong": 1,
+    "escape_candidates": 14,
+    "index_strings": 59,
+    "merge_candidates": 0,
+    "merge_excluded": 0,
+    "segments_with_hits": 2,
+    "stoplisted_strings": 0
+  },
+  "distinctness_evidence": [
+    {
+      "evidence": [
+        {
+          "count": 1,
+          "evidence": "Tovan sent Ivara and Eren Vey to inspect the Orchard.",
+          "segments": [
+            0
+          ],
+          "strength": "strong",
+          "type": "coordination"
+        }
+      ],
+      "ids": [
+        "person:eren_vey",
+        "person:ivara_noll"
+      ],
+      "strength": "strong",
+      "why_checked": []
+    }
+  ],
+  "entities": 51,
+  "escape_candidates": [
+    {
+      "count": 24,
+      "example": "p that had no north. Her desk stood beside the Mouth Room, a chamber inside the Hall where new rooms were asked to say what they were. Its door was a circular slab",
+      "overlaps": [
+        "obj:hall_ledger",
+        "place:vellum_hall"
+      ],
+      "segments": [
+        0,
+        1
+      ],
+      "string": "hall",
+      "surface": "Hall"
+    },
+    {
+      "count": 4,
+      "example": "The red key stayed cool in Ivara's hand. Nima believed the inherited story, though the story was wrong.",
+      "overlaps": [
+        "person:ivara_noll"
+      ],
+      "segments": [
+        0,
+        1
+      ],
+      "string": "ivara",
+      "surface": "Ivara"
+    },
+    {
+      "count": 3,
+      "example": "inty in her voice came from practice. Nima believed the Latch had been built by Nima's grandmother, and that her grandmother had hidden it to protect the Orchard. Eve",
+      "overlaps": [
+        "person:nima_orrel"
+      ],
+      "segments": [
+        0
+      ],
+      "string": "nima",
+      "surface": "Nima"
+    },
+    {
+      "count": 2,
+      "example": "n after its children had grown old. The Registry called these sounds addresses. Everyone else called them manners.",
+      "overlaps": [],
+      "segments": [
+        0
+      ],
+      "string": "everyone",
+      "surface": "Everyone"
+    },
+    {
+      "count": 2,
+      "example": "letters reminded Ivara of her mother's old recipe sheets, but the hand was not Mara's. Mara Noll wrote every letter with a small gap in its middle, as though each wo",
+      "overlaps": [
+        "person:mara_noll"
+      ],
+      "segments": [
+        0
+      ],
+      "string": "mara",
+      "surface": "Mara"
+    },
+    {
+      "count": 2,
+      "example": "\u201cI tried to tell the Hall. The name I used was Pell Aven. Nobody found it in the files. When I told them I knew where the tooth was, they search",
+      "overlaps": [],
+      "segments": [
+        1
+      ],
+      "string": "nobody",
+      "surface": "Nobody"
+    },
+    {
+      "count": 2,
+      "example": "Mara Noll appeared beside the first division. Tovan's name appeared beside the second. Ivara asked what the marks meant. He told her",
+      "overlaps": [
+        "person:tovan_sere"
+      ],
+      "segments": [
+        0,
+        1
+      ],
+      "string": "tovan",
+      "surface": "Tovan"
+    },
+    {
+      "count": 1,
+      "example": "Pell watched him take it. \u201cDoes it feel familiar?\u201d",
+      "overlaps": [],
+      "segments": [
+        1
+      ],
+      "string": "does",
+      "surface": "Does"
+    },
+    {
+      "count": 1,
+      "example": "e and almost the same name, carried stacks of bark to the drying racks. The two Eren's had learned to answer only to their surnames. When someone called \u201cEren,\u201d both",
+      "overlaps": [
+        "obj:eren_vey_tag",
+        "person:eren_vell",
+        "person:eren_vey"
+      ],
+      "segments": [
+        0
+      ],
+      "string": "eren",
+      "surface": "Eren"
+    },
+    {
+      "count": 1,
+      "example": "The two Erens stood facing each other. Eren Vey looked down at the note. \u201cYou wrote that.\u201d",
+      "overlaps": [],
+      "segments": [
+        1
+      ],
+      "string": "erens",
+      "surface": "Erens"
+    },
+    {
+      "count": 1,
+      "example": "\u201cNeither is this room,\u201d said Ivara.",
+      "overlaps": [],
+      "segments": [
+        0
+      ],
+      "string": "neither",
+      "surface": "Neither"
+    },
+    {
+      "count": 1,
+      "example": "the Hall's collection of unwanted instruments. The collection denied owning it. Under Ivara's cuff, the red key warmed; Tovan had not borrowed it.",
+      "overlaps": [],
+      "segments": [
+        1
+      ],
+      "string": "under ivara",
+      "surface": "Under Ivara"
+    },
+    {
+      "count": 1,
+      "example": "\u201cPeople share a voice. Rooms share walls.\u201d Tovan turned the comb over. \u201cUnless they're the same room.\u201d",
+      "overlaps": [],
+      "segments": [
+        1
+      ],
+      "string": "unless",
+      "surface": "Unless"
+    },
+    {
+      "count": 1,
+      "example": "oom may be stored by its first name, but not its walls.\u201d The note was signed E. Vell.",
+      "overlaps": [
+        "person:eren_vell"
+      ],
+      "segments": [
+        1
+      ],
+      "string": "vell",
+      "surface": "Vell"
+    }
+  ],
+  "id_repairs": {},
+  "index": {
+    "address strips": [
+      "obj:address_strips"
+    ],
+    "alis noll": [
+      "person:alis_noll"
+    ],
+    "black thread": [
+      "obj:black_thread"
+    ],
+    "blue thread": [
+      "obj:blue_thread"
+    ],
+    "blue-stained hinge": [
+      "obj:blue_stained_hinge"
+    ],
+    "bone comb": [
+      "obj:bone_comb"
+    ],
+    "brass map": [
+      "obj:brass_map"
+    ],
+    "brass washer necklace": [
+      "obj:brass_washer_necklace"
+    ],
+    "chair": [
+      "person:tovan_sere"
+    ],
+    "clay addresses": [
+      "obj:clay_addresses"
+    ],
+    "disappearance of the latch": [
+      "event:latch_disappearance"
+    ],
+    "drying racks": [
+      "obj:drying_racks"
+    ],
+    "eren vell": [
+      "person:eren_vell"
+    ],
+    "eren vey": [
+      "person:eren_vey"
+    ],
+    "eren vey's sleeping tag": [
+      "obj:eren_vey_tag"
+    ],
+    "false bottom": [
+      "obj:false_bottom"
+    ],
+    "first division": [
+      "event:hall_division_first"
+    ],
+    "first house": [
+      "place:first_house"
+    ],
+    "floor under the floor": [
+      "place:orchard_subfloor"
+    ],
+    "folded paper": [
+      "obj:evell_note"
+    ],
+    "glass thimble": [
+      "obj:glass_thimble"
+    ],
+    "great partition": [
+      "event:great_partition"
+    ],
+    "hall ledger": [
+      "obj:hall_ledger"
+    ],
+    "handprint strip": [
+      "obj:handprint_strip"
+    ],
+    "hidden chamber": [
+      "place:hidden_chamber"
+    ],
+    "ivara noll": [
+      "person:ivara_noll"
+    ],
+    "ivara's satchel": [
+      "obj:ivara_satchel"
+    ],
+    "ivara's sleeping tag": [
+      "obj:ivara_sleeping_tag"
+    ],
+    "latch": [
+      "place:the_latch"
+    ],
+    "lio": [
+      "place:the_latch"
+    ],
+    "lost-property shelf": [
+      "obj:lost_property_shelf"
+    ],
+    "map": [
+      "obj:map"
+    ],
+    "mara noll": [
+      "person:mara_noll"
+    ],
+    "moth": [
+      "obj:moth"
+    ],
+    "mouth room": [
+      "place:mouth_room"
+    ],
+    "nima orrel": [
+      "person:nima_orrel"
+    ],
+    "nima's grandmother": [
+      "person:nimas_grandmother"
+    ],
+    "note": [
+      "obj:evell_note"
+    ],
+    "orchard": [
+      "place:tin_orchard"
+    ],
+    "orchard petition": [
+      "doc:orchard_petition"
+    ],
+    "orchard subfloor": [
+      "place:orchard_subfloor"
+    ],
+    "oru": [
+      "place:oru"
+    ],
+    "pell": [
+      "person:eren_vell"
+    ],
+    "pell aven": [
+      "person:eren_vell"
+    ],
+    "porter": [
+      "person:eren_vell"
+    ],
+    "red key": [
+      "obj:red_key"
+    ],
+    "registry": [
+      "org:the_registry"
+    ],
+    "round door": [
+      "place:round_door"
+    ],
+    "second division": [
+      "event:hall_division_second"
+    ],
+    "seventh tooth": [
+      "obj:seventh_tooth"
+    ],
+    "sleeping gallery": [
+      "place:sleeping_gallery"
+    ],
+    "spool": [
+      "obj:spool"
+    ],
+    "stone basin": [
+      "place:stone_basin"
+    ],
+    "sump": [
+      "place:the_sump"
+    ],
+    "tin box": [
+      "obj:tin_box"
+    ],
+    "tin orchard": [
+      "place:tin_orchard"
+    ],
+    "tovan sere": [
+      "person:tovan_sere"
+    ],
+    "understair": [
+      "place:understair"
+    ],
+    "vellum hall": [
+      "place:vellum_hall"
+    ]
+  },
+  "merge_candidates": [],
+  "merge_excluded": [],
+  "part_b": "applied",
+  "reconcile": true,
+  "registry_sha256": "382089d0e99fb4e2d04c1b782e47e7f1c7aeb77aabfa20ae067bbb0929ed5c9b",
+  "report_only": [
+    {
+      "detail": {
+        "person:eren_vey": "person_namespace",
+        "person:ivara_noll": "person_namespace"
+      },
+      "evidence": "Tovan sent Ivara and Eren Vey to inspect the Orchard.",
+      "evidence_all": [
+        {
+          "evidence": "Tovan sent Ivara and Eren Vey to inspect the Orchard.",
+          "type": "coordination"
+        }
+      ],
+      "ids": [
+        "person:eren_vey",
+        "person:ivara_noll"
+      ],
+      "reason": "person"
+    }
+  ],
+  "segment_hits": [
+    {
+      "ids": {
+        "event:hall_division_first": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "first division"
+          }
+        ],
+        "obj:address_strips": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "address strips"
+          }
+        ],
+        "obj:blue_thread": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "blue thread"
+          }
+        ],
+        "obj:drying_racks": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "drying racks"
+          }
+        ],
+        "obj:evell_note": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "note"
+          }
+        ],
+        "obj:handprint_strip": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "handprint strip"
+          }
+        ],
+        "obj:lost_property_shelf": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "lost-property shelf"
+          }
+        ],
+        "obj:map": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "map"
+          }
+        ],
+        "obj:red_key": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "red key"
+          }
+        ],
+        "obj:tin_box": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "tin box"
+          }
+        ],
+        "org:the_registry": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "registry"
+          }
+        ],
+        "person:alis_noll": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "prefix",
+            "string": "alis"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "alis noll"
+          }
+        ],
+        "person:eren_vell": [
+          {
+            "ambiguous": true,
+            "count": 4,
+            "match": "prefix",
+            "string": "eren"
+          },
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "eren vell"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "porter"
+          }
+        ],
+        "person:eren_vey": [
+          {
+            "ambiguous": true,
+            "count": 4,
+            "match": "prefix",
+            "string": "eren"
+          },
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "eren vey"
+          }
+        ],
+        "person:ivara_noll": [
+          {
+            "ambiguous": false,
+            "count": 27,
+            "match": "prefix",
+            "string": "ivara"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "ivara noll"
+          }
+        ],
+        "person:mara_noll": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "prefix",
+            "string": "mara"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "mara noll"
+          }
+        ],
+        "person:nima_orrel": [
+          {
+            "ambiguous": false,
+            "count": 8,
+            "match": "prefix",
+            "string": "nima"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "nima orrel"
+          }
+        ],
+        "person:nimas_grandmother": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "nima's grandmother"
+          }
+        ],
+        "person:tovan_sere": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "chair"
+          },
+          {
+            "ambiguous": false,
+            "count": 8,
+            "match": "prefix",
+            "string": "tovan"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tovan sere"
+          }
+        ],
+        "place:first_house": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "first house"
+          }
+        ],
+        "place:mouth_room": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "mouth room"
+          }
+        ],
+        "place:oru": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "oru"
+          }
+        ],
+        "place:sleeping_gallery": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "sleeping gallery"
+          }
+        ],
+        "place:the_latch": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "latch"
+          },
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "lio"
+          }
+        ],
+        "place:tin_orchard": [
+          {
+            "ambiguous": false,
+            "count": 13,
+            "match": "exact",
+            "string": "orchard"
+          },
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "tin orchard"
+          }
+        ],
+        "place:understair": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "understair"
+          }
+        ],
+        "place:vellum_hall": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "vellum hall"
+          }
+        ]
+      },
+      "segment": 0
+    },
+    {
+      "ids": {
+        "event:great_partition": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "great partition"
+          }
+        ],
+        "obj:black_thread": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "black thread"
+          }
+        ],
+        "obj:blue_thread": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "blue thread"
+          }
+        ],
+        "obj:bone_comb": [
+          {
+            "ambiguous": false,
+            "count": 7,
+            "match": "exact",
+            "string": "bone comb"
+          }
+        ],
+        "obj:brass_map": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "brass map"
+          }
+        ],
+        "obj:clay_addresses": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "clay addresses"
+          }
+        ],
+        "obj:evell_note": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "folded paper"
+          },
+          {
+            "ambiguous": false,
+            "count": 7,
+            "match": "exact",
+            "string": "note"
+          }
+        ],
+        "obj:false_bottom": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "false bottom"
+          }
+        ],
+        "obj:glass_thimble": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "glass thimble"
+          }
+        ],
+        "obj:lost_property_shelf": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "lost-property shelf"
+          }
+        ],
+        "obj:map": [
+          {
+            "ambiguous": false,
+            "count": 16,
+            "match": "exact",
+            "string": "map"
+          }
+        ],
+        "obj:moth": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "moth"
+          }
+        ],
+        "obj:red_key": [
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "red key"
+          }
+        ],
+        "obj:seventh_tooth": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "seventh tooth"
+          }
+        ],
+        "obj:spool": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "spool"
+          }
+        ],
+        "obj:tin_box": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "tin box"
+          }
+        ],
+        "org:the_registry": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "registry"
+          }
+        ],
+        "person:eren_vell": [
+          {
+            "ambiguous": true,
+            "count": 3,
+            "match": "prefix",
+            "string": "eren"
+          },
+          {
+            "ambiguous": false,
+            "count": 7,
+            "match": "exact",
+            "string": "eren vell"
+          },
+          {
+            "ambiguous": false,
+            "count": 15,
+            "match": "exact",
+            "string": "pell"
+          },
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "pell aven"
+          },
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "porter"
+          }
+        ],
+        "person:eren_vey": [
+          {
+            "ambiguous": true,
+            "count": 3,
+            "match": "prefix",
+            "string": "eren"
+          },
+          {
+            "ambiguous": false,
+            "count": 13,
+            "match": "exact",
+            "string": "eren vey"
+          }
+        ],
+        "person:ivara_noll": [
+          {
+            "ambiguous": false,
+            "count": 21,
+            "match": "prefix",
+            "string": "ivara"
+          }
+        ],
+        "person:tovan_sere": [
+          {
+            "ambiguous": false,
+            "count": 24,
+            "match": "prefix",
+            "string": "tovan"
+          }
+        ],
+        "place:first_house": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "first house"
+          }
+        ],
+        "place:hidden_chamber": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "hidden chamber"
+          }
+        ],
+        "place:mouth_room": [
+          {
+            "ambiguous": false,
+            "count": 5,
+            "match": "exact",
+            "string": "mouth room"
+          }
+        ],
+        "place:oru": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "oru"
+          }
+        ],
+        "place:round_door": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "round door"
+          }
+        ],
+        "place:stone_basin": [
+          {
+            "ambiguous": false,
+            "count": 3,
+            "match": "exact",
+            "string": "stone basin"
+          }
+        ],
+        "place:the_latch": [
+          {
+            "ambiguous": false,
+            "count": 6,
+            "match": "exact",
+            "string": "latch"
+          }
+        ],
+        "place:the_sump": [
+          {
+            "ambiguous": false,
+            "count": 7,
+            "match": "exact",
+            "string": "sump"
+          }
+        ],
+        "place:tin_orchard": [
+          {
+            "ambiguous": false,
+            "count": 4,
+            "match": "exact",
+            "string": "orchard"
+          },
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "tin orchard"
+          }
+        ],
+        "place:understair": [
+          {
+            "ambiguous": false,
+            "count": 1,
+            "match": "exact",
+            "string": "understair"
+          }
+        ],
+        "place:vellum_hall": [
+          {
+            "ambiguous": false,
+            "count": 2,
+            "match": "exact",
+            "string": "vellum hall"
+          }
+        ]
+      },
+      "segment": 1
+    }
+  ],
+  "segments": 2,
+  "segments_sha256": "68bb79a2a35150459c67e4b0aa3614e96f958b2a22f06733bf75c3fe5d2851fe",
+  "source": "file",
+  "stoplisted": {},
+  "world_id": "w:book_book",
+  "written": []
+}

@@ -1,0 +1,414 @@
+{
+  "ablation": [
+    {
+      "result": "not measured",
+      "stage": "pass0"
+    },
+    {
+      "result": "not measured",
+      "stage": "pass1"
+    },
+    {
+      "result": "not measured",
+      "stage": "escape_repair"
+    },
+    {
+      "result": "not measured",
+      "stage": "commit"
+    },
+    {
+      "result": "not measured",
+      "stage": "audit"
+    }
+  ],
+  "build_what_ifs": [
+    {
+      "scenario": "measured",
+      "total_s": 103.1
+    },
+    {
+      "scenario": "pass0 on 4 worker(s)",
+      "total_s": 78.6
+    },
+    {
+      "scenario": "pass0 on 8 worker(s)",
+      "total_s": 78.6
+    },
+    {
+      "scenario": "pass0 with unlimited workers (floor)",
+      "total_s": 78.6
+    },
+    {
+      "scenario": "pass1 on 1 worker(s)",
+      "total_s": 144.4
+    },
+    {
+      "scenario": "pass1 on 8 worker(s)",
+      "total_s": 103.1
+    },
+    {
+      "scenario": "pass1 with unlimited workers (floor)",
+      "total_s": 103.1
+    },
+    {
+      "scenario": "pass1 without retries (first attempts only)",
+      "total_s": 103.1
+    },
+    {
+      "scenario": "commit with unlimited workers (floor)",
+      "total_s": 82.1
+    },
+    {
+      "scenario": "audit with unlimited workers (floor)",
+      "total_s": 103.0
+    },
+    {
+      "scenario": "overlapped pipeline (hypothetical)",
+      "total_s": 98.016
+    }
+  ],
+  "by_model_effort": [],
+  "ceilings": [
+    {
+      "current_workers": 1,
+      "floor_s": 28.519,
+      "floor_unit": "segment:00",
+      "measured_wall_s": 53.0,
+      "never_accepted": [],
+      "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+      "objectives": 2,
+      "serial_sum_s": 53.04,
+      "stage": "pass0",
+      "what_if": [
+        {
+          "all_attempts_s": 53.04,
+          "current": true,
+          "no_retries_s": 53.04,
+          "workers": 1
+        },
+        {
+          "all_attempts_s": 28.519,
+          "current": false,
+          "no_retries_s": 28.519,
+          "workers": 4
+        },
+        {
+          "all_attempts_s": 28.519,
+          "current": false,
+          "no_retries_s": 28.519,
+          "workers": 8
+        }
+      ],
+      "would_still_fail": 0
+    },
+    {
+      "current_workers": 4,
+      "floor_s": 18.366,
+      "floor_unit": "chunk:02",
+      "measured_wall_s": 18.4,
+      "never_accepted": [],
+      "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+      "objectives": 4,
+      "serial_sum_s": 59.651,
+      "stage": "pass1",
+      "what_if": [
+        {
+          "all_attempts_s": 59.651,
+          "current": false,
+          "no_retries_s": 59.651,
+          "workers": 1
+        },
+        {
+          "all_attempts_s": 18.366,
+          "current": true,
+          "no_retries_s": 18.366,
+          "workers": 4
+        },
+        {
+          "all_attempts_s": 18.366,
+          "current": false,
+          "no_retries_s": 18.366,
+          "workers": 8
+        }
+      ],
+      "would_still_fail": 0
+    },
+    {
+      "current_workers": 1,
+      "floor_s": 8.023,
+      "floor_unit": "classify:02",
+      "measured_wall_s": 29.0,
+      "never_accepted": [],
+      "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+      "objectives": 4,
+      "serial_sum_s": 27.405,
+      "stage": "commit",
+      "what_if": [],
+      "would_still_fail": 0
+    },
+    {
+      "current_workers": 1,
+      "floor_s": 2.65,
+      "floor_unit": "audit",
+      "measured_wall_s": 2.7,
+      "never_accepted": [],
+      "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+      "objectives": 1,
+      "serial_sum_s": 2.65,
+      "stage": "audit",
+      "what_if": [],
+      "would_still_fail": 0
+    }
+  ],
+  "notes": [],
+  "output_bound_fit": {
+    "all": {
+      "latency_vs_input_tokens": {
+        "intercept_s": 6.787,
+        "n": 11,
+        "r2": 0.1499,
+        "seconds_per_1k_tokens": 1.688
+      },
+      "latency_vs_output_tokens": {
+        "intercept_s": -0.595,
+        "n": 11,
+        "r2": 0.8339,
+        "seconds_per_1k_tokens": 16.237
+      }
+    },
+    "audit": {
+      "latency_vs_input_tokens": {
+        "n": 1,
+        "unmeasured": "fewer than 5 calls (1)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 1,
+        "unmeasured": "fewer than 5 calls (1)"
+      }
+    },
+    "commit": {
+      "latency_vs_input_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      }
+    },
+    "pass0": {
+      "latency_vs_input_tokens": {
+        "n": 2,
+        "unmeasured": "fewer than 5 calls (2)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 2,
+        "unmeasured": "fewer than 5 calls (2)"
+      }
+    },
+    "pass1": {
+      "latency_vs_input_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      }
+    }
+  },
+  "overlapped_pipeline": {
+    "batch_ready_s": [
+      13.316,
+      13.907,
+      14.062,
+      18.366
+    ],
+    "classification_done_s": 40.721,
+    "classification_total_s": 27.405,
+    "commit_other_s": 1.595,
+    "last_chunk_done_s": 18.366,
+    "measured_total_s": 103.1,
+    "model": "Dependency model (hypothetical, not today's code): a pass-1 chunk's facts can be classified as soon as that chunk is accepted. The commit's K classification batches are spread over the N accepted chunks in acceptance order; batch j becomes ready when chunk ceil(j*N/K) has finished (facts per chunk assumed even). Batches run, with their measured durations, one at a time on a separate worker. Escape repair, the commit's other work (its wall minus the summed batch durations) and the audit stay serial after the last chunk and the last batch, as today. Pass-0 stays as measured.",
+    "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+    "pass1_phase_s": 40.721,
+    "saved_s": 5.084,
+    "total_s": 98.016
+  },
+  "run_dir": "a_low",
+  "stages": [
+    {
+      "api_time_share_of_latency": 0.953,
+      "cached_tokens": 0,
+      "calls": 2,
+      "calls_with_latency": 2,
+      "cost_known": true,
+      "cost_usd": 0.094188,
+      "harness_overhead_s": 2.498,
+      "input_tokens": 6,
+      "latency_max_s": 28.517,
+      "latency_p50_s": 24.519,
+      "latency_p90_s": 28.517,
+      "latency_sum_s": 53.037,
+      "max_concurrent_calls": 1,
+      "objectives": 2,
+      "out_tok_per_s_median": 51.62,
+      "out_tok_per_s_p10": 51.62,
+      "output_tokens": 2868,
+      "share": 0.5141,
+      "stage": "pass0",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 1.0007,
+      "wall_s": 53.0,
+      "workers": 1
+    },
+    {
+      "api_time_share_of_latency": 0.904,
+      "cached_tokens": 0,
+      "calls": 4,
+      "calls_with_latency": 4,
+      "cost_known": true,
+      "cost_usd": 0.178368,
+      "harness_overhead_s": 5.742,
+      "input_tokens": 12,
+      "latency_max_s": 18.365,
+      "latency_p50_s": 13.905,
+      "latency_p90_s": 18.365,
+      "latency_sum_s": 59.644,
+      "max_concurrent_calls": 4,
+      "objectives": 4,
+      "out_tok_per_s_median": 62.87,
+      "out_tok_per_s_p10": 53.27,
+      "output_tokens": 3806,
+      "share": 0.1785,
+      "stage": "pass1",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 0.8104,
+      "wall_s": 18.4,
+      "workers": 4
+    },
+    {
+      "api_time_share_of_latency": "unmeasured",
+      "cached_tokens": 0,
+      "calls": 0,
+      "calls_with_latency": 0,
+      "cost_known": true,
+      "cost_usd": 0,
+      "harness_overhead_s": "unmeasured",
+      "input_tokens": 0,
+      "latency_max_s": "unmeasured",
+      "latency_p50_s": "unmeasured",
+      "latency_p90_s": "unmeasured",
+      "latency_sum_s": "unmeasured",
+      "max_concurrent_calls": "unmeasured",
+      "objectives": 0,
+      "out_tok_per_s_median": "unmeasured",
+      "out_tok_per_s_p10": "unmeasured",
+      "output_tokens": 0,
+      "share": 0.0,
+      "stage": "escape_repair",
+      "turns_per_call_max": "unmeasured",
+      "turns_per_call_median": "unmeasured",
+      "utilization": "unmeasured",
+      "wall_s": 0.0,
+      "workers": 1
+    },
+    {
+      "api_time_share_of_latency": 0.796,
+      "cached_tokens": 0,
+      "calls": 4,
+      "calls_with_latency": 4,
+      "cost_known": true,
+      "cost_usd": 0.068256,
+      "harness_overhead_s": 5.593,
+      "input_tokens": 886,
+      "latency_max_s": 8.022,
+      "latency_p50_s": 8.005,
+      "latency_p90_s": 8.022,
+      "latency_sum_s": 27.401,
+      "max_concurrent_calls": 1,
+      "objectives": 4,
+      "out_tok_per_s_median": 96.86,
+      "out_tok_per_s_p10": 41.01,
+      "output_tokens": 2512,
+      "share": 0.2813,
+      "stage": "commit",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 0.9449,
+      "wall_s": 29.0,
+      "workers": 1
+    },
+    {
+      "api_time_share_of_latency": 0.388,
+      "cached_tokens": 0,
+      "calls": 1,
+      "calls_with_latency": 1,
+      "cost_known": true,
+      "cost_usd": 0.036423,
+      "harness_overhead_s": 1.621,
+      "input_tokens": 3,
+      "latency_max_s": 2.649,
+      "latency_p50_s": 2.649,
+      "latency_p90_s": 2.649,
+      "latency_sum_s": 2.649,
+      "max_concurrent_calls": 1,
+      "objectives": 1,
+      "out_tok_per_s_median": 3.02,
+      "out_tok_per_s_p10": 3.02,
+      "output_tokens": 8,
+      "share": 0.0262,
+      "stage": "audit",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 0.9811,
+      "wall_s": 2.7,
+      "workers": 1
+    }
+  ],
+  "total_wall_s": 103.1,
+  "turns": [
+    {
+      "accepted": 2,
+      "attempts_histogram": {
+        "1": 2
+      },
+      "objectives": 2,
+      "retried": [],
+      "retry_seconds": 0.0,
+      "stage": "pass0"
+    },
+    {
+      "accepted": 4,
+      "attempts_histogram": {
+        "1": 4
+      },
+      "objectives": 4,
+      "retried": [],
+      "retry_seconds": 0.0,
+      "stage": "pass1"
+    },
+    {
+      "accepted": 4,
+      "attempts_histogram": {
+        "1": 4
+      },
+      "objectives": 4,
+      "retried": [],
+      "retry_seconds": 0.0,
+      "stage": "commit"
+    },
+    {
+      "accepted": 1,
+      "attempts_histogram": {
+        "1": 1
+      },
+      "objectives": 1,
+      "retried": [],
+      "retry_seconds": 0.0,
+      "stage": "audit"
+    }
+  ]
+}

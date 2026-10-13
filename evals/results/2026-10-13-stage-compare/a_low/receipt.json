@@ -1,0 +1,70 @@
+{
+  "stages": {
+    "audit": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 6049,
+      "calls": 1,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.036423,
+      "input_tokens": 3,
+      "output_tokens": 8,
+      "seconds": 2.7
+    },
+    "commit": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 4653,
+      "calls": 4,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.068256,
+      "input_tokens": 886,
+      "output_tokens": 2512,
+      "seconds": 29.0
+    },
+    "escape_repair": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "calls": 0,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "seconds": 0.0
+    },
+    "pass0": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 8525,
+      "calls": 2,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.094188,
+      "input_tokens": 6,
+      "output_tokens": 2868,
+      "seconds": 53.0
+    },
+    "pass1": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 20207,
+      "calls": 4,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.178368,
+      "input_tokens": 12,
+      "output_tokens": 3806,
+      "seconds": 18.4
+    }
+  },
+  "total": {
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 39434,
+    "calls": 11,
+    "calls_without_usage": 0,
+    "cost_known": true,
+    "cost_usd": 0.377235,
+    "input_tokens": 907,
+    "output_tokens": 9194,
+    "seconds": 103.1
+  }
+}

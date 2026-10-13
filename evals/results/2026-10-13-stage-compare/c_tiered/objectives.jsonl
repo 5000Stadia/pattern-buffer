@@ -1,0 +1,10 @@
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 218.711, "started": 1791934671.731}], "seconds": 218.711, "stage": "pass0", "unit": "segment:00"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 139.615, "started": 1791934890.442}], "seconds": 139.615, "stage": "pass0", "unit": "segment:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 127.662, "started": 1791935030.112}], "seconds": 127.662, "stage": "pass1", "unit": "chunk:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 162.308, "started": 1791935030.113}], "seconds": 162.308, "stage": "pass1", "unit": "chunk:02"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 183.408, "started": 1791935030.115}], "seconds": 183.408, "stage": "pass1", "unit": "chunk:03"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "rejected", "reason": "reject rate over threshold (38 rejects)", "seconds": 183.466, "started": 1791935030.109}, {"attempt": 2, "outcome": "accepted", "reason": null, "seconds": 144.269, "started": 1791935213.576}], "seconds": 327.735, "stage": "pass1", "unit": "chunk:00"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 89.807, "started": 1791935357.846}], "seconds": 89.807, "stage": "escape_repair", "unit": "registry_extend"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 76.995, "started": 1791935447.656}], "seconds": 76.995, "stage": "escape_repair", "unit": "chunk:01"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 216.053, "started": 1791935524.655}], "seconds": 216.053, "stage": "escape_repair", "unit": "chunk:02"}
+{"accepted": true, "attempts": [{"attempt": 1, "outcome": "accepted", "reason": null, "seconds": 109.849, "started": 1791935740.711}], "seconds": 109.849, "stage": "escape_repair", "unit": "chunk:03"}

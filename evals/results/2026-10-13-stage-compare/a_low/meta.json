@@ -1,0 +1,51 @@
+{
+  "audit": {
+    "adds": 0,
+    "dropped": 0,
+    "retracts": 0
+  },
+  "book": "book",
+  "chapters": 2,
+  "chunks": 4,
+  "date": "2026-10-13",
+  "entities": 53,
+  "glean": false,
+  "log_rows": 266,
+  "merge_gate": false,
+  "model": "claude-sonnet-4-6",
+  "pass0_mode": "sequential",
+  "pipeline": "INGEST-V2 (registry-first)",
+  "receipt": {
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 39434,
+    "calls": 11,
+    "calls_without_usage": 0,
+    "cost_known": true,
+    "cost_usd": 0.377235,
+    "input_tokens": 907,
+    "output_tokens": 9194,
+    "seconds": 103.1
+  },
+  "registry_after_commit_entities": 51,
+  "registry_escapes": 0,
+  "stage_models": {
+    "applied": true,
+    "map": {
+      "default": {
+        "effort": "low",
+        "model": "claude-sonnet-4-6"
+      }
+    },
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996"
+  },
+  "timings": {
+    "audit_s": 2.7,
+    "commit_s": 29.0,
+    "escape_repair_s": 0.0,
+    "pass0_s": 53.0,
+    "pass1_s": 18.4,
+    "total_s": 103.1
+  },
+  "words": 4157,
+  "world_id": "w:book_book"
+}

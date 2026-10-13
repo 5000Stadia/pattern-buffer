@@ -1,0 +1,1379 @@
+{
+  "alias_first_chapter": {
+    "address_tag": {
+      "her tag": 1,
+      "sleeping tag": 1,
+      "the tag": 1
+    },
+    "alis": {
+      "alis": 1,
+      "alis noll": 1
+    },
+    "alis_name": {
+      "name on the back": 1
+    },
+    "black_thread": {
+      "black thread": 2,
+      "the black thread": 2
+    },
+    "blue_thread": {
+      "blue thread": 1
+    },
+    "bone_comb": {
+      "bone comb": 2,
+      "comb": 2,
+      "the bone comb": 2,
+      "the comb": 2
+    },
+    "brass_map": {
+      "brass map": 2,
+      "the brass map": 2
+    },
+    "chalk_moth": {
+      "moth": 2,
+      "the moth": 2
+    },
+    "chamber_note": {
+      "Mouth Room's note": 1,
+      "note like a spoon touching a cup": 1
+    },
+    "eren_tag": {
+      "his own tag": 1
+    },
+    "eren_vey": {
+      "eren vey": 1,
+      "young clerk": 1
+    },
+    "false_bottom": {
+      "false base": 2,
+      "false bottom": 2,
+      "the false bottom": 2
+    },
+    "first_house": {
+      "first house": 1,
+      "latch": 1,
+      "lio": 1,
+      "the first house": 1,
+      "the latch": 1,
+      "the missing room": 1
+    },
+    "glass_thimble": {
+      "glass thimble": 2,
+      "the glass thimble": 2,
+      "the thimble": 2,
+      "thimble": 2
+    },
+    "hall_map": {
+      "map that had no north": 1
+    },
+    "hall_old_keeper": {
+      "earlier keeper of the Hall": 2
+    },
+    "handprint_strip": {
+      "handprint strip": 1,
+      "the handprint strip": 1
+    },
+    "hinge": {
+      "hinge": 1,
+      "the hinge": 1
+    },
+    "ivara": {
+      "ivara": 1,
+      "ivara noll": 1
+    },
+    "ledger": {
+      "the ledger": 1
+    },
+    "mara": {
+      "mara": 1,
+      "mara noll": 1
+    },
+    "mouth_room": {
+      "mouth room": 1,
+      "the mouth room": 1
+    },
+    "nima": {
+      "nima": 1,
+      "nima orrel": 1
+    },
+    "nima_grandmother": {
+      "Nima's grandmother": 1
+    },
+    "numbered_spool": {
+      "spool": 2,
+      "the spool": 2
+    },
+    "oru": {
+      "city of oru": 1,
+      "oru": 1,
+      "the city": 1,
+      "the city of oru": 1
+    },
+    "paper_note": {
+      "folded paper": 2,
+      "small folded paper": 2
+    },
+    "pell": {
+      "apprentice": 2,
+      "eren vell": 1,
+      "pell": 2,
+      "pell aven": 2,
+      "porter": 1,
+      "the porter": 2
+    },
+    "petition": {
+      "petition": 1,
+      "petition that arrived": 1,
+      "the petition": 1
+    },
+    "pocket_strip": {
+      "Mouth Room's bark strip": 1
+    },
+    "recipe_sheet": {
+      "sheet where Mara had recorded a recipe for shell milk": 1
+    },
+    "red_key": {
+      "iron thing": 1,
+      "red key": 1,
+      "the red key": 1
+    },
+    "registry": {
+      "The Registry": 1,
+      "the Registry": 1
+    },
+    "round_door": {
+      "round door": 2,
+      "the round door": 2
+    },
+    "satchel": {
+      "her satchel": 1,
+      "satchel": 1
+    },
+    "seventh_tooth": {
+      "seventh tooth": 2,
+      "the missing tooth": 2,
+      "the seventh tooth": 2
+    },
+    "sleeping_gallery": {
+      "sleeping gallery": 1,
+      "the hall's sleeping gallery": 1
+    },
+    "stone_basin": {
+      "stone basin": 2,
+      "the basin": 2
+    },
+    "sump": {
+      "sump": 2,
+      "the sump": 2
+    },
+    "tin_box": {
+      "parcel": 1,
+      "the parcel": 1,
+      "the tin box": 1,
+      "tin box": 1
+    },
+    "tin_orchard": {
+      "orchard": 1,
+      "the orchard": 1,
+      "the tin orchard": 1,
+      "tin orchard": 1
+    },
+    "tovan": {
+      "senior examiner": 1,
+      "the Chair": 1,
+      "tovan": 1,
+      "tovan sere": 1
+    },
+    "tree_fruit": {
+      "hollow metal fruit": 1
+    },
+    "understair": {
+      "the understair": 1,
+      "understair": 1
+    },
+    "vellum_hall": {
+      "hall": 1,
+      "the hall": 1,
+      "the vellum hall": 1,
+      "vellum hall": 1
+    },
+    "washers": {
+      "brass washers": 1,
+      "necklace of brass washers": 1,
+      "washers": 1
+    },
+    "winter_roll": {
+      "winter roll": 2
+    }
+  },
+  "beliefs": [],
+  "containers": [
+    {
+      "container": "tin_box",
+      "contents": [
+        "brass_map",
+        "glass_thimble",
+        "paper_note"
+      ],
+      "id": "containers[0]"
+    },
+    {
+      "container": "glass_thimble",
+      "contents": [
+        "black_thread"
+      ],
+      "id": "containers[1]"
+    },
+    {
+      "container": "satchel",
+      "contents": [
+        "tin_box"
+      ],
+      "id": "containers[4]"
+    },
+    {
+      "container": "address_tag",
+      "contents": [
+        "alis_name"
+      ],
+      "id": "containers[5]"
+    },
+    {
+      "container": "stone_basin",
+      "contents": [
+        "tin_box"
+      ],
+      "id": "containers[8]"
+    },
+    {
+      "container": "false_bottom",
+      "contents": [
+        "seventh_tooth"
+      ],
+      "id": "containers[10]"
+    },
+    {
+      "container": "false_bottom",
+      "contents": [
+        "brass_map",
+        "glass_thimble",
+        "paper_note"
+      ],
+      "id": "containers[11]"
+    }
+  ],
+  "corrections": [
+    {
+      "as_fact": {
+        "attribute": "signed_by",
+        "entity": "petition",
+        "value": {
+          "literal": "Lio"
+        }
+      },
+      "corrected_as_fact": null,
+      "corrected_chapter": 1,
+      "id": "corrections[10]",
+      "stated_chapter": 1
+    },
+    {
+      "as_fact": {
+        "attribute": "borrowed_by",
+        "entity": "bone_comb",
+        "value": {
+          "entity": "tovan"
+        }
+      },
+      "corrected_as_fact": {
+        "attribute": "from_collection",
+        "entity": "bone_comb",
+        "value": {
+          "literal": false
+        }
+      },
+      "corrected_chapter": 2,
+      "id": "corrections[12]",
+      "stated_chapter": 2
+    }
+  ],
+  "dropped": [
+    {
+      "id": "holdings[28]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Pell holds the tooth only in backstory, never in the story's present. The book also contradicts itself on when: ch2 l57 says 'Before I sent you the box, I moved the tooth', but ch2 l115 sets the move in his childhood in the first house."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "unclear"
+      }
+    },
+    {
+      "id": "holdings[7]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Eren Vey holds the brass map from ch2; ch4 \"map to Eren Vey\" and ch5 he sets it before Alis, so to_chapter 3 understates (should be 5, until Ivara folds it and keeps it). Not contradicted.",
+        "B (Claude Opus, final)": "Eren Vey keeps the map through ch4 ('The objects... were divided among them: map to Eren Vey', ch4 l43) and ch5 ('Eren Vey set the brass map before her', ch5 l5). It passes to Ivara only in ch5 ('Ivara folded the map and kept it'). to_chapter should be 5."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[101]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "The basin is a fixed object and is still in the Sump in ch3 (l3, 'took the red key from the stone basin') and ch5 (l41, 'the Sump, with its clay floor and stone basin'). to_chapter should be null, or at least 5."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[108]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Also ch2 says Pell moved the tooth under the moth 'before I sent you the box' (recent) vs ch2 later as a child; so a ch2 location is only a past event.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[13]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[21]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[35]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[3]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[43]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch3 l3: 'Ivara took the red key from the stone basin', so the key is in the Sump in ch3. Range should be 2-3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[54]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch3 l9 (in the Sump, before the door): 'Pell held the tin box against his chest.' Range should be 2-3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[60]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Eren Vey carries the map through the Sump at the start of ch3, before using it in the chamber (ch3 l21). Range should be 2-3. Same systematic Sump-ends-at-2 error."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[66]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ivara has the thimble in her pocket in the Sump at the start of ch3. Range should be 2-3. Same systematic error."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[69]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "The thread is still in the thimble at the start of ch5: 'Alis took the black thread from inside the thimble' (ch5 l15). By the key's own overlap convention (see holdings 2/3), to_chapter should be 5."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[71]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch3 l5, in the Sump: 'Tovan lifted the bone comb.' Range should be 2-3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "not_same[6]",
+      "notes": {
+        "A (Claude Sonnet, final)": "ch5: \"The Mouth Room remained a separate answering chamber, connected to the first house by a shared wall\"; ch3/ch6 agree. Note ch2 contradicts: Tovan \"Unless they're the same room\" and \"Tovan's suggestion was true\" (see text_contradictions).",
+        "B (Claude Opus, final)": "Ch5 l57 says plainly: 'The Mouth Room remained a separate answering chamber, connected to the first house by a shared wall.' But ch2 l15-17 contradicts it: Tovan says 'Unless they're the same room' and 'the red key stay[ed] cool... Tovan's suggestion was true'. Ch6 l5-7 also gives the Mouth Room's 'true name' as 'First House'. The book disagrees with itself."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "unclear"
+      }
+    }
+  ],
+  "dropped_aliases": [
+    {
+      "alias": "the hidden chamber",
+      "by": [
+        "A (Claude Sonnet, final)"
+      ],
+      "entity": "first_house"
+    }
+  ],
+  "dropped_contents": [],
+  "dropped_fields": [
+    {
+      "id": "corrections[10].corrected_as_fact",
+      "notes": {
+        "A (Claude Sonnet, final)": "ch1 'Lio isn't a person... It's what the missing room calls itself... the petition had mistaken a room's name for its signer.' The established fact is that Lio is the room's name (first_house name Lio / room is the signer). petition refers_to first_house is a different, uncontradicting relation and does not state the correction of signed_by Lio.",
+        "B (Claude Opus, final)": "'petition refers_to first_house' was never in dispute. The petition was about the missing Latch from the start (ch1 'a room was missing from the Tin Orchard ... the Latch'). The correction is that Lio is the room's own name, not a signer (ch1 'Lio isn't a person. It's what the missing room calls itself when it wants to be found'; 'the petition had mistaken a room's name for its signer'). A fact like first_house name 'Lio' (or petition signed_by nima, ch1 'I signed the petition that arrived') would carry it."
+      },
+      "reason": "a reader did not mark the field ok",
+      "verdicts": {
+        "A (Claude Sonnet, final)": "wrong",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "corrections[11].as_fact",
+      "notes": {
+        "A (Claude Sonnet, final)": "No correction: ch2 reaffirms \"The passage was still officially sealed, though its door had been painted over\". It is still officially sealed; nothing says the claim was false. (Possibly only that the seal is not actually effective.)",
+        "B (Claude Opus, final)": "Nothing is corrected. Ch2 l31 reaffirms it: 'The passage was still officially sealed, though its door had been painted over and the paint had a fresh crack.' The official status still stands. (What is false is Ivara's own claim that she 'had never entered the Understair' (ch1 l11), which the key exposes.)"
+      },
+      "reason": "the entry-level verdict is not ok for both readers",
+      "verdicts": {
+        "A (Claude Sonnet, final)": "wrong",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "corrections[11].corrected_as_fact",
+      "notes": {
+        "A (Claude Sonnet, final)": "No correction: ch2 reaffirms \"The passage was still officially sealed, though its door had been painted over\". It is still officially sealed; nothing says the claim was false. (Possibly only that the seal is not actually effective.)",
+        "B (Claude Opus, final)": "Nothing is corrected. Ch2 l31 reaffirms it: 'The passage was still officially sealed, though its door had been painted over and the paint had a fresh crack.' The official status still stands. (What is false is Ivara's own claim that she 'had never entered the Understair' (ch1 l11), which the key exposes.)"
+      },
+      "reason": "the entry-level verdict is not ok for both readers",
+      "verdicts": {
+        "A (Claude Sonnet, final)": "wrong",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "corrections[13].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    },
+    {
+      "id": "entities.first_house.alias_first_chapter[the hidden chamber]",
+      "notes": {},
+      "reason": "alias dropped (bad_aliases)",
+      "verdicts": {
+        "alias": "dropped"
+      }
+    },
+    {
+      "id": "false_beliefs[0].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    },
+    {
+      "id": "false_beliefs[10].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    },
+    {
+      "id": "false_beliefs[2].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    },
+    {
+      "id": "false_beliefs[7].as_fact",
+      "notes": {
+        "A (Claude Sonnet, final)": "Never stated as Ivara's belief; only implied by Tovan's correction ch3 (\"not your sister by blood\"). Ivara asks \"Who was Alis to me?\" (ch3), which shows uncertainty. ch1 has no kinship statement at all, so from_chapter 1 is unsupported (earliest ch3).",
+        "B (Claude Opus, final)": "Ch1 never states or shows Ivara's view of Alis's blood relation, and Alis is not called her sister until ch3 l25. The belief is only implied by Tovan's correction ('She was not your sister by blood', ch3 l39). from_chapter should be 3."
+      },
+      "reason": "the entry-level verdict is not ok for both readers",
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "unclear"
+      }
+    },
+    {
+      "id": "false_beliefs[9].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    },
+    {
+      "id": "knowledge[10].as_fact",
+      "notes": {
+        "A (Claude Sonnet, final)": "literal 'the same three notes' is a relative phrase that does not stand alone (same as what?). ch2: 'the thread repeated the same three notes' as the song he heard; the literal should name the song/three notes, e.g. repeats 'the song'.",
+        "B (Claude Opus, final)": ""
+      },
+      "reason": "a reader did not mark the field ok",
+      "verdicts": {
+        "A (Claude Sonnet, final)": "wrong",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "knowledge[16].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    },
+    {
+      "id": "knowledge[3].as_fact",
+      "notes": {},
+      "reason": "as_fact is null: not one fact",
+      "verdicts": {}
+    }
+  ],
+  "entities": {
+    "address_tag": {
+      "aliases": [
+        "sleeping tag",
+        "her tag",
+        "the tag"
+      ],
+      "kind": "object"
+    },
+    "alis": {
+      "aliases": [
+        "alis noll",
+        "alis"
+      ],
+      "kind": "person"
+    },
+    "alis_name": {
+      "aliases": [
+        "name on the back"
+      ],
+      "kind": "object"
+    },
+    "black_thread": {
+      "aliases": [
+        "black thread",
+        "the black thread"
+      ],
+      "kind": "object"
+    },
+    "blue_thread": {
+      "aliases": [
+        "blue thread"
+      ],
+      "kind": "object"
+    },
+    "bone_comb": {
+      "aliases": [
+        "bone comb",
+        "the bone comb",
+        "comb",
+        "the comb"
+      ],
+      "kind": "object"
+    },
+    "brass_map": {
+      "aliases": [
+        "brass map",
+        "the brass map"
+      ],
+      "kind": "object"
+    },
+    "chalk_moth": {
+      "aliases": [
+        "moth",
+        "the moth"
+      ],
+      "kind": "object"
+    },
+    "chamber_note": {
+      "aliases": [
+        "note like a spoon touching a cup",
+        "Mouth Room's note"
+      ],
+      "kind": "sound"
+    },
+    "eren_tag": {
+      "aliases": [
+        "his own tag"
+      ],
+      "kind": "object"
+    },
+    "eren_vey": {
+      "aliases": [
+        "eren vey",
+        "young clerk"
+      ],
+      "kind": "person"
+    },
+    "false_bottom": {
+      "aliases": [
+        "false bottom",
+        "the false bottom",
+        "false base"
+      ],
+      "kind": "object"
+    },
+    "first_house": {
+      "aliases": [
+        "first house",
+        "the first house",
+        "latch",
+        "the latch",
+        "the missing room",
+        "lio"
+      ],
+      "kind": "place"
+    },
+    "glass_thimble": {
+      "aliases": [
+        "glass thimble",
+        "the glass thimble",
+        "thimble",
+        "the thimble"
+      ],
+      "kind": "object"
+    },
+    "hall_map": {
+      "aliases": [
+        "map that had no north"
+      ],
+      "kind": "object"
+    },
+    "hall_old_keeper": {
+      "aliases": [
+        "earlier keeper of the Hall"
+      ],
+      "kind": "person"
+    },
+    "handprint_strip": {
+      "aliases": [
+        "handprint strip",
+        "the handprint strip"
+      ],
+      "kind": "object"
+    },
+    "hinge": {
+      "aliases": [
+        "hinge",
+        "the hinge"
+      ],
+      "kind": "object"
+    },
+    "ivara": {
+      "aliases": [
+        "ivara noll",
+        "ivara"
+      ],
+      "kind": "person"
+    },
+    "ledger": {
+      "aliases": [
+        "the ledger"
+      ],
+      "kind": "object"
+    },
+    "mara": {
+      "aliases": [
+        "mara noll",
+        "mara"
+      ],
+      "kind": "person"
+    },
+    "mouth_room": {
+      "aliases": [
+        "mouth room",
+        "the mouth room"
+      ],
+      "kind": "place"
+    },
+    "nima": {
+      "aliases": [
+        "nima orrel",
+        "nima"
+      ],
+      "kind": "person"
+    },
+    "nima_grandmother": {
+      "aliases": [
+        "Nima's grandmother"
+      ],
+      "kind": "person"
+    },
+    "numbered_spool": {
+      "aliases": [
+        "spool",
+        "the spool"
+      ],
+      "kind": "object"
+    },
+    "oru": {
+      "aliases": [
+        "oru",
+        "city of oru",
+        "the city",
+        "the city of oru"
+      ],
+      "kind": "place"
+    },
+    "paper_note": {
+      "aliases": [
+        "folded paper",
+        "small folded paper"
+      ],
+      "kind": "object"
+    },
+    "pell": {
+      "aliases": [
+        "pell",
+        "eren vell",
+        "pell aven",
+        "porter",
+        "apprentice",
+        "the porter"
+      ],
+      "kind": "person"
+    },
+    "petition": {
+      "aliases": [
+        "petition",
+        "the petition",
+        "petition that arrived"
+      ],
+      "kind": "object"
+    },
+    "pocket_strip": {
+      "aliases": [
+        "Mouth Room's bark strip"
+      ],
+      "kind": "object"
+    },
+    "recipe_sheet": {
+      "aliases": [
+        "sheet where Mara had recorded a recipe for shell milk"
+      ],
+      "kind": "object"
+    },
+    "red_key": {
+      "aliases": [
+        "red key",
+        "the red key",
+        "iron thing"
+      ],
+      "kind": "object"
+    },
+    "red_key_tooth": {
+      "aliases": [],
+      "kind": "component"
+    },
+    "registry": {
+      "aliases": [
+        "The Registry",
+        "the Registry"
+      ],
+      "kind": "institution"
+    },
+    "round_door": {
+      "aliases": [
+        "round door",
+        "the round door"
+      ],
+      "kind": "object"
+    },
+    "satchel": {
+      "aliases": [
+        "satchel",
+        "her satchel"
+      ],
+      "kind": "object"
+    },
+    "seventh_tooth": {
+      "aliases": [
+        "seventh tooth",
+        "the seventh tooth",
+        "the missing tooth"
+      ],
+      "kind": "object"
+    },
+    "sleeping_gallery": {
+      "aliases": [
+        "sleeping gallery",
+        "the hall's sleeping gallery"
+      ],
+      "kind": "place"
+    },
+    "stone_basin": {
+      "aliases": [
+        "stone basin",
+        "the basin"
+      ],
+      "kind": "object"
+    },
+    "sump": {
+      "aliases": [
+        "sump",
+        "the sump"
+      ],
+      "kind": "place"
+    },
+    "tin_box": {
+      "aliases": [
+        "tin box",
+        "the tin box",
+        "parcel",
+        "the parcel"
+      ],
+      "kind": "object"
+    },
+    "tin_orchard": {
+      "aliases": [
+        "tin orchard",
+        "the tin orchard",
+        "orchard",
+        "the orchard"
+      ],
+      "kind": "place"
+    },
+    "tovan": {
+      "aliases": [
+        "tovan sere",
+        "tovan",
+        "senior examiner",
+        "the Chair"
+      ],
+      "kind": "person"
+    },
+    "tree_fruit": {
+      "aliases": [
+        "hollow metal fruit"
+      ],
+      "kind": "object"
+    },
+    "understair": {
+      "aliases": [
+        "understair",
+        "the understair"
+      ],
+      "kind": "place"
+    },
+    "vellum_hall": {
+      "aliases": [
+        "vellum hall",
+        "the vellum hall",
+        "hall",
+        "the hall"
+      ],
+      "kind": "place"
+    },
+    "washers": {
+      "aliases": [
+        "brass washers",
+        "washers",
+        "necklace of brass washers"
+      ],
+      "kind": "object"
+    },
+    "winter_roll": {
+      "aliases": [
+        "winter roll"
+      ],
+      "kind": "object"
+    }
+  },
+  "field_counts": {
+    "alias_first_chapter": {
+      "dropped": 1,
+      "entries": 112,
+      "verified": 111
+    },
+    "beliefs": {
+      "dropped": 5,
+      "entries": 5,
+      "verified": 0
+    },
+    "corrections": {
+      "dropped": 4,
+      "entries": 7,
+      "verified": 3
+    },
+    "knowledge": {
+      "dropped": 3,
+      "entries": 4,
+      "verified": 1
+    }
+  },
+  "key_sha256": "34bd5facb48f8c158ea3c4de5d9108675cde4419357e687e5315bc8e64a93c3b",
+  "knowledge": [
+    {
+      "chapter": 2,
+      "fact": {
+        "attribute": "name",
+        "entity": "pell",
+        "value": {
+          "literal": "Pell Aven"
+        }
+      },
+      "id": "knowledge[5]",
+      "mode": "learns",
+      "who": "ivara"
+    }
+  ],
+  "moves": {
+    "blue_thread": [
+      {
+        "from_chapter": 1,
+        "id": "locations[103]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[23]",
+        "to": "pell",
+        "to_chapter": 1
+      }
+    ],
+    "bone_comb": [
+      {
+        "from_chapter": 2,
+        "id": "holdings[11]",
+        "to": "tovan",
+        "to_chapter": null
+      }
+    ],
+    "brass_map": [
+      {
+        "from_chapter": 2,
+        "id": "locations[59]",
+        "to": "tin_box",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[27]",
+        "to": "tovan",
+        "to_chapter": 2
+      }
+    ],
+    "eren_tag": [
+      {
+        "from_chapter": 1,
+        "id": "locations[122]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[25]",
+        "to": "eren_vey",
+        "to_chapter": 1
+      }
+    ],
+    "eren_vey": [
+      {
+        "from_chapter": 1,
+        "id": "locations[9]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[10]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[11]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[12]",
+        "to": "understair",
+        "to_chapter": null
+      }
+    ],
+    "false_bottom": [
+      {
+        "from_chapter": 2,
+        "id": "locations[88]",
+        "to": "tin_box",
+        "to_chapter": 2
+      }
+    ],
+    "glass_thimble": [
+      {
+        "from_chapter": 2,
+        "id": "locations[65]",
+        "to": "tin_box",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[9]",
+        "to": "pell",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[10]",
+        "to": "ivara",
+        "to_chapter": null
+      }
+    ],
+    "hall_map": [
+      {
+        "from_chapter": 1,
+        "id": "locations[102]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "handprint_strip": [
+      {
+        "from_chapter": 1,
+        "id": "locations[92]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[15]",
+        "to": "ivara",
+        "to_chapter": 1
+      }
+    ],
+    "hinge": [
+      {
+        "from_chapter": 1,
+        "id": "locations[81]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      }
+    ],
+    "ivara": [
+      {
+        "from_chapter": 1,
+        "id": "locations[0]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[1]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[2]",
+        "to": "understair",
+        "to_chapter": null
+      }
+    ],
+    "ledger": [
+      {
+        "from_chapter": 1,
+        "id": "locations[86]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "nima": [
+      {
+        "from_chapter": 1,
+        "id": "locations[26]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      }
+    ],
+    "paper_note": [
+      {
+        "from_chapter": 2,
+        "id": "locations[87]",
+        "to": "tin_box",
+        "to_chapter": 2
+      }
+    ],
+    "pell": [
+      {
+        "from_chapter": 1,
+        "id": "locations[19]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[20]",
+        "to": "understair",
+        "to_chapter": null
+      }
+    ],
+    "petition": [
+      {
+        "from_chapter": 1,
+        "id": "locations[113]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "pocket_strip": [
+      {
+        "from_chapter": 1,
+        "id": "locations[115]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "red_key": [
+      {
+        "from_chapter": 1,
+        "id": "locations[40]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[41]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[42]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[0]",
+        "to": "ivara",
+        "to_chapter": 2
+      }
+    ],
+    "red_key_tooth": [
+      {
+        "from_chapter": 1,
+        "id": "holdings[31]",
+        "to": "ivara",
+        "to_chapter": 2
+      }
+    ],
+    "registry": [
+      {
+        "from_chapter": 1,
+        "id": "locations[107]",
+        "to": "oru",
+        "to_chapter": null
+      }
+    ],
+    "round_door": [
+      {
+        "from_chapter": 2,
+        "id": "locations[105]",
+        "to": "sump",
+        "to_chapter": null
+      }
+    ],
+    "satchel": [
+      {
+        "from_chapter": 1,
+        "id": "locations[89]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "sleeping_gallery": [
+      {
+        "from_chapter": 1,
+        "id": "locations[100]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "tin_box": [
+      {
+        "from_chapter": 1,
+        "id": "locations[50]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[51]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[52]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[53]",
+        "to": "understair",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[4]",
+        "to": "ivara",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[5]",
+        "to": "pell",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[26]",
+        "to": "pell",
+        "to_chapter": 1
+      }
+    ],
+    "tovan": [
+      {
+        "from_chapter": 1,
+        "id": "locations[34]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      }
+    ],
+    "tree_fruit": [
+      {
+        "from_chapter": 1,
+        "id": "locations[118]",
+        "to": "tin_orchard",
+        "to_chapter": null
+      }
+    ],
+    "washers": [
+      {
+        "from_chapter": 1,
+        "id": "locations[83]",
+        "to": "tin_orchard",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[14]",
+        "to": "nima",
+        "to_chapter": null
+      }
+    ]
+  },
+  "not_same": [
+    {
+      "a": "eren_vey",
+      "b": "pell",
+      "id": "not_same[0]"
+    },
+    {
+      "a": "red_key",
+      "b": "seventh_tooth",
+      "id": "not_same[1]"
+    },
+    {
+      "a": "black_thread",
+      "b": "numbered_spool",
+      "id": "not_same[2]"
+    },
+    {
+      "a": "brass_map",
+      "b": "hall_map",
+      "id": "not_same[3]"
+    },
+    {
+      "a": "black_thread",
+      "b": "blue_thread",
+      "id": "not_same[4]"
+    },
+    {
+      "a": "tovan",
+      "b": "hall_old_keeper",
+      "id": "not_same[5]"
+    }
+  ],
+  "pending_corrections": 0,
+  "readers": [
+    "A (Claude Sonnet, final)",
+    "B (Claude Opus, final)"
+  ],
+  "same_as": [
+    {
+      "alias": "eren vell",
+      "chapter": 2,
+      "entity": "pell",
+      "id": "same_as[0]"
+    }
+  ],
+  "through_chapter": 2,
+  "ungraded_counts": {
+    "corrections": 4,
+    "false_beliefs": 5,
+    "knowledge": 4
+  }
+}

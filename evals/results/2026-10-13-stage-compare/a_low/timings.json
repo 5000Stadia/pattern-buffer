@@ -1,0 +1,18 @@
+{
+  "audit_s": 2.7,
+  "commit_alias_distinct_s": 0.03,
+  "commit_classify_all_s": 28.11,
+  "commit_promotion_s": 0.01,
+  "commit_replay_s": 0.43,
+  "commit_s": 29.0,
+  "commit_seed_s": 0.4,
+  "commit_truth_scan_s": 0.02,
+  "escape_repair_s": 0.0,
+  "pass0_s": 53.0,
+  "pass0_segment_s": [
+    28.52,
+    24.52
+  ],
+  "pass1_s": 18.4,
+  "total_s": 103.1
+}

@@ -1,0 +1,999 @@
+{
+  "attributes": {
+    "access_restriction": "fruit_access",
+    "address": "sound_address",
+    "address_before_sound": "thread_function",
+    "address_note": "room_note_tone",
+    "authorized_division": "division_authorizer",
+    "bark_text": "strip_content",
+    "black_thread_purpose": "thread_function",
+    "blue_door_indicator": "blue_door_mark",
+    "blue_mark_beside_entry": "blue_door_mark",
+    "born_of_room": "latch_parentage",
+    "box_construction": "false_bottom_mechanism",
+    "brass_washer_count": "washer_count",
+    "bunk_tag_occupant": "bunk_tag_label",
+    "bunk_total": "bunk_count",
+    "bunks_in_gallery": "bunk_count",
+    "child_of_latch": "latch_parentage",
+    "clay_address_storage": "sump_function",
+    "cluster_of_marks": "map_marks",
+    "comb_history": "comb_provenance",
+    "comb_origin": "comb_provenance",
+    "comb_purpose": "comb_function",
+    "comb_reaction_to_map": "comb_response",
+    "comb_teeth": "tooth_count",
+    "comb_to_make_room_speak_plainly": "comb_function",
+    "comb_vibration": "comb_response",
+    "discarded_address_pressing": "sump_function",
+    "division_entries": "division_record",
+    "door_origin_condition": "door_appearance",
+    "door_scar": "scar_origin",
+    "false_base_design": "false_bottom_mechanism",
+    "false_bottom_impression_marks": "map_marks",
+    "first_name_listener": "seventh_tooth_function",
+    "five_seats": "house_threshold_count",
+    "five_seats_mark": "map_marks",
+    "five_thresholds": "house_threshold_count",
+    "founding_confusion": "partition_description",
+    "fruit_contents": "fruit_address",
+    "fruit_opener": "fruit_access",
+    "gap_in_letters": "letter_handwriting_style",
+    "great_partition_account": "partition_description",
+    "hall_name_filing": "name_filing_method",
+    "hand_size_comparison": "handprint_size",
+    "handprint_dimensions": "handprint_size",
+    "hinge_contents": "hinge_inventory",
+    "hinge_count": "hinge_inventory",
+    "hinged_bottom": "false_bottom_mechanism",
+    "hinged_leaf_tags": "tree_structure",
+    "how_letters_are_formed": "letter_handwriting_style",
+    "how_map_releases": "map_release_condition",
+    "how_round_door_appeared": "door_appearance",
+    "identity_record_method": "name_filing_method",
+    "impression_in_basin": "basin_impression",
+    "job-based_filing": "name_filing_method",
+    "joined_and_separated_places": "division_record",
+    "key_temperature": "key_warmth_response",
+    "latch_relationship": "latch_parentage",
+    "ledger_note": "ledger_annotation",
+    "letter_gap": "letter_handwriting_style",
+    "lid_hinged_upward": "false_bottom_mechanism",
+    "line_in_stone": "basin_impression",
+    "map_age_relative_to_hall": "map_age",
+    "map_bearer_selection": "map_release_condition",
+    "map_claim_condition": "map_release_condition",
+    "mark_in_ledger": "ledger_annotation",
+    "mend_and_undo": "seventh_tooth_function",
+    "minutes_deducted": "pay_deduction_rule",
+    "missing_tooth_role": "seventh_tooth_function",
+    "name_narrowing": "name_filing_method",
+    "necklace_washer_number": "washer_count",
+    "new_door_emergence": "door_appearance",
+    "non-deterministic_route": "passage_behavior",
+    "note_like_spoon_on_cup": "room_note_tone",
+    "note_signature": "note_signer",
+    "number_of_bunks": "bunk_count",
+    "number_of_teeth": "tooth_count",
+    "officially_sealed": "sealed_status",
+    "older_than_orchard": "map_age",
+    "open_door_drawn_in_blue": "blue_door_mark",
+    "order_signer": "division_authorizer",
+    "parcel_contents": "box_contents",
+    "passage_route_preservation": "passage_behavior",
+    "pay_docked": "pay_deduction_rule",
+    "pay_penalty": "pay_deduction_rule",
+    "petition_signature": "petition_signer",
+    "place_division_history": "division_record",
+    "pocket_vs_room_designation": "room_classification",
+    "pre-division_age": "map_age",
+    "private_address_in_fruit": "fruit_address",
+    "private_note": "ledger_annotation",
+    "quiet_second_note": "second_note",
+    "red_wax_seal": "thimble_seal",
+    "registered_seam": "seam_status",
+    "room_division_history": "partition_description",
+    "room_identifying_note": "room_note_tone",
+    "room_manner": "sound_address",
+    "room_or_pocket": "room_classification",
+    "room_sound": "sound_address",
+    "room_tone": "room_note_tone",
+    "room_type": "room_classification",
+    "room_voice": "sound_address",
+    "scar_from_door": "scar_origin",
+    "scar_location": "scar_origin",
+    "sealed_since": "sealed_status",
+    "sealing_status": "sealed_status",
+    "seam_registration": "seam_status",
+    "secondary_tone_beneath_mouth_room_note": "second_note",
+    "separating_room_voices": "comb_function",
+    "seventh_tooth_purpose": "seventh_tooth_function",
+    "signed_name_on_note": "note_signer",
+    "signed_order": "division_authorizer",
+    "signer_name": "petition_signer",
+    "size_of_prints": "handprint_size",
+    "sleeping_tag_text": "bunk_tag_label",
+    "stone_record": "basin_impression",
+    "stored_address": "fruit_address",
+    "stored_hinges": "hinge_inventory",
+    "strip_writing": "strip_content",
+    "sump_purpose": "sump_function",
+    "sump_routing": "passage_behavior",
+    "tag_name": "bunk_tag_label",
+    "tag_writing": "bunk_tag_label",
+    "teeth_count": "tooth_count",
+    "text_on_strip": "strip_content",
+    "the_sound_a_room_makes_to_identify_itself": "sound_address",
+    "thimble_cap_color": "thimble_seal",
+    "thread_role": "thread_function",
+    "threshold_number": "house_threshold_count",
+    "tin_box_contents": "box_contents",
+    "tin_box_warmth": "box_warmth",
+    "tooth_vibration": "comb_response",
+    "tovan_annotation": "ledger_annotation",
+    "tree_anatomy": "tree_structure",
+    "tree_composition": "tree_structure",
+    "unregistered_seam": "seam_status",
+    "warm_parcel": "box_warmth",
+    "warms_when_lying": "key_warmth_response",
+    "warmth_on_false_statement": "key_warmth_response",
+    "warmth_when_claim_is_false": "key_warmth_response",
+    "wax_cap_type": "thimble_seal",
+    "what_the_comb_does": "comb_function",
+    "where_comb_came_from": "comb_provenance",
+    "who_authorized": "division_authorizer",
+    "who_can_open_fruit": "fruit_access",
+    "who_signed": "petition_signer",
+    "wire_roots": "tree_structure",
+    "words_on_bark": "strip_content",
+    "wrist_scar": "scar_origin",
+    "writing_style": "letter_handwriting_style",
+    "year_count": "washer_count",
+    "years_lived_in_orchard": "washer_count"
+  },
+  "entities": {
+    "doc:city_petition": {
+      "aliases": [
+        "the petition"
+      ],
+      "anchors": [
+        "formal petition about missing room in Tin Orchard",
+        "name Lio appeared as signer"
+      ],
+      "kind": "doc",
+      "names": [
+        "city petition"
+      ]
+    },
+    "doc:e_vell_note": {
+      "aliases": [],
+      "anchors": [
+        "signed E. Vell",
+        "found in false bottom of tin box",
+        "room storage statement"
+      ],
+      "kind": "doc",
+      "names": [
+        "the note",
+        "E. Vell note"
+      ]
+    },
+    "doc:repair_ledger": {
+      "aliases": [
+        "the ledger",
+        "cracked-spine ledger",
+        "tovan's ledger"
+      ],
+      "anchors": [
+        "records Hall repairs and place divisions",
+        "private notes by Tovan",
+        "cracked spine"
+      ],
+      "kind": "doc",
+      "names": [
+        "Hall repair ledger"
+      ]
+    },
+    "doc:winter_roll": {
+      "aliases": [],
+      "anchors": [
+        "apprentice records",
+        "Registry document",
+        "missing persons list"
+      ],
+      "kind": "doc",
+      "names": [
+        "the Registry's winter roll",
+        "winter roll"
+      ]
+    },
+    "event:great_partition": {
+      "aliases": [],
+      "anchors": [
+        "rooms joined and divided without consent",
+        "Registry founding cause"
+      ],
+      "kind": "event",
+      "names": [
+        "the Great Partition",
+        "Great Partition"
+      ]
+    },
+    "event:latch_disappearance": {
+      "aliases": [
+        "the latch vanishing",
+        "missing room event"
+      ],
+      "anchors": [
+        "room vanished without taking hinge inventory"
+      ],
+      "kind": "event",
+      "names": [
+        "disappearance of the Latch"
+      ]
+    },
+    "obj:address_map": {
+      "aliases": [
+        "the map",
+        "map with no north"
+      ],
+      "anchors": [
+        "in Vellum Hall",
+        "has no north",
+        "address strips pinned to it",
+        "brass map",
+        "little brass map",
+        "the brass map",
+        "folded brass map"
+      ],
+      "kind": "obj",
+      "names": [
+        "address map"
+      ]
+    },
+    "obj:bark_strips": {
+      "aliases": [
+        "bark strips",
+        "skin-thin bark"
+      ],
+      "anchors": [
+        "addresses copied onto them",
+        "pinned to address map"
+      ],
+      "kind": "obj",
+      "names": [
+        "address strips"
+      ]
+    },
+    "obj:black_thread": {
+      "aliases": [],
+      "anchors": [
+        "inside glass thimble",
+        "address thread",
+        "three-note sound"
+      ],
+      "kind": "obj",
+      "names": [
+        "black thread"
+      ]
+    },
+    "obj:blue_thread": {
+      "aliases": [],
+      "anchors": [
+        "tied around tin box",
+        "Pell's addition",
+        "parcel thread"
+      ],
+      "kind": "obj",
+      "names": [
+        "blue thread"
+      ]
+    },
+    "obj:bone_comb": {
+      "aliases": [],
+      "anchors": [
+        "numbered teeth",
+        "Tovan's instrument",
+        "earlier keeper's comb",
+        "Hall instrument"
+      ],
+      "kind": "obj",
+      "names": [
+        "bone comb"
+      ]
+    },
+    "obj:brass_lip_door": {
+      "aliases": [
+        "mouth room door",
+        "circular door"
+      ],
+      "anchors": [
+        "circular black wood slab",
+        "brass lip",
+        "door to Mouth Room",
+        "round door",
+        "small round door",
+        "the door in the Sump wall"
+      ],
+      "kind": "obj",
+      "names": [
+        "brass lip door"
+      ]
+    },
+    "obj:glass_thimble": {
+      "aliases": [],
+      "anchors": [
+        "red wax cap",
+        "black thread container",
+        "Ivara's pocket"
+      ],
+      "kind": "obj",
+      "names": [
+        "glass thimble"
+      ]
+    },
+    "obj:handprint_strip": {
+      "aliases": [
+        "the strip",
+        "bark with handprints"
+      ],
+      "anchors": [
+        "bark strip with small handprints",
+        "appeared by Orchard's address on map"
+      ],
+      "kind": "obj",
+      "names": [
+        "handprint strip"
+      ]
+    },
+    "obj:hinge": {
+      "aliases": [
+        "the hinge",
+        "blue-stained hinge",
+        "hinge with blue-stained pin"
+      ],
+      "anchors": [
+        "found in empty grit ring",
+        "pin has blue stain"
+      ],
+      "kind": "obj",
+      "names": [
+        "door hinge"
+      ]
+    },
+    "obj:ivaras_satchel": {
+      "aliases": [
+        "ivara's bag",
+        "her satchel"
+      ],
+      "anchors": [
+        "carried by Ivara",
+        "contains tin box"
+      ],
+      "kind": "obj",
+      "names": [
+        "satchel"
+      ]
+    },
+    "obj:mara_recipe_sheet": {
+      "aliases": [
+        "mara's recipe sheet",
+        "shell milk recipe sheet"
+      ],
+      "anchors": [
+        "written by Mara Noll",
+        "shell milk recipe",
+        "gap-letter handwriting"
+      ],
+      "kind": "obj",
+      "names": [
+        "recipe sheet"
+      ]
+    },
+    "obj:metal_fruit": {
+      "aliases": [
+        "hollow metal fruit",
+        "the fruit"
+      ],
+      "anchors": [
+        "grows on Orchard trees",
+        "holds private address",
+        "opened only by depositor"
+      ],
+      "kind": "obj",
+      "names": [
+        "metal fruit"
+      ]
+    },
+    "obj:nimas_necklace": {
+      "aliases": [
+        "nima's necklace",
+        "washer necklace"
+      ],
+      "anchors": [
+        "one brass washer per year lived in Orchard"
+      ],
+      "kind": "obj",
+      "names": [
+        "brass washer necklace"
+      ]
+    },
+    "obj:red_key": {
+      "aliases": [
+        "the key",
+        "iron key",
+        "forked key"
+      ],
+      "anchors": [
+        "long iron object",
+        "forked tooth",
+        "warms when Ivara lies",
+        "left by Mara Noll with no label"
+      ],
+      "kind": "obj",
+      "names": [
+        "red key"
+      ]
+    },
+    "obj:seventh_tooth": {
+      "aliases": [],
+      "anchors": [
+        "missing from comb",
+        "seventh place",
+        "unnumbered gap"
+      ],
+      "kind": "obj",
+      "names": [
+        "seventh tooth",
+        "the seventh tooth"
+      ]
+    },
+    "obj:sleeping_tag": {
+      "aliases": [
+        "ivara's tag",
+        "bunk tag"
+      ],
+      "anchors": [
+        "front: Ivara Noll Vellum Hall",
+        "back: Alis Noll in faded red ink"
+      ],
+      "kind": "obj",
+      "names": [
+        "sleeping tag"
+      ]
+    },
+    "obj:the_moth": {
+      "aliases": [],
+      "anchors": [
+        "in hidden chamber",
+        "landmark in hidden chamber"
+      ],
+      "kind": "obj",
+      "names": [
+        "the moth"
+      ]
+    },
+    "obj:the_spool": {
+      "aliases": [],
+      "anchors": [
+        "in hidden chamber",
+        "tied to seventh tooth"
+      ],
+      "kind": "obj",
+      "names": [
+        "the spool"
+      ]
+    },
+    "obj:tin_box": {
+      "aliases": [
+        "the box",
+        "the parcel",
+        "blue-thread parcel"
+      ],
+      "anchors": [
+        "from lost-property shelf",
+        "warm",
+        "no label",
+        "sent by Eren Vell to Orchard keeper"
+      ],
+      "kind": "obj",
+      "names": [
+        "tin box"
+      ]
+    },
+    "org:first_examiners": {
+      "aliases": [],
+      "anchors": [
+        "made the bone comb",
+        "Registry founders after Great Partition"
+      ],
+      "kind": "org",
+      "names": [
+        "the Hall's first examiners",
+        "first examiners"
+      ]
+    },
+    "org:halls_collection": {
+      "aliases": [],
+      "anchors": [
+        "denied owning the comb"
+      ],
+      "kind": "org",
+      "names": [
+        "the Hall's collection",
+        "collection of unwanted instruments"
+      ]
+    },
+    "org:the_registry": {
+      "aliases": [
+        "registry"
+      ],
+      "anchors": [
+        "institution managing room addresses in Oru"
+      ],
+      "kind": "org",
+      "names": [
+        "the Registry"
+      ]
+    },
+    "person:alis_noll": {
+      "aliases": [
+        "alis"
+      ],
+      "anchors": [
+        "name written in faded red ink on back of Ivara's sleeping tag"
+      ],
+      "kind": "person",
+      "names": [
+        "Alis Noll"
+      ]
+    },
+    "person:earlier_keeper": {
+      "aliases": [],
+      "anchors": [
+        "bone comb owner",
+        "former Hall keeper"
+      ],
+      "kind": "person",
+      "names": [
+        "earlier keeper",
+        "earlier keeper of the Hall"
+      ]
+    },
+    "person:eren_vell": {
+      "aliases": [
+        "eren (shared)",
+        "vell"
+      ],
+      "anchors": [
+        "porter",
+        "Pell Aven",
+        "Pell"
+      ],
+      "kind": "person",
+      "names": [
+        "Eren Vell"
+      ]
+    },
+    "person:eren_vey": {
+      "aliases": [
+        "eren (shared)",
+        "vey"
+      ],
+      "anchors": [
+        "address-sorting clerk",
+        "scar on wrist"
+      ],
+      "kind": "person",
+      "names": [
+        "Eren Vey"
+      ]
+    },
+    "person:ivara_noll": {
+      "aliases": [
+        "ivara",
+        "noll"
+      ],
+      "anchors": [
+        "clerk",
+        "address-copier",
+        "daughter of Mara Noll"
+      ],
+      "kind": "person",
+      "names": [
+        "Ivara Noll"
+      ]
+    },
+    "person:mara_noll": {
+      "aliases": [
+        "mara"
+      ],
+      "anchors": [
+        "Ivara's mother",
+        "gap-letter handwriting style"
+      ],
+      "kind": "person",
+      "names": [
+        "Mara Noll"
+      ]
+    },
+    "person:nima_orrel": {
+      "aliases": [
+        "nima",
+        "the orchard keeper"
+      ],
+      "anchors": [
+        "Orchard keeper",
+        "brass washer necklace wearer"
+      ],
+      "kind": "person",
+      "names": [
+        "Nima Orrel"
+      ]
+    },
+    "person:nimas_grandmother": {
+      "aliases": [
+        "the old woman"
+      ],
+      "anchors": [
+        "claimed builder of the Latch per oral tradition"
+      ],
+      "kind": "person",
+      "names": [
+        "Nima's grandmother"
+      ]
+    },
+    "person:tovan_sere": {
+      "aliases": [
+        "the chair",
+        "senior examiner"
+      ],
+      "anchors": [
+        "senior examiner",
+        "never stands while deciding"
+      ],
+      "kind": "person",
+      "names": [
+        "Tovan Sere"
+      ]
+    },
+    "place:drying_racks": {
+      "aliases": [
+        "the racks"
+      ],
+      "anchors": [
+        "in Vellum Hall area",
+        "where bark strips are taken to dry"
+      ],
+      "kind": "place",
+      "names": [
+        "drying racks"
+      ]
+    },
+    "place:empty_grit_ring": {
+      "aliases": [
+        "hinge ring",
+        "the empty ring"
+      ],
+      "anchors": [
+        "in Tin Orchard",
+        "location where Latch was",
+        "single hinge remains"
+      ],
+      "kind": "place",
+      "names": [
+        "empty grit ring"
+      ]
+    },
+    "place:first_house": {
+      "aliases": [],
+      "anchors": [
+        "one room",
+        "five thresholds",
+        "pre-division",
+        "Pell's childhood home"
+      ],
+      "kind": "place",
+      "names": [
+        "the first house",
+        "the house"
+      ]
+    },
+    "place:hidden_chamber": {
+      "aliases": [],
+      "anchors": [
+        "contains the moth",
+        "contains the spool",
+        "seventh tooth location"
+      ],
+      "kind": "place",
+      "names": [
+        "the hidden chamber"
+      ]
+    },
+    "place:ivaras_bunk": {
+      "aliases": [
+        "her bunk"
+      ],
+      "anchors": [
+        "in sleeping gallery",
+        "has sleeping tag"
+      ],
+      "kind": "place",
+      "names": [
+        "Ivara's bunk"
+      ]
+    },
+    "place:ivaras_desk": {
+      "aliases": [
+        "her desk"
+      ],
+      "anchors": [
+        "beside Mouth Room in Vellum Hall"
+      ],
+      "kind": "place",
+      "names": [
+        "Ivara's desk"
+      ]
+    },
+    "place:ivaras_desk_drawers": {
+      "aliases": [
+        "the drawers"
+      ],
+      "anchors": [
+        "compartments in Ivara's desk"
+      ],
+      "kind": "place",
+      "names": [
+        "desk drawers"
+      ]
+    },
+    "place:lost_property_shelf": {
+      "aliases": [
+        "lost property shelf"
+      ],
+      "anchors": [
+        "in Vellum Hall"
+      ],
+      "kind": "place",
+      "names": [
+        "lost-property shelf"
+      ]
+    },
+    "place:mouth_room": {
+      "aliases": [
+        "mouth room"
+      ],
+      "anchors": [
+        "chamber inside Vellum Hall",
+        "new rooms examined here",
+        "note like spoon on cup"
+      ],
+      "kind": "place",
+      "names": [
+        "the Mouth Room"
+      ]
+    },
+    "place:orchard_sublevel": {
+      "aliases": [
+        "below the orchard",
+        "under the grit"
+      ],
+      "anchors": [
+        "beneath Tin Orchard grit floor",
+        "accessible via seam"
+      ],
+      "kind": "place",
+      "names": [
+        "floor under the floor"
+      ]
+    },
+    "place:orchard_trays": {
+      "aliases": [
+        "grit trays",
+        "pale grit trays"
+      ],
+      "anchors": [
+        "in Tin Orchard",
+        "contain tree roots and wire"
+      ],
+      "kind": "place",
+      "names": [
+        "shallow trays"
+      ]
+    },
+    "place:orchard_trees": {
+      "aliases": [
+        "rust-colored trees",
+        "the trees",
+        "metal trees"
+      ],
+      "anchors": [
+        "in Tin Orchard",
+        "grow in shallow grit trays",
+        "roots are wire loops",
+        "leaves are hinged tags"
+      ],
+      "kind": "place",
+      "names": [
+        "orchard trees"
+      ]
+    },
+    "place:oru": {
+      "aliases": [
+        "the city"
+      ],
+      "anchors": [
+        "city of moving rooms",
+        "navigated by sound"
+      ],
+      "kind": "place",
+      "names": [
+        "Oru"
+      ]
+    },
+    "place:other_staircase": {
+      "aliases": [],
+      "anchors": [
+        "Tovan's alternate route",
+        "alternate passage to Sump"
+      ],
+      "kind": "place",
+      "names": [
+        "the other staircase"
+      ]
+    },
+    "place:sleeping_gallery": {
+      "aliases": [
+        "the gallery"
+      ],
+      "anchors": [
+        "in Vellum Hall",
+        "thirty narrow bunks with tags"
+      ],
+      "kind": "place",
+      "names": [
+        "sleeping gallery"
+      ]
+    },
+    "place:stone_basin": {
+      "aliases": [],
+      "anchors": [
+        "center of Sump",
+        "in Sump"
+      ],
+      "kind": "place",
+      "names": [
+        "stone basin"
+      ]
+    },
+    "place:the_latch": {
+      "aliases": [
+        "lio",
+        "the missing room"
+      ],
+      "anchors": [
+        "room in Tin Orchard that stored door hinges",
+        "calls itself Lio when wanting to be found"
+      ],
+      "kind": "place",
+      "names": [
+        "the Latch"
+      ]
+    },
+    "place:the_sump": {
+      "aliases": [],
+      "anchors": [
+        "clay address room",
+        "beneath understair",
+        "stone basin room",
+        "discarded addresses pressed in clay"
+      ],
+      "kind": "place",
+      "names": [
+        "the Sump",
+        "Sump"
+      ]
+    },
+    "place:tin_orchard": {
+      "aliases": [
+        "the orchard"
+      ],
+      "anchors": [
+        "contains rust-colored metal trees",
+        "not a garden"
+      ],
+      "kind": "place",
+      "names": [
+        "the Tin Orchard"
+      ]
+    },
+    "place:understair": {
+      "aliases": [
+        "maintenance passage below vellum hall"
+      ],
+      "anchors": [
+        "officially sealed since Ivara was small"
+      ],
+      "kind": "place",
+      "names": [
+        "the Understair"
+      ]
+    },
+    "place:vellum_hall": {
+      "aliases": [
+        "the hall"
+      ],
+      "anchors": [
+        "address registry building",
+        "contains Mouth Room and sleeping gallery"
+      ],
+      "kind": "place",
+      "names": [
+        "Vellum Hall"
+      ]
+    }
+  },
+  "places": [
+    [
+      "place:oru",
+      "place:vellum_hall"
+    ],
+    [
+      "place:oru",
+      "place:tin_orchard"
+    ],
+    [
+      "place:vellum_hall",
+      "place:mouth_room"
+    ],
+    [
+      "place:vellum_hall",
+      "place:sleeping_gallery"
+    ],
+    [
+      "place:vellum_hall",
+      "place:drying_racks"
+    ],
+    [
+      "place:vellum_hall",
+      "place:lost_property_shelf"
+    ],
+    [
+      "place:sleeping_gallery",
+      "place:ivaras_bunk"
+    ],
+    [
+      "place:tin_orchard",
+      "place:empty_grit_ring"
+    ],
+    [
+      "place:tin_orchard",
+      "place:orchard_trees"
+    ],
+    [
+      "place:tin_orchard",
+      "place:orchard_trays"
+    ],
+    [
+      "place:vellum_hall",
+      "place:understair"
+    ],
+    [
+      "place:understair",
+      "place:the_sump"
+    ]
+  ],
+  "timeline": {
+    "anchors": {
+      "handprint_strip_dawn": 1.0,
+      "orchard_inspection_afternoon": 0.0,
+      "petition_arrives": 0.0,
+      "seam_discovery": 0.0,
+      "sleeping_gallery_night": 0.0,
+      "tovan_ledger_consultation": 1.0
+    },
+    "origin": "The morning the city's petition about the missing Latch arrived at Vellum Hall"
+  },
+  "world_id": "w:book_book"
+}
