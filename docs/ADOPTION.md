@@ -955,7 +955,7 @@ world.close()
   new World afterwards.
 - **No author: the standalone runner.** `python -m patternbuffer.service --world
   play.world --world-id w:play --view-frame knows:person:mara [--port 8787]
-  [--generator MODULE:FN] [--recorder NAME]` (or `patternbuffer-service`) opens
+  [--generator MODULE:FN] [--recorder NAME] [--author NAME]` (or `patternbuffer-service`) opens
   the World, attaches and pumps on its own thread and serves
   `POST /call {session, verb, args}` and `GET /now` on **127.0.0.1 only**, with
   the standard library. `--generator` (the runner gates its model itself) is a code route `(prompt, schema) ->
@@ -964,7 +964,11 @@ world.close()
   `record(items, at=)`, which writes each item as an `observed` row to canon
   and to the view frame in one unit (an item naming its own `frame` or `status`
   is refused and the whole call writes nothing). Under an author, play events go
-  to the author. Wider hosting is not built.
+  to the author. A `--author NAME` session (repeatable; a name may not also be a
+  `--recorder`) calls `record(items, at=, frame=)` to write canon (the default)
+  or one `knows:<observer>` frame outside the player's view, each item once as
+  `stated` (AUTHOR-RECORD-V1); `WorldService.session(name, role="author")` is
+  allowed under a host author too. Wider hosting is not built.
 
 ## THE MCP SERVER (non-Python hosts)
 
