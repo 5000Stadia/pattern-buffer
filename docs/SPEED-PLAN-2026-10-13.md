@@ -7,13 +7,31 @@ order is right, and it found five problems. Each is folded in below and marked *
 
 Every step goes through spec, pbr review, build and merge. Nothing paid runs without Kabe's yes.
 
-## Step 1. A bare harness: BARE-CALL-V1 (spec pbr GREEN, building)
+## Step 1. A bare harness: BARE-CALL-V1 (merged; profiled, see below)
 - Every model-call attempt is one turn with no tools. It runs from an empty temporary directory,
   with a short fixed system prompt, no settings and no MCP servers, and a trimmed environment.
 - A multi-turn answer is refused through the retry path.
 - Then: a one-call smoke test, and the approved 2-chapter profiling build of *The Last Honest
   Meter* under BUILD-PROFILE-V1. That gives the real per-stage time, turns and tokens, and the
   measured output tokens per second.
+
+## Step 1b. Effort and models per stage (Kabe, 2026-10-13, after the profile)
+- **The profile** (`evals/results/2026-10-13-profile-lhm2/REPORT.md`): about 96% of output tokens
+  are hidden thinking, and latency is output-bound (R² 0.97). The harness is about 1%.
+- **Kabe's answer**, asked whether to test effort settings: "Yes and further consider alternative
+  models and speed. We may want to initially index complex concepts like motive and dynamics
+  escellating on a plot, but mostly gathering details accurately already established should be
+  fast chore work, much of which can be batched for speed and much of which can be parallelized".
+- **Reading:** tier the build by how hard each judgment is.
+  - Deep thinking stays only where the book asks for interpretation: motive, dynamics, escalation,
+    reveals.
+  - Extracting stated detail is chore work: low effort or a smaller fast model, batched and run in
+    parallel.
+- **Next:**
+  - STAGE-MODELS-V1: a per-stage model and effort setting in the harness. The defaults stay
+    today's.
+  - Then a measured comparison on the practice book: low effort, medium effort, and a fast model
+    for the chore stages, each graded against the verified key.
 
 ## Step 2. Grading that sees the ending leak *(redesigned in r2)*
 Round two showed that a "not one closure before the reveal" check measures nothing:
