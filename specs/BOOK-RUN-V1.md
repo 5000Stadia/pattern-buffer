@@ -1,6 +1,6 @@
 # BOOK-RUN-V1: build any book and grade it against its answer key (roadmap R27)
 
-**Status:** r2 (2026-10-13). It answers pbr's r1 RED (m on 19ea6444): the key and verdict schemas, stable item ids, the terminal marker, the gold file's shape, receipt deltas and the ordering of timeless rows are now defined (marked *(r2)*). r1 was for pbr's spec review. Author: pb.
+**Status:** r2.1 (2026-10-13). It answers pbr's r2 RED (m on b9b20a44): it defines the book normalizer exactly, gives each run a fresh usage log, and adds a head read when no row is timed (marked *(r2.1)*). r2 answers pbr's r1 RED (m on 19ea6444): the key and verdict schemas, stable item ids, the terminal marker, the gold file's shape, receipt deltas and the ordering of timeless rows are now defined (marked *(r2)*). r1 was for pbr's spec review. Author: pb.
 **Source:** R27 as Kabe revised it on 2026-10-13: "Make chatgpt write the fiction so its
 anonymous and original - tell it to try to make something out there and original." The test book
 is a new novella written by ChatGPT, *The Weather That Would Not Leave* (12 chapters, about 25,300
@@ -59,8 +59,13 @@ The writer's format, as the novella's key has it:
   hash, and it needs new verdicts.
 - **`to_chapter: null` means through the end of the book.** It is the terminal marker that §3.4's
   `final` uses.
-- `aliases` are matched by the normalization `grade_registry` uses for mentions: lowercased,
-  whitespace collapsed, and curly quotes folded to straight.
+- *(r2.1)* `aliases` and the world's `name`/`alias` strings are both matched by
+  `book_normalize(s) = grade_registry.normalize(fold_quotes(s))`. `fold_quotes` maps ’ and ‘ to
+  `'` and “ and ” to `"`, and changes nothing else. `grade_registry.normalize` stays as it is:
+  lowercase, collapse whitespace, trim, drop one leading article. So "The woman with the copper
+  hand" and "the woman with the copper hand" both become "woman with the copper hand", and
+  "Or’s spoon" matches "Or's spoon". `grade_registry.grade` is called with both sides already
+  folded by `fold_quotes`, so its own `normalize` produces the same keys.
 
 ### 1.2 The readers' verdict files *(r2)*
 
@@ -108,7 +113,11 @@ PYTHONPATH=src python evals/harness/run_book.py --book evals/books/<slug> --out 
   snapshot before it, field by field: calls, `calls_without_usage`, the four token counts and
   `cost_usd`. Its `cost_known` is False if any call in that stage left the price unknown (the
   ledger's `cost_known` is cumulative, so a stage's flag is computed from the per-call log,
-  `usage.jsonl`). The total is the final snapshot. `receipt.json` holds wall-clock seconds per stage plus calls, tokens in, out and
+  `usage.jsonl`). The total is the final snapshot.
+  *(r2.1)* The log must hold only this run. Before the build, the runner moves any existing
+  `DIR/usage.jsonl` to `DIR/usage.jsonl.<n>` (the next free n) and starts an empty one. Each
+  stage's flag reads only the lines that stage appended: the runner records the line count before
+  and after the stage and slices between them. `receipt.json` holds wall-clock seconds per stage plus calls, tokens in, out and
   cached, and cost (with `cost_known`), per stage and in total. `PB_EVAL_USAGE_LOG` is set to
   `DIR/usage.jsonl`.
 - **`--dry-run`** reads the book and prints the segment and chunk counts, with a token estimate
@@ -149,7 +158,8 @@ through the world's canon `name`/`alias` rows (the same mention rule as `grade_r
    - **final:** for each object whose last expected entry has `to_chapter: null`, does the
      world's folded containment at the end (`state(e, "in")`, as of the greatest valid time in the
      log; the engine folds the whole containment family under `in`) resolve to that entry's
-     container or holder? An object whose last entry ends before the book does is not scored
+     container or holder? *(r2.1)* If no canon row in the log has a `valid_from`, the read is the
+     head read, `state(e, "in")` with no `as_of`. An object whose last entry ends before the book does is not scored
      here.
    - **ever:** the share of expected containers that appear anywhere in the world's sequence.
 5. **Containers:** for each revealed container, the share of its listed contents that the world
