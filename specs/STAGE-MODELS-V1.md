@@ -1,6 +1,6 @@
 # STAGE-MODELS-V1: a model and an effort per build stage, and grading a partial book
 
-**Status:** r1.1, answering pbr's r1 RED: the correction window; locations are half-open and stay open at the horizon; the partial read bound; a missing `default`; and a routing test across workers. For pbr review. Author: pb, 2026-10-13. Harness only.
+**Status:** r1.2, answering pbr's r1.1 RED: the window is cut in `book_gold`, where the full key is; identity is read as of `hi(N)`; and not-yet-corrected corrections are pending and outside the scores. r1.1, answering pbr's r1 RED: the correction window; locations are half-open and stay open at the horizon; the partial read bound; a missing `default`; and a routing test across workers. For pbr review. Author: pb, 2026-10-13. Harness only.
 **Source:** the profiling build (`evals/results/2026-10-13-profile-lhm2/REPORT.md`): about 96% of
 output tokens are hidden thinking, and latency is output-bound (R² 0.97). Kabe, asked whether to
 test effort settings (2026-10-13): "Yes and further consider alternative models and speed. We may
@@ -62,10 +62,23 @@ the part of the key it covers.
 - **Codex** (`PB_EVAL_PROVIDER=codex`) is out of scope for V1. Per-stage routing there is a later
   item, if wanted.
 
-### 2. Grading a partial book: `grade_book.py --through-chapter N`
+### 2. Grading a partial book: `--through-chapter N`
 
 A build of chapters 1..N is graded only against the key entries a reader of chapters 1..N could
-know. `book_gold` and `grade_book` apply this filter before scoring:
+know.
+
+**Where the window is cut** *(r1.2, pbr)*. `graded.json` doesn't carry the chapter fields the
+window needs, so the cut happens where the full key is:
+- `book_gold.py --through-chapter N` reads the full key and both verified verdict files, applies
+  the rules below, and writes a **windowed** `graded.json` stamped `"through_chapter": N`.
+- `grade_book.py --through-chapter N` consumes that artifact and uses N only for its read bounds.
+- `grade_book` refuses before grading when:
+  - it is given `--through-chapter` but the `graded.json` has no stamp, or a different N;
+  - it is given a stamped `graded.json` without the flag;
+  - N is not in `1..` the book's chapter count, or is beyond the last chapter in the run's
+    `chunk_spans.json`.
+
+The selection rules, applied by `book_gold`:
 - **entities:** those whose `first_chapter ≤ N`. Aliases are kept only where
   `alias_first_chapter ≤ N`, when the field exists; otherwise all aliases are kept.
 - **same_as:** reveals with a reveal chapter ≤ N.
@@ -80,17 +93,26 @@ know. `book_gold` and `grade_book` apply this filter before scoring:
 - **knowledge:** entries with `chapter ≤ N`.
 - **false_beliefs:** entries with `from_chapter ≤ N`. If `corrected_chapter` is null or greater
   than N, the belief is graded as still held through N (the believer window ends at N).
-- **corrections** *(r1.1)*: in the window when `stated_chapter ≤ N`.
-  - The `ends_correct` and claim-after-correction checks are made only when
-    `corrected_chapter ≤ N`.
-  - Before that the correction has not happened at the horizon. Those checks are absent, not
-    failed, and the matching false belief, if any, is graded as held.
+- **corrections** *(r1.1, r1.2)*: graded only when `corrected_chapter ≤ N`.
+  - An entry with `stated_chapter ≤ N < corrected_chapter` is **pending**: it is left out of the
+    correction items and every correction denominator, and counted only in an informational
+    `pending_corrections` number. The matching false belief, if any, is graded as held.
+  - The denominators are therefore deterministic.
 - **"final" and every read in the partial window** *(r1.1)*: bounded by chapter N's exposure-clock
   position, `asserted_as_of = hi(N)` (GRADE-LEAKS-V1).
   - The valid anchor for a final read is the latest `valid_from` among rows visible at that
     asserted bound, never among all rows.
   - Every fold in a final read passes the same asserted bound.
   - So gate and audit rows written after chapter N's last chunk never reach a partial verdict.
+- **Identity at the horizon** *(r1.2, pbr)*. In the partial window, identity is read as of
+  `hi(N)`:
+  - roots and closures come from the registry at that bound (`resolve` and `closure` with
+    `asserted_as_of = hi(N)`);
+  - identity B³, reveals, look-alikes and every final or belief fold use those closures.
+
+  A read path that would otherwise resolve through the end-of-run closure must instead fold the
+  `hi(N)` closure's members under the same bound. A merge or `same_as` written after chapter N's
+  last chunk, by the gate, the audit or anything else, can never change a partial verdict.
 
 The report states the window (`through_chapter: N`) on its first line. Without the flag, grading is
 byte-identical to today.
@@ -141,6 +163,13 @@ Kabe approved the comparison (2026-10-13). Its report gives:
      N = 2 and both count for `final`, while one from 1 to 2 is closed;
    - *(r1.1)* a gate row written after chapter 2's last chunk, moving an object, doesn't change the
      N = 2 final location;
+   - *(r1.2)* a `same_as` merge written after chapter 2's last chunk, joining two look-alikes,
+     changes neither the N = 2 identity score, the look-alike verdict nor a final read on either
+     id. The full-book grade does see it;
+   - *(r1.2)* the refusals: a flag without a stamped artifact, a stamped artifact without the
+     flag, a mismatched N, N = 0, and N beyond the run's chunk spans;
+   - *(r1.2)* a pending correction is absent from items and denominators, and counted in
+     `pending_corrections`;
    - final reads come from chapter 2's position;
    - without the flag, the output is byte-identical to the current grader on R27's key and a
      hand-built world.
