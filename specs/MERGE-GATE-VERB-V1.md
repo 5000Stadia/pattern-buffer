@@ -158,7 +158,8 @@ unchanged.
    elected representative (pass mark 7's vote case reused). One `different` inside makes it
    `conflicting_component`.
 8. **Failures:** a model that raises on batch 1 of 2 leaves batch 1's pairs `batch_unparseable`
-   and batch 2 answered. *(r1.2)* With no model injected, the report has `status: no_model`,
+   and batch 2 answered. *(r1.2)* With no model injected, a call holding one askable pair and one
+   `already_one` pair has `status: no_model`,
    every askable pair is in `not_asked` as `no_model`, an `already_one` pair keeps
    `already_one`, `requested_as` covers every request, and `call_id` and `cached: false` are
    present.
