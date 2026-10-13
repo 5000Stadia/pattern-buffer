@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -144,18 +144,26 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
 - **Reveal splits.** A chunk that holds a persona's reveal sentence is **split before that
   sentence**: the reveal sentence opens the new chunk, and the earlier chunk ends just before it.
   No chunk holds both pre-reveal and reveal text.
-- **The candidate gate is the chunk's last sentence** *(r1.3, pbr)*. A chunk's `candidates` are the
-  entries whose `anchor_quote`, and the personas whose `intro_quote`, is at or before the chunk's
-  **last** sentence.
-  - **Why this leaks nothing.** An entry's anchor and a persona's intro are their first appearance
-    in the text. A chunk holding that sentence reads the name itself, so receiving the candidate
-    gives it nothing its own text doesn't hold.
-  - **What does carry hidden knowledge** is a reveal, the join of a persona to its entry. That is
-    never given to a chunk as a candidate, only written by commit's `correlate`. And no chunk spans
-    a reveal.
-  - So the per-sentence gate in `resolve()` and the per-chunk gate in `plan()` agree at the
-    granularity that matters. Within a chunk, an entry introduced mid-chunk is a candidate for the
-    whole chunk.
+- **Sentence-scoped candidates** *(r1.4, pbr; replaces r1.3's last-sentence gate)*.
+  - **The effective gate.** Each entry's gate is its **effective anchor**: the earlier of the
+    sentence holding `anchor_quote` and the first sentence whose text contains any of the entry's
+    names, as a whole-token match (GRADE-LEAKS-V1's tokenizer). Each persona's gate is likewise the
+    earlier of `intro_quote` and the persona name's first occurrence. So a gate is never later than
+    the first time the text names the entity, however the author chose the quote, and it is
+    computed by code.
+  - **What a chunk receives:** every entry and persona whose effective gate is at or before the
+    chunk's last sentence. Each candidate is annotated with its gate, as a sentence number in the
+    chunk's own numbering.
+  - **Numbered sentences.** The prompt shows the chunk with sentence numbers (`[s12]`). Every item
+    the model writes **cites the sentence** it comes from. That is a new required field of INGEST-V2's
+    line grammar.
+  - **The code enforces the gate.** An item about candidate X (as subject or entity value) that cites
+    a sentence before X's gate is **refused**: dropped, and recorded in the chunk result as
+    `gate_refused`. An item citing a sentence outside the chunk is also refused.
+  - So `resolve(surface, chapter, sentence)` and the chunk check apply **the same per-sentence
+    gate**, and the two never disagree.
+  - **Reveals still split:** the reveal sentence opens the next chunk. No chunk holds pre-reveal and
+    reveal text, and a reveal is never a candidate, only `correlate`.
 - **Per chunk:** `{index, chapter, first_sentence, last_sentence, text, candidates}`.
 - **Deterministic:** the same text and manifest give the same plan, byte for byte.
 
@@ -205,6 +213,8 @@ or `classify="defer"`) pass through to every `ingest_structured` call, unchanged
 
    No other path writes `kind` on a minted id. So R49's reclassification never fires on a manifest,
    persona, escape or mention id, and the Rex result holds.
+   - **The one exception** *(r1.4, pbr)*: a mention whose candidates are of mixed types and not all
+     beings gets **no** shape rows (step 2a). Every other minted id gets its shape rows first.
 1. **The manifest.**
    - For every entry: its shape rows *(c6)*, then its `name` and `alias` rows, then its `role`
      when given.
@@ -321,11 +331,17 @@ For a book with no author (construct passes its author's manifest instead):
    `ManifestError` lists every problem at once: three planted problems give three items.
 4. **Time gate:**
    - the duke's entry anchored in chapter 3 is never a candidate for a chapter-2 chunk;
-   - *(r1.3)* an entry whose anchor falls mid-chunk is a candidate for that whole chunk, and not
-     for the chunk before it;
+   - *(r1.4, pbr's case)* a chunk whose sentence 1 says "The hooded stranger took the key." and
+     whose sentence 3 is the persona's chosen `intro_quote`: the effective gate is sentence 1 (the
+     name's first occurrence), so the sentence-1 fact may bind to the persona;
+   - *(r1.4)* an entry whose name first occurs at sentence 3 of a chunk: an item about it citing
+     sentence 1 is `gate_refused`, and one citing sentence 3 is accepted. `resolve` gives the same
+     answers at sentences 1 and 3;
+   - *(r1.4)* an item citing a sentence outside its chunk, or citing no sentence, is refused;
    - a persona's reveal mid-chunk splits the chunk before the reveal sentence, so the reveal
      sentence opens the next chunk;
-   - *(r1.3)* a persona introduced mid-chunk is a candidate in that chunk.
+   - *(r1.3, r1.4)* a persona introduced mid-chunk is a candidate in that chunk, and its items
+     are gated from its effective intro sentence.
 5. **Personas:**
    - *(r1.2)* before its `intro_quote` the persona is not a candidate. Between intro and reveal,
      "the hooded stranger" resolves to the persona id;
