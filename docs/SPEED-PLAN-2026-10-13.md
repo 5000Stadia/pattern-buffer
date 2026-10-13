@@ -64,23 +64,33 @@ Canon identity therefore stays as it is: the truth, timeless. The grader gains t
 - **The development set** is this book plus *The Last Honest Meter*. *The Weather That Would Not
   Leave* is run only on frozen designs.
 
-## Step 4. The whole-book cast call *(r2 checks added)*
-- **The design:** one call writes the cast, and pass-1 runs fully in parallel.
-- **The cast must carry time** *(r2)*. Today's registry holds untimed aliases and seeds them as
-  timeless facts (`registry.py`), so a whole-book cast would leak a chapter-10 name into
-  chapter 2. Each alias carries the chapter where the reader first meets it, chunks receive only
-  the aliases known by then, and the seed path writes nothing a chunk couldn't know.
-- **Size it before relying on it** *(r2)*.
-  - The shim times out a call at 300 s and retries twice, so a long cast call could spend about
-    15 minutes and abort.
-  - From step 1's measured output tokens per second, project the cast call's length against the
-    timeout and the CLI's output cap.
-  - Run it once on the practice book first.
-  - Split it if the projection needs it, for example cast first and reveals second.
+## Step 4. The registry first, as category passes *(r3: Kabe's passes, co-designed with construct)*
+Kabe (via construct ma2f75e): "Pass for cast list, pass for locations, etc". Construct's proposal
+is `/home/k/Newproject/docs/design/SEEDING-REGISTRY-FIRST.md`; pb's read is m52998c. This replaces
+r2's single whole-book cast call.
+- **Pass 0, the registry, as concurrent category passes:** beings, places, key things, groups.
+  - Each pass reads the whole text and writes a short list on a fast tier at low effort, so the
+    wall time is the slowest pass.
+  - Each name carries the chapter where the reader first knows it.
+  - Code merges the lists, using (type, normalized name) as a blocking key. The **registry entry
+    is the identity**, so two namesakes the author lists stay two. Code mints the ids.
+  - **Pass 0 never joins two names into one being.** Hidden identities are pass 2's, so the
+    registry is leak-safe by construction.
+- **Pass 1, facts:** per chunk, fully in parallel, against the registry slice the reader knows by
+  that chunk.
+  - Fragments ("Breck") resolve by code only to a unique compatible entry among names known by
+    then. Anything else goes to one batched fast call.
+  - New entities arrive as escapes, and code registers them.
+- **Pass 2, interpretation:** on the top model, in a few calls (motive, dynamics, reveals). Joins
+  are written with their reveal chapter.
+- **Where it lives:** INGEST-V2 (`evals/harness/pipeline.py`, `registry.py`) is promoted to a
+  host-usable library that construct and the book runner share. Name resolution runs in that
+  pre-pass, never in the engine's ingest gate. R51's closed types come into the engine.
 - **Judging it:**
-  - first, zero wrong merges across every look-alike pair;
-  - then the step-2 checks (no provenance leaks, no false belief in canon, point of view);
+  - first, zero wrong merges across look-alikes, the Rex test (a man and a dog both named Rex stay
+    two from the first commit), zero leaks and zero false beliefs in canon;
   - then time and cost.
+- Two fresh views (construct's) come before any build.
 
 ## How results are reported *(r2)*
 - Every receipt states how many complete end-to-end runs it rests on.
