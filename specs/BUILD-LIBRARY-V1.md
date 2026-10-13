@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.1, adding construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -51,7 +51,7 @@ core never imports it. It writes only through the porcelain (`ingest_structured`
 Manifest(entries: list[Entry], namesakes: list[tuple[str, str, str]] = ())
 Entry(key: str, type: str, names: list[str], anchor_quote: str,
       personas: list[Persona] = (), role: str | None = None)
-Persona(name: str, reveal_quote: str)
+Persona(name: str, intro_quote: str, reveal_quote: str)
 ```
 
 - **What each entry is.** An entry is one identity. Two entries can share a name and a type
@@ -59,7 +59,13 @@ Persona(name: str, reveal_quote: str)
   says a reader could confuse.
 - **`type`** comes from the closed set: `person`, `animal`, `creature`, `place`, `object`, `group`
   and `event`. Every being is filed under `person:` (see §2). A role word ("condemned man") is
-  refused as a type.
+  refused as a type. An entry may also give `species`, a free word such as `dog` or `wraith`,
+  allowed only for `animal` and `creature`.
+- **Personas have two anchors** *(r1.2, pbr)*.
+  - `intro_quote` is where the persona first appears. It gates the persona's candidacy.
+  - `reveal_quote` is where the reader learns who it is. It splits the chunk and dates the
+    `correlate`.
+  - validate() refuses a reveal at or before the intro (`persona_reveal_before_intro`).
 - **Anchors are exact quotes** *(c1)*. An author model can't count sentences. So each entry,
   persona and namesake gives `anchor_quote`: an exact sentence or phrase from the prose. The
   library resolves it to `(chapter, sentence)`.
@@ -85,15 +91,31 @@ Persona(name: str, reveal_quote: str)
 
 ### 2. `Registry.from_manifest(manifest, text_by_chapter)`: ids minted by code
 
-- **The id** comes from the type's namespace and the entry's first name, slugged by rule:
+- **The id** comes from the type's namespace and the entry's first name, slugged by rule. *(r1.2,
+  pbr)* **Entries, personas, mentions and escapes all draw from one allocator**, in a fixed order
+  (manifest entries, then each entry's personas, in manifest order; mentions and escapes at commit,
+  §5), so no two ever mint the same id:
   - `person:` for person, animal and creature *(c3: one namespace for beings, since construct
     branches on `person:`)*;
   - `place:`, `obj:`, `group:` and `event:` for the rest.
 
   A later entry with the same slug gets `_2`, `_3`, … in manifest order: `person:rex` and
   `person:rex_2`. Ids are never written by a model.
-- **The type fact is the authority** (R51). The namespace is only a readable hint: a dog is
-  `person:rex_2` with `kind = dog`.
+- **The durable shape of a type** *(r1.2, pbr)*. R49's gate moves any non-`person` kind on a
+  `person:` id into `role`, with an inferred `kind = person`. So a being's type is **not** written
+  as its `kind`:
+  - **a being:** `kind = person` (R49's shape), `being_type` with exactly one of `person`, `animal`
+    and `creature`, and `species` when the manifest gives one. A dog is `person:rex_2` with
+    `kind = person`, `being_type = animal` and `species = dog`.
+  - **anything else:** `kind = <type>` (`place`, `object`, `group`, `event`), as today.
+  - `being_type` is the authority on what a being is, and the namespace is only a readable hint.
+    R51 may later fold `being_type` into its own type layer. This shape is the one R49 permits now.
+- **Type-hint compatibility:**
+  - `being` matches any being type;
+  - `person`, `animal` and `creature` match that `being_type` only;
+  - `place`, `object`, `group` and `event` match that `kind`.
+
+  The Rex rule: a hint of `animal` never resolves to a `being_type = person` entry.
 - **`entries()`** *(c3)* returns `[{id, key, type, names, role, anchor: (chapter, sentence),
   personas: [{name, id, reveal: (chapter, sentence)}]}]` in manifest order. It's for a host's
   cast author.
@@ -101,8 +123,8 @@ Persona(name: str, reveal_quote: str)
   persona name slugged (`person:the_hooded_stranger`). It is a separate facet until its reveal
   (§5).
 - **`resolve(surface, chapter, sentence)`** answers one of three things.
-  - **The candidates** are the entries and personas whose anchor is at or before
-    `(chapter, sentence)`: the **per-entry time gate**.
+  - **The candidates** are the entries whose `anchor_quote`, and the personas whose `intro_quote`,
+    is at or before `(chapter, sentence)`: the **per-entry time gate**.
   - **Matching** is on any of a candidate's names, after normalization (lowercase, quote folding,
     leading titles from a fixed list). A **fragment** ("Breck") matches a candidate whose name
     holds it as a whole token.
@@ -139,11 +161,16 @@ Persona(name: str, reveal_quote: str)
   library, chunk)` for extraction and `Name the beings, places and things (build library,
   <category> pass)` for the category passes. Hosts that route by prefix, and timing logs, can tell
   the steps apart. The heads are module constants, and a test pins them.
-- **Each chunk returns:**
-  - `items` on resolved ids;
-  - `Escape(type, name, chunk, quote)` for an entity not in the registry;
-  - `Pick(surface, candidates, choice, evidence_quote, chunk)` when a surface was `Ambiguous` and
-    the model chose.
+- **Each chunk returns** *(r1.2, pbr: the result schema)*
+  `ChunkResult(index, items, escapes, picks)`.
+  - `items` are fact items whose `entity` (and `value`, for an entity value) is either a candidate
+    id or a **local handle** `new:<k>` (k = 0, 1, … within the chunk).
+  - `escapes` are `Escape(handle, type, name, species, quote)`, one per handle the chunk
+    introduces for an entity not in the registry.
+  - `picks` are `Pick(handle, surface, candidates, choice, evidence_quote)`, one per handle the
+    chunk uses for an `Ambiguous` surface it chose.
+  - Every handle an item uses is declared by exactly one escape or pick in the same chunk, and
+    every declared handle is used. Otherwise the chunk is refused, as INGEST-V2 refuses orphans.
 - **The code checks** every id it receives:
   - an id not among the chunk's candidates or escapes is refused, as INGEST-V2's grammar already
     does;
@@ -155,20 +182,27 @@ Persona(name: str, reveal_quote: str)
 omitted, chunk *i* is committed at `i + 1`. `ingest_kwargs` (for example `cursor_authoritative`
 or `classify="defer"`) pass through to every `ingest_structured` call, unchanged.
 
-**The writes, in this order:**
+**The writes, in this order** *(r1.2, pbr: ids are allocated before any fact is written)*:
 1. **The manifest.**
    - **For every minted id, its type fact first** *(c6)*: `kind = <type>`, timeless, canon. A
      being's kind is its type, never a role, so R49's gate sees a person from the first row.
    - Then its `name` and `alias` rows, and its `role` when given.
    - Then each persona id: its type fact first, then its name.
-2. **Mentions.** A `Pick`'s facts go on a **provisional id** `mention:<slug>_<n>`, minted by code:
+2. **Allocation, before any fact.** Each chunk's handles are visited in (chunk index, handle
+   number) order, and each gets an id and its type fact:
+   - **a pick handle** gets a **provisional id** `mention:<slug>_<n>`, minted by code (step 2a);
+   - **an escape handle** joins an existing escape id or gets a new one, by the rules in step 4.
+
+   Every item's handles are then **rewritten** to their ids. No fact is written under a handle,
+   and no handle can attach to an id other than the one allocated here.
+2a. **Mention type facts.** A pick's provisional id gets:
    - first, a type fact *(k3)*:
      - when every candidate has one type, that type;
      - otherwise, when every candidate is a being (person, animal, creature), `kind = person`,
        so R49's role move still applies to an extracted role word;
      - otherwise, no type fact, and the proposal carries the candidates;
    - then the facts the chunk wrote for that surface.
-3. **Chunk facts,** in chunk order, each chunk at `time_of(i)`.
+3. **Chunk facts,** with handles already rewritten, in chunk order, each chunk at `time_of(i)`.
 4. **Escapes.** New entities are minted like manifest entries, type fact first.
    - *(k4)* **A role word as the type** ("guard", "condemned man"), which is not in the closed set,
      is coerced at the library edge: `type = person` plus `role = <the word>`, R49's rule. It is
@@ -180,11 +214,19 @@ or `classify="defer"`) pass through to every `ingest_structured` call, unchanged
        of lowercase common words) joins only **within one chapter**. Across chapters, each
        chapter's description gets its own id, and a same-text description in a later chapter
        becomes a same_as **proposal**, never a join.
-   - A name that collides with a manifest entry of a compatible type does **not** auto-join. It
-     becomes a `Pick`-style proposal (step 5).
-5. **Proposals, never merges.** For each `Pick`, and each colliding escape, an item with a
-   `same_as` field proposes `mention:… → <choice>` as a canon `maybe_same_as`, with the evidence
-   quote. The host, or `merge_gate`, decides later.
+   - *(r1.2, pbr)* **A collision with the manifest.** An escape whose name resolves (§2) to one or
+     more manifest entries or personas of a compatible type still gets **its own escape id**. Its
+     facts go there, never onto a manifest id. Step 5 proposes it against **each** colliding
+     candidate.
+5. **Proposals, never merges** *(r1.2, pbr: sources and targets)*. Each is an item with a `same_as`
+   field, written as a canon `maybe_same_as`:
+   - **a pick:** source = its mention id, target = its `choice`, evidence = its `evidence_quote`;
+   - **a colliding escape:** source = its escape id, with one proposal per colliding candidate,
+     each with evidence = the escape's `quote`;
+   - **a description across chapters (k5):** source = the later chapter's escape id, target = the
+     earlier one, with evidence = the later `quote`.
+
+   The host, or `merge_gate`, decides later. Nothing in this step merges anything.
 6. **Hidden personas.** `correlate(persona_id, entry_id, evidence=<reveal quote>,
    at=time_of(reveal_chunk))`. That is a dated `aka`, never a collapse (consult point P2).
    - *(k7)* **This `correlate` is the only write that links a persona to its entry.** No alias,
@@ -246,8 +288,11 @@ For a book with no author (construct passes its author's manifest instead):
 
 ## Tests (no model calls; fake models)
 
-1. **Rex.** A man and a dog both named Rex in the manifest become `person:rex` (`kind = person`)
-   and `person:rex_2` (`kind = dog`) from the first commit. A chunk mentioning "Rex the dog" with a
+1. **Rex** *(r1.2)*. A man and a dog both named Rex in the manifest become:
+   - `person:rex`: `kind = person`, `being_type = person`;
+   - `person:rex_2`: `kind = person`, `being_type = animal`, `species = dog`.
+
+   No `role` row is produced for either, and R49's reclassification never fires on them. A chunk mentioning "Rex the dog" with a
    being hint resolves to the dog, and no merge or proposal ever joins them.
 2. **Namesakes:** two Johns stay two ids, and a `distinct_from` row exists between them.
 3. **Quote anchors:** a quote found once resolves, and quotes found 0 or 2 times are refused. A
@@ -255,7 +300,9 @@ For a book with no author (construct passes its author's manifest instead):
 4. **Time gate:** the duke's entry anchored in chapter 3 is never a candidate for a chapter-2
    chunk. A persona's reveal mid-chunk splits the chunk at the reveal sentence.
 5. **Personas:**
-   - before the reveal, "the hooded stranger" resolves to the persona id;
+   - *(r1.2)* before its `intro_quote` the persona is not a candidate. Between intro and reveal,
+     "the hooded stranger" resolves to the persona id;
+   - *(r1.2)* a reveal at or before its intro is refused by validate();
    - commit writes one `aka` at `time_of(reveal chunk)`;
    - the persona's facts stay on the persona id;
    - default reads of the duke never show them.
@@ -271,6 +318,14 @@ For a book with no author (construct passes its author's manifest instead):
    - "Mira Vell" escaped in chapters 1 and 3 converges;
    - an escape colliding with a manifest entry becomes a proposal, not a join;
    - *(k4)* an escape typed "condemned man" is minted `type = person` with `role = condemned man`.
+6a. *(r1.2, pbr)* **Handles:**
+    - a chunk that uses `new:0` without declaring it, or declares `new:1` without using it, is
+      refused;
+    - every committed row's entity and value are real ids, never `new:` handles;
+    - an escape colliding with two manifest entries keeps its own id and gets two proposals, and
+      its facts are never on a manifest id.
+6b. *(r1.2, pbr)* **One allocator:** two personas whose names slug alike, or a persona slugging
+    like an entry, mint distinct ids (`_2`).
 7a. *(k3)* **A mixed-type pick:**
     - "Rex" picked among a man and a dog, with no type hint, puts `kind = person` on the mention,
       since both are beings;
