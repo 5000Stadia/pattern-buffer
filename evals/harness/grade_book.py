@@ -9,7 +9,13 @@ merge the build or the merge gate made is credited or charged where it lands.
 
 CLI:
     PYTHONPATH=src python evals/harness/grade_book.py --run RUN_DIR \\
-        --graded evals/books/<slug>/graded.json [--out DIR]
+        --graded evals/books/<slug>/graded.json [--out DIR] [--through-chapter N]
+
+``--through-chapter N`` (STAGE-MODELS-V1) grades a build of exactly chapters 1..N against
+a ``graded.json`` that ``book_gold.py --through-chapter N`` windowed and stamped. The
+grading itself is unchanged: reads are at the run's head, and the windowed gold is what
+limits the grade. N must be the last chapter the run built. Without the flag the output
+is what it always was.
 """
 
 from __future__ import annotations
@@ -37,6 +43,45 @@ logger = logging.getLogger(__name__)
 IDENTITY_KINDS = ("person", "place", "object")
 _SECTION_ORDER = {"locations": 0, "holdings": 1}
 _ID = re.compile(r"^(\w+)\[(\d+)\]$")
+
+
+class WindowRefused(ValueError):
+    """A partial-book grade the grader refuses before reading the world."""
+
+
+def check_window(graded: Mapping[str, Any], through_chapter: int | None,
+                 spans: Mapping[str, Any] | None, chapters: int | None = None) -> None:
+    """Refuse a window that cannot be graded (STAGE-MODELS-V1 §2): a flag without a stamped
+    ``graded.json``, a stamp without the flag, a different N, N outside ``1..chapters`` (the
+    book's chapter count, when known), a flag with no ``chunk_spans.json``, or an N that is
+    not the last chapter the run built (the last chapter in its spans, and ``chapters`` when
+    known): a partial grade covers a build of exactly chapters 1..N."""
+    stamp = graded.get("through_chapter")
+    if through_chapter is None:
+        if "through_chapter" in graded:
+            raise WindowRefused(f"graded.json is windowed (through_chapter {stamp!r}); "
+                                "pass --through-chapter to grade it")
+        return
+    if isinstance(through_chapter, bool) or not isinstance(through_chapter, int):
+        raise WindowRefused(f"--through-chapter {through_chapter!r} is not a chapter number")
+    if "through_chapter" not in graded:
+        raise WindowRefused("graded.json is not windowed (no through_chapter stamp); build one "
+                            "with book_gold.py --through-chapter")
+    if stamp != through_chapter:
+        raise WindowRefused(f"graded.json is windowed through chapter {stamp!r}, not {through_chapter}")
+    if through_chapter < 1 or (chapters is not None and through_chapter > chapters):
+        raise WindowRefused(f"--through-chapter {through_chapter} is outside the book's chapters "
+                            f"1..{chapters if chapters is not None else '?'}")
+    if spans is None:
+        raise WindowRefused("--through-chapter needs the run's chunk_spans.json: without it the "
+                            "last built chapter is unknown")
+    last = max((c["chapter"] for c in spans["chunks"]), default=0)
+    if through_chapter != last:
+        raise WindowRefused(f"--through-chapter {through_chapter} is not the last chapter the run "
+                            f"built ({last}): a partial grade covers a build of exactly chapters 1..N")
+    if chapters is not None and through_chapter != chapters:
+        raise WindowRefused(f"--through-chapter {through_chapter} is not the run's chapter count "
+                            f"({chapters}): a partial grade covers a build of exactly chapters 1..N")
 
 
 def _ratio(num: float, den: float) -> float | None:
@@ -90,8 +135,13 @@ def _move_order(move: Mapping[str, Any]) -> tuple[int, int, int]:
 def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
                spans: Mapping[str, Any] | None = None,
                chunk_texts: Mapping[int, str] | None = None,
-               pass0: Any | None = None) -> dict[str, Any]:
+               pass0: Any | None = None, through_chapter: int | None = None) -> dict[str, Any]:
     """Score ``world`` against ``graded`` (the content of ``graded.json``).
+
+    ``through_chapter`` (STAGE-MODELS-V1) states that ``world`` is a build of exactly
+    chapters 1..N and ``graded`` the windowed, stamped artifact of ``book_gold.py
+    --through-chapter`` for the same N; ``spans`` is required. The grading is the same
+    (reads at the head); the scorecard states the window. ``WindowRefused`` otherwise.
 
     GRADE-LEAKS-V1: ``spans`` is the run's ``chunk_spans.json`` content,
     ``chunk_texts`` the text of each chunk by id and ``pass0`` the pass-0
@@ -105,6 +155,7 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
     when the book grades nothing of that kind), then the detail of each
     measure. See BOOK-RUN-V1 §3 for what each measures."""
     ident = registry if registry is not None else world.registry
+    check_window(graded, through_chapter, spans)
     family = sorted(world.semantics.containment_family())
     index, strings = _name_index(world, ident)
     entities = graded["entities"]
@@ -246,7 +297,7 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
         "containers": containers["score"],
     }
     new = grade_sections(world, ident, graded, spans=spans, chunk_texts=chunk_texts, pass0=pass0)
-    return {
+    card = {
         "key_sha256": graded.get("key_sha256"), "readers": graded.get("readers"),
         "summary": summary, "identity": identity, "reveals": reveals,
         "look_alikes": look_alikes, "order": order, "final": final, "ever": ever,
@@ -258,6 +309,10 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
         "dropped": len(graded.get("dropped", [])),
         "dropped_fields": len(graded.get("dropped_fields", [])),
     }
+    if through_chapter is not None:
+        card.update(through_chapter=through_chapter,
+                    pending_corrections=graded.get("pending_corrections", 0))
+    return card
 
 
 def _ungraded(graded: Mapping[str, Any]) -> dict[str, int]:
@@ -299,8 +354,13 @@ def scorecard_md(card: Mapping[str, Any], title: str = "Book scorecard") -> str:
     """Render ``grade_book`` output as a Markdown scorecard."""
     fmt = lambda x: "n/a" if x is None else f"{x:.3f}"  # noqa: E731
     s, ident = card["summary"], card["identity"]
-    lines = [f"# {title}", "", f"Readers: {', '.join(card.get('readers') or [])}; "
+    window = card.get("through_chapter")
+    lines = [f"# {title}" + ("" if window is None else f" [through_chapter: {window}]"), "",
+             f"Readers: {', '.join(card.get('readers') or [])}; "
              f"{card['dropped']} entries dropped.", ""]
+    if window is not None:
+        lines += [f"through_chapter: {window}; {card.get('pending_corrections', 0)} correction(s) "
+                  "pending (stated, not yet corrected; outside the scores).", ""]
     if "headline" in card:
         lines += ["## Headline (judging order)", "", "| # | measure | value | target |", "|---|---|---|---|"]
         for h in card["headline"]:
@@ -464,19 +524,29 @@ def main(argv: list[str] | None = None) -> int:
                     help="the book directory (chNN.md) for chunk texts; default: beside --graded")
     ap.add_argument("--out", default=None, help="where to write (default: the run directory)")
     ap.add_argument("--world-id", default=None, help="default: the run's meta.json")
+    ap.add_argument("--through-chapter", type=int, default=None, metavar="N",
+                    help="grade a build of exactly chapters 1..N against a graded.json windowed "
+                         "to N by book_gold.py --through-chapter N")
     args = ap.parse_args(argv)
     from patternbuffer.mirror import open_read_only_copy
 
     run = Path(args.run)
     world_id = args.world_id or json.loads((run / "meta.json").read_text())["world_id"]
+    graded = json.loads(Path(args.graded).read_text())
     spans, texts, pass0 = _load_run_inputs(run, Path(args.graded),
                                            Path(args.book) if args.book else None, world_id)
+    try:
+        meta = json.loads((run / "meta.json").read_text()) if (run / "meta.json").exists() else {}
+        check_window(graded, args.through_chapter, spans,
+                     meta.get("chapters") if isinstance(meta.get("chapters"), int) else None)
+    except WindowRefused as exc:
+        raise SystemExit(f"ABORT: {exc}") from exc
     # a sealed in-memory copy taken through `mode=ro`: the build artifact is
     # never opened for writing (bytes and mtime unchanged)
     world = open_read_only_copy(run / "fresh_ingest.world", world_id)
     try:
-        card = grade_book(world, world.registry, json.loads(Path(args.graded).read_text()),
-                          spans=spans, chunk_texts=texts, pass0=pass0)
+        card = grade_book(world, world.registry, graded, spans=spans, chunk_texts=texts,
+                          pass0=pass0, through_chapter=args.through_chapter)
     finally:
         world.close()
     receipt = run / "receipt.json"

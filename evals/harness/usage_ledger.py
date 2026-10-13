@@ -67,7 +67,7 @@ def record(provider: str, model: str, usage: Mapping[str, Any] | None,
            latency_s: float | None = None, outcome: str | None = None,
            prompt_chars: int | None = None, response_chars: int | None = None,
            num_turns: int | None = None, cli_duration_ms: float | None = None,
-           api_duration_ms: float | None = None) -> None:
+           api_duration_ms: float | None = None, effort: str | None = None) -> None:
     """Count one completed call. ``usage`` holds any of ``_FIELDS``; None
     means the provider reported nothing, which is counted, not guessed.
 
@@ -75,7 +75,8 @@ def record(provider: str, model: str, usage: Mapping[str, Any] | None,
     (epoch seconds), ``latency_s``, ``outcome`` (``ok``, ``timeout`` or
     ``error``), the prompt and response sizes, and the claude CLI's own
     ``num_turns`` and durations. Each is ``None`` when the caller did not
-    measure it. The current ``label`` is written beside them. None of them
+    measure it. ``effort`` (STAGE-MODELS-V1) is the ``--effort`` the call ran at;
+    ``None`` is the CLI's default. The current ``label`` is written beside them. None of them
     touches ``snapshot()``."""
     lab = _label.get()
     entry = {"t": time.time(), "started": started, "latency_s": latency_s,
@@ -86,7 +87,7 @@ def record(provider: str, model: str, usage: Mapping[str, Any] | None,
              "cost_usd": cost_usd, "usage_reported": usage is not None,
              "prompt_chars": prompt_chars, "response_chars": response_chars,
              "num_turns": num_turns, "cli_duration_ms": cli_duration_ms,
-             "api_duration_ms": api_duration_ms}
+             "api_duration_ms": api_duration_ms, "effort": effort}
     with _lock:
         _totals["calls"] += 1
         if usage is None:

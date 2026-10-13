@@ -622,4 +622,5 @@ def test_6_a_line_holds_every_field_of_the_spec(tmp_path, monkeypatch):
     assert set(line) == {"t", "started", "latency_s", "provider", "model", "stage", "unit", "attempt",
                          "outcome", "input_tokens", "output_tokens", "cache_read_tokens",
                          "cache_write_tokens", "cost_usd", "usage_reported", "prompt_chars",
-                         "response_chars", "num_turns", "cli_duration_ms", "api_duration_ms"}
+                         "response_chars", "num_turns", "cli_duration_ms", "api_duration_ms",
+                         "effort"}   # STAGE-MODELS-V1 added effort
