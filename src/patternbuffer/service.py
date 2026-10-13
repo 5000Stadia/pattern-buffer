@@ -13,8 +13,11 @@ through the player's view, never raw canon.
   log head or the classifier's `verdict_version` moved.
 - A viewer's `resolve` is an owner job: it plants, forces (or serves the memo)
   and mirrors what the player perceives into the view frame in ONE unit.
-- `record` exists on the standalone runner only (a world with no author). Its
-  public answer is a bare `recorded` / `refused` (VIEW-EXPORT-V1 §5).
+- `record` for a recorder exists on the standalone runner only (a world with no
+  author). Its public answer is a bare `recorded` / `refused` (VIEW-EXPORT-V1 §5).
+- An author session (AUTHOR-RECORD-V1), allowed hosted or standalone, also
+  `record`s, but into canon or one character's `knows:` frame as `stated`,
+  never the player's view. Same bare answer.
 - `export` and `feed` (VIEW-EXPORT-V1) are viewer service verbs, also served
   from the snapshot; `unhandle` is the host's own method.
 
@@ -45,6 +48,7 @@ from patternbuffer.model import (
     CANON,
     CANON_IDENTITY_EDGES,
     ID_RE,
+    KNOWS_PREFIX,
     MECHANISM_ATTRIBUTES,
     META_ATTRIBUTES,
     POLICIES,
@@ -186,7 +190,8 @@ class RateCap:
 
 
 class _Job:
-    """One owner job (a viewer resolve or a record), run inside `pump()`."""
+    """One owner job (a viewer resolve, a record or an author record), run inside
+    `pump()`."""
 
     def __init__(self, kind: str, args: dict[str, Any]) -> None:
         self.kind = kind
@@ -221,7 +226,8 @@ class WorldService:
 
     ``model_route(schema) -> "code" | "model"`` is the host's routing, read
     only to decide which model calls the ``rate`` cap counts. ``standalone``
-    marks the runner (no author): only there may a session be a recorder.
+    marks the runner (no author): only there may a session be a recorder (an
+    author session may be opened in either mode).
     """
 
     def __init__(self, model_route: Callable[[dict], str] | None = None,
@@ -345,9 +351,11 @@ class WorldService:
         self._view_frame = frame
 
     def session(self, name: str, role: str = "viewer") -> "Session":
-        """A client's door. ``role`` is "viewer", or "recorder" (a viewer that
-        may also `record`; the standalone runner only)."""
-        if role not in ("viewer", "recorder"):
+        """A client's door. ``role`` is "viewer", "recorder" (a viewer that may
+        also `record` play events; the standalone runner only) or "author" (a
+        viewer that may also `record` into canon or a character's knowledge,
+        never the player's view; hosted or standalone)."""
+        if role not in ("viewer", "recorder", "author"):
             raise ValueError(f"unknown role {role!r}")
         if role == "recorder" and not self._standalone:
             raise Refused("record exists on the standalone runner only: under an "
@@ -399,6 +407,8 @@ class WorldService:
                 job.result = self._do_resolve(**job.args)
             elif job.kind == "record":
                 job.result = self._do_record(**job.args)
+            elif job.kind == "author_record":
+                job.result = self._do_author_record(**job.args)
             else:                              # pragma: no cover - guarded at enqueue
                 raise AssertionError(job.kind)
         except BaseException as exc:           # noqa: BLE001 - handed to the caller
@@ -712,6 +722,45 @@ class WorldService:
                                       "error": f"{type(exc).__name__}: {exc}"})
         return self._note_record({"status": "recorded", "receipt": receipt.to_dict()})
 
+    def _do_author_record(self, items: list[dict], at: float | None,
+                          frame: str) -> dict:
+        """An author's write (AUTHOR-RECORD-V1): each item once, `stated`, into
+        ``frame`` (canon or one `knows:` frame), refused if ``frame`` is in the
+        player's view as of the log head now, on the owner thread."""
+        world, view_frame = self._world, self._view_frame
+        assert world is not None and view_frame is not None
+        try:
+            sel = world.porcelain._scoped_frames(
+                view_frame, self._frame_scope, world.buffer.head())
+            view = {sel} if isinstance(sel, str) else set(sel)
+        except Exception as exc:               # noqa: BLE001 - fail closed, never on the wire
+            logger.exception("scoping the view frames failed")
+            return self._note_record({"status": "refused", "cause": "error",
+                                      "error": f"{type(exc).__name__}: {exc}"})
+        if frame in view:
+            return self._note_record({
+                "status": "refused", "cause": "invalid",
+                "reason": f"frame {frame!r} is in the player's view; an author "
+                          "writes canon or a character's knowledge outside it"})
+        when = at if at is not None else self.now()
+        ops: list[dict] = []
+        for item in items:
+            base = dict(item)
+            if when is not None and not base.get("timeless") and base.get("valid_from") is None:
+                base["valid_from"] = when
+            ops.append({"op": "assert",
+                        "item": {**base, "frame": frame, "status": "stated"}})
+        try:
+            receipt = world.porcelain.commit_set(ops, classify="rules")
+        except AtomicAbort as abort:
+            return self._note_record({"status": "refused", "cause": abort.cause,
+                                      "skipped": abort.skipped, "error": abort.error})
+        except Exception as exc:               # noqa: BLE001 - never on the wire
+            logger.exception("author record failed")
+            return self._note_record({"status": "refused", "cause": "error",
+                                      "error": f"{type(exc).__name__}: {exc}"})
+        return self._note_record({"status": "recorded", "receipt": receipt.to_dict()})
+
 
 # ------------------------------------------------------------- viewer reads
 
@@ -809,7 +858,11 @@ class Session:
     - `resolve(entity, aspect, wait=)`, pinned to canon for the plant and the
       view frame for the perception;
     - `now()`;
-    - `record(items, at=)`, for a recorder on the standalone runner.
+    - `record(items, at=)`, for a recorder on the standalone runner: play
+      events, written to canon and the view frame as `observed`;
+    - `record(items, at=, frame=)`, for an author (hosted or standalone): each
+      item once, as `stated`, into canon (the default) or one `knows:` frame
+      outside the player's view (AUTHOR-RECORD-V1).
     """
 
     def __init__(self, service: WorldService, name: str, role: str) -> None:
@@ -841,8 +894,12 @@ class Session:
             _only(args, "now", set())
             return {"now": svc.now()}
         if verb == "record":
+            if self.role == "author":
+                return self._author_record(**_only(
+                    args, "record", {"items", "at", "frame"}, required={"items"}))
             if self.role != "recorder":
-                raise Refused("record needs a recorder session on the standalone runner")
+                raise Refused("record needs a recorder session on the standalone "
+                              "runner, or an author session")
             return self._record(**_only(args, "record", {"items", "at"},
                                         required={"items"}))
         if verb in VIEWER_EXCLUDED:
@@ -865,9 +922,30 @@ class Session:
             # wire answers the bare `refused`, the reason stays with the host
             return self.service._note_record({"status": "refused", "cause": "invalid",
                                               "reason": str(exc)})
+        return self._submit_record("record", {"items": clean, "at": at})
+
+    def _author_record(self, items: Any, at: Any = None, frame: Any = "canon") -> dict:
+        """An author's `record` (AUTHOR-RECORD-V1 §2). The frame's shape is
+        checked here; whether it is in the player's view is the owner job's, at
+        the log head when it runs."""
         try:
-            result = self.service._submit(
-                "record", {"items": clean, "at": at}, DEFAULT_WAIT)
+            if not (isinstance(frame, str)
+                    and (frame == CANON
+                         or (frame.startswith(KNOWS_PREFIX)
+                             and ID_RE.fullmatch(frame[len(KNOWS_PREFIX):])))):
+                raise Refused(f"an author's frame is {CANON!r} or "
+                              f"'{KNOWS_PREFIX}<observer id>', got {frame!r}")
+            clean = self._clean_items(items, at, author=True)
+        except Refused as exc:
+            return self.service._note_record({"status": "refused", "cause": "invalid",
+                                              "reason": str(exc)})
+        return self._submit_record("author_record",
+                                   {"items": clean, "at": at, "frame": frame})
+
+    def _submit_record(self, kind: str, args: dict[str, Any]) -> dict:
+        """Queue a record job and answer its bare result (both roles)."""
+        try:
+            result = self.service._submit(kind, args, DEFAULT_WAIT)
         except Exception as exc:               # noqa: BLE001 - never on the wire
             logger.exception("record job failed")
             return self.service._note_record({"status": "refused", "cause": "error",
@@ -880,7 +958,10 @@ class Session:
                                           "cause": result.get("status"), "detail": result})
 
     @staticmethod
-    def _clean_items(items: Any, at: Any) -> list[dict]:
+    def _clean_items(items: Any, at: Any, author: bool = False) -> list[dict]:
+        """The shape rules for a `record` batch. An author (AUTHOR-RECORD-V1)
+        also may not name a handle, as `entity` or as an entity `value`: it
+        writes canonical ids."""
         if not isinstance(items, list) or not items:
             raise Refused("record needs a non-empty list of items")
         if at is not None and (isinstance(at, bool) or not isinstance(at, (int, float))):
@@ -892,7 +973,7 @@ class Session:
             if "frame" in item or "status" in item:
                 raise Refused(
                     f"record item {i} names its own frame/status: the service "
-                    "sets both (canon and the view frame, observed)")
+                    "sets both")
             extra = set(item) - _RECORD_KEYS
             if extra:
                 raise Refused(f"record item {i} carries keys a play event may not: "
@@ -906,6 +987,12 @@ class Session:
             if item.get("value_type", "literal") not in _RECORD_VALUE_TYPES:
                 raise Refused(f"record item {i}: value_type must be one of "
                               f"{sorted(_RECORD_VALUE_TYPES)}")
+            if author and (mirror.HANDLE_RE.fullmatch(entity)
+                           or (item.get("value_type") == "entity"
+                               and isinstance(item.get("value"), str)
+                               and mirror.HANDLE_RE.fullmatch(item["value"]))):
+                raise Refused(f"record item {i} names a handle: an author writes "
+                              "canonical ids")
             clean.append(dict(item))
         return clean
 
@@ -963,6 +1050,7 @@ class Runner:
 
     def __init__(self, open_world: Callable[[Callable], World], view_frame: str, *,
                  port: int = 0, recorders: tuple[str, ...] = (),
+                 authors: tuple[str, ...] = (),
                  rate: RateCap | None = None,
                  model_route: Callable[[dict], str] | None = None,
                  mirror_key: bytes | None = None) -> None:
@@ -972,6 +1060,11 @@ class Runner:
         self._open_world = open_world
         self.world: World | None = None
         self.recorders = frozenset(recorders)
+        self.authors = frozenset(authors)
+        both = self.recorders & self.authors
+        if both:
+            raise ValueError(f"a session is a recorder or an author, not both: "
+                             f"{sorted(both)}")
         self.service = WorldService(model_route=model_route, rate=rate,
                                     standalone=True, mirror_key=mirror_key)
         self._view_frame = view_frame
@@ -1032,7 +1125,8 @@ class Runner:
         with self._sessions_lock:
             sess = self._sessions.get(name)
             if sess is None:
-                role = "recorder" if name in self.recorders else "viewer"
+                role = ("recorder" if name in self.recorders
+                        else "author" if name in self.authors else "viewer")
                 sess = self._sessions[name] = self.service.session(name, role=role)
             return sess
 
@@ -1134,6 +1228,10 @@ def main(argv: list[str] | None = None) -> int:
                              "without it, model-routed resolves answer no_model")
     parser.add_argument("--recorder", action="append", default=[], metavar="NAME",
                         help="a session name that may `record` (repeatable)")
+    parser.add_argument("--author", action="append", default=[], metavar="NAME",
+                        help="a session name that may `record(items, at=, frame=)` "
+                             "into canon or a character's knowledge, never the "
+                             "player's view (repeatable)")
     parser.add_argument("--policy", choices=sorted(POLICIES), default=None)
     parser.add_argument("--mirror-key-file", default=None, metavar="PATH",
                         help="a file of raw key bytes (at least 16): turns on the "
@@ -1141,6 +1239,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rate", type=int, default=None, metavar="N",
                         help="cap model-routed viewer resolves at N per minute")
     args = parser.parse_args(argv)
+    both = set(args.recorder) & set(args.author)
+    if both:
+        parser.error(f"a session is a recorder or an author, not both: {sorted(both)}")
 
     generator = _load_generator(args.generator) if args.generator else None
     mirror_key = Path(args.mirror_key_file).read_bytes() if args.mirror_key_file else None
@@ -1148,7 +1249,7 @@ def main(argv: list[str] | None = None) -> int:
     runner = Runner(lambda gated: World(args.world, world_id=args.world_id,
                                         model=gated(model), policy=args.policy),
                     args.view_frame, port=args.port,
-                    recorders=tuple(args.recorder),
+                    recorders=tuple(args.recorder), authors=tuple(args.author),
                     rate=RateCap(args.rate) if args.rate is not None else None,
                     model_route=route, mirror_key=mirror_key)
     stop = threading.Event()
