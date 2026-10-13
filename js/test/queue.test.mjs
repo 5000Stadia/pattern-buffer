@@ -4,8 +4,8 @@ import { openQueue, queueKey } from "../patternbuffer/queue.mjs";
 import { memoryBackend } from "../patternbuffer/backend.mjs";
 import { fakeLocks, tick, withNavigator } from "./helpers.mjs";
 
-const ITEM = { entity: "person:cook", attribute: "posture", value: "sitting" };
-const item = (n) => ({ entity: `person:p${n}`, attribute: "posture", value: `v${n}` });
+const ITEM = { entity: "person:cook", attribute: "posture", value: "sitting", valid_from: 1 };
+const item = (n) => ({ entity: `person:p${n}`, attribute: "posture", value: `v${n}`, valid_from: n });
 const REC = { status: 200, json: { result: { status: "recorded" } } };
 const REF = { status: 200, json: { result: { status: "refused" } } };
 
@@ -124,7 +124,8 @@ test("add refuses a delta item, an item frame, an item status and an unknown key
   assert.deepEqual(await q.pending(), []);
   // the allowed keys are accepted
   await q.add([{ ...ITEM, value_type: "literal", valid_from: 1, valid_to: 2, timeless: false },
-    { entity: "person:cook", attribute: "in", value: "place:hall", value_type: "entity" }]);
+    { entity: "person:cook", attribute: "in", value: "place:hall", value_type: "entity",
+      valid_from: 1 }]);
   assert.equal((await q.pending()).length, 1);
 });
 
@@ -273,4 +274,36 @@ test("the queue never touches a document", async () => {
   const q = await open(backend);
   await q.add([ITEM]);
   assert.deepEqual(Object.keys(await Promise.resolve(q)).sort(), ["add", "flush", "pending", "persisted"]);
+});
+
+test("a timed item with no time of its own is refused, so a retry repeats the same call", async () => {
+  const q = await open(memoryBackend());
+  const bare = { entity: "person:cook", attribute: "in", value: "place:hall", value_type: "entity" };
+  await assert.rejects(q.add([bare]), /carries no time/);
+  // the interval case: an end but no start
+  await assert.rejects(q.add([{ ...bare, valid_to: 9 }]), /carries no time/);
+  await assert.rejects(q.add([{ ...bare, timeless: false }]), /carries no time/);
+  // a time of its own, a call-wide at, or a timeless fact is accepted
+  await q.add([{ ...bare, valid_from: 4 }]);
+  await q.add([bare], { at: 5 });
+  await q.add([{ ...bare, valid_to: 9 }], { at: 6 });
+  await q.add([{ entity: "person:cook", attribute: "eyes", value: "grey", timeless: true }]);
+  assert.equal((await q.pending()).length, 4);
+});
+
+test("after a lost answer the retry sends a byte-identical body", async () => {
+  const backend = memoryBackend();
+  const q = await open(backend);
+  const bare = { entity: "person:cook", attribute: "in", value: "place:hall", value_type: "entity" };
+  await q.add([bare], { at: 5 });
+  await q.add([{ ...bare, valid_to: 9 }], { at: 6 });
+  const bodies = [];
+  const lost = async (body) => { bodies.push(JSON.stringify(body)); throw new Error("reset"); };
+  assert.equal(await q.flush(lost), 0);
+  const ok = async (body) => { bodies.push(JSON.stringify(body)); return REC; };
+  assert.equal(await (await open(backend)).flush(ok), 2);
+  assert.equal(bodies.length, 3);
+  assert.equal(bodies[0], bodies[1]);                 // the first call, sent twice, unchanged
+  assert.match(bodies[0], /"at":5/);
+  assert.match(bodies[2], /"at":6/);
 });

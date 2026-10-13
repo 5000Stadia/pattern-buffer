@@ -1,6 +1,6 @@
 # VIEW-JS-V1: a small `patternbuffer` JS module for the browser
 
-**Status:** r2. r1.1 took holo-emitter's review (m47f6b9: eviction, cross-tab locks, apply off the frame loop). r2 answers pbr's r1.1 RED (a viewer session for `sync`; queues namespaced by world; the queue's role and `onRefused` are parameters) and drops `queue.lost` (see §3). For pbr review and for Photonic's and holo-emitter's review as the two clients.
+**Status:** r2.1 (pbr's code review: a queued timed item must carry its own time). r2. r1.1 took holo-emitter's review (m47f6b9: eviction, cross-tab locks, apply off the frame loop). r2 answers pbr's r1.1 RED (a viewer session for `sync`; queues namespaced by world; the queue's role and `onRefused` are parameters) and drops `queue.lost` (see §3). For pbr review and for Photonic's and holo-emitter's review as the two clients.
 Author: pb, 2026-10-13.
 **Source:** roadmap R47. Photonic m019da7: "By Kabe's rule (each element used from its home
 project), the JS store is yours: your contract, your vectors, your spec. Will you own a small
@@ -142,6 +142,15 @@ Photonic's on-device writes wait in a queue until a service is reachable.
 - `queue.pending()` lists the waiting calls, so the game can draw its own overlay. **The queue
   never applies its calls to the document.** The document holds only the server's answers;
   the overlay is the game's.
+- *(r2.1, pbr)* **Every queued timed item carries its own time.**
+  - A non-timeless item with no `valid_from`, given without a call-wide `at`, is refused by `add`.
+    That includes an item with only `valid_to`.
+  - Otherwise the server stamps it with its own `now()` at each delivery. After a lost answer, the
+    retry would then write a different, later fact, or turn an interval into a refusal.
+  - With the time in the persisted call, a retry is byte-identical, and two deliveries read exactly
+    as one.
+  - The game supplies the time from its own world clock. Photonic already sets `valid_from` at the
+    event's world time. The module never reads a client clock.
 - **Delivery is at least once.** A call whose answer was lost in transit is sent again on the
   next flush. A fact at rest written twice folds to the same answer. A `delta` value (an accrual)
   written twice would count twice, so **`add` refuses an item with `value_type: "delta"`** in V1.
@@ -222,6 +231,11 @@ Photonic's on-device writes wait in a queue until a service is reachable.
    - A transport error or a 5xx stops the flush and keeps the rest, and a reopened queue still
      holds them.
    - `add` refuses a `delta` item, an item `frame`, and an unknown key.
+   - *(r2.1)* `add` refuses a timed item with no `valid_from` and no `at`, including the interval
+     case (`valid_to` only). After a lost answer, the retry's body is byte-identical to the first.
+   - *(r2.1)* End to end: the same author call (open, and an interval) delivered once and twice
+     gives exports equal in everything but the cursor, and equal `state` inside and after the
+     interval.
    - *(r1.1)* `persisted` reflects a fake `navigator.storage.persist()`, or is `null` without one.
    - *(r2, pbr P1)* Two worlds with one session name on one backend keep separate queues and
      locks, and each flush sends only its own world's calls. A world id containing `:` doesn't

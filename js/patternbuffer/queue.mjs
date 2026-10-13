@@ -129,6 +129,16 @@ export async function openQueue({ backend, worldId, session, role, onRefused } =
           && (typeof at !== "number" || !Number.isFinite(at))) {
         throw new TypeError("add: at is a number");
       }
+      // A timed item with no time of its own would be stamped by the server's
+      // now() on each delivery, so a retry after a lost answer would write a
+      // different fact. Every queued timed item carries its time (VIEW-JS-V1 §3 r2.1).
+      const hasAt = typeof at === "number";
+      items.forEach((item, i) => {
+        const timed = item.timeless !== true;
+        if (timed && (item.valid_from === undefined || item.valid_from === null) && !hasAt) {
+          throw new TypeError(`record item ${i} is timed but carries no time: give it valid_from, or add(items, {at}), so a retry repeats the same call`);
+        }
+      });
       if (frame !== undefined && frame !== null) {
         if (role === "recorder") {
           throw new TypeError("add: a recorder session cannot name a frame");
