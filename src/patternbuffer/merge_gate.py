@@ -365,7 +365,7 @@ def compute_components(pair_results: Sequence[Mapping[str, Any]],
 
 
 def _check_pairs(pairs: Any) -> list[tuple[str, str]]:
-    if isinstance(pairs, (str, bytes)) or not isinstance(pairs, (list, tuple)) or not pairs:
+    if not isinstance(pairs, list) or not pairs:
         raise ValueError("pairs must be a non-empty list of [id, id] pairs")
     if len(pairs) > MAX_PAIRS:
         raise ValueError(f"at most {MAX_PAIRS} pairs per call, got {len(pairs)}")
@@ -387,8 +387,7 @@ def _check_context(context: Any) -> dict[str, list[str]]:
     for key, sentences in context.items():
         if not (isinstance(key, str) and key):
             raise ValueError(f"a context key is a non-empty id string, got {key!r}")
-        if isinstance(sentences, (str, bytes)) or not isinstance(sentences, (list, tuple)) \
-                or not all(isinstance(s, str) for s in sentences):
+        if not isinstance(sentences, list) or not all(isinstance(s, str) for s in sentences):
             raise ValueError(f"context for {key!r} is a list of strings")
         out[key] = list(sentences)
     return out

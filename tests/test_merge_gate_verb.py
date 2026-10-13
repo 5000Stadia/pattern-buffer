@@ -351,6 +351,8 @@ def test_9_two_calls_are_two_askings_and_requested_as_covers(world):
     ([[LA, LB]], {"context": ["not a mapping"]}),
     ([[LA, LB]], {"context": {LA: "a bare string"}}),
     ([[LA, LB]], {"context": {LA: [3]}}),
+    (([LA, LB],), {}),                                    # the outer container is a list
+    ([[LA, LB]], {"context": {LA: ("a tuple of sentences",)}}),
 ])
 def test_10_bad_input_raises_before_any_model_call(world, pairs, kw):
     with pytest.raises(ValueError):
