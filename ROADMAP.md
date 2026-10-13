@@ -134,7 +134,6 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - Construct's condition grammar (`construct/arc/conditions.py`) is the starting vocabulary. The turn-pacing atoms stay host-side.
     - Declarations are accepted at any time, not only during ingest.
     - Kabe settled device secrets (via holo-emitter maf0465): "this is not bank security sort of thing as long as our engine itself is not shouting out the plot points along the way or it isn't infecting our characters awareness of the future in engine, we don't need to worry about [cyber] security attacks that are trying to figure out the twist of our romantic comedy." Reading: mechanism answers on the device may carry codes in plain text. The concealment that matters is inside the engine: frames, narration, and characters' awareness never reaching the future.
-  - New scope: Kabe places it.
   - **Placed by Kabe (2026-10-13, via holo-emitter m17d4f4):** "Fine if its elegant to the architectural direction but if were encrypting things and stuff thats silly." He added: "We don't want watson to just "know" who did it though ... if the pattern buffer call internally is with Watsons framing and cant touch the events of the night murder itself that seems mechanistically helpful." Reading:
     - Beats live in an author-side frame.
     - The phone gets plain-text mechanism answers, with no hashing or encryption anywhere.
