@@ -1,6 +1,6 @@
 # STAGE-MODELS-V1: a model and an effort per build stage, and grading a partial book
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-13. Harness only.
+**Status:** r1.1, answering pbr's r1 RED: the correction window; locations are half-open and stay open at the horizon; the partial read bound; a missing `default`; and a routing test across workers. For pbr review. Author: pb, 2026-10-13. Harness only.
 **Source:** the profiling build (`evals/results/2026-10-13-profile-lhm2/REPORT.md`): about 96% of
 output tokens are hidden thinking, and latency is output-bound (R² 0.97). Kabe, asked whether to
 test effort settings (2026-10-13): "Yes and further consider alternative models and speed. We may
@@ -48,9 +48,14 @@ the part of the key it covers.
   - an unknown stage key;
   - an effort outside the set;
   - an empty model;
-  - a map that isn't a JSON object.
+  - a map that isn't a JSON object;
+  - *(r1.1)* an unreadable file, invalid JSON, or a `model` or `effort` that is neither a string
+    nor (for `effort`) `null`.
 
   The run stops with the reason.
+- *(r1.1)* **A missing `"default"`** means `{"model": PB_EVAL_MODEL, "effort": null}`, today's
+  call. So `{}` is a valid map that changes nothing, and a map listing one stage changes only that
+  stage.
 - **Receipts.** Each `usage.jsonl` call line records its `model` (already there) and a new
   `effort` field. `profile_build.py` groups each stage's table by (model, effort) when a stage used
   more than one. `meta.json` records the map's content and its sha256.
@@ -65,13 +70,27 @@ know. `book_gold` and `grade_book` apply this filter before scoring:
   `alias_first_chapter ≤ N`, when the field exists; otherwise all aliases are kept.
 - **same_as:** reveals with a reveal chapter ≤ N.
 - **not_same:** pairs whose two entities both have `first_chapter ≤ N`.
-- **locations and holdings:** entries with `from_chapter ≤ N`, with `to_chapter` clipped to N.
+- **locations and holdings** *(r1.1)*: ranges are half-open, `[from_chapter, to_chapter)`.
+  - An entry is in the window when `from_chapter ≤ N`.
+  - If its `to_chapter` is null or greater than N, it stays **open** in the window
+    (`to_chapter: null`): the fact is still active at the horizon and counts for `final`.
+  - If its `to_chapter` is N or less, it stays closed as written.
+  - Nothing is clipped.
 - **containers:** reveals with `revealed_chapter ≤ N`.
-- **knowledge, false_beliefs and corrections:** entries whose chapter (`chapter` or
-  `from_chapter`) is ≤ N. A belief whose `corrected_chapter > N` is graded as still held, with its
-  correction outside the window.
-- **"final" reads:** at chapter N's exposure-clock position (GRADE-LEAKS-V1), not at a full book's
-  end.
+- **knowledge:** entries with `chapter ≤ N`.
+- **false_beliefs:** entries with `from_chapter ≤ N`. If `corrected_chapter` is null or greater
+  than N, the belief is graded as still held through N (the believer window ends at N).
+- **corrections** *(r1.1)*: in the window when `stated_chapter ≤ N`.
+  - The `ends_correct` and claim-after-correction checks are made only when
+    `corrected_chapter ≤ N`.
+  - Before that the correction has not happened at the horizon. Those checks are absent, not
+    failed, and the matching false belief, if any, is graded as held.
+- **"final" and every read in the partial window** *(r1.1)*: bounded by chapter N's exposure-clock
+  position, `asserted_as_of = hi(N)` (GRADE-LEAKS-V1).
+  - The valid anchor for a final read is the latest `valid_from` among rows visible at that
+    asserted bound, never among all rows.
+  - Every fold in a final read passes the same asserted bound.
+  - So gate and audit rows written after chapter N's last chunk never reach a partial verdict.
 
 The report states the window (`through_chapter: N`) on its first line. Without the flag, grading is
 byte-identical to today.
@@ -102,8 +121,11 @@ Kabe approved the comparison (2026-10-13). Its report gives:
 
 1. **No map:** the argv is exactly BARE-CALL-V1's, with no `--effort`, under every label.
 2. **Routing:** under a map, a call inside `label(stage="pass1")` uses pass1's model and effort.
-   Unlisted stages and unlabelled calls use `"default"`. The argv ends with `--effort low` exactly
-   when effort is set.
+   Unlisted stages and unlabelled calls use `"default"`, or today's call when it is absent. `{}`
+   changes nothing. The argv ends with `--effort low` exactly when effort is set.
+2a. *(r1.1, pbr P2)* **Routing across workers:** a fake-shim toy build runs parallel pass-0
+    (4 workers) and pass-1 (4 workers), with one pass-1 retry and the `ObjectiveModel` wrapping
+    commit's classification. Every recorded call's argv carries its own stage's model and effort.
 3. **Refusals at load:** an unknown stage, a bad effort, an empty model and a non-object map are
    refused before any call, naming the reason.
 4. **Receipts:** call lines carry `effort`, and `meta.json` holds the map and its sha256. The
@@ -113,6 +135,12 @@ Kabe approved the comparison (2026-10-13). Its report gives:
    - on a hand-built key with entries across chapters 1–4, `--through-chapter 2` keeps exactly the
      entries the rules above select;
    - a belief corrected in chapter 3 is graded as held through chapter 2;
+   - *(r1.1)* a correction with `stated_chapter` 1 and `corrected_chapter` 3: at N = 2 its
+     correction checks are absent and the belief is held; at N = 3 they are made;
+   - *(r1.1)* a move open from chapter 1 to null, and one from chapter 1 to 4, are both open at
+     N = 2 and both count for `final`, while one from 1 to 2 is closed;
+   - *(r1.1)* a gate row written after chapter 2's last chunk, moving an object, doesn't change the
+     N = 2 final location;
    - final reads come from chapter 2's position;
    - without the flag, the output is byte-identical to the current grader on R27's key and a
      hand-built world.
