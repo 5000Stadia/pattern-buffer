@@ -1,0 +1,2311 @@
+{
+  "alias_first_chapter": {
+    "address_strip": {
+      "blank address strip": 6,
+      "new strip of bark lay there": 6
+    },
+    "address_tag": {
+      "her tag": 1,
+      "sleeping tag": 1,
+      "the tag": 1
+    },
+    "alis": {
+      "alis": 1,
+      "alis noll": 1
+    },
+    "alis_name": {
+      "name on the back": 1
+    },
+    "black_thread": {
+      "black thread": 2,
+      "the black thread": 2
+    },
+    "blue_thread": {
+      "blue thread": 1
+    },
+    "bone_comb": {
+      "bone comb": 2,
+      "comb": 2,
+      "the bone comb": 2,
+      "the comb": 2
+    },
+    "brass_map": {
+      "brass map": 2,
+      "the brass map": 2
+    },
+    "chalk_moth": {
+      "chalk moth": 3,
+      "moth": 2,
+      "the chalk moth": 3,
+      "the flat creature": 3,
+      "the moth": 2
+    },
+    "chamber_note": {
+      "Mouth Room's note": 1,
+      "note like a spoon touching a cup": 1
+    },
+    "child_chair": {
+      "child-sized chair": 3
+    },
+    "desk_drawer": {
+      "a drawer in her desk": 6,
+      "drawer in her desk": 6
+    },
+    "door_passage": {
+      "narrow passage beyond the round door": 3
+    },
+    "doorless_roll": {
+      "names without a door": 3,
+      "second copy of the roll": 3
+    },
+    "eren_tag": {
+      "his own tag": 1
+    },
+    "eren_vey": {
+      "eren vey": 1,
+      "young clerk": 1
+    },
+    "false_bottom": {
+      "false base": 2,
+      "false bottom": 2,
+      "the false bottom": 2
+    },
+    "family_niche": {
+      "family niche": 3,
+      "the family niche": 3,
+      "the niche": 4
+    },
+    "first_house": {
+      "first house": 1,
+      "latch": 1,
+      "lio": 1,
+      "the first house": 1,
+      "the latch": 1,
+      "the missing room": 1
+    },
+    "four_name_strip": {
+      "bark strip bearing the word LATCH": 4,
+      "bark strip with the four children's names": 5
+    },
+    "glass_thimble": {
+      "glass thimble": 2,
+      "the glass thimble": 2,
+      "the thimble": 2,
+      "thimble": 2
+    },
+    "grit_ring": {
+      "outline left by the latch's old hinge": 6,
+      "pale ring of grit": 6
+    },
+    "hall_assembly": {
+      "Hall's assembly": 6,
+      "the assembly": 6
+    },
+    "hall_map": {
+      "map that had no north": 1,
+      "the vellum hall's map": 6
+    },
+    "hall_old_keeper": {
+      "earlier keeper of the Hall": 2
+    },
+    "hall_record_room": {
+      "Hall's record room": 6
+    },
+    "hall_register": {
+      "hall's register": 3
+    },
+    "handprint_strip": {
+      "handprint strip": 1,
+      "the handprint strip": 1
+    },
+    "hinge": {
+      "hinge": 1,
+      "the hinge": 1
+    },
+    "ivara": {
+      "ivara": 1,
+      "ivara noll": 1,
+      "the youngest hand": 3
+    },
+    "ledger": {
+      "the ledger": 1
+    },
+    "mara": {
+      "mara": 1,
+      "mara noll": 1
+    },
+    "metal_fruit": {
+      "small metal fruit": 6
+    },
+    "mouth_room": {
+      "mouth room": 1,
+      "the mouth room": 1
+    },
+    "nacre_stair": {
+      "nacre stair": 3,
+      "the nacre stair": 3
+    },
+    "nima": {
+      "nima": 1,
+      "nima orrel": 1
+    },
+    "nima_grandmother": {
+      "Nima's grandmother": 1
+    },
+    "numbered_spool": {
+      "numbered spool": 3,
+      "spool": 2,
+      "the numbered spool": 3,
+      "the spool": 2
+    },
+    "oru": {
+      "city of oru": 1,
+      "oru": 1,
+      "the city": 1,
+      "the city of oru": 1
+    },
+    "paper_bird": {
+      "bird": 5,
+      "paper bird": 5,
+      "the bird": 5
+    },
+    "paper_note": {
+      "folded paper": 2,
+      "message": 5,
+      "small folded paper": 2
+    },
+    "pell": {
+      "apprentice": 2,
+      "aven": 3,
+      "eren vell": 1,
+      "pell": 2,
+      "pell aven": 2,
+      "porter": 1,
+      "the porter": 2
+    },
+    "petition": {
+      "petition": 1,
+      "petition that arrived": 1,
+      "the petition": 1
+    },
+    "pocket_strip": {
+      "Mouth Room's bark strip": 1
+    },
+    "recipe_note": {
+      "note on the recipe sheet": 6
+    },
+    "recipe_sheet": {
+      "sheet where Mara had recorded a recipe for shell milk": 1,
+      "shell-milk recipe sheet": 6
+    },
+    "red_key": {
+      "iron thing": 1,
+      "red key": 1,
+      "the red key": 1
+    },
+    "red_key_tooth": {
+      "key's forked tooth": 4
+    },
+    "registry": {
+      "The Registry": 1,
+      "the Registry": 1
+    },
+    "round_door": {
+      "round door": 2,
+      "the round door": 2
+    },
+    "route_mark": {
+      "loop with four smaller loops inside": 4
+    },
+    "satchel": {
+      "her satchel": 1,
+      "satchel": 1
+    },
+    "seventh_tooth": {
+      "seventh tooth": 2,
+      "the missing tooth": 2,
+      "the seventh tooth": 2
+    },
+    "shell_wall": {
+      "shell wall": 4
+    },
+    "sleeping_gallery": {
+      "sleeping gallery": 1,
+      "the hall's sleeping gallery": 1
+    },
+    "stair_landing": {
+      "the landing": 4
+    },
+    "stone_basin": {
+      "stone basin": 2,
+      "the basin": 2
+    },
+    "stool": {
+      "stool": 5,
+      "the stool": 5
+    },
+    "sump": {
+      "sump": 2,
+      "the sump": 2
+    },
+    "table": {
+      "table stood in the middle": 5
+    },
+    "table_drawer": {
+      "a drawer beneath the table": 5,
+      "drawer beneath the table": 5
+    },
+    "tin_box": {
+      "parcel": 1,
+      "the parcel": 1,
+      "the tin box": 1,
+      "tin box": 1
+    },
+    "tin_orchard": {
+      "orchard": 1,
+      "the orchard": 1,
+      "the tin orchard": 1,
+      "tin orchard": 1
+    },
+    "tovan": {
+      "senior examiner": 1,
+      "the Chair": 1,
+      "the hall's old examiner": 5,
+      "tovan": 1,
+      "tovan sere": 1
+    },
+    "tree_fruit": {
+      "hollow metal fruit": 1
+    },
+    "understair": {
+      "the understair": 1,
+      "understair": 1
+    },
+    "vellum_hall": {
+      "hall": 1,
+      "the hall": 1,
+      "the vellum hall": 1,
+      "vellum hall": 1
+    },
+    "wall_chair": {
+      "chair by the wall": 5
+    },
+    "washers": {
+      "brass washers": 1,
+      "necklace of brass washers": 1,
+      "the washer necklace": 4,
+      "washers": 1
+    },
+    "winter_roll": {
+      "the winter roll": 3,
+      "winter roll": 2
+    }
+  },
+  "beliefs": [],
+  "containers": [
+    {
+      "container": "tin_box",
+      "contents": [
+        "brass_map",
+        "glass_thimble",
+        "paper_note"
+      ],
+      "id": "containers[0]"
+    },
+    {
+      "container": "glass_thimble",
+      "contents": [
+        "black_thread"
+      ],
+      "id": "containers[1]"
+    },
+    {
+      "container": "metal_fruit",
+      "contents": [
+        "grit_ring"
+      ],
+      "id": "containers[2]"
+    },
+    {
+      "container": "desk_drawer",
+      "contents": [
+        "recipe_sheet"
+      ],
+      "id": "containers[3]"
+    },
+    {
+      "container": "satchel",
+      "contents": [
+        "tin_box"
+      ],
+      "id": "containers[4]"
+    },
+    {
+      "container": "address_tag",
+      "contents": [
+        "alis_name"
+      ],
+      "id": "containers[5]"
+    },
+    {
+      "container": "table_drawer",
+      "contents": [
+        "paper_bird"
+      ],
+      "id": "containers[7]"
+    },
+    {
+      "container": "stone_basin",
+      "contents": [
+        "tin_box"
+      ],
+      "id": "containers[8]"
+    },
+    {
+      "container": "tin_box",
+      "contents": [
+        "red_key"
+      ],
+      "id": "containers[9]"
+    },
+    {
+      "container": "false_bottom",
+      "contents": [
+        "seventh_tooth"
+      ],
+      "id": "containers[10]"
+    },
+    {
+      "container": "false_bottom",
+      "contents": [
+        "brass_map",
+        "glass_thimble",
+        "paper_note"
+      ],
+      "id": "containers[11]"
+    }
+  ],
+  "corrections": [],
+  "dropped": [
+    {
+      "id": "containers[6]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Evidence only supports the moth, not the spool (spool 'lay beneath' the moth, ch3).",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "holdings[28]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Pell holds the tooth only in backstory, never in the story's present. The book also contradicts itself on when: ch2 l57 says 'Before I sent you the box, I moved the tooth', but ch2 l115 sets the move in his childhood in the first house."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "unclear"
+      }
+    },
+    {
+      "id": "holdings[7]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Eren Vey holds the brass map from ch2; ch4 \"map to Eren Vey\" and ch5 he sets it before Alis, so to_chapter 3 understates (should be 5, until Ivara folds it and keeps it). Not contradicted.",
+        "B (Claude Opus, final)": "Eren Vey keeps the map through ch4 ('The objects... were divided among them: map to Eren Vey', ch4 l43) and ch5 ('Eren Vey set the brass map before her', ch5 l5). It passes to Ivara only in ch5 ('Ivara folded the map and kept it'). to_chapter should be 5."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[101]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "The basin is a fixed object and is still in the Sump in ch3 (l3, 'took the red key from the stone basin') and ch5 (l41, 'the Sump, with its clay floor and stone basin'). to_chapter should be null, or at least 5."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[108]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Also ch2 says Pell moved the tooth under the moth 'before I sent you the box' (recent) vs ch2 later as a child; so a ch2 location is only a past event.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[119]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[13]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[14]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. (Also the cited evidence 'He went through first' is Pell, not Eren Vey; Eren Vey is present in ch3 chamber anyway.)",
+        "B (Claude Opus, final)": "The entry is right, but the evidence 'He went through first' refers to Pell, not Eren Vey. Eren Vey is shown in the chamber at ch3 l21."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[17]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch4 l85: 'He placed the thread against his ear and stepped over the threshold. The room took a breath.' from_chapter should be 4."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[21]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[22]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[32]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Alis is still in the first house in ch6: 'they saw Alis standing in the Latch, with the tin box on the stool Alis had used in the first house' (ch6 l9), and she lives 'sometimes in the first house' (l73). to_chapter should be 6/null."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[35]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[36]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": "The entry is right, but the evidence 'Tovan lifted the bone comb' happens in the Sump. Tovan is in the chamber at l27 ('Tovan lunged')."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[3]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[43]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch3 l3: 'Ivara took the red key from the stone basin', so the key is in the Sump in ch3. Range should be 2-3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[44]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[48]",
+      "notes": {
+        "A (Claude Sonnet, final)": "ch6: \"Nima still held the red key\" while Alis is seen \"standing in the Latch\" through the Mouth Room door; Nima/key are in the Hall scene (Mouth Room), not clearly in the first house. Also ch6 later says \"Alis placed it on the table\" before \"Nima handed the key to Alis\".",
+        "B (Claude Opus, final)": "The evidence 'Nima still held the red key' (ch6 l9) places Nima and the key at the Vellum Hall, looking through the Mouth Room's second door into the Latch. The key reaches the first house only if Alis's tin box (on the stool in the Latch) is where she puts it. Where the l15-19 conversation takes place is never stated."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "unclear"
+      }
+    },
+    {
+      "id": "locations[4]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[54]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch3 l9 (in the Sump, before the door): 'Pell held the tin box against his chest.' Range should be 2-3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[55]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[60]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Eren Vey carries the map through the Sump at the start of ch3, before using it in the chamber (ch3 l21). Range should be 2-3. Same systematic Sump-ends-at-2 error."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[61]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[66]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ivara has the thimble in her pocket in the Sump at the start of ch3. Range should be 2-3. Same systematic error."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[69]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "The thread is still in the thimble at the start of ch5: 'Alis took the black thread from inside the thimble' (ch5 l15). By the key's own overlap convention (see holdings 2/3), to_chapter should be 5."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[71]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "ch3 l5, in the Sump: 'Tovan lifted the bone comb.' Range should be 2-3."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "locations[72]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": "The evidence sentence is from the Sump. The comb is in the chamber with Tovan at ch3 l89."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[76]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Moth: ch3 chair in chamber; ch4 landing room has chair and moth; ch6 'The chalk moth stayed in the hidden chamber beneath the Understair'. Ranges 3-6 plausible only if chamber = first house.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[77]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'.",
+        "B (Claude Opus, final)": ""
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "locations[7]",
+      "notes": {
+        "A (Claude Sonnet, final)": "",
+        "B (Claude Opus, final)": "Ivara enters the room in ch4: 'Still, Ivara stepped through first' (ch4 l65). She is inside when 'Ivara saw the room's five places set for them' (l81), and Eren Vey follows her over the threshold (l85). from_chapter should be 4. (Ch4 l67 'Before they entered the opening' muddles the order; see text_contradictions.)"
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "wrong"
+      }
+    },
+    {
+      "id": "not_same[6]",
+      "notes": {
+        "A (Claude Sonnet, final)": "ch5: \"The Mouth Room remained a separate answering chamber, connected to the first house by a shared wall\"; ch3/ch6 agree. Note ch2 contradicts: Tovan \"Unless they're the same room\" and \"Tovan's suggestion was true\" (see text_contradictions).",
+        "B (Claude Opus, final)": "Ch5 l57 says plainly: 'The Mouth Room remained a separate answering chamber, connected to the first house by a shared wall.' But ch2 l15-17 contradicts it: Tovan says 'Unless they're the same room' and 'the red key stay[ed] cool... Tovan's suggestion was true'. Ch6 l5-7 also gives the Mouth Room's 'true name' as 'First House'. The book disagrees with itself."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "ok",
+        "B (Claude Opus, final)": "unclear"
+      }
+    },
+    {
+      "id": "same_as[1]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Lio = the missing room (= Latch) is stated ch1 (\"Lio isn't a person. It's what the missing room calls itself\"). Lio is never mentioned in ch5; Lio -> first house depends on Latch = first house, which ch5 itself undercuts (\"not all the same room\"). Chapter 5 is wrong as the establishing chapter for Lio.",
+        "B (Claude Opus, final)": "Lio is the missing room's self-name from ch1 l29 ('It's what the missing room calls itself'), so Lio = Latch from ch1. Ch5 never mentions Lio; ch5 only fits as the chapter where Latch = first house is stated outright. The Latch/first-house identity is already strongly implied in ch3 (l39-49)."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    },
+    {
+      "id": "same_as[2]",
+      "notes": {
+        "A (Claude Sonnet, final)": "Strong cues for identity (ch3 Tovan \"Mara brought her home through the Mouth Room and into the Latch\" / \"hide her in the first house\"; ch4 four children made the room; ch6 Alis \"standing in the Latch\" behind the First House door). But ch5: \"The Latch was the name Nima heard at the Orchard. First House was what Mara called it... The fragments remembered the first house, but were not all the same room.\" A careful reader cannot settle whether Latch is the whole house or a fragment.",
+        "B (Claude Opus, final)": "Ch5 l57: 'The Latch was the name Nima heard at the Orchard. First House was what Mara called it.' This is implied from ch3 (Mara brought Alis 'into the Latch'; Tovan hid her 'in the first house'). Caveat: ch5 l11 calls the Latch one of the 'connected rooms... not the same room'."
+      },
+      "verdicts": {
+        "A (Claude Sonnet, final)": "unclear",
+        "B (Claude Opus, final)": "ok"
+      }
+    }
+  ],
+  "dropped_aliases": [
+    {
+      "alias": "the hidden chamber",
+      "by": [
+        "A (Claude Sonnet, final)"
+      ],
+      "entity": "first_house"
+    }
+  ],
+  "dropped_contents": [],
+  "dropped_fields": [
+    {
+      "id": "entities.first_house.alias_first_chapter[the hidden chamber]",
+      "notes": {},
+      "reason": "alias dropped (bad_aliases)",
+      "verdicts": {
+        "alias": "dropped"
+      }
+    }
+  ],
+  "entities": {
+    "address_strip": {
+      "aliases": [
+        "blank address strip",
+        "new strip of bark lay there"
+      ],
+      "kind": "object"
+    },
+    "address_tag": {
+      "aliases": [
+        "sleeping tag",
+        "her tag",
+        "the tag"
+      ],
+      "kind": "object"
+    },
+    "alis": {
+      "aliases": [
+        "alis noll",
+        "alis"
+      ],
+      "kind": "person"
+    },
+    "alis_name": {
+      "aliases": [
+        "name on the back"
+      ],
+      "kind": "object"
+    },
+    "black_thread": {
+      "aliases": [
+        "black thread",
+        "the black thread"
+      ],
+      "kind": "object"
+    },
+    "blue_thread": {
+      "aliases": [
+        "blue thread"
+      ],
+      "kind": "object"
+    },
+    "bone_comb": {
+      "aliases": [
+        "bone comb",
+        "the bone comb",
+        "comb",
+        "the comb"
+      ],
+      "kind": "object"
+    },
+    "brass_map": {
+      "aliases": [
+        "brass map",
+        "the brass map"
+      ],
+      "kind": "object"
+    },
+    "chalk_moth": {
+      "aliases": [
+        "chalk moth",
+        "the chalk moth",
+        "moth",
+        "the moth",
+        "the flat creature"
+      ],
+      "kind": "object"
+    },
+    "chamber_note": {
+      "aliases": [
+        "note like a spoon touching a cup",
+        "Mouth Room's note"
+      ],
+      "kind": "sound"
+    },
+    "child_chair": {
+      "aliases": [
+        "child-sized chair"
+      ],
+      "kind": "object"
+    },
+    "desk_drawer": {
+      "aliases": [
+        "drawer in her desk",
+        "a drawer in her desk"
+      ],
+      "kind": "object"
+    },
+    "dining_chairs": {
+      "aliases": [],
+      "kind": "object"
+    },
+    "door_passage": {
+      "aliases": [
+        "narrow passage beyond the round door"
+      ],
+      "kind": "place"
+    },
+    "doorless_roll": {
+      "aliases": [
+        "second copy of the roll",
+        "names without a door"
+      ],
+      "kind": "object"
+    },
+    "eren_tag": {
+      "aliases": [
+        "his own tag"
+      ],
+      "kind": "object"
+    },
+    "eren_vey": {
+      "aliases": [
+        "eren vey",
+        "young clerk"
+      ],
+      "kind": "person"
+    },
+    "false_bottom": {
+      "aliases": [
+        "false bottom",
+        "the false bottom",
+        "false base"
+      ],
+      "kind": "object"
+    },
+    "family_niche": {
+      "aliases": [
+        "family niche",
+        "the family niche",
+        "the niche"
+      ],
+      "kind": "concept"
+    },
+    "first_house": {
+      "aliases": [
+        "first house",
+        "the first house",
+        "latch",
+        "the latch",
+        "the missing room",
+        "lio"
+      ],
+      "kind": "place"
+    },
+    "four_name_strip": {
+      "aliases": [
+        "bark strip bearing the word LATCH",
+        "bark strip with the four children's names"
+      ],
+      "kind": "object"
+    },
+    "glass_thimble": {
+      "aliases": [
+        "glass thimble",
+        "the glass thimble",
+        "thimble",
+        "the thimble"
+      ],
+      "kind": "object"
+    },
+    "grit_ring": {
+      "aliases": [
+        "pale ring of grit",
+        "outline left by the latch's old hinge"
+      ],
+      "kind": "object"
+    },
+    "hall_assembly": {
+      "aliases": [
+        "Hall's assembly",
+        "the assembly"
+      ],
+      "kind": "institution"
+    },
+    "hall_map": {
+      "aliases": [
+        "map that had no north",
+        "the vellum hall's map"
+      ],
+      "kind": "object"
+    },
+    "hall_old_keeper": {
+      "aliases": [
+        "earlier keeper of the Hall"
+      ],
+      "kind": "person"
+    },
+    "hall_record_room": {
+      "aliases": [
+        "Hall's record room"
+      ],
+      "kind": "place"
+    },
+    "hall_register": {
+      "aliases": [
+        "hall's register"
+      ],
+      "kind": "object"
+    },
+    "handprint_strip": {
+      "aliases": [
+        "handprint strip",
+        "the handprint strip"
+      ],
+      "kind": "object"
+    },
+    "hinge": {
+      "aliases": [
+        "hinge",
+        "the hinge"
+      ],
+      "kind": "object"
+    },
+    "ivara": {
+      "aliases": [
+        "ivara noll",
+        "ivara",
+        "the youngest hand"
+      ],
+      "kind": "person"
+    },
+    "ledger": {
+      "aliases": [
+        "the ledger"
+      ],
+      "kind": "object"
+    },
+    "mara": {
+      "aliases": [
+        "mara noll",
+        "mara"
+      ],
+      "kind": "person"
+    },
+    "metal_fruit": {
+      "aliases": [
+        "small metal fruit"
+      ],
+      "kind": "object"
+    },
+    "mouth_room": {
+      "aliases": [
+        "mouth room",
+        "the mouth room"
+      ],
+      "kind": "place"
+    },
+    "nacre_stair": {
+      "aliases": [
+        "nacre stair",
+        "the nacre stair"
+      ],
+      "kind": "place"
+    },
+    "nima": {
+      "aliases": [
+        "nima orrel",
+        "nima"
+      ],
+      "kind": "person"
+    },
+    "nima_grandmother": {
+      "aliases": [
+        "Nima's grandmother"
+      ],
+      "kind": "person"
+    },
+    "numbered_spool": {
+      "aliases": [
+        "numbered spool",
+        "the numbered spool",
+        "spool",
+        "the spool"
+      ],
+      "kind": "object"
+    },
+    "oru": {
+      "aliases": [
+        "oru",
+        "city of oru",
+        "the city",
+        "the city of oru"
+      ],
+      "kind": "place"
+    },
+    "paper_bird": {
+      "aliases": [
+        "paper bird",
+        "bird",
+        "the bird"
+      ],
+      "kind": "object"
+    },
+    "paper_note": {
+      "aliases": [
+        "folded paper",
+        "small folded paper",
+        "message"
+      ],
+      "kind": "object"
+    },
+    "pell": {
+      "aliases": [
+        "pell",
+        "eren vell",
+        "pell aven",
+        "porter",
+        "apprentice",
+        "the porter",
+        "aven"
+      ],
+      "kind": "person"
+    },
+    "petition": {
+      "aliases": [
+        "petition",
+        "the petition",
+        "petition that arrived"
+      ],
+      "kind": "object"
+    },
+    "pocket_strip": {
+      "aliases": [
+        "Mouth Room's bark strip"
+      ],
+      "kind": "object"
+    },
+    "recipe_note": {
+      "aliases": [
+        "note on the recipe sheet"
+      ],
+      "kind": "inscription"
+    },
+    "recipe_sheet": {
+      "aliases": [
+        "sheet where Mara had recorded a recipe for shell milk",
+        "shell-milk recipe sheet"
+      ],
+      "kind": "object"
+    },
+    "red_key": {
+      "aliases": [
+        "red key",
+        "the red key",
+        "iron thing"
+      ],
+      "kind": "object"
+    },
+    "red_key_tooth": {
+      "aliases": [
+        "key's forked tooth"
+      ],
+      "kind": "component"
+    },
+    "registry": {
+      "aliases": [
+        "The Registry",
+        "the Registry"
+      ],
+      "kind": "institution"
+    },
+    "round_door": {
+      "aliases": [
+        "round door",
+        "the round door"
+      ],
+      "kind": "object"
+    },
+    "route_mark": {
+      "aliases": [
+        "loop with four smaller loops inside"
+      ],
+      "kind": "object"
+    },
+    "satchel": {
+      "aliases": [
+        "satchel",
+        "her satchel"
+      ],
+      "kind": "object"
+    },
+    "seventh_tooth": {
+      "aliases": [
+        "seventh tooth",
+        "the seventh tooth",
+        "the missing tooth"
+      ],
+      "kind": "object"
+    },
+    "shell_wall": {
+      "aliases": [
+        "shell wall"
+      ],
+      "kind": "place"
+    },
+    "sleeping_gallery": {
+      "aliases": [
+        "sleeping gallery",
+        "the hall's sleeping gallery"
+      ],
+      "kind": "place"
+    },
+    "stair_landing": {
+      "aliases": [
+        "the landing"
+      ],
+      "kind": "place"
+    },
+    "stone_basin": {
+      "aliases": [
+        "stone basin",
+        "the basin"
+      ],
+      "kind": "object"
+    },
+    "stool": {
+      "aliases": [
+        "stool",
+        "the stool"
+      ],
+      "kind": "object"
+    },
+    "sump": {
+      "aliases": [
+        "sump",
+        "the sump"
+      ],
+      "kind": "place"
+    },
+    "table": {
+      "aliases": [
+        "table stood in the middle"
+      ],
+      "kind": "object"
+    },
+    "table_drawer": {
+      "aliases": [
+        "drawer beneath the table",
+        "a drawer beneath the table"
+      ],
+      "kind": "object"
+    },
+    "tin_box": {
+      "aliases": [
+        "tin box",
+        "the tin box",
+        "parcel",
+        "the parcel"
+      ],
+      "kind": "object"
+    },
+    "tin_orchard": {
+      "aliases": [
+        "tin orchard",
+        "the tin orchard",
+        "orchard",
+        "the orchard"
+      ],
+      "kind": "place"
+    },
+    "tovan": {
+      "aliases": [
+        "tovan sere",
+        "tovan",
+        "senior examiner",
+        "the hall's old examiner",
+        "the Chair"
+      ],
+      "kind": "person"
+    },
+    "tree_fruit": {
+      "aliases": [
+        "hollow metal fruit"
+      ],
+      "kind": "object"
+    },
+    "understair": {
+      "aliases": [
+        "understair",
+        "the understair"
+      ],
+      "kind": "place"
+    },
+    "vellum_hall": {
+      "aliases": [
+        "vellum hall",
+        "the vellum hall",
+        "hall",
+        "the hall"
+      ],
+      "kind": "place"
+    },
+    "wall_chair": {
+      "aliases": [
+        "chair by the wall"
+      ],
+      "kind": "object"
+    },
+    "washers": {
+      "aliases": [
+        "brass washers",
+        "washers",
+        "necklace of brass washers",
+        "the washer necklace"
+      ],
+      "kind": "object"
+    },
+    "winter_roll": {
+      "aliases": [
+        "winter roll",
+        "the winter roll"
+      ],
+      "kind": "object"
+    }
+  },
+  "field_counts": {
+    "alias_first_chapter": {
+      "dropped": 1,
+      "entries": 161,
+      "verified": 160
+    },
+    "beliefs": {
+      "dropped": 0,
+      "entries": 0,
+      "verified": 0
+    },
+    "corrections": {
+      "dropped": 0,
+      "entries": 0,
+      "verified": 0
+    },
+    "knowledge": {
+      "dropped": 0,
+      "entries": 0,
+      "verified": 0
+    }
+  },
+  "key_sha256": "bd914c39d776fc82e590da2269c0643aa2309e5c5b7d815e245b42efeee436bc",
+  "knowledge": [],
+  "moves": {
+    "address_strip": [
+      {
+        "from_chapter": 6,
+        "id": "locations[94]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "alis": [
+      {
+        "from_chapter": 6,
+        "id": "locations[33]",
+        "to": "mouth_room",
+        "to_chapter": 6
+      }
+    ],
+    "black_thread": [
+      {
+        "from_chapter": 5,
+        "id": "locations[70]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[20]",
+        "to": "alis",
+        "to_chapter": 5
+      }
+    ],
+    "blue_thread": [
+      {
+        "from_chapter": 1,
+        "id": "locations[103]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[23]",
+        "to": "pell",
+        "to_chapter": 1
+      }
+    ],
+    "bone_comb": [
+      {
+        "from_chapter": 4,
+        "id": "locations[73]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[74]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[75]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[11]",
+        "to": "tovan",
+        "to_chapter": null
+      }
+    ],
+    "brass_map": [
+      {
+        "from_chapter": 2,
+        "id": "locations[59]",
+        "to": "tin_box",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[62]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[63]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[64]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[8]",
+        "to": "ivara",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[27]",
+        "to": "tovan",
+        "to_chapter": 2
+      }
+    ],
+    "desk_drawer": [
+      {
+        "from_chapter": 6,
+        "id": "locations[98]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "dining_chairs": [
+      {
+        "from_chapter": 5,
+        "id": "locations[110]",
+        "to": "first_house",
+        "to_chapter": 5
+      }
+    ],
+    "door_passage": [
+      {
+        "from_chapter": 3,
+        "id": "locations[129]",
+        "to": "understair",
+        "to_chapter": 3
+      }
+    ],
+    "doorless_roll": [
+      {
+        "from_chapter": 3,
+        "id": "locations[111]",
+        "to": "vellum_hall",
+        "to_chapter": 3
+      }
+    ],
+    "eren_tag": [
+      {
+        "from_chapter": 1,
+        "id": "locations[122]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[25]",
+        "to": "eren_vey",
+        "to_chapter": 1
+      }
+    ],
+    "eren_vey": [
+      {
+        "from_chapter": 1,
+        "id": "locations[9]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[10]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[11]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[12]",
+        "to": "understair",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 3,
+        "id": "locations[15]",
+        "to": "understair",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[16]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[18]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "false_bottom": [
+      {
+        "from_chapter": 2,
+        "id": "locations[88]",
+        "to": "tin_box",
+        "to_chapter": 2
+      }
+    ],
+    "four_name_strip": [
+      {
+        "from_chapter": 5,
+        "id": "locations[93]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[106]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[21]",
+        "to": "nima",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[22]",
+        "to": "nima",
+        "to_chapter": 5
+      }
+    ],
+    "glass_thimble": [
+      {
+        "from_chapter": 2,
+        "id": "locations[65]",
+        "to": "tin_box",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[67]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[68]",
+        "to": "mouth_room",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 3,
+        "id": "locations[120]",
+        "to": "understair",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[121]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[9]",
+        "to": "pell",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[10]",
+        "to": "ivara",
+        "to_chapter": 5
+      }
+    ],
+    "grit_ring": [
+      {
+        "from_chapter": 6,
+        "id": "locations[99]",
+        "to": "metal_fruit",
+        "to_chapter": 6
+      }
+    ],
+    "hall_assembly": [
+      {
+        "from_chapter": 6,
+        "id": "locations[125]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      }
+    ],
+    "hall_map": [
+      {
+        "from_chapter": 1,
+        "id": "locations[102]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      }
+    ],
+    "hall_record_room": [
+      {
+        "from_chapter": 6,
+        "id": "locations[126]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      }
+    ],
+    "hall_register": [
+      {
+        "from_chapter": 3,
+        "id": "locations[112]",
+        "to": "vellum_hall",
+        "to_chapter": 3
+      }
+    ],
+    "handprint_strip": [
+      {
+        "from_chapter": 1,
+        "id": "locations[92]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[15]",
+        "to": "ivara",
+        "to_chapter": 1
+      }
+    ],
+    "hinge": [
+      {
+        "from_chapter": 1,
+        "id": "locations[81]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[82]",
+        "to": "tin_orchard",
+        "to_chapter": null
+      }
+    ],
+    "ivara": [
+      {
+        "from_chapter": 1,
+        "id": "locations[0]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[1]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[2]",
+        "to": "understair",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 3,
+        "id": "locations[5]",
+        "to": "vellum_hall",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[6]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[8]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "ledger": [
+      {
+        "from_chapter": 1,
+        "id": "locations[86]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "metal_fruit": [
+      {
+        "from_chapter": 6,
+        "id": "locations[90]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[16]",
+        "to": "nima",
+        "to_chapter": 6
+      }
+    ],
+    "nima": [
+      {
+        "from_chapter": 1,
+        "id": "locations[26]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[27]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[28]",
+        "to": "tin_orchard",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[29]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[30]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[31]",
+        "to": "tin_orchard",
+        "to_chapter": 6
+      }
+    ],
+    "numbered_spool": [
+      {
+        "from_chapter": 4,
+        "id": "locations[78]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[79]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[80]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 3,
+        "id": "holdings[12]",
+        "to": "eren_vey",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[30]",
+        "to": "tovan",
+        "to_chapter": 4
+      }
+    ],
+    "paper_bird": [
+      {
+        "from_chapter": 5,
+        "id": "locations[95]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[96]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[17]",
+        "to": "pell",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[18]",
+        "to": "pell",
+        "to_chapter": 6
+      }
+    ],
+    "paper_note": [
+      {
+        "from_chapter": 2,
+        "id": "locations[87]",
+        "to": "tin_box",
+        "to_chapter": 2
+      }
+    ],
+    "pell": [
+      {
+        "from_chapter": 1,
+        "id": "locations[19]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[20]",
+        "to": "understair",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[23]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[24]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[25]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "petition": [
+      {
+        "from_chapter": 1,
+        "id": "locations[113]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "pocket_strip": [
+      {
+        "from_chapter": 1,
+        "id": "locations[115]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "recipe_note": [
+      {
+        "from_chapter": 6,
+        "id": "locations[123]",
+        "to": "desk_drawer",
+        "to_chapter": 6
+      }
+    ],
+    "recipe_sheet": [
+      {
+        "from_chapter": 6,
+        "id": "locations[91]",
+        "to": "desk_drawer",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[117]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[19]",
+        "to": "ivara",
+        "to_chapter": null
+      }
+    ],
+    "red_key": [
+      {
+        "from_chapter": 1,
+        "id": "locations[40]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[41]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[42]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[45]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[46]",
+        "to": "tin_orchard",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[47]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[49]",
+        "to": "tin_box",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[0]",
+        "to": "ivara",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 3,
+        "id": "holdings[1]",
+        "to": "tovan",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[2]",
+        "to": "nima",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[3]",
+        "to": "alis",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 3,
+        "id": "holdings[24]",
+        "to": "ivara",
+        "to_chapter": 4
+      }
+    ],
+    "red_key_tooth": [
+      {
+        "from_chapter": 1,
+        "id": "holdings[31]",
+        "to": "ivara",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 3,
+        "id": "holdings[32]",
+        "to": "tovan",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 3,
+        "id": "holdings[33]",
+        "to": "ivara",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 4,
+        "id": "holdings[34]",
+        "to": "nima",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 6,
+        "id": "holdings[35]",
+        "to": "alis",
+        "to_chapter": 6
+      }
+    ],
+    "registry": [
+      {
+        "from_chapter": 1,
+        "id": "locations[107]",
+        "to": "oru",
+        "to_chapter": 6
+      }
+    ],
+    "round_door": [
+      {
+        "from_chapter": 2,
+        "id": "locations[105]",
+        "to": "sump",
+        "to_chapter": 3
+      }
+    ],
+    "route_mark": [
+      {
+        "from_chapter": 4,
+        "id": "locations[114]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      }
+    ],
+    "satchel": [
+      {
+        "from_chapter": 1,
+        "id": "locations[89]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "seventh_tooth": [
+      {
+        "from_chapter": 3,
+        "id": "holdings[13]",
+        "to": "eren_vey",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 3,
+        "id": "holdings[29]",
+        "to": "eren_vey",
+        "to_chapter": 5
+      }
+    ],
+    "shell_wall": [
+      {
+        "from_chapter": 4,
+        "id": "locations[128]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      }
+    ],
+    "sleeping_gallery": [
+      {
+        "from_chapter": 1,
+        "id": "locations[100]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      }
+    ],
+    "stair_landing": [
+      {
+        "from_chapter": 4,
+        "id": "locations[127]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      }
+    ],
+    "stool": [
+      {
+        "from_chapter": 5,
+        "id": "locations[131]",
+        "to": "first_house",
+        "to_chapter": 6
+      }
+    ],
+    "table": [
+      {
+        "from_chapter": 5,
+        "id": "locations[130]",
+        "to": "first_house",
+        "to_chapter": 5
+      }
+    ],
+    "table_drawer": [
+      {
+        "from_chapter": 5,
+        "id": "locations[97]",
+        "to": "first_house",
+        "to_chapter": 5
+      }
+    ],
+    "tin_box": [
+      {
+        "from_chapter": 1,
+        "id": "locations[50]",
+        "to": "vellum_hall",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 1,
+        "id": "locations[51]",
+        "to": "tin_orchard",
+        "to_chapter": 1
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[52]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "locations[53]",
+        "to": "understair",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[56]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[57]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[58]",
+        "to": "first_house",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[4]",
+        "to": "ivara",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 2,
+        "id": "holdings[5]",
+        "to": "pell",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "holdings[6]",
+        "to": "alis",
+        "to_chapter": 6
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[26]",
+        "to": "pell",
+        "to_chapter": 1
+      }
+    ],
+    "tovan": [
+      {
+        "from_chapter": 1,
+        "id": "locations[34]",
+        "to": "vellum_hall",
+        "to_chapter": 2
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[37]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 5,
+        "id": "locations[38]",
+        "to": "first_house",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[39]",
+        "to": "vellum_hall",
+        "to_chapter": null
+      }
+    ],
+    "tree_fruit": [
+      {
+        "from_chapter": 1,
+        "id": "locations[118]",
+        "to": "tin_orchard",
+        "to_chapter": 6
+      }
+    ],
+    "wall_chair": [
+      {
+        "from_chapter": 5,
+        "id": "locations[109]",
+        "to": "first_house",
+        "to_chapter": 5
+      }
+    ],
+    "washers": [
+      {
+        "from_chapter": 1,
+        "id": "locations[83]",
+        "to": "tin_orchard",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[84]",
+        "to": "nacre_stair",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[85]",
+        "to": "tin_orchard",
+        "to_chapter": 4
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[116]",
+        "to": "tin_orchard",
+        "to_chapter": null
+      },
+      {
+        "from_chapter": 4,
+        "id": "locations[132]",
+        "to": "tin_orchard",
+        "to_chapter": 5
+      },
+      {
+        "from_chapter": 1,
+        "id": "holdings[14]",
+        "to": "nima",
+        "to_chapter": 4
+      }
+    ],
+    "winter_roll": [
+      {
+        "from_chapter": 3,
+        "id": "locations[104]",
+        "to": "vellum_hall",
+        "to_chapter": 3
+      },
+      {
+        "from_chapter": 6,
+        "id": "locations[124]",
+        "to": "vellum_hall",
+        "to_chapter": 6
+      }
+    ]
+  },
+  "not_same": [
+    {
+      "a": "eren_vey",
+      "b": "pell",
+      "id": "not_same[0]"
+    },
+    {
+      "a": "red_key",
+      "b": "seventh_tooth",
+      "id": "not_same[1]"
+    },
+    {
+      "a": "black_thread",
+      "b": "numbered_spool",
+      "id": "not_same[2]"
+    },
+    {
+      "a": "brass_map",
+      "b": "hall_map",
+      "id": "not_same[3]"
+    },
+    {
+      "a": "black_thread",
+      "b": "blue_thread",
+      "id": "not_same[4]"
+    },
+    {
+      "a": "tovan",
+      "b": "hall_old_keeper",
+      "id": "not_same[5]"
+    }
+  ],
+  "readers": [
+    "A (Claude Sonnet, final)",
+    "B (Claude Opus, final)"
+  ],
+  "same_as": [
+    {
+      "alias": "eren vell",
+      "chapter": 2,
+      "entity": "pell",
+      "id": "same_as[0]"
+    }
+  ],
+  "ungraded_counts": {
+    "corrections": 18,
+    "false_beliefs": 11,
+    "knowledge": 20
+  }
+}

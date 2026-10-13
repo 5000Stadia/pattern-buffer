@@ -19,7 +19,7 @@ out, run only on frozen designs (Kabe, gate g936be9, accepting consult c4bb1f2 p
 | `ch01.md` … `ch06.md` | the text | yes, and nothing else |
 | `key.json` | the writer's answer key, frozen (sha256 below) | never |
 | `verdicts_A.json`, `verdicts_B.json` | the two final readers' verdicts on that key | never |
-| `graded.json`, `dropped.md` | the entries both final readers confirmed, and the rest with their notes (`book_gold.py`, once GRADE-LEAKS-V1 is merged) | never (the grader only) |
+| `graded.json`, `dropped.md` | the entries both final readers confirmed, and the rest with their notes (`book_gold.py`) | never (the grader only) |
 | `provenance/` | the briefs, the earlier rounds' verdicts, the writer's change notes | no |
 
 The key's sha256 is `bd914c39d776fc82e590da2269c0643aa2309e5c5b7d815e245b42efeee436bc`.
@@ -44,6 +44,18 @@ At most two revision rounds were allowed, the same exit rule as R27's book (moni
    inconsistent on whether the Mouth Room and the first house are one room.
 5. **What is graded:** only the entries both final readers mark `ok`. Every other entry is listed
    in `dropped.md` with both readers' notes.
+   - **Graded (`graded.json`):**
+     - 71 entities and 160 of 161 alias first-chapters;
+     - 6 look-alike pairs and 11 containers;
+     - 53 moves;
+     - 1 identity reveal. The other two were judged unclear by one reader, because the book wavers
+       on whether its rooms are one room.
+   - **One reveal is thin.** The practice book alone can't settle identity questions;
+     *The Last Honest Meter* adds its own.
+   - **Converted exception lists.** The readers recorded alias first-chapter verdicts as lists of
+     exceptions. Both stated they checked every alias. `provenance/fields_from_exceptions.py`
+     converts those lists into GRADE-LEAKS-V1 per-field verdicts: an unlisted alias of an `ok`
+     entity is `ok`, and a listed one is `wrong` with the reader's reason.
 
 ## Not yet in the key
 

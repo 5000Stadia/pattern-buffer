@@ -1674,5 +1674,313 @@
    "verdict": "ok",
    "note": "ch4 line: \"Ivara had read 'in the niche' as 'buried'\". Conflicts with false_beliefs[8] which says corrected ch5."
   }
- ]
+ ],
+ "key_sha256": "bd914c39d776fc82e590da2269c0643aa2309e5c5b7d815e245b42efeee436bc",
+ "reader": "A (Claude Sonnet, final)",
+ "fields": {
+  "alias_first_chapter": {
+   "ivara": {
+    "ivara noll": "ok",
+    "ivara": "ok",
+    "the youngest hand": "ok"
+   },
+   "tovan": {
+    "tovan sere": "ok",
+    "tovan": "ok",
+    "senior examiner": "ok",
+    "the hall's old examiner": "ok",
+    "the Chair": "ok"
+   },
+   "eren_vey": {
+    "eren vey": "ok",
+    "young clerk": "ok"
+   },
+   "pell": {
+    "pell": "ok",
+    "eren vell": "ok",
+    "pell aven": "ok",
+    "porter": "ok",
+    "apprentice": "ok",
+    "the porter": "ok",
+    "aven": "ok"
+   },
+   "nima": {
+    "nima orrel": "ok",
+    "nima": "ok"
+   },
+   "alis": {
+    "alis noll": "ok",
+    "alis": "ok"
+   },
+   "mara": {
+    "mara noll": "ok",
+    "mara": "ok"
+   },
+   "oru": {
+    "oru": "ok",
+    "city of oru": "ok",
+    "the city": "ok",
+    "the city of oru": "ok"
+   },
+   "vellum_hall": {
+    "vellum hall": "ok",
+    "the vellum hall": "ok",
+    "hall": "ok",
+    "the hall": "ok"
+   },
+   "mouth_room": {
+    "mouth room": "ok",
+    "the mouth room": "ok"
+   },
+   "understair": {
+    "understair": "ok",
+    "the understair": "ok"
+   },
+   "tin_orchard": {
+    "tin orchard": "ok",
+    "the tin orchard": "ok",
+    "orchard": "ok",
+    "the orchard": "ok"
+   },
+   "sump": {
+    "sump": "ok",
+    "the sump": "ok"
+   },
+   "nacre_stair": {
+    "nacre stair": "ok",
+    "the nacre stair": "ok"
+   },
+   "first_house": {
+    "first house": "ok",
+    "the first house": "ok",
+    "latch": "ok",
+    "the latch": "ok",
+    "the missing room": "ok",
+    "the hidden chamber": "ok",
+    "lio": "ok"
+   },
+   "red_key": {
+    "red key": "ok",
+    "the red key": "ok",
+    "iron thing": "ok"
+   },
+   "bone_comb": {
+    "bone comb": "ok",
+    "the bone comb": "ok",
+    "comb": "ok",
+    "the comb": "ok"
+   },
+   "tin_box": {
+    "tin box": "ok",
+    "the tin box": "ok",
+    "parcel": "ok",
+    "the parcel": "ok"
+   },
+   "brass_map": {
+    "brass map": "ok",
+    "the brass map": "ok"
+   },
+   "glass_thimble": {
+    "glass thimble": "ok",
+    "the glass thimble": "ok",
+    "thimble": "ok",
+    "the thimble": "ok"
+   },
+   "black_thread": {
+    "black thread": "ok",
+    "the black thread": "ok"
+   },
+   "chalk_moth": {
+    "chalk moth": "ok",
+    "the chalk moth": "ok",
+    "moth": "ok",
+    "the moth": "ok",
+    "the flat creature": "ok"
+   },
+   "numbered_spool": {
+    "numbered spool": "ok",
+    "the numbered spool": "ok",
+    "spool": "ok",
+    "the spool": "ok"
+   },
+   "seventh_tooth": {
+    "seventh tooth": "ok",
+    "the seventh tooth": "ok",
+    "the missing tooth": "ok"
+   },
+   "hinge": {
+    "hinge": "ok",
+    "the hinge": "ok"
+   },
+   "washers": {
+    "brass washers": "ok",
+    "washers": "ok",
+    "necklace of brass washers": "ok",
+    "the washer necklace": "ok"
+   },
+   "paper_bird": {
+    "paper bird": "ok",
+    "bird": "ok",
+    "the bird": "ok"
+   },
+   "address_tag": {
+    "sleeping tag": "ok",
+    "her tag": "ok",
+    "the tag": "ok"
+   },
+   "ledger": {
+    "the ledger": "ok"
+   },
+   "satchel": {
+    "satchel": "ok",
+    "her satchel": "ok"
+   },
+   "false_bottom": {
+    "false bottom": "ok",
+    "the false bottom": "ok",
+    "false base": "ok"
+   },
+   "metal_fruit": {
+    "small metal fruit": "ok"
+   },
+   "recipe_sheet": {
+    "sheet where Mara had recorded a recipe for shell milk": "ok",
+    "shell-milk recipe sheet": "ok"
+   },
+   "stone_basin": {
+    "stone basin": "ok",
+    "the basin": "ok"
+   },
+   "handprint_strip": {
+    "handprint strip": "ok",
+    "the handprint strip": "ok"
+   },
+   "alis_name": {
+    "name on the back": "ok"
+   },
+   "table_drawer": {
+    "drawer beneath the table": "ok",
+    "a drawer beneath the table": "ok"
+   },
+   "desk_drawer": {
+    "drawer in her desk": "ok",
+    "a drawer in her desk": "ok"
+   },
+   "grit_ring": {
+    "pale ring of grit": "ok",
+    "outline left by the latch's old hinge": "ok"
+   },
+   "family_niche": {
+    "family niche": "ok",
+    "the family niche": "ok",
+    "the niche": "ok"
+   },
+   "sleeping_gallery": {
+    "sleeping gallery": "ok",
+    "the hall's sleeping gallery": "ok"
+   },
+   "four_name_strip": {
+    "bark strip bearing the word LATCH": "ok",
+    "bark strip with the four children's names": "ok"
+   },
+   "address_strip": {
+    "blank address strip": "ok",
+    "new strip of bark lay there": "ok"
+   },
+   "hall_map": {
+    "map that had no north": "ok",
+    "the vellum hall's map": "ok"
+   },
+   "blue_thread": {
+    "blue thread": "ok"
+   },
+   "registry": {
+    "The Registry": "ok",
+    "the Registry": "ok"
+   },
+   "hall_old_keeper": {
+    "earlier keeper of the Hall": "ok"
+   },
+   "nima_grandmother": {
+    "Nima's grandmother": "ok"
+   },
+   "winter_roll": {
+    "winter roll": "ok",
+    "the winter roll": "ok"
+   },
+   "round_door": {
+    "round door": "ok",
+    "the round door": "ok"
+   },
+   "red_key_tooth": {
+    "key's forked tooth": "ok"
+   },
+   "stool": {
+    "stool": "ok",
+    "the stool": "ok"
+   },
+   "table": {
+    "table stood in the middle": "ok"
+   },
+   "chamber_note": {
+    "note like a spoon touching a cup": "ok",
+    "Mouth Room's note": "ok"
+   },
+   "tree_fruit": {
+    "hollow metal fruit": "ok"
+   },
+   "paper_note": {
+    "folded paper": "ok",
+    "small folded paper": "ok",
+    "message": "ok"
+   },
+   "child_chair": {
+    "child-sized chair": "ok"
+   },
+   "wall_chair": {
+    "chair by the wall": "ok"
+   },
+   "dining_chairs": {},
+   "doorless_roll": {
+    "second copy of the roll": "ok",
+    "names without a door": "ok"
+   },
+   "hall_register": {
+    "hall's register": "ok"
+   },
+   "petition": {
+    "petition": "ok",
+    "the petition": "ok",
+    "petition that arrived": "ok"
+   },
+   "route_mark": {
+    "loop with four smaller loops inside": "ok"
+   },
+   "pocket_strip": {
+    "Mouth Room's bark strip": "ok"
+   },
+   "eren_tag": {
+    "his own tag": "ok"
+   },
+   "recipe_note": {
+    "note on the recipe sheet": "ok"
+   },
+   "hall_assembly": {
+    "Hall's assembly": "ok",
+    "the assembly": "ok"
+   },
+   "hall_record_room": {
+    "Hall's record room": "ok"
+   },
+   "stair_landing": {
+    "the landing": "ok"
+   },
+   "shell_wall": {
+    "shell wall": "ok"
+   },
+   "door_passage": {
+    "narrow passage beyond the round door": "ok"
+   }
+  }
+ }
 }
