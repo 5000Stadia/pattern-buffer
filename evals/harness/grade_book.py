@@ -25,9 +25,11 @@ from patternbuffer.model import ATTR_PREFIX, CANON
 
 try:
     from book_gold import book_normalize, fold_quotes
+    from grade_leaks import grade_sections
     from grade_registry import grade
 except ImportError:  # imported as evals.harness.grade_book
     from evals.harness.book_gold import book_normalize, fold_quotes
+    from evals.harness.grade_leaks import grade_sections
     from evals.harness.grade_registry import grade
 
 logger = logging.getLogger(__name__)
@@ -85,8 +87,17 @@ def _move_order(move: Mapping[str, Any]) -> tuple[int, int, int]:
     return (move["from_chapter"], _SECTION_ORDER.get(section, 2), index)
 
 
-def grade_book(world: Any, registry: Any, graded: Mapping[str, Any]) -> dict[str, Any]:
+def grade_book(world: Any, registry: Any, graded: Mapping[str, Any], *,
+               spans: Mapping[str, Any] | None = None,
+               chunk_texts: Mapping[int, str] | None = None,
+               pass0: Any | None = None) -> dict[str, Any]:
     """Score ``world`` against ``graded`` (the content of ``graded.json``).
+
+    GRADE-LEAKS-V1: ``spans`` is the run's ``chunk_spans.json`` content,
+    ``chunk_texts`` the text of each chunk by id and ``pass0`` the pass-0
+    ``WorldRegistry``. They add the ``leaks``, ``beliefs`` and ``point_of_view``
+    sections; without ``spans`` all three are ``"unmeasured"`` and nothing is
+    inferred.
 
     ``registry`` is the world's identity registry (``world.registry``; ``None``
     means that), the one that resolves a row's entity to its closure. Returns a
@@ -234,14 +245,54 @@ def grade_book(world: Any, registry: Any, graded: Mapping[str, Any]) -> dict[str
         "order": order["mean"], "final": final["score"], "ever": ever["score"],
         "containers": containers["score"],
     }
+    new = grade_sections(world, ident, graded, spans=spans, chunk_texts=chunk_texts, pass0=pass0)
     return {
         "key_sha256": graded.get("key_sha256"), "readers": graded.get("readers"),
         "summary": summary, "identity": identity, "reveals": reveals,
         "look_alikes": look_alikes, "order": order, "final": final, "ever": ever,
         "containers": containers,
-        "ungraded_counts": graded.get("ungraded_counts", {}),
+        **new,
+        "headline": _headline(look_alikes, new, summary),
+        "field_counts": graded.get("field_counts", {}),
+        "ungraded_counts": _ungraded(graded),
         "dropped": len(graded.get("dropped", [])),
+        "dropped_fields": len(graded.get("dropped_fields", [])),
     }
+
+
+def _ungraded(graded: Mapping[str, Any]) -> dict[str, int]:
+    """Entries the grader does not score: the key's counts, less the entries a
+    verified structured field now grades (GRADE-LEAKS-V1)."""
+    counts = dict(graded.get("ungraded_counts", {}))
+    if "field_counts" in graded:
+        for key_section, graded_section in (("knowledge", "knowledge"), ("false_beliefs", "beliefs"),
+                                            ("corrections", "corrections")):
+            if key_section in counts:
+                counts[key_section] = max(0, counts[key_section] - len(graded.get(graded_section, [])))
+    return counts
+
+
+def _headline(look_alikes: Mapping[str, Any], new: Mapping[str, Any],
+              summary: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """The judging order (docs/SPEED-PLAN-2026-10-13.md), most important first.
+    Time and cost are filled by the CLI from the run's receipt."""
+    leaks, beliefs = new["leaks"], new["beliefs"]
+    return [
+        {"rank": 1, "measure": "wrong merges across look-alike pairs",
+         "value": len(look_alikes["fusions"]), "target": 0},
+        {"rank": 2, "measure": "leaks",
+         "value": leaks if isinstance(leaks, str) else leaks["total"], "target": 0,
+         "unmeasured_parts": [] if isinstance(leaks, str) else leaks["unmeasured_parts"]},
+        {"rank": 3, "measure": "false beliefs in canon",
+         "value": beliefs if isinstance(beliefs, str) else beliefs["false_beliefs"]["false_in_canon"],
+         "target": 0},
+        {"rank": 4, "measure": "existing scores", "value": dict(summary)},
+        {"rank": 5, "measure": "time and cost", "value": None},
+    ]
+
+
+def _count(x: Any) -> str:
+    return x if isinstance(x, str) else ("n/a" if x is None else str(x))
 
 
 def scorecard_md(card: Mapping[str, Any], title: str = "Book scorecard") -> str:
@@ -249,8 +300,24 @@ def scorecard_md(card: Mapping[str, Any], title: str = "Book scorecard") -> str:
     fmt = lambda x: "n/a" if x is None else f"{x:.3f}"  # noqa: E731
     s, ident = card["summary"], card["identity"]
     lines = [f"# {title}", "", f"Readers: {', '.join(card.get('readers') or [])}; "
-             f"{card['dropped']} entries dropped.", "",
-             "| measure | score |", "|---|---|",
+             f"{card['dropped']} entries dropped.", ""]
+    if "headline" in card:
+        lines += ["## Headline (judging order)", "", "| # | measure | value | target |", "|---|---|---|---|"]
+        for h in card["headline"]:
+            if h["rank"] == 4:
+                value = "see the scores below"
+            elif isinstance(h["value"], dict):
+                v = h["value"]
+                value = (f"{_count(v.get('seconds'))} s, ${_count(v.get('cost_usd'))}"
+                         + ("" if v.get("cost_known") else " (price unknown for some calls)"))
+            else:
+                value = _count(h["value"])
+            if h.get("unmeasured_parts"):
+                value += f" (unmeasured: {', '.join(h['unmeasured_parts'])})"
+            lines.append(f"| {h['rank']} | {h['measure']} | {value} | "
+                         f"{_count(h['target']) if 'target' in h else ''} |")
+        lines.append("")
+    lines += ["| measure | score |", "|---|---|",
              f"| identity B3 F1 | {fmt(s['identity_b3_f1'])} |",
              f"| reveals joined | {fmt(s['reveals'])} |",
              f"| look-alikes kept apart | {fmt(s['look_alikes'])} |",
@@ -274,10 +341,78 @@ def scorecard_md(card: Mapping[str, Any], title: str = "Book scorecard") -> str:
     for k, o in card["order"]["objects"].items():
         lines.append(f"- `{k}` {fmt(o['score'])}: expected {' > '.join(o['expected'])}; "
                      f"world {' > '.join(o['world']) or '(none)'}")
-    lines += ["", "## Not graded in V1", ""]
+    lines += _leaks_md(card.get("leaks"))
+    lines += _beliefs_md(card.get("beliefs"))
+    lines += _pov_md(card.get("point_of_view"))
+    lines += ["", "## Structured fields (entries / verified / dropped)", ""]
+    counts = card.get("field_counts") or {}
+    lines += [f"- {name}: {c['entries']} / {c['verified']} / {c['dropped']}"
+              for name, c in sorted(counts.items())] or ["- none: the key carries no structured fields"]
+    lines += ["", "## Not graded", ""]
     lines += [f"- {k}: {n} entries" for k, n in sorted(card["ungraded_counts"].items())]
     lines.append("")
     return "\n".join(lines)
+
+
+def _leaks_md(leaks: Any) -> list[str]:
+    if leaks is None:
+        return []
+    lines = ["", "## Leaks (target 0)", ""]
+    if isinstance(leaks, str):
+        return lines + [f"- {leaks}: this run has no chunk_spans.json; nothing is inferred"]
+    a, ident = leaks["alias_leaks"], leaks["identity_leaks"]
+    lines.append(f"- total {leaks['total']}" + (f"; unmeasured parts: {', '.join(leaks['unmeasured_parts'])}"
+                                                 if leaks["unmeasured_parts"] else ""))
+    lines.append(f"- alias leaks: {a['count'] if a['measured'] else 'unmeasured'}")
+    lines += [f"  - seq {r['seq']} `{r['entity']}` {r['attribute']} {r['value']!r}: chapter "
+              f"{r['chapter']}, first used in chapter {r['first_chapter']}" for r in a["rows"]]
+    lines.append(f"- chunk leaks: {_count(ident['chunk_leak_rows'])}; registry leaks: "
+                 f"{_count(ident['registry_leaks'])}; ambiguous rows (not charged): "
+                 f"{_count(ident['ambiguous_rows'])}; unmapped rows (not charged): "
+                 f"{_count(ident['unmapped_rows'])}")
+    for e in ident["entries"]:
+        lines.append(f"  - `{e['entity']}` / {e['pre_alias']!r} (reveal {e['reveal_chapter']}): "
+                     f"{_count(e['chunk_leak_rows'])} chunk-leak rows, first leaking chapter "
+                     f"{_count(e['first_leaking_chapter'])}, registry leak {_count(e['registry_leak'])}")
+    if ident["unclassified_chunks"]:
+        lines.append(f"- chunks with no text, never classified: {ident['unclassified_chunks']}")
+    lines.append("- aliases left out of chunk classification: "
+                 + (", ".join(f"`{x['entity']}` {x['alias']!r}" for x in ident["excluded_aliases"]) or "none"))
+    return lines
+
+
+def _beliefs_md(beliefs: Any) -> list[str]:
+    if beliefs is None:
+        return []
+    lines = ["", "## Beliefs", ""]
+    if isinstance(beliefs, str):
+        return lines + [f"- {beliefs}: no chunk_spans.json, so no chapter has a time"]
+    fb, co = beliefs["false_beliefs"], beliefs["corrections"]
+    lines += [f"- false beliefs: {fb['entries']} verified entries, {fb['measured']} measured, "
+              f"{fb['unmatched']} unmatched; false in canon {fb['false_in_canon']} (target 0); "
+              f"held by the believer {fb['held_by_believer']} ({_count(fb['held_by_believer_rate'])})"]
+    lines += [f"  - false in canon: `{i['id']}` ({i['who']})" for i in fb["items"]
+              if i.get("false_in_canon")]
+    lines += [f"  - unmatched: `{i['id']}` ({', '.join(i['unmatched'])})" for i in fb["items"]
+              if i["status"] == "unmatched"]
+    lines += [f"- corrections: {co['entries']} verified entries; ends at the corrected value "
+              f"{co['ends_correct']} of {co['ends_correct_entries']}; claim still held after the "
+              f"correction {co['claim_after_correction']} (target 0); {co['unmatched']} with an unmatched part"]
+    return lines
+
+
+def _pov_md(pov: Any) -> list[str]:
+    if pov is None:
+        return []
+    lines = ["", "## Point of view", ""]
+    if isinstance(pov, str):
+        return lines + [f"- {pov}: no chunk_spans.json, so no chapter has a time"]
+    ln, nv = pov["learns"], pov["never_learns"]
+    lines += [f"- learns: {ln['entries']} entries, held by the end {ln['held']} ({_count(ln['held_rate'])}), "
+              f"learned too early {ln['learned_too_early']}, unmatched {ln['unmatched']}",
+              f"- never learns: {nv['entries']} entries, violations {nv['violations']} (target 0), "
+              f"unmatched {nv['unmatched']}"]
+    return lines
 
 
 def write_scorecard(card: Mapping[str, Any], out_dir: str | Path, stem: str = "book_scorecard",
@@ -291,10 +426,42 @@ def write_scorecard(card: Mapping[str, Any], out_dir: str | Path, stem: str = "b
     return md, js
 
 
+def _load_run_inputs(run: Path, graded_path: Path, book: Path | None,
+                     world_id: str) -> tuple[Any, Any, Any]:
+    """``(spans, chunk_texts, pass0)`` for a run: each ``None`` when the run or
+    the book directory does not have it. Raises ``SystemExit`` when the book's
+    chunk plan disagrees with the run's ``chunk_spans.json``."""
+    spans_path = run / "chunk_spans.json"
+    spans = json.loads(spans_path.read_text()) if spans_path.exists() else None
+    texts = None
+    if spans is not None:
+        try:
+            try:
+                from run_book import load_book
+            except ImportError:
+                from evals.harness.run_book import load_book
+            plan = load_book(book or graded_path.parent)
+        except Exception as exc:  # no readable book beside the key: chunk leaks go unmeasured
+            logger.warning("chunk texts unavailable (%s): chunk leaks are unmeasured", exc)
+        else:
+            texts = {i: text for i, (_, text) in enumerate(plan.chunks)}
+            for c in spans["chunks"]:
+                if c["chunk"] >= len(plan.chunks) or int(plan.chunks[c["chunk"]][0]) != c["chapter"]:
+                    raise SystemExit(f"ABORT: chunk {c['chunk']} of {run.name}'s chunk_spans.json "
+                                     f"does not match the book's chunk plan in {book or graded_path.parent}")
+    pass0 = None
+    if (run / "registry_pass0.json").exists():
+        from registry import WorldRegistry
+        pass0 = WorldRegistry.load(run / "registry_pass0.json", world_id)
+    return spans, texts, pass0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--run", required=True, help="a run_book.py output directory")
     ap.add_argument("--graded", required=True, help="the book's graded.json")
+    ap.add_argument("--book", default=None,
+                    help="the book directory (chNN.md) for chunk texts; default: beside --graded")
     ap.add_argument("--out", default=None, help="where to write (default: the run directory)")
     ap.add_argument("--world-id", default=None, help="default: the run's meta.json")
     args = ap.parse_args(argv)
@@ -302,13 +469,22 @@ def main(argv: list[str] | None = None) -> int:
 
     run = Path(args.run)
     world_id = args.world_id or json.loads((run / "meta.json").read_text())["world_id"]
+    spans, texts, pass0 = _load_run_inputs(run, Path(args.graded),
+                                           Path(args.book) if args.book else None, world_id)
     # a sealed in-memory copy taken through `mode=ro`: the build artifact is
     # never opened for writing (bytes and mtime unchanged)
     world = open_read_only_copy(run / "fresh_ingest.world", world_id)
     try:
-        card = grade_book(world, world.registry, json.loads(Path(args.graded).read_text()))
+        card = grade_book(world, world.registry, json.loads(Path(args.graded).read_text()),
+                          spans=spans, chunk_texts=texts, pass0=pass0)
     finally:
         world.close()
+    receipt = run / "receipt.json"
+    if receipt.exists():
+        total = json.loads(receipt.read_text()).get("total", {})
+        card["headline"][-1]["value"] = {"seconds": total.get("seconds"),
+                                         "cost_usd": total.get("cost_usd"),
+                                         "cost_known": total.get("cost_known")}
     md, js = write_scorecard(card, args.out or run, title=f"Book scorecard ({run.name})")
     print(f"{md}\n{js}")
     return 0

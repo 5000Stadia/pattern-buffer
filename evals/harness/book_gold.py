@@ -10,6 +10,15 @@ CLI:
         --verdicts readerA.json readerB.json --out evals/books/<slug>/graded.json \\
         [--dropped-md dropped.md]
 
+GRADE-LEAKS-V1 §2: a key may also carry ``alias_first_chapter`` on its entities
+and ``as_fact`` / ``corrected_as_fact`` fact forms on ``false_beliefs``,
+``corrections`` and ``knowledge``. Each reader's verdict file may then carry a
+``fields`` object with a per-field verdict (``"ok"`` or ``"wrong: <why>"``);
+only a field both readers marked ``ok`` lands in the new ``graded.json``
+sections (``alias_first_chapter``, ``beliefs``, ``corrections``, ``knowledge``),
+and every other field is listed in ``dropped_fields``. A key without those
+fields builds exactly the ``graded.json`` it always did.
+
 A verdict file is refused when its ``key_sha256`` is not the hash of the key's
 bytes, when it misses an item or gives one twice, or when the two readers share
 a label. The key itself is refused when an id-valued field names no entity.
@@ -36,6 +45,15 @@ VERDICTS = ("ok", "wrong", "unclear")
 # statements that need a judge model; BOOK-RUN-V1 §3.6).
 GRADED_SECTIONS = ("same_as", "not_same", "locations", "holdings", "containers")
 UNGRADED_SECTIONS = ("knowledge", "false_beliefs", "corrections")
+
+# GRADE-LEAKS-V1 §2: the key sections that carry structured fact forms, and
+# which fields of each are verified one by one.
+FACT_FIELDS = {"false_beliefs": ("as_fact",), "corrections": ("as_fact", "corrected_as_fact"),
+               "knowledge": ("as_fact",)}
+FIELD_SECTIONS = ("alias_first_chapter",) + tuple(FACT_FIELDS)
+# graded.json section for each key section
+GRADED_FIELD_SECTION = {"alias_first_chapter": "alias_first_chapter", "false_beliefs": "beliefs",
+                        "corrections": "corrections", "knowledge": "knowledge"}
 
 _QUOTES = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"'})
 
@@ -66,6 +84,63 @@ def _section(key: Mapping[str, Any], name: str) -> list[Any]:
     return list(key.get(name, []) or [])
 
 
+def fact_problem(fact: Any, ids: Sequence[str] | set[str]) -> str | None:
+    """Why ``fact`` is not a fact form (GRADE-LEAKS-V1 §2), or ``None`` when it
+    is: ``{"entity": <key>, "attribute": <plain str>, "value": {"entity": <key>}
+    | {"literal": <JSON scalar>}}``, every key named an entity of the same key."""
+    if not isinstance(fact, Mapping) or set(fact) != {"entity", "attribute", "value"}:
+        return "not an {entity, attribute, value} object"
+    if fact["entity"] not in ids:
+        return f"entity {fact['entity']!r} is not an entity of the key"
+    if not isinstance(fact["attribute"], str) or not fact["attribute"].strip():
+        return "attribute is not a plain string"
+    value = fact["value"]
+    if not isinstance(value, Mapping) or len(value) != 1:
+        return "value is not {entity: key} or {literal: scalar}"
+    if "entity" in value:
+        return None if value["entity"] in ids else f"value entity {value['entity']!r} is not an entity of the key"
+    if "literal" in value:
+        lit = value["literal"]
+        return None if lit is None or isinstance(lit, (str, int, float, bool)) else "literal is not a JSON scalar"
+    return "value is not {entity: key} or {literal: scalar}"
+
+
+def _check_fields(key: Mapping[str, Any]) -> list[str]:
+    """Problems with the GRADE-LEAKS-V1 fields of ``key`` (empty when none or all fine)."""
+    ids = set(key.get("entities", {}))
+    bad: list[str] = []
+    for kid, ent in key.get("entities", {}).items():
+        afc = ent.get("alias_first_chapter")
+        if afc is None:
+            continue
+        if not isinstance(afc, Mapping):
+            bad.append(f"entities.{kid}.alias_first_chapter: not an object")
+            continue
+        for alias, chapter in afc.items():
+            if alias not in ent.get("aliases", []):
+                bad.append(f"entities.{kid}.alias_first_chapter: {alias!r} is not one of its aliases")
+            if not isinstance(chapter, int) or isinstance(chapter, bool):
+                bad.append(f"entities.{kid}.alias_first_chapter[{alias!r}]: chapter is not an int")
+    for section, names in FACT_FIELDS.items():
+        for i, entry in enumerate(_section(key, section)):
+            for name in names:
+                if name not in entry:
+                    continue
+                fact = entry[name]
+                if fact is None:
+                    continue
+                problem = fact_problem(fact, ids)
+                if problem:
+                    bad.append(f"{section}[{i}].{name}: {problem}")
+            if section == "knowledge" and entry.get("as_fact") is not None \
+                    and entry.get("who") not in ids:
+                bad.append(f"knowledge[{i}].who: {entry.get('who')!r} is not an entity of the key")
+            if section == "false_beliefs" and entry.get("as_fact") is not None:
+                if entry.get("who") not in ids:
+                    bad.append(f"false_beliefs[{i}].who: {entry.get('who')!r} is not an entity of the key")
+    return bad
+
+
 def check_key(key: Mapping[str, Any]) -> None:
     """Refuse a key whose id-valued fields name no entity (BOOK-RUN-V1 §1.1)."""
     ids = set(key.get("entities", {}))
@@ -87,6 +162,9 @@ def check_key(key: Mapping[str, Any]) -> None:
         need(f"containers[{i}]", row["container"], *row["contents"])
     if bad:
         raise VerdictError("key names unknown entity ids: " + "; ".join(bad))
+    malformed = _check_fields(key)
+    if malformed:
+        raise VerdictError("key has malformed structured fields: " + "; ".join(malformed))
 
 
 def check_verdicts(verdicts: Mapping[str, Any], key: Mapping[str, Any], key_sha: str,
@@ -127,10 +205,158 @@ def check_verdicts(verdicts: Mapping[str, Any], key: Mapping[str, Any], key_sha:
             if item.get("verdict") not in VERDICTS:
                 raise VerdictError(f"{where}: {section}[{item['i']}] has verdict "
                                    f"{item.get('verdict')!r}")
+    if verdicts.get("fields") is not None:
+        _check_field_verdicts(verdicts["fields"], key, where)
+
+
+def _check_field_verdicts(fields: Any, key: Mapping[str, Any], where: str) -> None:
+    """Refuse a malformed per-field verdict object (GRADE-LEAKS-V1 §2): it must
+    name only fields the key has, each with a string verdict."""
+    if not isinstance(fields, Mapping):
+        raise VerdictError(f"{where}: fields must be an object")
+    unknown = sorted(set(fields) - set(FIELD_SECTIONS))
+    if unknown:
+        raise VerdictError(f"{where}: fields names unknown sections {unknown}")
+    entities = key.get("entities", {})
+    for kid, by_alias in (fields.get("alias_first_chapter") or {}).items():
+        afc = (entities.get(kid) or {}).get("alias_first_chapter")
+        if not isinstance(by_alias, Mapping) or not isinstance(afc, Mapping):
+            raise VerdictError(f"{where}: fields.alias_first_chapter.{kid} names no such field in the key")
+        for alias, v in by_alias.items():
+            if alias not in afc or not isinstance(v, str):
+                raise VerdictError(f"{where}: fields.alias_first_chapter.{kid}[{alias!r}] is not a "
+                                   "string verdict for an alias the key maps")
+    for section, names in FACT_FIELDS.items():
+        entries = _section(key, section)
+        for idx, by_name in (fields.get(section) or {}).items():
+            ok_idx = isinstance(idx, str) and idx.isdigit() and int(idx) < len(entries)
+            if not ok_idx or not isinstance(by_name, Mapping):
+                raise VerdictError(f"{where}: fields.{section}[{idx!r}] names no such entry")
+            for name, v in by_name.items():
+                if name not in names or name not in entries[int(idx)] or not isinstance(v, str):
+                    raise VerdictError(f"{where}: fields.{section}[{idx}].{name} is not a string "
+                                       "verdict for a field the entry has")
 
 
 def _by_index(verdicts: Mapping[str, Any], section: str) -> dict[int, Mapping[str, Any]]:
     return {item["i"]: item for item in _section(verdicts, section)}
+
+
+def _has_fields(key: Mapping[str, Any]) -> bool:
+    """Whether ``key`` carries any GRADE-LEAKS-V1 field (else it builds as it always did)."""
+    if any("alias_first_chapter" in e for e in key.get("entities", {}).values()):
+        return True
+    return any(name in entry for section, names in FACT_FIELDS.items()
+               for entry in _section(key, section) for name in names)
+
+
+def _field_verdict(doc: Mapping[str, Any], section: str, where: Sequence[Any]) -> tuple[str, str]:
+    """One reader's verdict on one field as ``(ok | wrong | missing, why)``."""
+    node: Any = (doc.get("fields") or {}).get(section) or {}
+    for step in where:
+        node = node.get(step) if isinstance(node, Mapping) else None
+    if node is None:
+        return "missing", "no verdict"
+    if node == "ok":
+        return "ok", ""
+    why = node.split(":", 1)[1].strip() if node.startswith("wrong:") else node
+    return "wrong", why
+
+
+def _field_gold(key: Mapping[str, Any], docs: Sequence[Mapping[str, Any]], readers: Sequence[str],
+                entity_ok: Mapping[str, bool], dropped_alias_set: set[tuple[str, str]],
+                entry_verdict: Any) -> dict[str, Any]:
+    """The GRADE-LEAKS-V1 sections of ``graded.json``: the fields both readers
+    marked ``ok`` (and whose entry and entities stand), ``dropped_fields`` for
+    every other, and ``field_counts``. Empty for a key without those fields."""
+    if not _has_fields(key):
+        return {}
+    dropped: list[dict[str, Any]] = []
+    counts = {s: {"entries": 0, "verified": 0, "dropped": 0} for s in GRADED_FIELD_SECTION.values()}
+
+    def judge(section: str, field_id: str, where: Sequence[Any], blocked: tuple[str, dict, dict] | None) -> bool:
+        """Count one field and say whether it is graded; record why not."""
+        c = counts[GRADED_FIELD_SECTION[section]]
+        c["entries"] += 1
+        if blocked is None:
+            vs, ns = {}, {}
+            for r, d in zip(readers, docs):
+                vs[r], ns[r] = _field_verdict(d, section, where)
+            if all(v == "ok" for v in vs.values()):
+                c["verified"] += 1
+                return True
+            reason = "a reader did not mark the field ok"
+        else:
+            reason, vs, ns = blocked
+        c["dropped"] += 1
+        dropped.append({"id": field_id, "reason": reason, "verdicts": vs, "notes": ns})
+        return False
+
+    alias_first: dict[str, dict[str, int]] = {}
+    for kid, ent in key.get("entities", {}).items():
+        for alias, chapter in sorted((ent.get("alias_first_chapter") or {}).items()):
+            if not entity_ok[kid]:
+                blocked: tuple[str, dict, dict] | None = ("entity dropped", {"entity": "dropped"}, {})
+            elif (kid, alias) in dropped_alias_set:
+                blocked = ("alias dropped (bad_aliases)", {"alias": "dropped"}, {})
+            else:
+                blocked = None
+            if judge("alias_first_chapter", f"entities.{kid}.alias_first_chapter[{alias}]",
+                     (kid, alias), blocked):
+                alias_first.setdefault(kid, {})[alias] = chapter
+
+    graded: dict[str, list[dict[str, Any]]] = {"beliefs": [], "corrections": [], "knowledge": []}
+    for section, names in FACT_FIELDS.items():
+        for i, entry in enumerate(_section(key, section)):
+            item_id = f"{section}[{i}]"
+            entry_vs, entry_ns = {}, {}
+            for r, d in zip(readers, docs):
+                entry_vs[r], entry_ns[r] = entry_verdict(d, section, i)
+            entry_ok = all(v == "ok" for v in entry_vs.values())
+            verified: dict[str, Any] = {}
+            for name in names:
+                if name not in entry:
+                    continue
+                fact = entry[name]
+                field_id = f"{item_id}.{name}"
+                if fact is None:
+                    if name == "corrected_as_fact":     # the correction only negates the claim
+                        continue
+                    counts[GRADED_FIELD_SECTION[section]]["entries"] += 1
+                    counts[GRADED_FIELD_SECTION[section]]["dropped"] += 1
+                    dropped.append({"id": field_id, "reason": "as_fact is null: not one fact",
+                                    "verdicts": {}, "notes": {}})
+                    continue
+                refs = [fact["entity"]] + ([fact["value"]["entity"]] if "entity" in fact["value"] else []) \
+                    + ([entry["who"]] if section != "corrections" else [])
+                if not entry_ok:
+                    blocked = ("the entry-level verdict is not ok for both readers", entry_vs, entry_ns)
+                elif any(not entity_ok[x] for x in refs):
+                    blocked = ("entity dropped", {"entity": "dropped"}, {})
+                else:
+                    blocked = None
+                if judge(section, field_id, (str(i), name), blocked):
+                    verified[name] = fact
+            if not verified:
+                continue
+            if section == "false_beliefs":
+                graded["beliefs"].append({
+                    "id": item_id, "who": entry["who"], "fact": verified["as_fact"],
+                    "from_chapter": entry.get("from_chapter"),
+                    "corrected_chapter": entry.get("corrected_chapter")})
+            elif section == "corrections":
+                graded["corrections"].append({
+                    "id": item_id, "stated_chapter": entry.get("stated_chapter"),
+                    "corrected_chapter": entry.get("corrected_chapter"),
+                    "as_fact": verified.get("as_fact"),
+                    "corrected_as_fact": verified.get("corrected_as_fact")})
+            else:
+                graded["knowledge"].append({
+                    "id": item_id, "who": entry["who"], "fact": verified["as_fact"],
+                    "mode": "never_learns" if "never_learns" in entry else "learns",
+                    "chapter": entry.get("chapter")})
+    return {"alias_first_chapter": alias_first, **graded,
+            "dropped_fields": sorted(dropped, key=lambda e: e["id"]), "field_counts": counts}
 
 
 def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -234,6 +460,8 @@ def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> d
         containers.append({"id": f"containers[{i}]", "container": row["container"],
                            "contents": contents})
 
+    field_gold = _field_gold(key, docs, readers, entity_ok,
+                             {(a["entity"], a["alias"]) for a in dropped_aliases}, verdict_of)
     gold: dict[str, Any] = {
         "key_sha256": key_sha,
         "readers": readers,
@@ -247,6 +475,7 @@ def build_gold(key_bytes: bytes, verdict_docs: Sequence[Mapping[str, Any]]) -> d
         "dropped_contents": sorted(dropped_contents, key=lambda e: (e["id"], e["entity"])),
         "ungraded_counts": {s: len(_section(key, s)) for s in UNGRADED_SECTIONS},
     }
+    gold.update(field_gold)
     return gold
 
 
@@ -273,6 +502,15 @@ def dropped_markdown(gold: Mapping[str, Any]) -> str:
               for a in gold["dropped_aliases"]] or ["- none"]
     lines += ["", "## Container contents", ""]
     lines += [f"- `{c['id']}`: `{c['entity']}`" for c in gold["dropped_contents"]] or ["- none"]
+    if "dropped_fields" in gold:
+        lines += ["", "## Fields (GRADE-LEAKS-V1)", ""]
+        for d in gold["dropped_fields"]:
+            vs = ", ".join(f"{r}: {v}" for r, v in d["verdicts"].items())
+            notes = "; ".join(f"{r}: {n}" for r, n in d["notes"].items() if n)
+            lines.append(f"- `{d['id']}` ({d['reason']}" + (f"; {vs}" if vs else "") + ")"
+                         + (f" - {notes}" if notes else ""))
+        if not gold["dropped_fields"]:
+            lines.append("- none")
     lines.append("")
     return "\n".join(lines)
 

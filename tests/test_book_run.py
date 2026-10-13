@@ -520,7 +520,7 @@ def test_the_scorecard_writes_json_and_markdown(tmp_path):
     md, js = gb.write_scorecard(result, tmp_path / "out")
     assert json.loads(js.read_text())["summary"]["order"] == 1.0
     text = md.read_text()
-    assert "identity B3 F1" in text and "Not graded in V1" in text and "knowledge: 2" in text
+    assert "identity B3 F1" in text and "Not graded" in text and "knowledge: 2" in text
 
 
 def test_the_grader_grades_a_built_world_from_the_command_line(built, tmp_path):
