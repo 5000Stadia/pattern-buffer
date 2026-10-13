@@ -14,6 +14,11 @@ import re
 import subprocess
 import time
 
+try:
+    import usage_ledger
+except ImportError:                         # imported as evals.harness.model_shim
+    from evals.harness import usage_ledger
+
 logger = logging.getLogger(__name__)
 
 MODEL = os.environ.get("PB_EVAL_MODEL", "claude-sonnet-4-6")
@@ -47,6 +52,29 @@ def _extract_json(text: str) -> dict:
     raise ModelShimError("unbalanced JSON in model output")
 
 
+def _cli_result(stdout: str) -> tuple[str, dict | None, float | None]:
+    """Split ``claude -p --output-format json`` output into (reply text,
+    usage, cost). The envelope is the last JSON line of type ``result``;
+    output without one is taken as plain reply text with no usage."""
+    for line in reversed(stdout.strip().splitlines()):
+        try:
+            env = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(env, dict) and env.get("type") == "result":
+            u = env.get("usage")
+            usage = None if not isinstance(u, dict) else {
+                "input_tokens": u.get("input_tokens"),
+                "output_tokens": u.get("output_tokens"),
+                "cache_read_tokens": u.get("cache_read_input_tokens"),
+                "cache_write_tokens": u.get("cache_creation_input_tokens"),
+            }
+            cost = env.get("total_cost_usd")
+            return (str(env.get("result") or ""), usage,
+                    float(cost) if isinstance(cost, (int, float)) else None)
+    return stdout, None, None
+
+
 def claude_model(prompt: str, schema: dict) -> dict:
     """One model call. Retries once on JSON-parse failure."""
     full = (
@@ -60,16 +88,21 @@ def claude_model(prompt: str, schema: dict) -> dict:
             time.sleep(15 * (attempt - 1))  # transient rate pressure backs off
         try:
             proc = subprocess.run(
-                ["claude", "-p", "--model", MODEL, "--max-turns", "8"],
+                ["claude", "-p", "--model", MODEL, "--max-turns", "8",
+                 "--output-format", "json"],
                 input=full,
                 capture_output=True,
                 text=True,
                 timeout=TIMEOUT,
             )
         except subprocess.TimeoutExpired as exc:
+            usage_ledger.record("claude", MODEL, None, None)   # spent, amount unknown
             last_err = exc
             logger.warning("model shim timeout (attempt %d)", attempt)
             continue
+        # every completed invocation leaves a receipt, whatever its exit code
+        text, usage, cost = _cli_result(proc.stdout)
+        usage_ledger.record("claude", MODEL, usage, cost)
         if proc.returncode != 0:
             stdout_lower = proc.stdout.lower()
             if "hit your" in stdout_lower and "limit" in stdout_lower:
@@ -84,7 +117,7 @@ def claude_model(prompt: str, schema: dict) -> dict:
             logger.warning("model shim attempt %d failed: %s", attempt, last_err)
             continue
         try:
-            return _extract_json(proc.stdout)
+            return _extract_json(text)
         except (ModelShimError, json.JSONDecodeError) as exc:
             last_err = exc
             logger.warning("model shim parse failure (attempt %d): %s", attempt, exc)

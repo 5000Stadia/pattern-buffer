@@ -31,6 +31,11 @@ import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
+
+try:
+    import usage_ledger
+except ImportError:                         # imported as evals.harness.codex_shim
+    from evals.harness import usage_ledger
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -192,6 +197,7 @@ def _call_once(prompt: str, schema: dict) -> dict:
         # mid-stream stalls into retryable shim errors (letter 021 rule 2).
         raise CodexShimError(f"stream read failed/stalled: {exc}") from exc
 
+    usage_ledger.record("codex", MODEL, _usage_from_final(final), None)
     text = ""
     if final:
         for item in final.get("output", []):
@@ -209,3 +215,15 @@ def _call_once(prompt: str, schema: dict) -> dict:
         return json.loads(text)
     except json.JSONDecodeError as exc:
         raise CodexShimError(f"non-JSON output: {text[:200]!r}") from exc
+
+
+def _usage_from_final(final: dict | None) -> dict | None:
+    """The Responses API's usage block as the ledger's fields; None when the
+    stream ended without one. The subscription reports no price."""
+    u = (final or {}).get("usage")
+    if not isinstance(u, dict):
+        return None
+    details = u.get("input_tokens_details") or {}
+    return {"input_tokens": u.get("input_tokens"),
+            "output_tokens": u.get("output_tokens"),
+            "cache_read_tokens": details.get("cached_tokens")}
