@@ -1,6 +1,6 @@
 # GRADE-LEAKS-V1: grading that sees the ending leak, false beliefs and points of view
 
-**Status:** r2.3 (pbr r2.2 RED: chunk classification uses a tokenizer that keeps articles, since `book_normalize` drops a leading article). r2.2 (pbr r2.1 RED: binding by log position, not chapter; `map(R) = E` required; the exact tokenizer and stoplist; every row's position counts). r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
+**Status:** r2.4 (pbr's code-review ruling: beliefs and point of view are graded on the narrative-exposure clock, by log position, never by inferred story time; field verdicts are validated exactly). r2.3 (pbr r2.2 RED: chunk classification uses a tokenizer that keeps articles, since `book_normalize` drops a leading article). r2.2 (pbr r2.1 RED: binding by log position, not chapter; `map(R) = E` required; the exact tokenizer and stoplist; every row's position counts). r2.1 (pbr r2 RED: an id's binding is judged by when it became identifiable as E, from provenance; alias matching is whole-token, and common-word aliases are kept out of chunk classification). r2 (pbr r1 RED: a decidable raw-id leak algorithm, exact structured-form and per-field verdict schemas, `never_learns`, inclusive spans, and the scope of the byte-stability test). For pbr review. Author: pb, 2026-10-13. Harness only (grader, keys, commit
 bookkeeping); no engine change.
 **Source:** consult c4bb1f2 point 3, accepted by Kabe on gate g936be9. Redesigned after round two
 (ce0ba1f); see `docs/SPEED-PLAN-2026-10-13.md` step 2.
@@ -62,6 +62,10 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
       "knowledge":      {"<index>": {"as_fact": "…"}}
     }
     ```
+
+  - *(r2.4, pbr)* **A field verdict is exactly `"ok"`, or `"wrong: "` followed by a non-empty
+    reason.** Any other value (`"okay"`, `"wrong"`, `"unclear"`, `""`, a non-string) refuses the
+    verdict file, naming the field, before anything is graded. It is never silently dropped.
 
   - Only a field that both readers mark `ok` is graded. `book_gold.py` writes the confirmed fields
     into `graded.json` as new sections `alias_first_chapter`, `beliefs`, `corrections` and
@@ -143,9 +147,22 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
   - Two scores result: `false_in_canon` (the target is 0) and `held_by_believer` (a recall rate).
 - **A correction** with verified forms: canon at the end folds to `corrected_as_fact`, and never
   to the stated claim after `corrected_chapter`.
-- **Chapter to time:** the build's per-chunk valid time (the cursor each chunk was committed
-  under), recorded in `chunk_spans.json` next to its chapter. "A chapter's time" is the latest
-  cursor of its chunks.
+- **The clock: narrative exposure, by log position** *(r2.4, pbr ruling)*.
+  - "By chapter k" means **as the log stood after the build wrote chapter k's last chunk**: a read
+    with `asserted_as_of = hi(k)`, where `hi(k)` is the greatest `seq` in the spans of chapter k's
+    chunks.
+    - A chapter that appended nothing takes the previous chapter's `hi`. Chapter 0 is the seed:
+      the log head before the first chunk.
+    - Valid time is not pinned: each read takes the latest valid state the log held at that
+      position (`as_of=None`).
+  - **Why not story time.** Valid times are story time, which the model chooses (pass-0's timeline
+    anchors). Flashbacks make chapter times go backwards, and a chapter can state a future-dated
+    fact, so any anchor inferred from emitted rows gives false early or late verdicts. The log's
+    order is the order the build read the book in, which is what "known by chapter k" means.
+  - **A diegetic clock is a separate check**, not V1. Grading "what was true on the night of the
+    murder" would need a reader-verified `chapter_as_of` map in the key. Absent one, such checks
+    are not made.
+  - `chunk_spans.json` still records each chunk's cursor, for reference only. No check reads it.
 
 **`point_of_view`: who knows what.**
 - **A `learns` entry** with a verified `as_fact`: the learner's `knows:` frame holds the fact by
@@ -204,6 +221,11 @@ So a design that knows the ending, or one that swallows the book's deceptions, c
    `corrected_chapter` fails.
 6. **Point of view:** a fact in the learner's frame from their chapter on counts as held; one
    present before that chapter counts as too early.
+4a. *(r2.4)* **The exposure clock under a flashback.** In a hand-built run, chapter 3's chunk
+    writes a belief row with `valid_from` earlier than chapter 1's rows, and chapter 4's chunk
+    states a future-dated fact. The verdicts follow the log positions: the belief counts as
+    written by chapter 3, never earlier, and the future-dated fact counts as known from chapter 4,
+    not from its valid time.
 7. **Unverified and null:** a structured form that only one reader marked `ok`, or an `as_fact` of
    null, is not graded and is listed as dropped.
 8. **Old runs:** grading the stored R25 and R26 runs (no spans) writes `leaks: "unmeasured"` and
