@@ -1,6 +1,6 @@
 # VIEW-PEOPLE-V1: people on the device, where the world says they are
 
-**Status:** r1, for pbr review and for Photonic's review as the host that needs it. Author: pb,
+**Status:** r2 (pbr r1 RED: P1 a real place predicate, P2 the attribute list normalized), for pbr review and for Photonic's review as the host that needs it. Author: pb,
 2026-10-13. The open questions to Photonic (m27078b) are marked *(Photonic?)*. Their answers can
 change names, not the shape.
 **Source:** roadmap R46. Photonic's SEAM (b) (m019da7): "Offline, the phone must know where people
@@ -72,14 +72,22 @@ them, so the key is the id the author wrote, such as `person:mara`. This is the 
 accepted. Authors should name person ids neutrally (`person:mara`, not `person:the_killer`); the
 spec can't enforce that.
 
-**`place`**: the top of the person's canon containment chain.
+**A place** *(r2, pbr P1)*. A subject is a place when it is either:
+- a member of its identity closure (as of `head`) in the `place:` namespace;
+- or a subject whose canon `kind` folds to `place`.
+
+Being a containment root is **not** enough. An unattached safe, weapon or machine (`obj:*` with no
+parent) is not a place, and its id never crosses as one.
+
+**`place`**: the **nearest** place on the person's canon containment chain.
 - The walk goes from the person up through the containment family (`in`, `within`, `held_by`,
-  `worn_by`, `carried_by`, folded as one key, canon, as of `(head, at)`), until it reaches a
-  subject with no containment parent.
-- That subject's canonical id is `place`. It is whereabouts, so its id crosses.
+  `worn_by`, `carried_by`, folded as one key, canon, as of `(head, at)`).
+- The first ancestor that is a place gives its canonical id as `place`. It is whereabouts, so its
+  id crosses. The nearest is chosen because a room inside a house is where the player walks in.
+- No place on the chain (the chain ends at a non-place root, or the person has no parent): there
+  is no `place`.
 - A cycle, or a chain longer than 32, stops the walk, and `place` is omitted (logged at
   `WARNING`).
-- A person with no containment parent has no `place`.
 
 **`in`**: the person's immediate parent, only when it differs from `place`, as
 `[relation, ref]` or `[relation, ref, slot]`. The relation and `slot` follow VIEW-EXPORT-V1 §2.
@@ -97,7 +105,7 @@ The id of an unperceived container a person hides in never crosses. Only its han
 cross:
 - a literal JSON scalar crosses as `[attribute, value, "lit"]`;
 - an entity value crosses as `[attribute, ref, "id"]`. The `ref` is the id when the target is in
-  `known`, is a person, or is a place (a subject with no containment parent). Otherwise it is the
+  `known`, is a person, or is a place (by the predicate above, not by being a root). Otherwise it is the
   target's handle with a key, or the fact is omitted without one;
 - a set-valued key crosses as one tuple per member, by the same rules;
 - an accrue key's derived quantity crosses as a literal;
@@ -106,7 +114,14 @@ cross:
 
 Tuples are sorted as `known`'s are: `(attribute, type, canonical JSON of value)`.
 
-**Which attributes may be named.** Each name passes through `canonical_attribute`. A name is
+**Normalized once** *(r2, pbr P2)*. At construction (service, runner, CLI) or at the call (`export`
+and `feed`), `people` becomes one tuple: each name passed through `canonical_attribute`, then
+deduplicated and sorted. `("Posture", "posture", "activity")` becomes `("activity", "posture")`.
+That one tuple is what is validated, what the extraction reads, and what `q` hashes. Aliases and
+repeats therefore give one fact tuple each and the same `q`. A `people` that is not a list or tuple
+of strings is refused (`TypeError`).
+
+**Which attributes may be named.** Each normalized name is checked. A name is
 refused (`ValueError` at the call, or at service or runner start) when it is any of these:
 - in the containment family (position is `place` and `in`);
 - a mechanism, semantics, canon-identity or meta attribute (`_RECORD_BARRED_ATTRIBUTES`);
@@ -190,6 +205,12 @@ more folded layer through the same diff.
      without one;
    - a child carried by a parent has `in` as `["carried_by", "person:parent"]`;
    - a person with no parent has no `place`.
+   - *(r2, pbr P1)* A person standing at an unattached `obj:safe` (no parent, not a place) has no
+     `place`. An entity fact pointing to that safe crosses as its handle with a key, and is
+     omitted without one. The safe's id appears nowhere in the document's text.
+   - A person in `obj:wardrobe` in `place:bedroom` in `place:house` has `place` set to
+     `place:bedroom` (the nearest), and `in` as the wardrobe's handle.
+   - A root whose canon kind is `place`, under a non-`place:` id, counts as a place.
 3. **On, facts.**
    - Named literal facts cross.
    - An entity fact crosses as an id when it points to a place, a person or a known thing, as a
@@ -211,6 +232,9 @@ more folded layer through the same diff.
    `apply` adds or removes the `people` key to match.
 7. **Refused names.** `in`, `carried_by`, `kind`, `same_as` and a meta attribute are each refused
    at the call, at service construction and at runner start.
+7a. *(r2, pbr P2)* **Normalization.** `("Posture", "posture")`, `("posture",)` and
+    `["posture", "posture"]` give the same document and the same `q`, with one `posture` tuple per
+    person. `"posture"` (a bare string) is refused.
 8. **Service.** A viewer naming `people` is refused. `export` and `feed` serve the host's setting
    from the snapshot.
 9. **Vectors.** `tests/vectors/view-feed-people-v1.json` holds a fixture export and feed sequence
