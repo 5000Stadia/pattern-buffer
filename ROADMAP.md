@@ -166,6 +166,13 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - pb's reply (to mabe3e4): agreed on the rule, derived titles, stance as a relationship family, and a new reverse read.
     - pb's pushback: make the type-or-role judgment a deferred classifier verdict on a being's kind rows, read as type (CONSTITUTIVE) or role (STATE), not a write-time move at the gate. That keeps model calls off the write path, fixes existing worlds with no rewrite, and keeps a wrong call correctable.
     - Both placements go to fresh views when it is brought forward.
+    - Kabe answered construct's gate g2fd391 (2026-10-13): "Full agree on your 5 directions". Accepted:
+      - P1, the author's manifest as the sole authority;
+      - P2, a dated aka for hidden identities and distinct_from for listed namesakes;
+      - P3 in pb's form: provisional ids plus same_as, with no new `denotes` predicate;
+      - P5, planted-trap stories for acceptance.
+
+      Rejected: P4, neutral ids. Ids are code-minted, readable and type-prefixed, with R51's type fact as the authority. The design is construct's `SEEDING-REGISTRY-FIRST.md` r3. pb's share is to promote INGEST-V2 into a shared library; the interface gets agreed after round two of the fresh views.
     - Construct adopted the derived placement in its proposal r2 (m5bcedb).
     - A check for the build: identity's build stages (reconcile, the auto-gate) must read the type only after the build's classification has run (`seal_build`). Before that, the kind check would still see the raw kind word. Test it on a build-session ingest.
   - Nothing to build until Kabe brings the item forward.
