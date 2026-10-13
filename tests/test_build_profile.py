@@ -227,7 +227,7 @@ def test_2_a_timeout_and_an_error_are_recorded_and_counted(tmp_path, monkeypatch
 def test_2_the_cli_envelope_turns_and_durations_reach_the_line(tmp_path, monkeypatch):
     log = tmp_path / "u.jsonl"
     monkeypatch.setenv(rb.USAGE_ENV, str(log))
-    env = _envelope(num_turns=3, duration_ms=5400, duration_api_ms=4100)
+    env = _envelope(num_turns=1, duration_ms=5400, duration_api_ms=4100)
     monkeypatch.setattr(model_shim.subprocess, "run", _sleeping_run([env], 0.01))
     model_shim.claude_model("p", {})
     monkeypatch.setattr(model_shim.subprocess, "run", _sleeping_run([_envelope()], 0.01))
@@ -235,7 +235,7 @@ def test_2_the_cli_envelope_turns_and_durations_reach_the_line(tmp_path, monkeyp
     monkeypatch.setattr(model_shim.subprocess, "run", _sleeping_run(['{"ok": 1}'], 0.01))
     model_shim.claude_model("p", {})                         # plain output, no envelope
     a, b, c = _jsonl(log)
-    assert (a["num_turns"], a["cli_duration_ms"], a["api_duration_ms"]) == (3, 5400, 4100)
+    assert (a["num_turns"], a["cli_duration_ms"], a["api_duration_ms"]) == (1, 5400, 4100)
     for x in (b, c):
         assert (x["num_turns"], x["cli_duration_ms"], x["api_duration_ms"]) == (None, None, None)
 
