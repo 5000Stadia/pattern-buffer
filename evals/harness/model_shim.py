@@ -3,6 +3,19 @@ around the local `claude` CLI. (prompt, schema) -> parsed JSON.
 
 This is harness machinery, not engine code — the engine knows only the
 callable contract (whitepaper §17.1).
+
+BARE-CALL-V1: every *attempt* is one bare call — one turn, no tools, the
+default system prompt replaced by ``BARE_SYSTEM_PROMPT``, no settings or MCP
+servers, no session file — run from a fresh empty temporary directory (so no
+``CLAUDE.md``, project memory or repo file is in reach) with a trimmed child
+environment (``_CHILD_ENV_KEYS``). ``bare_argv(model)`` is the command line.
+An envelope reporting ``num_turns > 1`` is recorded (outcome ``multi_turn``),
+logged at WARNING and rejected through the retry path; its JSON is never
+returned. ``PB_SHIM_LEGACY=1`` (temporary, for one comparison run) restores
+the old ``--max-turns 8`` command line with no cwd or env override, and
+with it the old acceptance of multi-turn answers.
+``python -m evals.harness.model_shim --smoke`` makes one paid bare call and
+prints the envelope's figures.
 """
 
 from __future__ import annotations
@@ -12,6 +25,8 @@ import logging
 import os
 import re
 import subprocess
+import sys
+import tempfile
 import time
 
 try:
@@ -23,6 +38,18 @@ logger = logging.getLogger(__name__)
 
 MODEL = os.environ.get("PB_EVAL_MODEL", "claude-sonnet-4-6")
 TIMEOUT = int(os.environ.get("PB_EVAL_TIMEOUT", "300"))
+
+
+BARE_SYSTEM_PROMPT = (
+    "You answer with one JSON object that matches the schema in the user "
+    "message. No prose, no code fences, no tools."
+)
+
+# The only caller variables a bare call's child process receives: what the CLI
+# and its authentication need (HOME locates the OAuth credentials). No PB_* and
+# no CLAUDE_* variable passes.
+_CHILD_ENV_KEYS = ("HOME", "PATH", "USER", "LANG", "LC_ALL", "TMPDIR",
+                   "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL")
 
 
 class ModelShimError(RuntimeError):
@@ -93,8 +120,41 @@ def _cli_extras(stdout: str) -> dict:
     return {"num_turns": None, "cli_duration_ms": None, "api_duration_ms": None}
 
 
+def bare_argv(model: str) -> list[str]:
+    """The bare call's command line (BARE-CALL-V1): one turn, no tools, no
+    settings or MCP servers, no session file, a fixed minimal system prompt."""
+    return ["claude", "-p", "--model", model, "--output-format", "json",
+            "--max-turns", "1", "--tools", "", "--strict-mcp-config",
+            "--setting-sources", "", "--no-session-persistence",
+            "--system-prompt", BARE_SYSTEM_PROMPT]
+
+
+def _legacy() -> bool:
+    return os.environ.get("PB_SHIM_LEGACY") == "1"
+
+
+def _child_env() -> dict[str, str]:
+    return {k: os.environ[k] for k in _CHILD_ENV_KEYS if k in os.environ}
+
+
+def _invoke(full: str) -> subprocess.CompletedProcess:
+    """One CLI invocation with ``full`` on stdin. Bare by default: a fresh empty
+    temporary directory as cwd (removed afterwards on every path) and a trimmed
+    environment. ``PB_SHIM_LEGACY=1`` runs the old command line as before."""
+    if _legacy():
+        return subprocess.run(
+            ["claude", "-p", "--model", MODEL, "--max-turns", "8",
+             "--output-format", "json"],
+            input=full, capture_output=True, text=True, timeout=TIMEOUT)
+    with tempfile.TemporaryDirectory(prefix="pb-bare-") as empty:
+        return subprocess.run(
+            bare_argv(MODEL), input=full, capture_output=True, text=True,
+            timeout=TIMEOUT, cwd=empty, env=_child_env())
+
+
 def claude_model(prompt: str, schema: dict) -> dict:
-    """One model call. Retries once on JSON-parse failure."""
+    """One model call: up to three attempts, each one bare call. Retries on a
+    failed exit, a timeout, a multi-turn answer, or a JSON-parse failure."""
     full = (
         f"{prompt}\n\n"
         "Respond with ONLY a JSON object (no prose, no code fences) matching "
@@ -106,14 +166,7 @@ def claude_model(prompt: str, schema: dict) -> dict:
             time.sleep(15 * (attempt - 1))  # transient rate pressure backs off
         started, t0 = time.time(), time.perf_counter()
         try:
-            proc = subprocess.run(
-                ["claude", "-p", "--model", MODEL, "--max-turns", "8",
-                 "--output-format", "json"],
-                input=full,
-                capture_output=True,
-                text=True,
-                timeout=TIMEOUT,
-            )
+            proc = _invoke(full)
         except subprocess.TimeoutExpired as exc:
             usage_ledger.record("claude", MODEL, None, None, started=started,
                                 latency_s=time.perf_counter() - t0, outcome="timeout",
@@ -124,10 +177,22 @@ def claude_model(prompt: str, schema: dict) -> dict:
         # every completed invocation leaves a receipt, whatever its exit code
         latency = time.perf_counter() - t0
         text, usage, cost = _cli_result(proc.stdout)
+        extras = _cli_extras(proc.stdout)
+        turns = extras["num_turns"]
+        multi_turn = (not _legacy() and proc.returncode == 0
+                      and turns is not None and turns > 1)
         usage_ledger.record("claude", MODEL, usage, cost, started=started, latency_s=latency,
-                            outcome="ok" if proc.returncode == 0 else "error",
-                            prompt_chars=len(full), response_chars=len(text),
-                            **_cli_extras(proc.stdout))
+                            outcome=("multi_turn" if multi_turn
+                                     else "ok" if proc.returncode == 0 else "error"),
+                            prompt_chars=len(full), response_chars=len(text), **extras)
+        if multi_turn:
+            last_err = ModelShimError(f"claude reported num_turns={turns}; one turn expected")
+            logger.warning("model shim multi-turn answer rejected (attempt %d): "
+                           "num_turns=%s", attempt, turns)
+            # the parse-failure path's counterpart: the retry says what was wrong
+            full += ("\n\nYour previous reply took more than one turn. Answer in this "
+                     "one reply with the JSON object ONLY.")
+            continue
         if proc.returncode != 0:
             stdout_lower = proc.stdout.lower()
             if "hit your" in stdout_lower and "limit" in stdout_lower:
@@ -157,3 +222,40 @@ def get_model():
         from codex_shim import MODEL as codex_model_name, codex_model
         return codex_model, f"codex:{codex_model_name}"
     return claude_model, MODEL
+
+
+def _smoke() -> int:
+    """One paid bare call (a few hundred tokens): prints the envelope's figures
+    so a human can see the one-turn, no-tool shape hold. Run by hand only."""
+    schema = {"type": "object", "properties": {"answer": {"type": "string"}},
+              "required": ["answer"]}
+    full = ("Reply with the word pong as the value of the field answer.\n"
+            "Respond with ONLY a JSON object (no prose, no code fences) matching "
+            f"this JSON Schema:\n{json.dumps(schema)}")
+    proc = _invoke(full)
+    text, usage, _cost = _cli_result(proc.stdout)
+    extras = _cli_extras(proc.stdout)
+    denials = None
+    for line in reversed(proc.stdout.strip().splitlines()):
+        try:
+            env = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(env, dict) and env.get("type") == "result":
+            denials = env.get("permission_denials")
+            break
+    print(f"exit={proc.returncode} reply={text.strip()[:80]!r}")
+    print(f"num_turns={extras['num_turns']} duration_api_ms={extras['api_duration_ms']} "
+          f"duration_ms={extras['cli_duration_ms']}")
+    u = usage or {}
+    print(f"input_tokens={u.get('input_tokens')} output_tokens={u.get('output_tokens')}")
+    print(f"tool_use_reported={'n/a' if denials is None else bool(denials)} "
+          "(a tool-less single turn has num_turns=1)")
+    return 0 if proc.returncode == 0 else 1
+
+
+if __name__ == "__main__":
+    if "--smoke" in sys.argv[1:]:
+        sys.exit(_smoke())
+    print("usage: python -m evals.harness.model_shim --smoke", file=sys.stderr)
+    sys.exit(2)

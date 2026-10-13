@@ -51,7 +51,7 @@ def test_claude_call_asks_for_the_json_envelope_and_counts_it(monkeypatch):
     run, calls = _fake_run([_envelope('{"ok": true}')])
     monkeypatch.setattr(model_shim.subprocess, "run", run)
     assert model_shim.claude_model("p", {"type": "object"}) == {"ok": True}
-    assert calls[0][-2:] == ["--output-format", "json"]
+    assert calls[0][calls[0].index("--output-format") + 1] == "json"
     snap = usage_ledger.snapshot()
     assert snap["calls"] == 1 and snap["calls_without_usage"] == 0
     assert (snap["input_tokens"], snap["output_tokens"]) == (120, 40)
