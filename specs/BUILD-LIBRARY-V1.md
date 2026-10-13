@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -124,8 +124,13 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
   persona name slugged (`person:the_hooded_stranger`). It is a separate facet until its reveal
   (§5).
 - **`resolve(surface, chapter, sentence)`** answers one of three things.
-  - **The candidates** are the entries whose `anchor_quote`, and the personas whose `intro_quote`,
-    is at or before `(chapter, sentence)`: the **per-entry time gate**.
+  - **The candidates** are the entries and personas whose **effective gate** (§3: the earlier of
+    the anchor or intro quote's sentence and the first whole-token occurrence of any of their names)
+    is at or before `(chapter, sentence)`. This is the **per-entry time gate**, one rule for
+    `resolve()` and for `plan()`/`extract()` *(r1.5)*.
+  - `Registry.from_manifest` computes each entry's and persona's effective gate once and stores it.
+    `entries()` exposes it as `gate: (chapter, sentence)` beside `anchor`, and as `gate` on each
+    persona.
   - **Matching** is on any of a candidate's names, after normalization (lowercase, quote folding,
     leading titles from a fixed list). A **fragment** ("Breck") matches a candidate whose name
     holds it as a whole token.
@@ -331,9 +336,12 @@ For a book with no author (construct passes its author's manifest instead):
    `ManifestError` lists every problem at once: three planted problems give three items.
 4. **Time gate:**
    - the duke's entry anchored in chapter 3 is never a candidate for a chapter-2 chunk;
-   - *(r1.4, pbr's case)* a chunk whose sentence 1 says "The hooded stranger took the key." and
-     whose sentence 3 is the persona's chosen `intro_quote`: the effective gate is sentence 1 (the
-     name's first occurrence), so the sentence-1 fact may bind to the persona;
+   - *(r1.4, r1.5, pbr's case)* a chunk whose sentence 1 says "The hooded stranger took the key."
+     and whose sentence 3 is the persona's chosen `intro_quote`:
+     - the effective gate is sentence 1, the name's first occurrence;
+     - `entries()` reports that gate;
+     - `resolve("the hooded stranger", chapter, 1)` gives the persona id;
+     - the chunk's sentence-1 fact binds to the persona;
    - *(r1.4)* an entry whose name first occurs at sentence 3 of a chunk: an item about it citing
      sentence 1 is `gate_refused`, and one citing sentence 3 is accepted. `resolve` gives the same
      answers at sentences 1 and 3;
