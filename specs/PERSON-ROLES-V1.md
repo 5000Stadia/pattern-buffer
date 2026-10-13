@@ -1,6 +1,6 @@
 # PERSON-ROLES-V1: a person is a person for life; what they are at a time is a role
 
-**Status:** r1, for pbr review and for construct's shape read. Author: pb, 2026-10-13.
+**Status:** r1.1. It answers pbr's r1 RED (P1: a distinct gate reclassification receipt, never `canonicalized_from`; P2: the synthesized `kind = person` is `inferred`). It also takes construct's shape read (m9a8701: no role in force answers `unknown`). For pbr review. Author: pb, 2026-10-13.
 **Source:** roadmap R49 (construct m02bdb6). Kabe's answer on gate g9c3792 (2026-10-13), in his
 words: "imagine a character whose spans a story of a lifetime there may be different erad of that
 character they may be a prisoner, one chapter and a hero the next, so build an elegant structure
@@ -54,12 +54,28 @@ key must never fragment). It is deterministic, so it holds however the model ans
     `person:` namespace;
   - or one whose canon `kind` already folds to `person` before the item.
 - **What is written.**
-  - The row is written as `role = <the value, as given>`, in the item's frame, with its status,
-    `valid_from`, `valid_to` and source.
-  - A `canonicalized_from` receipt records that it came from `kind`, as for any canonicalized
-    attribute.
+  - The row is written as `role = <the value, as given>`, in the item's frame, with the item's
+    status, `valid_from`, `valid_to` and source. The text did say this about the person, so the
+    status is kept.
+  - *(r1.1, pbr P1)* **This is a reclassification, not canonicalization.** `canonicalized_from` is
+    a durable, global attribute-alias declaration: `_rebuild_alias_map` replays it on reopen. A
+    contextual move (only a person's non-person literal kinds) is not a global alias, so it must
+    never be recorded as one.
+    - The move writes its own gate-owned side row on the role row:
+      `<role row id> · reclassified_from · "kind"`, `inferred`, in the META set (hidden from
+      reads, like the other receipts).
+    - It is never read by `_rebuild_alias_map` or any alias machinery. The alias map and
+      `canonical_attribute` are unchanged by R49.
+    - A real spelling normalization still gets its `canonicalized_from` receipt as today. An item
+      `type -> kind`, then moved to `role`, carries both: `canonicalized_from` (`type -> kind`,
+      the global spelling) and `reclassified_from: "kind"` (the contextual move).
 - **Kind `person`.** If the subject has no `kind` row valued `person` in that frame, the gate also
-  writes one, timeless, in the same frame, with the item's status and the same receipt.
+  writes one, timeless, in the same frame.
+  - *(r1.1, pbr P2)* It is **`inferred`**, not the item's status: the input didn't state it.
+    It is derived from the `person:` namespace or the already-folded kind. Only the ingestor writes
+    it, so the role-authority matrix holds.
+  - Its derivation receipt is `<kind row id> · derived_by · "person_subject"`: `inferred`,
+    gate-owned, META and never replayed.
   - The `person:` namespace already says what the subject is; this row says it in the key identity
     reads. Without it, a pair would decline on `kind_absent` instead of reaching
     `alias_not_specific`.
@@ -70,6 +86,9 @@ key must never fragment). It is deterministic, so it holds however the model ans
   - Every non-person subject keeps its kind exactly as given: an object's, a place's, an event's.
     **This is a test:** `obj:lamp · kind · brass lamp` is stored as given.
   - `kind = person` is stored as given.
+- **The receipts are META.** `reclassified_from` and `derived_by` join `META_ATTRIBUTES`. They are
+  hidden from reads and bookkeeping, and barred from a recorder or author `record`, like the
+  other receipts.
 - **Order inside one batch.** The person test reads canon as it stands before the item, plus the
   `person:` namespace. A non-`person:` id whose `kind = person` arrives in the same batch as its
   `kind = smuggler` is judged by the order of the items. That is documented and tested. A `person:`
@@ -114,12 +133,22 @@ Nothing is rewritten. Append-only rules out any migration that edits rows.
 ## Tests (the build's acceptance)
 
 1. **The gate.**
-   - `person:tomas · kind · condemned man` (timed, chapter 1) is stored as `role`, with a
-     `canonicalized_from` receipt, plus one timeless `kind = person` in canon.
+   - `person:tomas · kind · condemned man` (timed, chapter 1) is stored as `role` with the item's
+     status and a `reclassified_from: "kind"` receipt, and no `canonicalized_from`.
+   - It comes with one timeless `kind = person` in canon, `inferred`, with a
+     `derived_by: "person_subject"` receipt.
    - A second non-person kind (`hero`, chapter 7) adds `role = hero` and no second `kind` row.
+1a. *(r1.1, pbr P1)* **The alias map is untouched.**
+    - Ingest `person:x · kind · prisoner` and `person:y · type · warden` (spelling `type -> kind`,
+      then moved), then close and reopen the world.
+    - `canonical_attribute("kind")` is still `kind`, and `canonical_attribute("type")` is still
+      `kind`, exactly as before R49.
+    - No alias maps to `role`, and the reopened alias map equals a pre-R49 world's.
+    - The `type` item carries both receipts, and the `kind` item only `reclassified_from`.
+    - `obj:lamp · kind · brass lamp` is still stored as `kind`, with no receipt.
 2. **Eras.** With `prisoner` valid over [1, 5) and `hero` from 7:
    - `state(role, as_of=3)` is `{prisoner}`;
-   - `as_of=6` is unknown or empty;
+   - *(r1.1, construct)* `as_of=6` answers `status: "unknown"`, not `known` with empty values;
    - `as_of=8` is `{hero}`;
    - overlapping roles (`prisoner` and `father` at 3) answer both.
 3. **Non-persons unchanged.** `obj:lamp · kind · brass lamp`, `place:inn · kind · tavern` and
@@ -145,5 +174,10 @@ Nothing is rewritten. Append-only rules out any migration that edits rows.
 - **role**: what a person is at a time (prisoner, captain, hero). A set-valued, time-indexed
   attribute, distinct from `kind`, which for a person is always `person`. The ingest gate moves a
   person's non-person kind into `role`.
+- **`reclassified_from`**: the gate's receipt on a row it moved to another attribute in context
+  (R49: a person's non-person kind, moved to `role`). It is META and never replayed. It is
+  distinct from `canonicalized_from`, which records a global spelling alias.
+- **`derived_by`**: the gate's receipt on an `inferred` row it derived rather than received
+  (R49: a person subject's `kind = person`). It is META.
 - **era**: one role's span on a person's valid-time axis. It is derived from the role rows and
   never stored.
