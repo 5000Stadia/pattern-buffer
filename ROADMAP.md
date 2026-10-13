@@ -133,6 +133,10 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
   - Clocks are derived from deadline facts, and the condition language stays small.
   - The phone gets a precomputed trigger table, applied as a pending overlay that the feed confirms.
   - The solvability proof is construct's, over the engine's graph read.
+  - Construct's view (m0a3e58), adopted:
+    - **Concealment is a hard constraint.** Beat rows and availability never reach a player frame, a mirror export or a phone table. The phone gets only mechanism-level answers (this keypad, this code, this door), so beats need author-side frame scoping. This replaces pb's first trigger-table idea.
+    - Construct's condition grammar (`construct/arc/conditions.py`) is the starting vocabulary. The turn-pacing atoms stay host-side.
+    - Declarations are accepted at any time, not only during ingest.
   - New scope: Kabe places it.
 - [ ] R52 Tag or relationship: refine R49's extraction rule so `role` is only what a person is on their own (prisoner, widow, hero). A title that needs another party (father of, mayor of, captain of, hostile toward) is extracted as a dated entity-valued relationship to that party, and the title is derived from it when read. Today's rule lists "captain" among its examples, which nudges relational titles into flat tags. It is a prompt change, so it needs a metered extraction check against the chapter test before merging (Kabe's yes), alongside the speed work. Source: Kabe via construct m5b3ed1, R51's reading.
 - [ ] R51 Beings, not only persons. Kabe (2026-10-13, via construct m5bc622), on R49 making a dog in `person:` read as kind person, role dog: "If a dog is a kind of person and what is the point of identifying term person? Isn't it more of a sentient entity have either type person or type dog." And: "In the future, this should be allowed as a hostile enemy if the engine actually develops into that direction." My reading:
