@@ -1,6 +1,6 @@
 # MERGE-GATE-VERB-V1: the measured merge gate as a report-only engine verb (roadmap R48)
 
-**Status:** r1.2 (2026-10-13). It answers pbr's r1.1 RED: the no-model call gets a full report, and the not-asked statuses get a fixed order (marked *(r1.2)*). r1.1 was for pbr's spec review. r1.1 adds construct's two report fields (m892d62): a per-call id with a no-cache contract, and the pairs exactly as requested (marked *(r1.1)*). Author: pb.
+**Status:** r1.3 (2026-10-13). The top-level status now has three values, including `nothing_to_ask` (marked *(r1.3)*). r1.2 (2026-10-13). It answers pbr's r1.1 RED: the no-model call gets a full report, and the not-asked statuses get a fixed order (marked *(r1.2)*). r1.1 was for pbr's spec review. r1.1 adds construct's two report fields (m892d62): a per-call id with a no-cache contract, and the pairs exactly as requested (marked *(r1.1)*). Author: pb.
 **Source:** construct asked for it (mba5a02): its build stops when one load-bearing character comes
 out under two ids ("Tomas Breck" and "Breck"). cr refused a second, construct-made adjudicator:
 a lexical rule can't tell "Breck the baker" from Tomas Breck, and one cheap verdict is a proposal,
@@ -30,8 +30,16 @@ porcelain.merge_gate(pairs, *, context=None, batch_size=25) -> dict
   injected, the verb calls nothing and still returns the full report (below), with top-level
   `"status": "no_model"`. Every pair that would have been asked is listed in `not_asked` with
   status `no_model`, so `pairs` and `components` are empty, `requested_as` still covers every
-  request, and `call_id` and `cached: false` are present as on every call. A call that asked the
-  model has top-level `"status": "asked"`.
+  request, and `call_id` and `cached: false` are present as on every call. *(r1.3)* The top-level
+  `status` is exactly one of:
+  - `asked`: at least one pair was asked (one or more model calls);
+  - `nothing_to_ask`: a model is injected but every pair took a not-asked status before reaching
+    it. There are no model calls, `counts.batches` is 0, `pairs` and `components` are empty, and
+    every pair is in `not_asked`;
+  - `no_model`: no model is injected and at least one pair would have been asked.
+
+  When no model is injected and every pair is already filtered out, the status is
+  `nothing_to_ask`, because no pair needed a model.
 - **`pairs`**: a non-empty list of two-id lists or tuples. Each id is resolved to its closure's
   served representative. More than 500 pairs, or anything that is not a pair of non-empty
   strings, raises `ValueError` before any read.
@@ -134,7 +142,11 @@ unchanged.
 3. **Not asked:** one pair of each status (`already_one`, `held_apart`, `class_mismatch` both
    ways, `no_names`) is reported and never reaches the model. *(r1.2)* Overlaps take the first
    status in order: a pair both held apart and person against object is `held_apart`, and a
-   pair with no names that is also person against object is `class_mismatch`.
+   pair with no names that is also person against object is `class_mismatch`. *(r1.3)* A call
+   whose pairs are all filtered out (for example `[["a", "a"]]`, `already_one`) has status
+   `nothing_to_ask`, `counts.batches` 0 and `counts.asked` 0, makes no model call, and still
+   carries `call_id`, `cached: false`, `requested` and full `requested_as` coverage. This holds
+   with and without an injected model.
 4. **Canonicalization:** `(b, a)`, `(a, b)` and a member-id spelling of the same pair are asked
    once, as `p0001`, with `a < b` by representative.
 5. **Context:** member-keyed sentences land on the representative, capped at 2 and trimmed; the
