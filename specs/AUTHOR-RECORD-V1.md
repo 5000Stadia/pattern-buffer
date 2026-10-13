@@ -1,6 +1,6 @@
 # AUTHOR-RECORD-V1: an author session that writes canon, never the player's view
 
-**Status:** r1, for pbr review and for Photonic's review as the host that needs it. Author: pb,
+**Status:** r1.1 (pbr r1 RED P2: the observer grammar after `knows:`), for pbr review and for Photonic's review as the host that needs it. Author: pb,
 2026-10-13.
 **Source:** roadmap R45. Photonic's SEAM (a) (m019da7): "Photonic records where people stand, sit
 and are heading, mostly out of the player's sight. That has to be canon-only (or another frame),
@@ -49,12 +49,16 @@ session.call("record", items=[...], at=None, frame="canon")   # -> {"status": "r
 `record(items, at=None, frame="canon")`:
 
 - **`frame`**: `"canon"` (the default), or one `knows:<observer>` frame **outside the player's
-  view**:
-  - The view's frames are `_scoped_frames(view_frame, frame_scope, head)`: the view frame itself,
-    plus what the host's `frame_scope` adds (continued frames, merged observers), as of the log
-    head when the job runs on the owner thread.
-  - A frame in that set is refused. The player's view is written by play (the recorder) or by
-    `resolve`, never by the author.
+  view**.
+  - *(r1.1, pbr P2)* `<observer>` must be a whole entity id: the text after `knows:` matches the
+    engine's `ID_RE` (`^[a-z][a-z0-9_]*:[a-z0-9_:]+$`). So `knows:`, `knows:mara`,
+    `knows:Person:x` and `knows:person:` are refused before any scope check.
+  - The view exclusion:
+    - The view's frames are `_scoped_frames(view_frame, frame_scope, head)`: the view frame itself,
+      plus what the host's `frame_scope` adds (continued frames, merged observers), as of the log
+      head when the job runs on the owner thread.
+    - A frame in that set is refused. The player's view is written by play (the recorder) or by
+      `resolve`, never by the author.
   - Any other frame name (`plot:*`, `scene:*`, an empty or non-string name) is refused in V1.
     Canon and characters' knowledge are what Photonic named.
 - **`items`**: the recorder's item rules apply unchanged (`_clean_items`):
@@ -122,7 +126,9 @@ None needed. This narrows the existing recorder: one frame instead of two, `stat
    - `frame` equal to the view frame;
    - a frame the host's `frame_scope="continued"` adds (a declared `frame_continues_as` source);
    - a frame `"merged"` adds (a `same_as` member's `knows:` frame).
-4. **Other frames refused.** `plot:x`, `scene:y`, `""` and `42` are refused.
+4. **Other frames refused.** `plot:x`, `scene:y`, `""` and `42` are refused. *(r1.1, pbr P2)*
+   `knows:`, `knows:mara`, `knows:Person:x` and `knows:person:` are refused too, each in a batch
+   with an otherwise valid item, and nothing is written.
 5. **Item rules.** An item-level `frame` or `status`, an extra key, a barred attribute, an
    `attr:` subject, and a handle as `entity` or as an entity `value` are each refused, writing
    nothing.
