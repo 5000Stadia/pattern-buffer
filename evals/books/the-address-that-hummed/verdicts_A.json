@@ -1,0 +1,1678 @@
+{
+ "entities": {
+  "ivara": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tovan": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "eren_vey": {
+   "verdict": "ok",
+   "note": "Bare 'Eren' is rightly not listed (shared with Pell/Eren Vell), though ch2-ch4 narration uses bare 'Eren' for Eren Vey.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "pell": {
+   "verdict": "ok",
+   "note": "'pell' first appears ch2 (ch2 'Pell was lying' even before the name is revealed). 'aven' bare first ch3 ('the Hall called him Aven'); full 'Pell Aven' ch2. All aliases refer only to him. Bare 'Eren' correctly omitted (shared with Eren Vey).",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nima": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "alis": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "mara": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "oru": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "vellum_hall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "mouth_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "understair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tin_orchard": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "sump": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nacre_stair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "first_house": {
+   "verdict": "ok",
+   "note": "Latch/missing room/Lio chain is only loosely supported: ch5 says the Latch, Mouth Room and Nacre Stair 'were connected rooms and ways of hearing the first house, not the same room' and 'each fragment received one of its names. The Latch was the name Nima heard at the Orchard'. 'The hidden chamber' (the child-sized paper-walled chamber behind the Sump's round door) is called in ch5 'The child-sized chamber beneath the Understair was its memory of being small' -- a fragment, not the first house itself.",
+   "bad_aliases": [
+    "the hidden chamber"
+   ],
+   "bad_alias_first_chapter": {}
+  },
+  "red_key": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "bone_comb": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tin_box": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "brass_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "glass_thimble": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "black_thread": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "chalk_moth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "numbered_spool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "seventh_tooth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hinge": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "washers": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "paper_bird": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "address_tag": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "ledger": {
+   "verdict": "ok",
+   "note": "ch1 ledger with cracked spine (Tovan's, repairs plus private notes on residents) is probably, but never stated to be, the 'old ledger' of ch3/ch5 that said Alis was buried. first_chapter 1 is fine.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "satchel": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "false_bottom": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "metal_fruit": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "recipe_sheet": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stone_basin": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "handprint_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "alis_name": {
+   "verdict": "ok",
+   "note": "An inscription (name written on the back of Ivara's sleeping tag), not really an object; harmless.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "table_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "desk_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "grit_ring": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "family_niche": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "sleeping_gallery": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "four_name_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "address_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "blue_thread": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "registry": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_old_keeper": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nima_grandmother": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "winter_roll": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "round_door": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "red_key_tooth": {
+   "verdict": "ok",
+   "note": "Redundant duplicate of red_key (same holder/location rows). first_chapter 1 ('a long iron thing with a forked tooth') vs alias 'key's forked tooth' first literally ch4; harmless but inconsistent. Risk of confusion with seventh_tooth (ch2 says the key is not a comb tooth).",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "table": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "chamber_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tree_fruit": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "paper_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "child_chair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "wall_chair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "dining_chairs": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "doorless_roll": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_register": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "petition": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "route_mark": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "pocket_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "eren_tag": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "recipe_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_assembly": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_record_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stair_landing": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "shell_wall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "door_passage": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  }
+ },
+ "missing": [
+  "ch5: 'The child-sized chamber beneath the Understair was its memory of being small. The Mouth Room remained a separate answering chamber' -- the hidden/child-sized chamber (ch2-3, ch6) is a separate fragment of the first house; the key folds it into first_house and has no not_same for it.",
+  "ch1/ch3/ch5: Mara held the red key before the story ('Her mother had left it'; ch3 'she had taken the red key when the first house became inaccessible'; ch5 'the red key first appeared in her mother's apron') -- no holding for mara.",
+  "ch1: Ivara's false belief about Lio ('I took it for a woman's name') appears only as a correction, not in false_beliefs.",
+  "ch3: Ivara learns Alis is alive ('I knew she was alive'; 'Tovan had helped hide her') -- knowledge[0] only covers 'not buried'; and Tovan learns nothing new about Pell's identity (ch2 'The porter was the same person') -- Tovan/Ivara learning of Pell Aven's identity as Eren Vell is covered only for Ivara and Eren Vey.",
+  "ch4: 'It had never been a door key in the ordinary sense; it was a memory of the hinge that joined the Orchard to the first house' -- red key / hinge relation not recorded.",
+  "ch5: Ivara's name is on the stool ('On the stool was her own name, written twice'), Alis's name on 'the chair by the wall': stool ownership/identity of chairs not recorded (and ch6 contradicts).",
+  "ch5: Alis: 'I was dead in the register' -- register status of Alis (dead in register; ledger said buried) is a correction not captured.",
+  "ch2: ch2 Eren Vey/Pell/Eren Vell naming: ch1 'The two Eren's had learned to answer only to their surnames. When someone called \"Eren,\" both looked up' -- bare 'Eren' is a shared (ambiguous) alias that should be flagged in the key (ch2 'Eren turned it upside down', ch3 'Eren the map and spool' are Eren Vey).",
+  "ch6: Alis moves between Hall, first house and Orchard ('She lived where she chose from day to day, sometimes in the Hall, sometimes in the first house, and sometimes among the trees') -- location rows end at Mouth Room.",
+  "ch3: Sump: Ivara, Eren Vey, Tovan, Pell are still in the Sump at the start of ch3 ('Ivara took the red key from the stone basin') -- no ch3 Sump locations."
+ ],
+ "text_contradictions": [
+  "ch1: Ivara addresses 'Eren' -- 'You signed the petition.' -- but Nima answers 'I signed the petition that arrived'; the addressee is Nima (name slip).",
+  "ch1: 'The two Eren's had learned to answer only to their surnames. When someone called \"Eren,\" both looked up.' (self-undercutting).",
+  "ch1: Alis Noll written on the tag 'in faded red ink' and 'The letters had faded, but the writing itself was recent'.",
+  "ch1: necklace 'one for each year she had lived in the Orchard' vs 'The Orchard keeper had begun the evening count, one washer for each tree that had offered its fruit... The necklace counted Nima's years; this was a separate count.'",
+  "ch2: 'The red key warmed: Pell was lying.' -- the name Pell is used before it is revealed (Eren Vell revealed as Pell Aven later in the chapter).",
+  "ch2: Tovan: 'People share a voice. Rooms share walls... Unless they're the same room.' and 'Tovan's suggestion was true' (Mouth Room = Orchard room) vs ch5 'The Mouth Room remained a separate answering chamber'.",
+  "ch2: Pell says 'Before I sent you the box, I moved the tooth beneath the moth' but later remembers as a child moving it 'to the spool' to stop the comb dividing the house; also box 'on the lost-property shelf when he began work at the Hall' yet he found the tooth in its false bottom earlier.",
+  "ch2 (Ivara learns she heard the name Pell Aven and 'The porter was the same person') vs ch3 Ivara: 'I didn't know you had been Pell Aven before that.'",
+  "ch3/ch4/ch5/ch6: location of chalk moth and child-sized chair: ch3 chamber behind the Sump's round door; ch4 'beyond it was a room with a child-sized chair, a chalk moth' off the Nacre Stair landing; ch5 felt-floored room with a table; ch6 'The chalk moth stayed in the hidden chamber beneath the Understair'; ch5 says the child-sized chamber is a separate fragment.",
+  "ch5: stool bears Ivara's name and Alis sits on 'the chair by the wall' vs ch6 'the tin box on the stool Alis had used in the first house'.",
+  "ch5: 'He gave the bird to Eren Vell' -- said of Pell, who is Eren Vell.",
+  "ch5: 'The Latch was the name Nima heard at the Orchard... The fragments... were not all the same room' vs ch3/ch4/ch6 using Latch and first house for the same room.",
+  "ch6: 'Eren Vell kept the name he had chosen after the Hall erased Pell Aven' vs ch2/ch5 (the Hall narrowed his ways to introduce himself; porter name 'the only one the Hall would let him keep').",
+  "ch6: 'Alis placed it [the key] on the table' vs next paragraph 'Nima handed the key to Alis'; ch6 earlier 'Nima still held the red key'.",
+  "ch4/ch5 vs ch6 on the stair: ch4 'counted upward', ch5 'counted 1, 2, 3', ch6 'now climbed without counting' (minor).",
+  "ch4 'Ivara's remembered claim changed... hidden alive' vs ch5 Alis/Tovan scene presented as still correcting the 'buried in the niche' belief."
+ ],
+ "same_as": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": "ch2: Eren Vell: \"I used to be called Pell Aven\"; \"The porter was the same person\"."
+  },
+  {
+   "i": 1,
+   "verdict": "unclear",
+   "note": "Lio = the missing room (= Latch) is stated ch1 (\"Lio isn't a person. It's what the missing room calls itself\"). Lio is never mentioned in ch5; Lio -> first house depends on Latch = first house, which ch5 itself undercuts (\"not all the same room\"). Chapter 5 is wrong as the establishing chapter for Lio."
+  },
+  {
+   "i": 2,
+   "verdict": "unclear",
+   "note": "Strong cues for identity (ch3 Tovan \"Mara brought her home through the Mouth Room and into the Latch\" / \"hide her in the first house\"; ch4 four children made the room; ch6 Alis \"standing in the Latch\" behind the First House door). But ch5: \"The Latch was the name Nima heard at the Orchard. First House was what Mara called it... The fragments remembered the first house, but were not all the same room.\" A careful reader cannot settle whether Latch is the whole house or a fragment."
+  }
+ ],
+ "not_same": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "Pair is true (black thread in thimble ch2; blue thread tied round the parcel ch1). Reason text is slightly off: ch1 says only that the hinge pin \"bore a faded blue stain\", the blue thread does not wrap the hinge pin."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "ch2: the comb \"had belonged to an earlier keeper of the Hall\"; Tovan only claimed to have borrowed it. Distinctness is implied by \"earlier\", not proven."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "ch5: \"The Mouth Room remained a separate answering chamber, connected to the first house by a shared wall\"; ch3/ch6 agree. Note ch2 contradicts: Tovan \"Unless they're the same room\" and \"Tovan's suggestion was true\" (see text_contradictions)."
+  }
+ ],
+ "locations": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. (Also the cited evidence 'He went through first' is Pell, not Eren Vey; Eren Vey is present in ch3 chamber anyway.)"
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 32,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 35,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 36,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 37,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 38,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 39,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 40,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 41,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 42,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 43,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 44,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 45,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 46,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 47,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 48,
+   "verdict": "unclear",
+   "note": "ch6: \"Nima still held the red key\" while Alis is seen \"standing in the Latch\" through the Mouth Room door; Nima/key are in the Hall scene (Mouth Room), not clearly in the first house. Also ch6 later says \"Alis placed it on the table\" before \"Nima handed the key to Alis\"."
+  },
+  {
+   "i": 49,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 50,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 51,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 52,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 53,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 54,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 55,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 56,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 57,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 58,
+   "verdict": "ok",
+   "note": "ch6 text says \"in the Latch ... the tin box on the stool\", i.e. the room seen through the Mouth Room door; counts as first_house only if Latch = first house (see same_as[2])."
+  },
+  {
+   "i": 59,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 60,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 61,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 62,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 63,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 64,
+   "verdict": "ok",
+   "note": "\"The brass map stayed with Ivara\" (Ivara in Hall); strictly the Hall is inferred."
+  },
+  {
+   "i": 65,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 66,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 67,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 68,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 69,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 70,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 71,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 72,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 73,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 74,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 75,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 76,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Moth: ch3 chair in chamber; ch4 landing room has chair and moth; ch6 'The chalk moth stayed in the hidden chamber beneath the Understair'. Ranges 3-6 plausible only if chamber = first house."
+  },
+  {
+   "i": 77,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 78,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 79,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 80,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 81,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 82,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 83,
+   "verdict": "ok",
+   "note": "Nima wears the necklace; in the Orchard from ch1 (she also carries it to the Nacre Stair in ch4, row 84)."
+  },
+  {
+   "i": 84,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 85,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 86,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 87,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 88,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 89,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 90,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 91,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 92,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 93,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 94,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 95,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 96,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 97,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 98,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 99,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 100,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 101,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 102,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 103,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 104,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 105,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 106,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 107,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 108,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Also ch2 says Pell moved the tooth under the moth 'before I sent you the box' (recent) vs ch2 later as a child; so a ch2 location is only a past event."
+  },
+  {
+   "i": 109,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 110,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 111,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 112,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 113,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 114,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 115,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 116,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 117,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 118,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 119,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'."
+  },
+  {
+   "i": 120,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 121,
+   "verdict": "ok",
+   "note": "Evidence is indirect (thimble is with Ivara, who is on the Nacre Stair ch4); acceptable."
+  },
+  {
+   "i": 122,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 123,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 124,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 125,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 126,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 127,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 128,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 129,
+   "verdict": "ok",
+   "note": "The round door is in the Sump wall (Understair); passage beyond it is reasonable as part of the Understair complex."
+  },
+  {
+   "i": 130,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 131,
+   "verdict": "ok",
+   "note": "Stool is in the first-house room ch5. But ch6 says \"the stool Alis had used\", while ch5 puts Alis on \"the chair by the wall\" and the stool bears Ivara's name (text contradiction)."
+  },
+  {
+   "i": 132,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "holdings": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "Nima holds the key ch4-ch6 (briefly placed in grit/depression, same holder)."
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "ch6 order is muddled: \"Alis placed it on the table\" before \"Nima handed the key to Alis\"; end state Alis holds/places in tin box is consistent."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "Eren Vey holds the brass map from ch2; ch4 \"map to Eren Vey\" and ch5 he sets it before Alis, so to_chapter 3 understates (should be 5, until Ivara folds it and keeps it). Not contradicted."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "Ivara holds thimble ch2 to ch5 (ch5 she puts it on the table); ch6 thimble goes to the Mouth Room."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": "Seventh tooth is tied to the spool ch3; ch5 it \"came loose from its thread and fell beside the comb\". Holder inferred through the spool. Duplicate of row 29."
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": "ch5: \"He gave the bird to Eren Vell, who read the name\" -- Pell IS Eren Vell, so this reads as self-handoff (text oddity); holder Pell/Eren Vell is correct in ch6 (\"Eren Vell kept the paper bird in his coat\")."
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": "Duplicate of row 13; evidence cites the spool, tooth held via the spool."
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": "Duplicate of red_key row via the component entity; true as red_key rows."
+  },
+  {
+   "i": 32,
+   "verdict": "ok",
+   "note": "Duplicate of red_key row via the component entity; true as red_key rows."
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": "Duplicate of red_key row via the component entity; true as red_key rows."
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": "Duplicate of red_key row via the component entity; true as red_key rows."
+  },
+  {
+   "i": 35,
+   "verdict": "ok",
+   "note": "Duplicate of red_key row via the component entity; true as red_key rows."
+  }
+ ],
+ "containers": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "Name written on the back of the tag -- inscription, not a container relation; true as \"inscribed on\"."
+  },
+  {
+   "i": 6,
+   "verdict": "unclear",
+   "note": "Ch3 scene is the paper-lined child-sized chamber behind the round door (the 'hidden chamber'). ch5 calls the 'child-sized chamber beneath the Understair' a separate fragment ('its memory of being small') of the first house; yet ch3 Tovan says Alis was hidden 'in the first house' and ch4 shows a room with 'a child-sized chair, a chalk moth' opening off the Nacre Stair where Alis answers. Text does not settle whether this chamber is 'the first house'. Evidence only supports the moth, not the spool (spool 'lay beneath' the moth, ch3)."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "Past containment (Tovan hid the tooth there, years before; Pell moved it to the moth). Revealed ch2 by Pell; ch2 gives two versions of when Pell moved it."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": "Duplicate of row 0 at false-bottom level."
+  }
+ ],
+ "knowledge": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "Nima learns the strip says four children (ch4); \"kept one side from falling away\" is her own conclusion later in ch4."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "ch2 says she had heard the name Pell Aven in an old file; but ch3 Ivara says \"I didn't know you had been Pell Aven before that\" (text tension)."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "Night in first house is stated ch3 (Eren finds his name; \"spent a single night\"); that the spool-name was his own is narrated ch4. He also keeps it secret until ch5."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": "Voice speaks to the group; Tovan \"heard his instruction\". Fine."
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": "\"everyone_present\" is not an entity key; true: Pell states it to Tovan, Ivara, Eren Vey."
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": "Partly learned ch3 (Pell: \"the baby Ivara had slept in a drawer\"; her name on the wall); Nima states it ch4."
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "wrong",
+   "note": "ch5 never mentions Lio; cited evidence (\"First House was what Mara called it\") is about First House. ch5 says \"The Latch was the name Nima heard at the Orchard\". Lio is explained ch1 and Ivara learns it there."
+  }
+ ],
+ "false_beliefs": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": "ch1: \"Nima believed the Latch had been built by Nima's grandmother\"; corrected ch4 by her own finding."
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "Stated ch3 (\"Ivara had believed Alis dead and buried\"); implied earlier. Near duplicate of [8]."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "ch1 Eren states door was in a wall that no longer existed; ch5 \"had not belonged to a vanished wall, as he had believed\"."
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "ch3: \"I believed the Latch could not open again... That belief had lasted for years.\" Sincere; ch6 Tovan calls his claim false."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "ch5: \"believing it to be an unclaimed tool\"; belief runs from ch1 (key left \"with no label and no lock\") not only from ch5, so from_chapter 5 is late but stated chapter is ch5."
+  },
+  {
+   "i": 5,
+   "verdict": "unclear",
+   "note": "ch3: \"Ivara had assumed the phrase meant her sister had not taken a first breath.\" Falsified in ch3 when Alis is revealed alive; ch5 only explains what \"unplaced\" meant. corrected_chapter 3 or 5 are both defensible."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": "ch5 \"For years, Pell had believed the porter name was the only one the Hall would let him keep\"; already voiced ch3 (\"I thought that was what I was allowed to be\"), so from_chapter could be 3. ch6 says Eren Vell is \"the name he had chosen\" (tension)."
+  },
+  {
+   "i": 7,
+   "verdict": "unclear",
+   "note": "Never stated as Ivara's belief; only implied by Tovan's correction ch3 (\"not your sister by blood\"). Ivara asks \"Who was Alis to me?\" (ch3), which shows uncertainty. ch1 has no kinship statement at all, so from_chapter 1 is unsupported (earliest ch3)."
+  },
+  {
+   "i": 8,
+   "verdict": "wrong",
+   "note": "By ch3 she knows Alis was not buried; ch4 narrates it in the past tense (\"Ivara had read 'in the niche' as 'buried'... There had been a mistake, then a correction\") and \"Ivara's remembered claim changed\" (ch4), so she no longer believes it in ch4, and the correction is not ch5 (ch5 reveals only that Tovan wrote \"buried in the niche\"). Contradicts corrections[17] (corrected ch4)."
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": "ch2: \"He had decided it was his mother's humming, though he had no proof\" (weak belief); ch3 \"he had stopped believing the song belonged only to his mother\"."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "ch2: \"She had never met Pell before he became Eren Vell. At least, that was what she believed.\" ch3 Pell: \"the baby Ivara had slept in a drawer\"."
+  }
+ ],
+ "corrections": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "Stated ch5; belief from ch1."
+  },
+  {
+   "i": 6,
+   "verdict": "unclear",
+   "note": "Same as false_beliefs[5]: disproved ch3, refined ch5."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "ch4: \"You once told me it was lost.\" / \"I told you it was dangerous.\" key warmed; Tovan lied about it being lost."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": "Voiced ch3, stated as long-held belief ch5."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "ch1: Ivara \"I took it for a woman's name\"; Nima corrects immediately."
+  },
+  {
+   "i": 11,
+   "verdict": "wrong",
+   "note": "No correction: ch2 reaffirms \"The passage was still officially sealed, though its door had been painted over\". It is still officially sealed; nothing says the claim was false. (Possibly only that the seal is not actually effective.)"
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": "ch2: \"Tovan claimed he had borrowed it from the Hall's collection. The collection denied owning it.\""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": "ch2 \"I didn't know there was a note\" / \"I don't write. I carry.\" then \"The red key warmed: Pell was lying\" (key warms for the second claim)."
+  },
+  {
+   "i": 14,
+   "verdict": "unclear",
+   "note": "Same as false_beliefs[7]: belief is only implied, ch1 stated chapter unsupported (earliest ch3)."
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": "ch4 line: \"Ivara had read 'in the niche' as 'buried'\". Conflicts with false_beliefs[8] which says corrected ch5."
+  }
+ ]
+}

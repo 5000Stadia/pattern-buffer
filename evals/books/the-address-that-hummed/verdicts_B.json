@@ -1,0 +1,1675 @@
+{
+ "entities": {
+  "ivara": {
+   "verdict": "ok",
+   "note": "'the youngest hand' is Mara's role phrase in ch3 (\"The key goes to the youngest hand\"); Ivara, the baby of the house, then places and retakes the key, so it fits her, though it is a description rather than a name.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tovan": {
+   "verdict": "ok",
+   "note": "'the Chair' is used for Tovan in ch1 and ch6. In ch6 Eren Vey is also given examiner duty six days a week, but the alias 'senior examiner' appears only in ch1, for Tovan.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "eren_vey": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "pell": {
+   "verdict": "ok",
+   "note": "'aven' alone first appears in ch3 ('the Hall called him Aven'); in ch2 it appears only inside 'Pell Aven', so ch3 is correct. 'porter' is used only for Pell, apart from the generic plural 'some porters' in ch3.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nima": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "alis": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "mara": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "oru": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "vellum_hall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "mouth_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "understair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tin_orchard": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "sump": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nacre_stair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "first_house": {
+   "verdict": "ok",
+   "note": "Aliases hold as the book mostly uses them (ch3: Mara brought Alis 'into the Latch' / Tovan 'helped hide her in the first house'). But ch5 says the fragments 'were not all the same room' and that the child-sized chamber beneath the Understair was the house's 'memory of being small', and ch5 l11 lists the Latch among rooms that are 'not the same room'. So 'the hidden chamber' and 'latch' are fragment names, not exact synonyms. Treat as acceptable but soft.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "red_key": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "bone_comb": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tin_box": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "brass_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "glass_thimble": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "black_thread": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "chalk_moth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "numbered_spool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "seventh_tooth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hinge": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "washers": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "paper_bird": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "address_tag": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "ledger": {
+   "verdict": "ok",
+   "note": "The ch3/ch5 'old ledger' (says Alis was buried in the family niche; Tovan wrote 'buried in the niche' on it) is plausibly the same as Tovan's ch1 ledger of repairs and private notes, but the book never says so outright.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "satchel": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "false_bottom": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "metal_fruit": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "recipe_sheet": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stone_basin": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "handprint_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "alis_name": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "table_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "desk_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "grit_ring": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "family_niche": {
+   "verdict": "ok",
+   "note": "Ch4 defines 'in the niche' as 'a place where a family keeps what it cannot carry'. Kind 'concept' is defensible.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "sleeping_gallery": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "four_name_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "address_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "blue_thread": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "registry": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_old_keeper": {
+   "verdict": "ok",
+   "note": "Only one mention. Ch2: Tovan 'had not borrowed' the comb (the key warmed), which leaves open whether he got it from this keeper.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nima_grandmother": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "winter_roll": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "round_door": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "red_key_tooth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "table": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "chamber_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tree_fruit": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "paper_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "child_chair": {
+   "verdict": "ok",
+   "note": "ch4 l49 also puts 'a child-sized chair, a chalk moth' in the room beyond the Nacre Stair. It is unclear whether that is the same chair (see text_contradictions).",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "wall_chair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "dining_chairs": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "doorless_roll": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_register": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "petition": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "route_mark": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "pocket_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "eren_tag": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "recipe_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_assembly": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_record_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stair_landing": {
+   "verdict": "ok",
+   "note": "ch4 has several landings ('arrive at a different landing', 'At one landing, the stair opened onto the Tin Orchard'). 'the landing' means the one where the map was set.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "shell_wall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "door_passage": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  }
+ },
+ "same_as": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "Lio is the missing room's self-name from ch1 l29 ('It's what the missing room calls itself'), so Lio = Latch from ch1. Ch5 never mentions Lio; ch5 only fits as the chapter where Latch = first house is stated outright. The Latch/first-house identity is already strongly implied in ch3 (l39-49)."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "Ch5 l57: 'The Latch was the name Nima heard at the Orchard. First House was what Mara called it.' This is implied from ch3 (Mara brought Alis 'into the Latch'; Tovan hid her 'in the first house'). Caveat: ch5 l11 calls the Latch one of the 'connected rooms... not the same room'."
+  }
+ ],
+ "not_same": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "The two threads are distinct, but the note's detail is off: the hinge pin 'bore a faded blue stain' (ch1 l35); it is not wrapped in blue thread."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "'an earlier keeper of the Hall' (ch2 l5) implies someone before Tovan. The book never names this keeper."
+  },
+  {
+   "i": 6,
+   "verdict": "unclear",
+   "note": "Ch5 l57 says plainly: 'The Mouth Room remained a separate answering chamber, connected to the first house by a shared wall.' But ch2 l15-17 contradicts it: Tovan says 'Unless they're the same room' and 'the red key stay[ed] cool... Tovan's suggestion was true'. Ch6 l5-7 also gives the Mouth Room's 'true name' as 'First House'. The book disagrees with itself."
+  }
+ ],
+ "locations": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "wrong",
+   "note": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "wrong",
+   "note": "Ivara enters the room in ch4: 'Still, Ivara stepped through first' (ch4 l65). She is inside when 'Ivara saw the room's five places set for them' (l81), and Eren Vey follows her over the threshold (l85). from_chapter should be 4. (Ch4 l67 'Before they entered the opening' muddles the order; see text_contradictions.)"
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "wrong",
+   "note": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": "The entry is right, but the evidence 'He went through first' refers to Pell, not Eren Vey. Eren Vey is shown in the chamber at ch3 l21."
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "wrong",
+   "note": "ch4 l85: 'He placed the thread against his ear and stepped over the threshold. The room took a breath.' from_chapter should be 4."
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "wrong",
+   "note": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 32,
+   "verdict": "wrong",
+   "note": "Alis is still in the first house in ch6: 'they saw Alis standing in the Latch, with the tin box on the stool Alis had used in the first house' (ch6 l9), and she lives 'sometimes in the first house' (l73). to_chapter should be 6/null."
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 35,
+   "verdict": "wrong",
+   "note": "Ch3 opens in the Sump: 'Ivara took the red key from the stone basin' (ch3 l3), and Tovan 'lifted the bone comb' and Pell 'held the tin box against his chest' before going through the round door. to_chapter should be 3."
+  },
+  {
+   "i": 36,
+   "verdict": "ok",
+   "note": "The entry is right, but the evidence 'Tovan lifted the bone comb' happens in the Sump. Tovan is in the chamber at l27 ('Tovan lunged')."
+  },
+  {
+   "i": 37,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 38,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 39,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 40,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 41,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 42,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 43,
+   "verdict": "wrong",
+   "note": "ch3 l3: 'Ivara took the red key from the stone basin', so the key is in the Sump in ch3. Range should be 2-3."
+  },
+  {
+   "i": 44,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 45,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 46,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 47,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 48,
+   "verdict": "unclear",
+   "note": "The evidence 'Nima still held the red key' (ch6 l9) places Nima and the key at the Vellum Hall, looking through the Mouth Room's second door into the Latch. The key reaches the first house only if Alis's tin box (on the stool in the Latch) is where she puts it. Where the l15-19 conversation takes place is never stated."
+  },
+  {
+   "i": 49,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 50,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 51,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 52,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 53,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 54,
+   "verdict": "wrong",
+   "note": "ch3 l9 (in the Sump, before the door): 'Pell held the tin box against his chest.' Range should be 2-3."
+  },
+  {
+   "i": 55,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 56,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 57,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 58,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 59,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 60,
+   "verdict": "wrong",
+   "note": "Eren Vey carries the map through the Sump at the start of ch3, before using it in the chamber (ch3 l21). Range should be 2-3. Same systematic Sump-ends-at-2 error."
+  },
+  {
+   "i": 61,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 62,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 63,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 64,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 65,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 66,
+   "verdict": "wrong",
+   "note": "Ivara has the thimble in her pocket in the Sump at the start of ch3. Range should be 2-3. Same systematic error."
+  },
+  {
+   "i": 67,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 68,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 69,
+   "verdict": "wrong",
+   "note": "The thread is still in the thimble at the start of ch5: 'Alis took the black thread from inside the thimble' (ch5 l15). By the key's own overlap convention (see holdings 2/3), to_chapter should be 5."
+  },
+  {
+   "i": 70,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 71,
+   "verdict": "wrong",
+   "note": "ch3 l5, in the Sump: 'Tovan lifted the bone comb.' Range should be 2-3."
+  },
+  {
+   "i": 72,
+   "verdict": "ok",
+   "note": "The evidence sentence is from the Sump. The comb is in the chamber with Tovan at ch3 l89."
+  },
+  {
+   "i": 73,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 74,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 75,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 76,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 77,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 78,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 79,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 80,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 81,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 82,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 83,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 84,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 85,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 86,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 87,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 88,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 89,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 90,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 91,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 92,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 93,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 94,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 95,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 96,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 97,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 98,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 99,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 100,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 101,
+   "verdict": "wrong",
+   "note": "The basin is a fixed object and is still in the Sump in ch3 (l3, 'took the red key from the stone basin') and ch5 (l41, 'the Sump, with its clay floor and stone basin'). to_chapter should be null, or at least 5."
+  },
+  {
+   "i": 102,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 103,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 104,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 105,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 106,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 107,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 108,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 109,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 110,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 111,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 112,
+   "verdict": "ok",
+   "note": "The text never states where the register is kept. Hall is the natural reading."
+  },
+  {
+   "i": 113,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 114,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 115,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 116,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 117,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 118,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 119,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 120,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 121,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 122,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 123,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 124,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 125,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 126,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 127,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 128,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 129,
+   "verdict": "ok",
+   "note": "The passage leads off the round door in the Sump wall, and the Sump lies under the stairs, reached from the Understair. 'sump' would be more precise."
+  },
+  {
+   "i": 130,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 131,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 132,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "holdings": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "wrong",
+   "note": "Eren Vey keeps the map through ch4 ('The objects... were divided among them: map to Eren Vey', ch4 l43) and ch5 ('Eren Vey set the brass map before her', ch5 l5). It passes to Ivara only in ch5 ('Ivara folded the map and kept it'). to_chapter should be 5."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": "Duplicate of item 29."
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": "This overlaps with item 17. The evidence sentence is self-contradictory ('He gave the bird to Eren Vell', but Pell is Eren Vell); ch6 l71 'Eren Vell kept the paper bird in his coat' confirms Pell."
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": "Pell tied the thread on (ch2 l69) and handed the parcel over in ch1. Marginal but supported."
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "unclear",
+   "note": "Pell holds the tooth only in backstory, never in the story's present. The book also contradicts itself on when: ch2 l57 says 'Before I sent you the box, I moved the tooth', but ch2 l115 sets the move in his childhood in the first house."
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 32,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 35,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "containers": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": "This is an inscription on the tag, not a physical containment."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "This containment is backstory (Tovan hid the tooth there; Pell later moved it beneath the moth). In the story's present the tooth is no longer in the false bottom."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "knowledge": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": "He hears the name in ch3 (l53), but the book reveals that it was his own name only in ch4 l47. He already knew about the night (ch3 l77, l105)."
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": "Ivara already learns in ch3 that 'the baby Ivara had slept in a drawer' in the first house (ch3 l71) and finds her name on the wall (l23). Ch4 adds that she was one of the four children."
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "wrong",
+   "note": "Ch5 never mentions Lio. The name heard at the Orchard is the Latch: 'The Latch was the name Nima heard at the Orchard. First House was what Mara called it.' (ch5 l57). Lio's identity as the missing room's self-name was given in ch1 l29, and Ivara 'understood' it there."
+  }
+ ],
+ "false_beliefs": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "Sincere in ch3 ('I believed the Latch could not open again'). Ch6 l11 calls his claim 'false' and frames it as an admission, but does not make it a knowing lie."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "The belief is stated in ch5 l47, though Ivara has held it since childhood (ch1: 'no label and no lock to fit')."
+  },
+  {
+   "i": 5,
+   "verdict": "unclear",
+   "note": "Once Ivara learns in ch3 that Alis was alive ('I knew she was alive', ch3 l83), she knows Alis must have breathed, so the belief is refuted in ch3. Ch5 l65 only explains what 'unplaced' really meant. corrected_chapter of 3 is at least as defensible."
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "unclear",
+   "note": "Ch1 never states or shows Ivara's view of Alis's blood relation, and Alis is not called her sister until ch3 l25. The belief is only implied by Tovan's correction ('She was not your sister by blood', ch3 l39). from_chapter should be 3."
+  },
+  {
+   "i": 8,
+   "verdict": "wrong",
+   "note": "The ch4 passage that reveals the misreading also corrects it: Mara 'had said Alis was \"in the niche,\" the phrase used in Oru for a place where a family keeps what it cannot carry. Ivara had read \"in the niche\" as \"buried\"...' (ch4 l71). Corrected in ch4 (Ivara already knew in ch3 that Alis was not buried), not ch5. This also contradicts corrections[17], which says 4-4."
+  },
+  {
+   "i": 9,
+   "verdict": "unclear",
+   "note": "The text never shows this belief to be false. Ch3 l105 says only that he 'stopped believing the song belonged ONLY to his mother', and ch5 l39 says his mother sang in the first house ('the walls gave a low note when she sang'), so the song may really be hers. corrections[16]'s wording ('only his mother's') is accurate; this wording is not."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "corrections": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "unclear",
+   "note": "Same issue as false_beliefs[5]: once she learns in ch3 that Alis was alive, the reading 'had not taken a first breath' is refuted. Ch5 explains the phrase's true sense."
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "wrong",
+   "note": "Nothing is corrected. Ch2 l31 reaffirms it: 'The passage was still officially sealed, though its door had been painted over and the paint had a fresh crack.' The official status still stands. (What is false is Ivara's own claim that she 'had never entered the Understair' (ch1 l11), which the key exposes.)"
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": "The key warms after 'I don't write. I carry.' with the ink on his palms. Whether he also knew about the note is not tested directly, but the note is signed 'E. Vell'."
+  },
+  {
+   "i": 14,
+   "verdict": "unclear",
+   "note": "stated_chapter 1 is unsupported. Ch1 never presents Ivara's belief about Alis's blood relation; the earliest support is ch3."
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "missing": [
+  "False belief: Eren Vey thinks speaking his memory of the first house will make the room claim him. Held in ch4 (l83, 'he feared that speaking it would make the room keep him'), corrected in ch5 (l39, 'thinking it would make the room claim him. Instead, the lines on the brass map joined into a single loop').",
+  "False belief: Ivara takes 'Lio' for the name of a woman who signed the petition (ch1 l19, 'I took it for a woman's name'), corrected in ch1 (l29). It is listed in corrections but missing from false_beliefs.",
+  "Fact/lie: Ivara HAS entered the Understair. Ch1 l11: the key 'warmed at the second claim' ('that she had never entered the Understair').",
+  "Lie: Tovan's ch4 'I told you it was dangerous', with the key warming (ch4 l33-35). Only the 'lost' half appears, as corrections[7].",
+  "Location/container: in ch4 the red key sits in the tin box's depression. Ch4 l45: 'Ivara set the key into the depression.'",
+  "Location: Alis at the Vellum Hall in ch6 ('Alis came to the Hall on the first day of every new cycle', l25), and in the first house/Latch in ch6 (l9).",
+  "Location: the seventh tooth comes loose in ch5 and 'fell beside the comb' on the table (ch5 l25). The tooth's location after ch3 is not tracked.",
+  "Knowledge: Ivara learns from Mara's 'Names without a door' roll that Eren Vey had temporary residence in the first house, and that Mara kept the evidence from Tovan (ch3 l95).",
+  "Knowledge: Ivara learns that Mara had been a Hall clerk, cared for Alis before and after the Partition, and took the red key when the first house became inaccessible (ch3 l79).",
+  "Knowledge: in ch4 l47 the reader learns that the name at the end of the spool was Eren Vey's own and that his mother took him away before the split.",
+  "False belief: Tovan thought writing 'buried in the niche' would protect Ivara ('He thought a completed form would protect Ivara... Instead, his neat writing gave her a false memory', ch5 l67).",
+  "Holding: Ivara briefly holds Nima's LATCH bark strip in ch4 ('She held the bark strip out to Ivara, who put it beside the brass map', l19). Nima holds 'the key and the bark strip' again at l63.",
+  "Entity: the Great Partition (the event) is never entered, though it drives the plot (ch2 l93 'a terrible confusion called the Great Partition'; ch3 l41)."
+ ],
+ "text_contradictions": [
+  "Mouth Room vs first house. Ch2 l15-17: Tovan says 'Unless they're the same room', and the red key stays cool ('Tovan's suggestion was true'). Ch5 l11/l57: 'not the same room'; 'The Mouth Room remained a separate answering chamber'. Ch6 l5-7: the Mouth Room's 'true name' is 'First House'.",
+  "Ch2 l17: in the Hall, 'A small folded paper lay beneath the false bottom, tucked beside the map and thimble, though she had not opened the box.' The map and thimble have not been discovered yet; they are found only in the Sump at l33-35.",
+  "Timing of the tooth move. Ch2 l57: 'Before I sent you the box, I moved the tooth beneath the moth.' Ch2 l115: Pell did this as a child in the first house. Also, ch2 l71-73: Pell says he did not know what was inside the box, yet ch2 l57 has him finding the tooth in its false bottom.",
+  "The map's whereabouts in ch2. l65: 'Eren Vey held the map.' l107: the map 'clung to the basin'. l113: 'Eren put the map inside his coat.' l125: 'Eren Vey caught the map before it fell.'",
+  "Ch3 l17: Pell says 'That was Eren Vey. I said I didn't remember the place.' Pell never says this in ch2; only Eren Vey does ('I remember a song, but not the place').",
+  "Ch3 l59 and ch6 l21: the chalk moth stays in the hidden chamber beneath the Understair. Ch4 l49: the room beyond the Nacre Stair has 'a child-sized chair, a chalk moth'.",
+  "Ch4 l65: 'Still, Ivara stepped through first.' Immediately after, l67: 'Before they entered the opening...'",
+  "Ch5 l73: 'Pell found a drawer... He gave the bird to Eren Vell, who read the name and then tucked it into his coat.' Pell IS Eren Vell.",
+  "Ch6 l9: 'Nima still held the red key.' l15: 'Alis placed it on the table.' l19: 'Nima handed the key to Alis.' Alis places the key before she has received it.",
+  "Seating. Ch5 l3: 'Ivara found ALIS on the chair by the wall. On the stool was her own name.' Ch6 l9: 'the stool Alis had used in the first house'. Ch5 l93: Tovan 'sat at the fifth place'.",
+  "Ch5 l15: Alis 'unlooped it from the spool', but the spool is still in Eren Vey's coat until l25 ('Eren Vey produced the spool from his coat').",
+  "Ch1 l31: 'Ivara glanced at Eren. \"You signed the petition.\"' Nima, not Eren, answers."
+ ]
+}

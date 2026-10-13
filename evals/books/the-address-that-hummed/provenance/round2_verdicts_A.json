@@ -1,0 +1,1636 @@
+{
+ "entities": {
+  "ivara": {
+   "verdict": "ok",
+   "note": "'the youngest hand' (ch3, chalk moth in Mara's voice: 'The key goes to the youngest hand') is an interpretive referent, plausibly Ivara (youngest of the four children).",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tovan": {
+   "verdict": "ok",
+   "note": "Key omits the nickname 'the Chair' (ch1 'the younger clerks called him the Chair'; ch6 'The Chair no longer had to remain seated').",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "eren_vey": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "pell": {
+   "verdict": "ok",
+   "note": "'aven' occurs in ch2 only inside 'Pell Aven'; standalone 'Aven' first ch3 ('the Hall called him Aven'). Defensible. Identity with Eren Vell is revealed ch2, alias use of 'eren vell' in ch1 is fine.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nima": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "alis": {
+   "verdict": "wrong",
+   "note": "first_chapter should be 1, not 3. Ch1: 'On the back, someone had written Alis Noll in faded red ink' and Ivara asks Tovan 'Did she tell you where Alis was?'. Key itself puts alis_name (the written name) on the tag in ch1 (containers[5]).",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {
+    "alis noll": "Appears in ch1 ('someone had written Alis Noll in faded red ink'), not first in ch3."
+   }
+  },
+  "mara": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "oru": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "vellum_hall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "mouth_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "understair": {
+   "verdict": "ok",
+   "note": "'the surface passage' (ch2: 'They moved away from the basin toward the surface passage, but remained in the Sump') is never equated with the Understair; it may be the route up, or the Understair itself. Unsupported.",
+   "bad_aliases": [
+    "the surface passage"
+   ],
+   "bad_alias_first_chapter": {}
+  },
+  "tin_orchard": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "sump": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nacre_stair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "first_house": {
+   "verdict": "ok",
+   "note": "Merging Latch/Lio/missing room/hidden chamber is supported by ch5 ('They were all the same room as it remembered itself') but the identity of Latch=first house is only explicit in ch5 (implicit ch3-4). 'lio' = the missing room is ch1.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "red_key": {
+   "verdict": "ok",
+   "note": "'key' also names the mark beside Ivara's name (ch3 'Beside Ivara's was a key') and the key-shaped outline (ch4); minor.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "bone_comb": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tin_box": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "brass_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "glass_thimble": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "black_thread": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "chalk_moth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "numbered_spool": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "seventh_tooth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hinge": {
+   "verdict": "ok",
+   "note": "'hinge pin' is the pin of the hinge (ch1 'Its pin was wrapped in blue thread'; ch4 'matched the shape of the hinge pin'), a part, not the whole hinge. Also 'hinge' in ch1 'hinge inventory' / 'spare door hinges' is plural stock, not this hinge.",
+   "bad_aliases": [
+    "hinge pin",
+    "the hinge pin"
+   ],
+   "bad_alias_first_chapter": {}
+  },
+  "washers": {
+   "verdict": "ok",
+   "note": "'washer' (singular) also names other individual washers: ch4 'Nima placed a washer on the step', 'Her grandmother's washer had been smooth with use', 'every child received a washer'. 'the necklace' exact string first ch4, but 'Nima's necklace' (ch1 end) already refers to it.",
+   "bad_aliases": [
+    "washer"
+   ],
+   "bad_alias_first_chapter": {
+    "the necklace": "ch1 end: 'At the gate, Nima's necklace made a distant chime' already refers to it; exact string 'the necklace' first ch4."
+   }
+  },
+  "paper_bird": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "address_tag": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "ledger": {
+   "verdict": "ok",
+   "note": "ch6 'ledger' ('no ledger agreed', 'No ledger followed her') is generic, not this book. 'the old ledger' (ch3, ch5) is presumably the same ledger.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "satchel": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "false_bottom": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "metal_fruit": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "recipe_sheet": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stone_basin": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "handprint_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "alis_name": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "table_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "desk_drawer": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "grit_ring": {
+   "verdict": "ok",
+   "note": "ch1 'empty ring of grit' in the Orchard tray is likely a different referent from the ring inside the ch6 fruit.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "family_niche": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "sleeping_gallery": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "four_name_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "address_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_map": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "blue_thread": {
+   "verdict": "ok",
+   "note": "ch1 has blue thread both on the parcel and on the hinge pin in the Orchard; text never explains (ch2 'It did not explain the blue thread'). Treated as one thread by key.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "registry": {
+   "verdict": "ok",
+   "note": "alias 'the Registry' is first used in ch1, not ch2.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {
+    "the Registry": "ch1: 'In the Registry, a question without an address could wander for days.'"
+   }
+  },
+  "hall_old_keeper": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "nima_grandmother": {
+   "verdict": "ok",
+   "note": "Never named; fine.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "winter_roll": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "round_door": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "red_key_tooth": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stool": {
+   "verdict": "ok",
+   "note": "ch6 'tin box on a stool' is presumably the same stool as ch5; not stated.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "table": {
+   "verdict": "ok",
+   "note": "Alias is a description fragment; note ch2 'the table' in the Hall is a different table.",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "chamber_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "tree_fruit": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "paper_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "child_chair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "wall_chair": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "dining_chairs": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "doorless_roll": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_register": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "petition": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "route_mark": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "pocket_strip": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "eren_tag": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "recipe_note": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_assembly": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "hall_record_room": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "stair_landing": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "shell_wall": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  },
+  "door_passage": {
+   "verdict": "ok",
+   "note": "",
+   "bad_aliases": [],
+   "bad_alias_first_chapter": {}
+  }
+ },
+ "same_as": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "unclear",
+   "note": "Ch1 Nima: 'Lio isn't a person. It's what the missing room calls itself' => Lio = the missing room = the Latch (petition). Latch = first house is only explicit in ch5 (same_as[2]); so ch1 holds for Lio=Latch, not Lio=first_house."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": "Ch5: 'The Latch was the name Nima heard at the Orchard. First House was what Mara called it.' Implicit earlier (ch3 'brought her home from the Latch' / 'hide her in the first house')."
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "Ch5: 'The child-sized chamber beneath the Understair was its memory of being small'; ch4 shows the chair+moth room reached from the stair. Ch6 still speaks of 'the hidden chamber beneath the Understair' as separate place."
+  },
+  {
+   "i": 4,
+   "verdict": "unclear",
+   "note": "Ch5: 'The Mouth Room was the part that still knew how to answer a question... None of these rooms were copies. They were all the same room as it remembered itself' - but also 'each fragment received one of its names', and ch6 treats Mouth Room and Latch as adjacent rooms joined by a second door. Identity vs part-of is not settled."
+  }
+ ],
+ "not_same": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "locations": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": "Evidence 'He went through first' refers to Pell; Eren Vey is in the chamber right after ('Eren Vey turned the brass map toward the chalk moth')."
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 16,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 28,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 32,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 33,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 34,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 35,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 36,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 37,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 38,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 39,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 40,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 41,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 42,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 43,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 44,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 45,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 46,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 47,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 48,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 49,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 50,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 51,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 52,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 53,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 54,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 55,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 56,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 57,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 58,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 59,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 60,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 61,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 62,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 63,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 64,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 65,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 66,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 67,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 68,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 69,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 70,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 71,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 72,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 73,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 74,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 75,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 76,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 77,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 78,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 79,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 80,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 81,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 82,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 83,
+   "verdict": "ok",
+   "note": "Wearer-based; ch4 she is on the Nacre Stair wearing it (locations[84])."
+  },
+  {
+   "i": 84,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 85,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 86,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 87,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 88,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 89,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 90,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 91,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 92,
+   "verdict": "unclear",
+   "note": "Evidence is 'She left the Hall with the handprint strip tucked into her coat' - by end of ch1 it is outside the Hall, pressed to the ground at the Orchard gate."
+  },
+  {
+   "i": 93,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 94,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 95,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 96,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 97,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 98,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 99,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 100,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 101,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 102,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 103,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 104,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 105,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 106,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 107,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 108,
+   "verdict": "unclear",
+   "note": "No text places Nima's grandmother anywhere; evidence is only Nima's belief that she built the Latch."
+  },
+  {
+   "i": 109,
+   "verdict": "unclear",
+   "note": "Ch2 Pell: moved the tooth 'beneath the moth in the hidden chamber'. From ch3 Eren carries the spool (with tooth) out and through ch4 stair; back at the first-house table in ch5. Range 2-5 as 'first_house' skips the carrying."
+  },
+  {
+   "i": 110,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 111,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 112,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 113,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 114,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 115,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 116,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 117,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 118,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 119,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 120,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 121,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 122,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 123,
+   "verdict": "unclear",
+   "note": "Contradicts location[49]/ch6 'placed it in the tin box'; order of ch6 events unclear."
+  },
+  {
+   "i": 124,
+   "verdict": "unclear",
+   "note": "See locations[123]."
+  },
+  {
+   "i": 125,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 126,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 127,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 128,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 129,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 130,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 131,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 132,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 133,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 134,
+   "verdict": "ok",
+   "note": "Stool exists in ch5 (Ivara's name on it); the 'tin box on a stool' evidence is ch6."
+  }
+ ],
+ "holdings": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "unclear",
+   "note": "Ch6 has Alis put the key in the tin box ('placed it in the tin box'); later 'Nima returned to the Orchard with the red key for a single afternoon... took it back to the Hall'. Order and whose hands is not settled."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "wrong",
+   "note": "Range is inverted (from 4 to 3); evidence 'Eren Vey held the map' is ch2. Ch4 does not state who holds the brass map ('They set the brass map on the landing'); ch5 'Eren Vey set the brass map before her'."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": "Ch4 is ambiguous: 'Tovan reached for the bone comb, and Pell blocked him'; 'Tovan followed behind with no tool in his hand'. Ch5 'He held the bone comb close to his chest'; ch6 comb with Tovan."
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "ok",
+   "note": "Tooth tied to spool Eren holds (ch3); in ch5 he still has it until 'The seventh tooth came loose from its thread and fell beside the comb', so range could extend to 5."
+  },
+  {
+   "i": 16,
+   "verdict": "unclear",
+   "note": "Range ends ch3 but ch4 opens with 'The brass washers on her necklace clicked with each breath' (she is wearing it); she removes it later in ch4."
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 19,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 20,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 21,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 22,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 23,
+   "verdict": "unclear",
+   "note": "Ch4: 'Eren Vey tied a loose end of black thread to the numbered spool without unspooling it from the glass thimble' - the thread stays in the thimble (Ivara's per holdings[12]); he handles/lays it ('laid the black thread along the handrail'). Holding vs handling unclear."
+  },
+  {
+   "i": 24,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 25,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 26,
+   "verdict": "wrong",
+   "note": "Forked tooth is part of the red key; key is held by Tovan in ch3 ('He took the key from Ivara') and by Nima from ch4, so 'held by ivara 1-4' contradicts the key's own holders."
+  },
+  {
+   "i": 27,
+   "verdict": "ok",
+   "note": "Blue thread on the parcel Eren Vell hands to Ivara at the Hall door (ch1); holder changes immediately to Ivara."
+  },
+  {
+   "i": 28,
+   "verdict": "unclear",
+   "note": "Evidence only says she wrote 'pocket' on the Mouth Room's bark strip and scratched it out; nothing says she holds it (it is a strip pinned/kept in the Hall)."
+  },
+  {
+   "i": 29,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 30,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 31,
+   "verdict": "wrong",
+   "note": "Ch6: 'She threaded the washers onto a cord around a young tree instead' - they are on a tree, not held by Nima (location[117] is right)."
+  }
+ ],
+ "containers": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "knowledge": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "unclear",
+   "note": "Ch3 only says 'He heard a name nobody else could hear. He did not tell them what it was'; that it was his own name and the single night are revealed in ch4. Ch3 narrator already says 'He had been in the first house as a baby' (ch4: 'for a single night')."
+  },
+  {
+   "i": 8,
+   "verdict": "unclear",
+   "note": "Evidence is generic narration; Tovan opposes joining in ch4 ('If you join it, the Hall loses its boundaries') and the text never shows him learning this."
+  },
+  {
+   "i": 9,
+   "verdict": "unclear",
+   "note": "'who' is 'narration', not a character; the fact is true (ch5 'She could leave only when someone remembered the room as one place')."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "Ch5 pronoun ambiguity: 'gave the bird to Eren Vey, who read the name... For years, he had believed the porter name was the only one' - content shows Pell."
+  },
+  {
+   "i": 11,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 12,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 13,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 14,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 15,
+   "verdict": "wrong",
+   "note": "Tovan does not learn this; he did it. Ch2: 'I did not keep it. I hid it where no one would use it.' Ch6: he 'admitted that he had hidden the seventh tooth' publicly. Ch4 narrator: 'Tovan had lied about the tooth being lost'."
+  },
+  {
+   "i": 16,
+   "verdict": "unclear",
+   "note": "Ch5 'The map had been drawn by Mara from memory' is narration, no learner named. Also conflicts with ch2 (map 'older than the Orchard... older than the Hall')."
+  },
+  {
+   "i": 17,
+   "verdict": "ok",
+   "note": "Ch6: assembly 'gave him one day a week, and assigned the other six to Eren Vey'."
+  },
+  {
+   "i": 18,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "false_beliefs": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": "First stated ch3, but ch1 Ivara already asks Tovan 'Did she tell you where Alis was?', which does not fit a belief she is dead; see text_contradictions."
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": "Ch3: 'I believed the Latch could not open again... That belief had lasted for years. It fell now.' Ch6 calls it a false 'claim'."
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "wrong",
+   "note": "Tovan does not believe the tooth is lost; he hid it and told Pell it was lost (ch4 narrator: 'Tovan had lied about the tooth being lost'; ch2 Tovan: 'I hid it where no one would use it'). It is a lie, not a false belief; correction already in ch2, public admission ch6."
+  },
+  {
+   "i": 9,
+   "verdict": "wrong",
+   "note": "Tovan does not believe this; ch3: 'This was another practiced answer. Tovan had known the child.' It is a lie by Tovan, not his false belief (see corrections[9], which frames it correctly as a claim)."
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": "Pronoun ambiguity in ch5 (see knowledge[10]); belief predates ch5 (ch2 'Eventually I became the person they expected to see', ch3 'I thought that was what I was allowed to be')."
+  }
+ ],
+ "corrections": [
+  {
+   "i": 0,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 1,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 2,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 3,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 4,
+   "verdict": "ok",
+   "note": "Evidence is ch3 Pell: 'the baby Ivara had slept in a drawer padded with old bark'."
+  },
+  {
+   "i": 5,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 6,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 7,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 8,
+   "verdict": "unclear",
+   "note": "Claim that the tooth was lost is only reported in ch4 (Pell: 'You told me it was lost'; narrator 'Tovan had lied'); Tovan already says in ch2 'I hid it', public admission ch6. Evidence quote 'I told you it was dangerous' is not the correction."
+  },
+  {
+   "i": 9,
+   "verdict": "ok",
+   "note": ""
+  },
+  {
+   "i": 10,
+   "verdict": "ok",
+   "note": ""
+  }
+ ],
+ "missing": [
+  "Tovan's nickname 'the Chair' (ch1: 'the younger clerks called him the Chair because he never stood while deciding anything'; ch6 'The Chair no longer had to remain seated') is not an alias of tovan.",
+  "Alis is first mentioned in ch1 (tag: 'someone had written Alis Noll in faded red ink'; 'Did she tell you where Alis was?'), contradicting alis.first_chapter=3.",
+  "Eren Vey false belief: the song is his mother's humming (ch2 'He had decided it was his mother's humming'; ch3 'he had stopped pretending the memory belonged only to his mother') - not in false_beliefs/corrections.",
+  "Correction on the Understair: ch1 'officially sealed since Ivara was small' vs ch2 'The passage was not sealed.' Not in corrections.",
+  "Correction on the comb: ch2 'Tovan claimed he had borrowed it from the Hall's collection of unwanted instruments. The collection denied owning it' ... 'Ivara understood that the comb had not been borrowed from the collection.'",
+  "Pell's lie/claim in ch2: 'I didn't know there was a note' / 'I don't write. I carry.' vs the note signed 'E. Vell' and 'His palms were stained with blue ink' (key warms/cools unreliably there). Not in corrections.",
+  "Seventh tooth trail not captured: Tovan hid it in the false bottom (ch2 'Tovan had hidden it there'), Pell found it and moved it 'beneath the moth', tied it to the spool (ch3 'the seventh tooth from the comb tied around its middle'); no holdings/containers entries for tooth in tin box/false bottom/under moth, nor for Pell holding it.",
+  "Ivara's mistranslation 'in the niche' -> burial (ch4: 'Ivara had translated that into burial because the Hall's register had used the word unplaced') is a separate false belief/correction from the 'no first breath' one.",
+  "Tovan holds the brass map briefly ('Tovan snatched the map from the basin', ch2) and the spool ('Tovan seized the spool', ch4); not in holdings.",
+  "Nima's 'ours to protect' heard as 'ours to own' (ch4) is the cause of her false belief; not recorded as a correction of its own.",
+  "Possible not_same candidates absent: Mouth Room's door vs the round door (ch2 'small and round, with a brass lip' echoing ch1 Mouth Room door); the four bark strips (handprint, Mouth Room strip, LATCH/four-name strip, blank address strip); Tovan's table in the Hall (ch2) vs the five-seat table (ch5)."
+ ],
+ "text_contradictions": [
+  "Key warms for lies: ch1 'it warmed when she lied'. But ch3 'The red key warmed in Ivara's palm. She believed him.'; ch5 'the red key... warmed. Pell's words were true.'; ch4 'The red key stayed cold. Tovan had lied about the tooth' and 'The red iron cooled against her palm, a sign she had spoken truth'; ch2 'The claim seemed true until he saw the ink... The red key stayed cool.' (the claim 'I don't write' was false).",
+  "Ch1: 'someone had written Alis Noll in faded red ink' vs 'The red ink was too fresh.'",
+  "Ch2 Eren Vey says 'I remember a song, but not the place'; ch3 Ivara tells Pell 'You said you remembered the song, but not the place' and Pell answers 'I said I didn't remember the place.' Speaker misattributed.",
+  "Ch3 Tovan: 'I did not know whether the room had kept her alive' (key stays hot/warm=lie ambiguous, narrator says 'Tovan's uncertainty was true') vs ch4 'You hid Alis there because you knew', ch5 'You knew I was alive and let Ivara mourn me', ch6 'admitted that he had known Alis was alive'.",
+  "Ch1 Ivara asks Tovan 'Did she tell you where Alis was?' (implies Alis alive/locatable) vs ch3-4 Ivara believed Alis dead and buried.",
+  "Ch2 brass map 'older than the Orchard' / 'older than the Hall' ('a map of rooms before they were divided') vs ch5 'The map had been drawn by Mara from memory', Mara being a living clerk who signed the division.",
+  "Ch2 'Each numbered tooth vibrated except the seventh' implies a seventh tooth on the comb, but the seventh tooth is missing/hidden ('Its unnumbered gap'; 'the missing tooth').",
+  "Ch2 Tovan disclosed 'I hid it where no one would use it' (the tooth) before ch4 where Pell cites 'You told me it was lost' as if unresolved; ch2 vs ch4 order of the tooth confession.",
+  "Ch1 washers: 'one for each year she had lived in the Orchard' vs ch1 end 'one washer for each tree that had offered its fruit to a family'.",
+  "Ch4: Nima takes necklace off and ties it to the hinge in the empty tray; ch6 'She threaded the washers onto a cord around a young tree instead' and ch6 'stopped wearing one washer for each year' (also hinge/tray references: ch1 hinge lay in tray, ch6 grit ring 'the outline left by the Latch's old hinge' suggests hinge gone).",
+  "Ch6: Alis 'placed it in the tin box' (key), then 'Nima returned to the Orchard with the red key for a single afternoon' and also 'Ivara did not take out the key'.",
+  "Ch2 Pell: 'The Hall erased my name' / 'Eventually I became the person they expected to see' vs ch6 'Eren Vell kept the name he had chosen after the Hall erased Pell Aven'.",
+  "Ch5: 'There were five chairs, all with names carved under the seats' but Ivara's name is on a stool ('On the stool was her own name').",
+  "Ch5: Beyond the door 'was the Understair, its clay floor and stone basin' - clay floor and stone basin are the Sump's (ch2); Understair/Sump boundary blurred.",
+  "Ch3 Tovan: Alis 'was not your sister by blood... Your mother brought her home from the Latch' vs ch5 Alis: Mara found her 'alone in a room that had lost its address' and 'brought her through the Mouth Room as a baby'; also ch3 'Mara had cared for Alis after the Partition' vs Alis as one of the four child-namers of the house before the division.",
+  "Ch3 Eren Vey was in the first house 'as a baby' vs ch4 'as a child... for a single night'; ch1 'door had closed on [scar] when he was very young'.",
+  "Ch3 Ivara 'had never entered the chamber' (name cut in wall) vs Pell/Nima: 'the baby Ivara had slept in a drawer padded with old bark' in the house."
+ ]
+}

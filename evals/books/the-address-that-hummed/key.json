@@ -1,0 +1,2569 @@
+{
+  "title": "The Address That Hummed",
+  "chapters": [
+    {
+      "n": 1,
+      "file": "ch01.md",
+      "words": 2001
+    },
+    {
+      "n": 2,
+      "file": "ch02.md",
+      "words": 2156
+    },
+    {
+      "n": 3,
+      "file": "ch03.md",
+      "words": 1812
+    },
+    {
+      "n": 4,
+      "file": "ch04.md",
+      "words": 1851
+    },
+    {
+      "n": 5,
+      "file": "ch05.md",
+      "words": 1964
+    },
+    {
+      "n": 6,
+      "file": "ch06.md",
+      "words": 1931
+    }
+  ],
+  "entities": {
+    "ivara": {
+      "kind": "person",
+      "aliases": [
+        "ivara noll",
+        "ivara",
+        "the youngest hand"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "ivara noll": 1,
+        "ivara": 1,
+        "the youngest hand": 3
+      }
+    },
+    "tovan": {
+      "kind": "person",
+      "aliases": [
+        "tovan sere",
+        "tovan",
+        "senior examiner",
+        "the hall's old examiner",
+        "the Chair"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "tovan sere": 1,
+        "tovan": 1,
+        "senior examiner": 1,
+        "the hall's old examiner": 5,
+        "the Chair": 1
+      }
+    },
+    "eren_vey": {
+      "kind": "person",
+      "aliases": [
+        "eren vey",
+        "young clerk"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "eren vey": 1,
+        "young clerk": 1
+      }
+    },
+    "pell": {
+      "kind": "person",
+      "aliases": [
+        "pell",
+        "eren vell",
+        "pell aven",
+        "porter",
+        "apprentice",
+        "the porter",
+        "aven"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "pell": 2,
+        "eren vell": 1,
+        "pell aven": 2,
+        "porter": 1,
+        "apprentice": 2,
+        "the porter": 2,
+        "aven": 3
+      }
+    },
+    "nima": {
+      "kind": "person",
+      "aliases": [
+        "nima orrel",
+        "nima"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "nima orrel": 1,
+        "nima": 1
+      }
+    },
+    "alis": {
+      "kind": "person",
+      "aliases": [
+        "alis noll",
+        "alis"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "alis noll": 1,
+        "alis": 1
+      }
+    },
+    "mara": {
+      "kind": "person",
+      "aliases": [
+        "mara noll",
+        "mara"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "mara noll": 1,
+        "mara": 1
+      }
+    },
+    "oru": {
+      "kind": "place",
+      "aliases": [
+        "oru",
+        "city of oru",
+        "the city",
+        "the city of oru"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "oru": 1,
+        "city of oru": 1,
+        "the city": 1,
+        "the city of oru": 1
+      }
+    },
+    "vellum_hall": {
+      "kind": "place",
+      "aliases": [
+        "vellum hall",
+        "the vellum hall",
+        "hall",
+        "the hall"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "vellum hall": 1,
+        "the vellum hall": 1,
+        "hall": 1,
+        "the hall": 1
+      }
+    },
+    "mouth_room": {
+      "kind": "place",
+      "aliases": [
+        "mouth room",
+        "the mouth room"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "mouth room": 1,
+        "the mouth room": 1
+      }
+    },
+    "understair": {
+      "kind": "place",
+      "aliases": [
+        "understair",
+        "the understair"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "understair": 1,
+        "the understair": 1
+      }
+    },
+    "tin_orchard": {
+      "kind": "place",
+      "aliases": [
+        "tin orchard",
+        "the tin orchard",
+        "orchard",
+        "the orchard"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "tin orchard": 1,
+        "the tin orchard": 1,
+        "orchard": 1,
+        "the orchard": 1
+      }
+    },
+    "sump": {
+      "kind": "place",
+      "aliases": [
+        "sump",
+        "the sump"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "sump": 2,
+        "the sump": 2
+      }
+    },
+    "nacre_stair": {
+      "kind": "place",
+      "aliases": [
+        "nacre stair",
+        "the nacre stair"
+      ],
+      "first_chapter": 3,
+      "alias_first_chapter": {
+        "nacre stair": 3,
+        "the nacre stair": 3
+      }
+    },
+    "first_house": {
+      "kind": "place",
+      "aliases": [
+        "first house",
+        "the first house",
+        "latch",
+        "the latch",
+        "the missing room",
+        "the hidden chamber",
+        "lio"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "first house": 1,
+        "the first house": 1,
+        "latch": 1,
+        "the latch": 1,
+        "the missing room": 1,
+        "the hidden chamber": 2,
+        "lio": 1
+      }
+    },
+    "red_key": {
+      "kind": "object",
+      "aliases": [
+        "red key",
+        "the red key",
+        "iron thing"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "red key": 1,
+        "the red key": 1,
+        "iron thing": 1
+      }
+    },
+    "bone_comb": {
+      "kind": "object",
+      "aliases": [
+        "bone comb",
+        "the bone comb",
+        "comb",
+        "the comb"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "bone comb": 2,
+        "the bone comb": 2,
+        "comb": 2,
+        "the comb": 2
+      }
+    },
+    "tin_box": {
+      "kind": "object",
+      "aliases": [
+        "tin box",
+        "the tin box",
+        "parcel",
+        "the parcel"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "tin box": 1,
+        "the tin box": 1,
+        "parcel": 1,
+        "the parcel": 1
+      }
+    },
+    "brass_map": {
+      "kind": "object",
+      "aliases": [
+        "brass map",
+        "the brass map"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "brass map": 2,
+        "the brass map": 2
+      }
+    },
+    "glass_thimble": {
+      "kind": "object",
+      "aliases": [
+        "glass thimble",
+        "the glass thimble",
+        "thimble",
+        "the thimble"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "glass thimble": 2,
+        "the glass thimble": 2,
+        "thimble": 2,
+        "the thimble": 2
+      }
+    },
+    "black_thread": {
+      "kind": "object",
+      "aliases": [
+        "black thread",
+        "the black thread"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "black thread": 2,
+        "the black thread": 2
+      }
+    },
+    "chalk_moth": {
+      "kind": "object",
+      "aliases": [
+        "chalk moth",
+        "the chalk moth",
+        "moth",
+        "the moth",
+        "the flat creature"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "chalk moth": 3,
+        "the chalk moth": 3,
+        "moth": 2,
+        "the moth": 2,
+        "the flat creature": 3
+      }
+    },
+    "numbered_spool": {
+      "kind": "object",
+      "aliases": [
+        "numbered spool",
+        "the numbered spool",
+        "spool",
+        "the spool"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "numbered spool": 3,
+        "the numbered spool": 3,
+        "spool": 2,
+        "the spool": 2
+      }
+    },
+    "seventh_tooth": {
+      "kind": "object",
+      "aliases": [
+        "seventh tooth",
+        "the seventh tooth",
+        "the missing tooth"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "seventh tooth": 2,
+        "the seventh tooth": 2,
+        "the missing tooth": 2
+      }
+    },
+    "hinge": {
+      "kind": "object",
+      "aliases": [
+        "hinge",
+        "the hinge"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "hinge": 1,
+        "the hinge": 1
+      }
+    },
+    "washers": {
+      "kind": "object",
+      "aliases": [
+        "brass washers",
+        "washers",
+        "necklace of brass washers",
+        "the washer necklace"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "brass washers": 1,
+        "washers": 1,
+        "necklace of brass washers": 1,
+        "the washer necklace": 4
+      }
+    },
+    "paper_bird": {
+      "kind": "object",
+      "aliases": [
+        "paper bird",
+        "bird",
+        "the bird"
+      ],
+      "first_chapter": 5,
+      "alias_first_chapter": {
+        "paper bird": 5,
+        "bird": 5,
+        "the bird": 5
+      }
+    },
+    "address_tag": {
+      "kind": "object",
+      "aliases": [
+        "sleeping tag",
+        "her tag",
+        "the tag"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "sleeping tag": 1,
+        "her tag": 1,
+        "the tag": 1
+      }
+    },
+    "ledger": {
+      "kind": "object",
+      "aliases": [
+        "the ledger"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "the ledger": 1
+      }
+    },
+    "satchel": {
+      "kind": "object",
+      "aliases": [
+        "satchel",
+        "her satchel"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "satchel": 1,
+        "her satchel": 1
+      }
+    },
+    "false_bottom": {
+      "kind": "object",
+      "aliases": [
+        "false bottom",
+        "the false bottom",
+        "false base"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "false bottom": 2,
+        "the false bottom": 2,
+        "false base": 2
+      }
+    },
+    "metal_fruit": {
+      "kind": "object",
+      "aliases": [
+        "small metal fruit"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "small metal fruit": 6
+      }
+    },
+    "recipe_sheet": {
+      "kind": "object",
+      "aliases": [
+        "sheet where Mara had recorded a recipe for shell milk",
+        "shell-milk recipe sheet"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "sheet where Mara had recorded a recipe for shell milk": 1,
+        "shell-milk recipe sheet": 6
+      }
+    },
+    "stone_basin": {
+      "kind": "object",
+      "aliases": [
+        "stone basin",
+        "the basin"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "stone basin": 2,
+        "the basin": 2
+      }
+    },
+    "handprint_strip": {
+      "kind": "object",
+      "aliases": [
+        "handprint strip",
+        "the handprint strip"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "handprint strip": 1,
+        "the handprint strip": 1
+      }
+    },
+    "alis_name": {
+      "kind": "object",
+      "aliases": [
+        "name on the back"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "name on the back": 1
+      }
+    },
+    "table_drawer": {
+      "kind": "object",
+      "aliases": [
+        "drawer beneath the table",
+        "a drawer beneath the table"
+      ],
+      "first_chapter": 5,
+      "alias_first_chapter": {
+        "drawer beneath the table": 5,
+        "a drawer beneath the table": 5
+      }
+    },
+    "desk_drawer": {
+      "kind": "object",
+      "aliases": [
+        "drawer in her desk",
+        "a drawer in her desk"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "drawer in her desk": 6,
+        "a drawer in her desk": 6
+      }
+    },
+    "grit_ring": {
+      "kind": "object",
+      "aliases": [
+        "pale ring of grit",
+        "outline left by the latch's old hinge"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "pale ring of grit": 6,
+        "outline left by the latch's old hinge": 6
+      }
+    },
+    "family_niche": {
+      "kind": "concept",
+      "aliases": [
+        "family niche",
+        "the family niche",
+        "the niche"
+      ],
+      "first_chapter": 3,
+      "alias_first_chapter": {
+        "family niche": 3,
+        "the family niche": 3,
+        "the niche": 4
+      }
+    },
+    "sleeping_gallery": {
+      "kind": "place",
+      "aliases": [
+        "sleeping gallery",
+        "the hall's sleeping gallery"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "sleeping gallery": 1,
+        "the hall's sleeping gallery": 1
+      }
+    },
+    "four_name_strip": {
+      "kind": "object",
+      "aliases": [
+        "bark strip bearing the word LATCH",
+        "bark strip with the four children's names"
+      ],
+      "first_chapter": 4,
+      "alias_first_chapter": {
+        "bark strip bearing the word LATCH": 4,
+        "bark strip with the four children's names": 5
+      }
+    },
+    "address_strip": {
+      "kind": "object",
+      "aliases": [
+        "blank address strip",
+        "new strip of bark lay there"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "blank address strip": 6,
+        "new strip of bark lay there": 6
+      }
+    },
+    "hall_map": {
+      "kind": "object",
+      "aliases": [
+        "map that had no north",
+        "the vellum hall's map"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "map that had no north": 1,
+        "the vellum hall's map": 6
+      }
+    },
+    "blue_thread": {
+      "kind": "object",
+      "aliases": [
+        "blue thread"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "blue thread": 1
+      }
+    },
+    "registry": {
+      "kind": "institution",
+      "aliases": [
+        "The Registry",
+        "the Registry"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "The Registry": 1,
+        "the Registry": 1
+      }
+    },
+    "hall_old_keeper": {
+      "kind": "person",
+      "aliases": [
+        "earlier keeper of the Hall"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "earlier keeper of the Hall": 2
+      }
+    },
+    "nima_grandmother": {
+      "kind": "person",
+      "aliases": [
+        "Nima's grandmother"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "Nima's grandmother": 1
+      }
+    },
+    "winter_roll": {
+      "kind": "object",
+      "aliases": [
+        "winter roll",
+        "the winter roll"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "winter roll": 2,
+        "the winter roll": 3
+      }
+    },
+    "round_door": {
+      "kind": "object",
+      "aliases": [
+        "round door",
+        "the round door"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "round door": 2,
+        "the round door": 2
+      }
+    },
+    "red_key_tooth": {
+      "kind": "component",
+      "aliases": [
+        "key's forked tooth"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "key's forked tooth": 4
+      }
+    },
+    "stool": {
+      "kind": "object",
+      "aliases": [
+        "stool",
+        "the stool"
+      ],
+      "first_chapter": 5,
+      "alias_first_chapter": {
+        "stool": 5,
+        "the stool": 5
+      }
+    },
+    "table": {
+      "kind": "object",
+      "aliases": [
+        "table stood in the middle"
+      ],
+      "first_chapter": 5,
+      "alias_first_chapter": {
+        "table stood in the middle": 5
+      }
+    },
+    "chamber_note": {
+      "kind": "sound",
+      "aliases": [
+        "note like a spoon touching a cup",
+        "Mouth Room's note"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "note like a spoon touching a cup": 1,
+        "Mouth Room's note": 1
+      }
+    },
+    "tree_fruit": {
+      "kind": "object",
+      "aliases": [
+        "hollow metal fruit"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "hollow metal fruit": 1
+      }
+    },
+    "paper_note": {
+      "kind": "object",
+      "aliases": [
+        "folded paper",
+        "small folded paper",
+        "message"
+      ],
+      "first_chapter": 2,
+      "alias_first_chapter": {
+        "folded paper": 2,
+        "small folded paper": 2,
+        "message": 5
+      }
+    },
+    "child_chair": {
+      "kind": "object",
+      "aliases": [
+        "child-sized chair"
+      ],
+      "first_chapter": 3,
+      "alias_first_chapter": {
+        "child-sized chair": 3
+      }
+    },
+    "wall_chair": {
+      "kind": "object",
+      "aliases": [
+        "chair by the wall"
+      ],
+      "first_chapter": 5,
+      "alias_first_chapter": {
+        "chair by the wall": 5
+      }
+    },
+    "dining_chairs": {
+      "kind": "object",
+      "aliases": [],
+      "first_chapter": 5,
+      "alias_first_chapter": {}
+    },
+    "doorless_roll": {
+      "kind": "object",
+      "aliases": [
+        "second copy of the roll",
+        "names without a door"
+      ],
+      "first_chapter": 3,
+      "alias_first_chapter": {
+        "second copy of the roll": 3,
+        "names without a door": 3
+      }
+    },
+    "hall_register": {
+      "kind": "object",
+      "aliases": [
+        "hall's register"
+      ],
+      "first_chapter": 3,
+      "alias_first_chapter": {
+        "hall's register": 3
+      }
+    },
+    "petition": {
+      "kind": "object",
+      "aliases": [
+        "petition",
+        "the petition",
+        "petition that arrived"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "petition": 1,
+        "the petition": 1,
+        "petition that arrived": 1
+      }
+    },
+    "route_mark": {
+      "kind": "object",
+      "aliases": [
+        "loop with four smaller loops inside"
+      ],
+      "first_chapter": 4,
+      "alias_first_chapter": {
+        "loop with four smaller loops inside": 4
+      }
+    },
+    "pocket_strip": {
+      "kind": "object",
+      "aliases": [
+        "Mouth Room's bark strip"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "Mouth Room's bark strip": 1
+      }
+    },
+    "eren_tag": {
+      "kind": "object",
+      "aliases": [
+        "his own tag"
+      ],
+      "first_chapter": 1,
+      "alias_first_chapter": {
+        "his own tag": 1
+      }
+    },
+    "recipe_note": {
+      "kind": "inscription",
+      "aliases": [
+        "note on the recipe sheet"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "note on the recipe sheet": 6
+      }
+    },
+    "hall_assembly": {
+      "kind": "institution",
+      "aliases": [
+        "Hall's assembly",
+        "the assembly"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "Hall's assembly": 6,
+        "the assembly": 6
+      }
+    },
+    "hall_record_room": {
+      "kind": "place",
+      "aliases": [
+        "Hall's record room"
+      ],
+      "first_chapter": 6,
+      "alias_first_chapter": {
+        "Hall's record room": 6
+      }
+    },
+    "stair_landing": {
+      "kind": "place",
+      "aliases": [
+        "the landing"
+      ],
+      "first_chapter": 4,
+      "alias_first_chapter": {
+        "the landing": 4
+      }
+    },
+    "shell_wall": {
+      "kind": "place",
+      "aliases": [
+        "shell wall"
+      ],
+      "first_chapter": 4,
+      "alias_first_chapter": {
+        "shell wall": 4
+      }
+    },
+    "door_passage": {
+      "kind": "place",
+      "aliases": [
+        "narrow passage beyond the round door"
+      ],
+      "first_chapter": 3,
+      "alias_first_chapter": {
+        "narrow passage beyond the round door": 3
+      }
+    }
+  },
+  "same_as": [
+    [
+      "pell",
+      "eren vell",
+      2
+    ],
+    [
+      "first_house",
+      "lio",
+      5
+    ],
+    [
+      "first_house",
+      "latch",
+      5
+    ]
+  ],
+  "not_same": [
+    [
+      "eren_vey",
+      "pell",
+      "Both are called Eren; Eren Vey is the clerk, while Pell is Eren Vell, the porter."
+    ],
+    [
+      "red_key",
+      "seventh_tooth",
+      "The red key is iron with a forked tooth; the seventh tooth is a numbered bone-comb piece."
+    ],
+    [
+      "black_thread",
+      "numbered_spool",
+      "Black thread is a loose line held in the glass thimble; the numbered spool is a separate object it is tied to."
+    ],
+    [
+      "brass_map",
+      "hall_map",
+      "The brass map came from the tin box; the Hall map is pinned in the Vellum Hall."
+    ],
+    [
+      "black_thread",
+      "blue_thread",
+      "The black thread is in the glass thimble; blue thread ties the parcel and wraps the hinge pin."
+    ],
+    [
+      "tovan",
+      "hall_old_keeper",
+      "The comb belonged to an earlier keeper of the Hall; Tovan is the current examiner."
+    ],
+    [
+      "mouth_room",
+      "first_house",
+      "The Mouth Room is a separate answering chamber connected to the first house by a shared wall."
+    ]
+  ],
+  "locations": [
+    {
+      "entity": "ivara",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Ivara Noll worked in the Vellum Hall,"
+    },
+    {
+      "entity": "ivara",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "The Tin Orchard rang in the afternoon,"
+    },
+    {
+      "entity": "ivara",
+      "in": "understair",
+      "from_chapter": 2,
+      "to_chapter": 3,
+      "evidence": "She took the box to the Understair,"
+    },
+    {
+      "entity": "ivara",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "The passage narrowed into a room called the Sump,"
+    },
+    {
+      "entity": "ivara",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Every wall was covered by names in different hands."
+    },
+    {
+      "entity": "ivara",
+      "in": "vellum_hall",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "After leaving the hidden chamber, Ivara went to the Hall's record shelves alone."
+    },
+    {
+      "entity": "ivara",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "The Nacre Stair descended through the shell of Oru."
+    },
+    {
+      "entity": "ivara",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "The room beyond the Nacre Stair had a floor of soft gray felt."
+    },
+    {
+      "entity": "ivara",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "They returned by the Nacre Stair,"
+    },
+    {
+      "entity": "eren_vey",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Across the aisle, Eren Vey sorted address strips"
+    },
+    {
+      "entity": "eren_vey",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Tovan sent Ivara and Eren Vey to inspect the Orchard."
+    },
+    {
+      "entity": "eren_vey",
+      "in": "vellum_hall",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Eren Vey was waiting there."
+    },
+    {
+      "entity": "eren_vey",
+      "in": "understair",
+      "from_chapter": 2,
+      "to_chapter": 3,
+      "evidence": "with Eren Vey behind her and Eren Vell ahead."
+    },
+    {
+      "entity": "eren_vey",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "The passage narrowed into a room called the Sump,"
+    },
+    {
+      "entity": "eren_vey",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "He went through first."
+    },
+    {
+      "entity": "eren_vey",
+      "in": "understair",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Eren Vey was sitting on the bottom step."
+    },
+    {
+      "entity": "eren_vey",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Eren Vey tied a loose end of black thread"
+    },
+    {
+      "entity": "eren_vey",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "The room beyond the Nacre Stair had a floor of soft gray felt."
+    },
+    {
+      "entity": "eren_vey",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "They returned by the Nacre Stair,"
+    },
+    {
+      "entity": "pell",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Eren Vell stopped at the Hall's outer door"
+    },
+    {
+      "entity": "pell",
+      "in": "understair",
+      "from_chapter": 2,
+      "to_chapter": 3,
+      "evidence": "with Eren Vey behind her and Eren Vell ahead."
+    },
+    {
+      "entity": "pell",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "The passage narrowed into a room called the Sump,"
+    },
+    {
+      "entity": "pell",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "He went through first."
+    },
+    {
+      "entity": "pell",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Pell opened the tin box and took out its false bottom."
+    },
+    {
+      "entity": "pell",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Pell sat on the floor."
+    },
+    {
+      "entity": "pell",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "They returned by the Nacre Stair,"
+    },
+    {
+      "entity": "nima",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Nima Orrel, the Orchard keeper, came to meet them."
+    },
+    {
+      "entity": "nima",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Nima waited on step 412."
+    },
+    {
+      "entity": "nima",
+      "in": "tin_orchard",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "At one landing, the stair opened onto the Tin Orchard."
+    },
+    {
+      "entity": "nima",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Nima laid down the bark strip"
+    },
+    {
+      "entity": "nima",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nima came to the Hall with a small metal fruit from the Orchard."
+    },
+    {
+      "entity": "nima",
+      "in": "tin_orchard",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nima went ahead to tell the trees"
+    },
+    {
+      "entity": "alis",
+      "in": "first_house",
+      "from_chapter": 4,
+      "to_chapter": 5,
+      "evidence": "A woman's voice answered, “Still here.”"
+    },
+    {
+      "entity": "alis",
+      "in": "mouth_room",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Alis came to the Hall on the first day of every new cycle."
+    },
+    {
+      "entity": "tovan",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Tovan Sere, listening with his left ear."
+    },
+    {
+      "entity": "tovan",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Tovan arrived carrying the bone comb."
+    },
+    {
+      "entity": "tovan",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Tovan lifted the bone comb."
+    },
+    {
+      "entity": "tovan",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Tovan followed behind with no tool in his hand,"
+    },
+    {
+      "entity": "tovan",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Tovan entered last."
+    },
+    {
+      "entity": "tovan",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "At the Vellum Hall, Tovan carried the bone comb into the Mouth Room."
+    },
+    {
+      "entity": "red_key",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "At her elbow sat a red key,"
+    },
+    {
+      "entity": "red_key",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "She turned the key in the grit."
+    },
+    {
+      "entity": "red_key",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Ivara touched the red key through her cuff."
+    },
+    {
+      "entity": "red_key",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "She took out the red key and laid it on the stone basin."
+    },
+    {
+      "entity": "red_key",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Ivara placed the key on the chair."
+    },
+    {
+      "entity": "red_key",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Ivara set the key into the depression."
+    },
+    {
+      "entity": "red_key",
+      "in": "tin_orchard",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "She placed the red key in the grit and waited."
+    },
+    {
+      "entity": "red_key",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "At that, the red key, still in Nima's hand, stayed cool."
+    },
+    {
+      "entity": "red_key",
+      "in": "first_house",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nima still held the red key."
+    },
+    {
+      "entity": "red_key",
+      "in": "tin_box",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Alis placed it in the tin box, whose false bottom folded down to make an ordinary bottom at last."
+    },
+    {
+      "entity": "tin_box",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Ivara put the tin box in her satchel and kept the key in her cuff."
+    },
+    {
+      "entity": "tin_box",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "the parcel in her satchel."
+    },
+    {
+      "entity": "tin_box",
+      "in": "vellum_hall",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "She removed the tin box and put it on the table."
+    },
+    {
+      "entity": "tin_box",
+      "in": "understair",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "She took the box to the Understair,"
+    },
+    {
+      "entity": "tin_box",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Ivara set the tin box inside it."
+    },
+    {
+      "entity": "tin_box",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Pell carried the tin box,"
+    },
+    {
+      "entity": "tin_box",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Pell opened the tin box and took out its false bottom."
+    },
+    {
+      "entity": "tin_box",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Pell gave the tin box to Alis."
+    },
+    {
+      "entity": "tin_box",
+      "in": "first_house",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "with the tin box on the stool Alis had used in the first house."
+    },
+    {
+      "entity": "brass_map",
+      "in": "tin_box",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "A little brass map lay within, folded into a square."
+    },
+    {
+      "entity": "brass_map",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "On its face, the map showed the Tin Orchard, the Vellum Hall, and a narrow room drawn between them."
+    },
+    {
+      "entity": "brass_map",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Eren Vey turned the brass map toward the chalk moth."
+    },
+    {
+      "entity": "brass_map",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "They set the brass map on the landing."
+    },
+    {
+      "entity": "brass_map",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Eren Vey set the brass map before her,"
+    },
+    {
+      "entity": "brass_map",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "The brass map stayed with Ivara,"
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "tin_box",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "they found a glass thimble containing a black thread."
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Ivara put the glass thimble in her pocket."
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Ivara put the glass thimble on the table."
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "mouth_room",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "the glass thimble returned to the Mouth Room,"
+    },
+    {
+      "entity": "black_thread",
+      "in": "glass_thimble",
+      "from_chapter": 2,
+      "to_chapter": 4,
+      "evidence": "a glass thimble containing a black thread."
+    },
+    {
+      "entity": "black_thread",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Alis took the black thread from inside the thimble,"
+    },
+    {
+      "entity": "bone_comb",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Tovan arrived carrying the bone comb."
+    },
+    {
+      "entity": "bone_comb",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Tovan lifted the bone comb."
+    },
+    {
+      "entity": "bone_comb",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Tovan reached for the bone comb,"
+    },
+    {
+      "entity": "bone_comb",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "He set the comb on the table."
+    },
+    {
+      "entity": "bone_comb",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "The bone comb remained with Tovan."
+    },
+    {
+      "entity": "chalk_moth",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 6,
+      "evidence": "on the chair lay a chalk moth."
+    },
+    {
+      "entity": "numbered_spool",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Beneath it lay a numbered spool,"
+    },
+    {
+      "entity": "numbered_spool",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Eren Vey tied a loose end of black thread"
+    },
+    {
+      "entity": "numbered_spool",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Eren Vey produced the spool from his coat."
+    },
+    {
+      "entity": "numbered_spool",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "the numbered spool went to Eren Vey."
+    },
+    {
+      "entity": "hinge",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "A single hinge lay in the center."
+    },
+    {
+      "entity": "hinge",
+      "in": "tin_orchard",
+      "from_chapter": 4,
+      "to_chapter": null,
+      "evidence": "She tied it to the hinge in the empty tray."
+    },
+    {
+      "entity": "washers",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 4,
+      "evidence": "She wore a necklace of brass washers,"
+    },
+    {
+      "entity": "washers",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "The brass washers on her necklace clicked with each breath."
+    },
+    {
+      "entity": "washers",
+      "in": "tin_orchard",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "When Nima returned the washer necklace to the Orchard,"
+    },
+    {
+      "entity": "ledger",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Ivara took the handprint strip to Tovan. He studied it for a long while, then brought out a ledger with a cracked spine."
+    },
+    {
+      "entity": "paper_note",
+      "in": "tin_box",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "A small folded paper lay beneath the false bottom, tucked beside the map and thimble, though she had not opened the box."
+    },
+    {
+      "entity": "false_bottom",
+      "in": "tin_box",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "The tin box had looked empty because its bottom was hinged upward;"
+    },
+    {
+      "entity": "satchel",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Ivara put the tin box in her satchel"
+    },
+    {
+      "entity": "metal_fruit",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "She set the fruit beside the map."
+    },
+    {
+      "entity": "recipe_sheet",
+      "in": "desk_drawer",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "It contained the shell-milk recipe sheet"
+    },
+    {
+      "entity": "handprint_strip",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Ivara pressed the handprint strip to the ground."
+    },
+    {
+      "entity": "four_name_strip",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Nima laid down the bark strip"
+    },
+    {
+      "entity": "address_strip",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "The blank address strip filled itself with five names:"
+    },
+    {
+      "entity": "paper_bird",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Inside was a paper bird folded from a strip of an old address."
+    },
+    {
+      "entity": "paper_bird",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Eren Vell kept the paper bird in his coat."
+    },
+    {
+      "entity": "table_drawer",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Pell found a drawer beneath the table."
+    },
+    {
+      "entity": "desk_drawer",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "Ivara found a drawer in her desk that had not been there before."
+    },
+    {
+      "entity": "grit_ring",
+      "in": "metal_fruit",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Inside was only a pale ring of grit,"
+    },
+    {
+      "entity": "sleeping_gallery",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "The Hall's sleeping gallery held thirty narrow bunks,"
+    },
+    {
+      "entity": "stone_basin",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "In its center stood a stone basin."
+    },
+    {
+      "entity": "hall_map",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 6,
+      "evidence": "pinned to a map that had no north."
+    },
+    {
+      "entity": "blue_thread",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "the parcel in her satchel."
+    },
+    {
+      "entity": "winter_roll",
+      "in": "vellum_hall",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "She wanted to see the winter roll where Pell Aven had disappeared."
+    },
+    {
+      "entity": "round_door",
+      "in": "sump",
+      "from_chapter": 2,
+      "to_chapter": 3,
+      "evidence": "A new door appeared in the Sump wall, small and round, with a brass lip."
+    },
+    {
+      "entity": "four_name_strip",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "She held the bark strip out to Ivara,"
+    },
+    {
+      "entity": "registry",
+      "in": "oru",
+      "from_chapter": 1,
+      "to_chapter": 6,
+      "evidence": "The Registry called these sounds addresses."
+    },
+    {
+      "entity": "seventh_tooth",
+      "in": "first_house",
+      "from_chapter": 2,
+      "to_chapter": 3,
+      "evidence": "I moved the tooth beneath the moth in the hidden chamber."
+    },
+    {
+      "entity": "wall_chair",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Ivara found ALIS on the chair by the wall."
+    },
+    {
+      "entity": "dining_chairs",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "There were four chairs and one stool, each with a name marked beneath it."
+    },
+    {
+      "entity": "doorless_roll",
+      "in": "vellum_hall",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "She found a second copy of the roll stored under the old title “Names without a door.”"
+    },
+    {
+      "entity": "hall_register",
+      "in": "vellum_hall",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "The Hall's register listed her as “unplaced at birth.”"
+    },
+    {
+      "entity": "petition",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "The city had sent a petition that morning:"
+    },
+    {
+      "entity": "route_mark",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Beneath the old mark, the shell showed a new one:"
+    },
+    {
+      "entity": "pocket_strip",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Ivara wrote pocket on the Mouth Room's bark strip."
+    },
+    {
+      "entity": "washers",
+      "in": "tin_orchard",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "She untied the washers from the hinge and threaded them onto a cord around a young tree instead."
+    },
+    {
+      "entity": "recipe_sheet",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "Ivara kept the sheet beside the blank address strip."
+    },
+    {
+      "entity": "tree_fruit",
+      "in": "tin_orchard",
+      "from_chapter": 1,
+      "to_chapter": 6,
+      "evidence": "Each tree grew a hollow metal fruit in which a family could keep a private address."
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "first_house",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Ivara the thimble,"
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "understair",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "At the Understair threshold,"
+    },
+    {
+      "entity": "glass_thimble",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Eren Vey tied a loose end of black thread to the numbered spool"
+    },
+    {
+      "entity": "eren_tag",
+      "in": "vellum_hall",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "He tapped his own tag."
+    },
+    {
+      "entity": "recipe_note",
+      "in": "desk_drawer",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Mara had written a note on the recipe sheet:"
+    },
+    {
+      "entity": "winter_roll",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Pell visited the Hall's record room and asked for the winter roll where Pell Aven had disappeared."
+    },
+    {
+      "entity": "hall_assembly",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Tovan stood before the Hall's assembly"
+    },
+    {
+      "entity": "hall_record_room",
+      "in": "vellum_hall",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Pell visited the Hall's record room"
+    },
+    {
+      "entity": "stair_landing",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "They set the brass map on the landing."
+    },
+    {
+      "entity": "shell_wall",
+      "in": "nacre_stair",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "A rectangular outline appeared in the shell wall,"
+    },
+    {
+      "entity": "door_passage",
+      "in": "understair",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "Beyond it lay a strip of darkness so narrow that a person could pass only sideways."
+    },
+    {
+      "entity": "table",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "A table stood in the middle,"
+    },
+    {
+      "entity": "stool",
+      "in": "first_house",
+      "from_chapter": 5,
+      "to_chapter": 6,
+      "evidence": "There were four chairs and one stool, each with a name marked beneath it."
+    },
+    {
+      "entity": "washers",
+      "in": "tin_orchard",
+      "from_chapter": 4,
+      "to_chapter": 5,
+      "evidence": "She tied it to the hinge in the empty tray."
+    }
+  ],
+  "holdings": [
+    {
+      "entity": "red_key",
+      "held_by": "ivara",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Ivara slid the red key into her cuff."
+    },
+    {
+      "entity": "red_key",
+      "held_by": "tovan",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "He took the key from Ivara and pressed it to the chalk moth."
+    },
+    {
+      "entity": "red_key",
+      "held_by": "nima",
+      "from_chapter": 4,
+      "to_chapter": 6,
+      "evidence": "She lifted the key from the depression in the box and gave it to Nima."
+    },
+    {
+      "entity": "red_key",
+      "held_by": "alis",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nima handed the key to Alis."
+    },
+    {
+      "entity": "tin_box",
+      "held_by": "ivara",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Ivara put the tin box in her satchel"
+    },
+    {
+      "entity": "tin_box",
+      "held_by": "pell",
+      "from_chapter": 2,
+      "to_chapter": 4,
+      "evidence": "Pell kept the tin box."
+    },
+    {
+      "entity": "tin_box",
+      "held_by": "alis",
+      "from_chapter": 5,
+      "to_chapter": 6,
+      "evidence": "Pell gave the tin box to Alis."
+    },
+    {
+      "entity": "brass_map",
+      "held_by": "eren_vey",
+      "from_chapter": 2,
+      "to_chapter": 3,
+      "evidence": "Eren put the map inside his coat."
+    },
+    {
+      "entity": "brass_map",
+      "held_by": "ivara",
+      "from_chapter": 5,
+      "to_chapter": null,
+      "evidence": "Ivara folded the map and kept it."
+    },
+    {
+      "entity": "glass_thimble",
+      "held_by": "pell",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Eren Vell took the thimble from the box."
+    },
+    {
+      "entity": "glass_thimble",
+      "held_by": "ivara",
+      "from_chapter": 2,
+      "to_chapter": 5,
+      "evidence": "Ivara put the glass thimble in her pocket."
+    },
+    {
+      "entity": "bone_comb",
+      "held_by": "tovan",
+      "from_chapter": 2,
+      "to_chapter": null,
+      "evidence": "Tovan arrived carrying the bone comb."
+    },
+    {
+      "entity": "numbered_spool",
+      "held_by": "eren_vey",
+      "from_chapter": 3,
+      "to_chapter": null,
+      "evidence": "He picked it up, unwound a short length, and listened."
+    },
+    {
+      "entity": "seventh_tooth",
+      "held_by": "eren_vey",
+      "from_chapter": 3,
+      "to_chapter": 5,
+      "evidence": "the seventh tooth from the comb tied around its middle."
+    },
+    {
+      "entity": "washers",
+      "held_by": "nima",
+      "from_chapter": 1,
+      "to_chapter": 4,
+      "evidence": "She wore a necklace of brass washers, one for each year she had lived in the Orchard."
+    },
+    {
+      "entity": "handprint_strip",
+      "held_by": "ivara",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "She left the Hall with the handprint strip tucked into her coat."
+    },
+    {
+      "entity": "metal_fruit",
+      "held_by": "nima",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nima came to the Hall with a small metal fruit from the Orchard."
+    },
+    {
+      "entity": "paper_bird",
+      "held_by": "pell",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Pell found a drawer beneath the table. Inside was a paper bird"
+    },
+    {
+      "entity": "paper_bird",
+      "held_by": "pell",
+      "from_chapter": 5,
+      "to_chapter": 6,
+      "evidence": "He gave the bird to Eren Vell, who read the name and then tucked it into his coat."
+    },
+    {
+      "entity": "recipe_sheet",
+      "held_by": "ivara",
+      "from_chapter": 6,
+      "to_chapter": null,
+      "evidence": "Ivara kept the sheet beside the blank address strip."
+    },
+    {
+      "entity": "black_thread",
+      "held_by": "alis",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Alis took the black thread from inside the thimble,"
+    },
+    {
+      "entity": "four_name_strip",
+      "held_by": "nima",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "In her hands she carried a folded bark strip bearing the word LATCH."
+    },
+    {
+      "entity": "four_name_strip",
+      "held_by": "nima",
+      "from_chapter": 5,
+      "to_chapter": 5,
+      "evidence": "Nima laid down the bark strip"
+    },
+    {
+      "entity": "blue_thread",
+      "held_by": "pell",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "a parcel tied with blue thread."
+    },
+    {
+      "entity": "red_key",
+      "held_by": "ivara",
+      "from_chapter": 3,
+      "to_chapter": 4,
+      "evidence": "Tovan gave Ivara back the red key."
+    },
+    {
+      "entity": "eren_tag",
+      "held_by": "eren_vey",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "He tapped his own tag."
+    },
+    {
+      "entity": "tin_box",
+      "held_by": "pell",
+      "from_chapter": 1,
+      "to_chapter": 1,
+      "evidence": "Eren Vell stopped at the Hall's outer door to hand her a parcel tied with blue thread."
+    },
+    {
+      "entity": "brass_map",
+      "held_by": "tovan",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Tovan snatched the map from the basin,"
+    },
+    {
+      "entity": "seventh_tooth",
+      "held_by": "pell",
+      "from_chapter": 2,
+      "to_chapter": 2,
+      "evidence": "Pell found it there, then moved it beneath the moth"
+    },
+    {
+      "entity": "seventh_tooth",
+      "held_by": "eren_vey",
+      "from_chapter": 3,
+      "to_chapter": 5,
+      "evidence": "He picked it up, unwound a short length, and listened."
+    },
+    {
+      "entity": "numbered_spool",
+      "held_by": "tovan",
+      "from_chapter": 4,
+      "to_chapter": 4,
+      "evidence": "Tovan seized the spool."
+    },
+    {
+      "entity": "red_key_tooth",
+      "held_by": "ivara",
+      "from_chapter": 1,
+      "to_chapter": 2,
+      "evidence": "Ivara slid the red key into her cuff."
+    },
+    {
+      "entity": "red_key_tooth",
+      "held_by": "tovan",
+      "from_chapter": 3,
+      "to_chapter": 3,
+      "evidence": "He took the key from Ivara and pressed it to the chalk moth."
+    },
+    {
+      "entity": "red_key_tooth",
+      "held_by": "ivara",
+      "from_chapter": 3,
+      "to_chapter": 4,
+      "evidence": "Tovan gave Ivara back the red key."
+    },
+    {
+      "entity": "red_key_tooth",
+      "held_by": "nima",
+      "from_chapter": 4,
+      "to_chapter": 6,
+      "evidence": "She lifted the key from the depression in the box and gave it to Nima."
+    },
+    {
+      "entity": "red_key_tooth",
+      "held_by": "alis",
+      "from_chapter": 6,
+      "to_chapter": 6,
+      "evidence": "Nima handed the key to Alis."
+    }
+  ],
+  "containers": [
+    {
+      "container": "tin_box",
+      "contents": [
+        "brass_map",
+        "glass_thimble",
+        "paper_note"
+      ],
+      "revealed_chapter": 2,
+      "evidence": "the objects had been tucked in the false base."
+    },
+    {
+      "container": "glass_thimble",
+      "contents": [
+        "black_thread"
+      ],
+      "revealed_chapter": 2,
+      "evidence": "they found a glass thimble containing a black thread."
+    },
+    {
+      "container": "metal_fruit",
+      "contents": [
+        "grit_ring"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "Inside was only a pale ring of grit, the outline left by the Latch's old hinge."
+    },
+    {
+      "container": "desk_drawer",
+      "contents": [
+        "recipe_sheet"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "It contained the shell-milk recipe sheet"
+    },
+    {
+      "container": "satchel",
+      "contents": [
+        "tin_box"
+      ],
+      "revealed_chapter": 1,
+      "evidence": "Ivara put the tin box in her satchel"
+    },
+    {
+      "container": "address_tag",
+      "contents": [
+        "alis_name"
+      ],
+      "revealed_chapter": 1,
+      "evidence": "On the back, someone had written Alis Noll"
+    },
+    {
+      "container": "first_house",
+      "contents": [
+        "chalk_moth",
+        "numbered_spool"
+      ],
+      "revealed_chapter": 3,
+      "evidence": "on the chair lay a chalk moth."
+    },
+    {
+      "container": "table_drawer",
+      "contents": [
+        "paper_bird"
+      ],
+      "revealed_chapter": 5,
+      "evidence": "Inside was a paper bird folded from a strip of an old address."
+    },
+    {
+      "container": "stone_basin",
+      "contents": [
+        "tin_box"
+      ],
+      "revealed_chapter": 2,
+      "evidence": "Ivara set the tin box inside it."
+    },
+    {
+      "container": "tin_box",
+      "contents": [
+        "red_key"
+      ],
+      "revealed_chapter": 6,
+      "evidence": "Alis placed it in the tin box, whose false bottom folded down to make an ordinary bottom at last."
+    },
+    {
+      "container": "false_bottom",
+      "contents": [
+        "seventh_tooth"
+      ],
+      "revealed_chapter": 2,
+      "evidence": "Tovan had hidden the seventh tooth in the false bottom."
+    },
+    {
+      "container": "false_bottom",
+      "contents": [
+        "brass_map",
+        "glass_thimble",
+        "paper_note"
+      ],
+      "revealed_chapter": 2,
+      "evidence": "the objects had been tucked in the false base."
+    }
+  ],
+  "knowledge": [
+    {
+      "who": "ivara",
+      "learns": "Alis had not been buried and had been hidden in the first house; her survival is confirmed later.",
+      "chapter": 3,
+      "evidence": "Tovan had helped hide her in the first house"
+    },
+    {
+      "who": "nima",
+      "learns": "Her grandmother did not make the Latch alone; she kept one side from falling while four children made the room.",
+      "chapter": 4,
+      "evidence": "I found this below the empty ring. It has my grandmother's handwriting, but it says the room was made by four children."
+    },
+    {
+      "who": "eren_vey",
+      "learns": "The brass map records who can remember places, not just physical locations.",
+      "chapter": 3,
+      "evidence": "This is not a map of places,” he said. “It's a map of who can remember them."
+    },
+    {
+      "who": "eren_vey",
+      "learns": "Eren Vell is Pell Aven, the former apprentice.",
+      "chapter": 2,
+      "evidence": "You were the apprentice who stole the seventh tooth."
+    },
+    {
+      "who": "tovan",
+      "learns": "The Latch can open again.",
+      "chapter": 3,
+      "evidence": "That belief had lasted for years. It fell now"
+    },
+    {
+      "who": "ivara",
+      "learns": "Pell had been the child Pell Aven before the Hall narrowed his identity to Eren Vell.",
+      "chapter": 2,
+      "evidence": "The porter was the same person, and he had carried the name Eren Vell for eight years."
+    },
+    {
+      "who": "ivara",
+      "learns": "Alis was Ivara’s sister by address, not by blood; Tovan knew her and hid her in the first house. Her survival is confirmed in Chapter 4.",
+      "chapter": 3,
+      "evidence": "She was not your sister by blood. She was your sister by address."
+    },
+    {
+      "who": "eren_vey",
+      "learns": "He had spent one night in the first house as a child and the voice at the end of the spool was his own name.",
+      "chapter": 3,
+      "evidence": "He heard a name nobody else could hear."
+    },
+    {
+      "who": "ivara",
+      "learns": "The first house can return as a shared room and be joined rather than divided.",
+      "chapter": 5,
+      "evidence": "The room could now reach the Hall, the Orchard, and the stair."
+    },
+    {
+      "who": "pell",
+      "learns": "His childhood name Pell Aven remains his alongside Eren Vell.",
+      "chapter": 5,
+      "evidence": "Now he had the old name as well, not as a replacement but as a piece of his history."
+    },
+    {
+      "who": "eren_vey",
+      "learns": "The song he thought was his mother humming is also repeated by the black thread in the Sump.",
+      "chapter": 2,
+      "evidence": "Now, in the Sump, the thread repeated the same three notes."
+    },
+    {
+      "who": "ivara",
+      "learns": "The red key was her mother’s promise to return, not an unclaimed tool.",
+      "chapter": 5,
+      "evidence": "her mother's promise to come back"
+    },
+    {
+      "who": "ivara",
+      "learns": "Tovan wrote the false burial claim in the old ledger.",
+      "chapter": 5,
+      "evidence": "he had written “buried in the niche” on the old ledger"
+    },
+    {
+      "who": "ivara",
+      "learns": "Her sister was unplaced at birth, but that was not a defect to correct.",
+      "chapter": 5,
+      "evidence": "The Hall's record was accurate about Alis being unplaced at birth, but wrong to treat that as a defect to be corrected."
+    },
+    {
+      "who": "eren_vey",
+      "learns": "He was assigned examiner for six days of each week.",
+      "chapter": 6,
+      "evidence": "assigned the other six to Eren Vey."
+    },
+    {
+      "who": "tovan",
+      "learns": "The chalk moth assigned the red key to the youngest hand, the comb to the one who divided, and the thread to the one who hears.",
+      "chapter": 3,
+      "evidence": "The key goes to the youngest hand. The comb goes to the one who divided. The thread goes to the one who hears."
+    },
+    {
+      "who": "everyone_present",
+      "learns": "Tovan had hidden the seventh tooth in the tin box false bottom; Pell found it and moved it beneath the moth.",
+      "chapter": 2,
+      "evidence": "Tovan had hidden the seventh tooth in the false bottom. Pell found it there, then moved it beneath the moth"
+    },
+    {
+      "who": "ivara",
+      "learns": "She had been the baby in the first house and one of the four children whose names were written there.",
+      "chapter": 4,
+      "evidence": "You were the baby in the house. They wrote your name on the wall before you could speak."
+    },
+    {
+      "who": "alis",
+      "learns": "Mara brought her through the Mouth Room as a baby after finding her in a room without an address.",
+      "chapter": 5,
+      "evidence": "Mara brought her through the Mouth Room as a baby, after finding her alone in a room that had lost its address."
+    },
+    {
+      "who": "ivara",
+      "learns": "Lio is the first house name heard at the Orchard; this identity is clarified in chapter 5.",
+      "chapter": 5,
+      "evidence": "First House was what Mara called it."
+    }
+  ],
+  "false_beliefs": [
+    {
+      "who": "nima",
+      "believes": "Her grandmother built the Latch and it belonged to her family.",
+      "from_chapter": 1,
+      "corrected_chapter": 4
+    },
+    {
+      "who": "ivara",
+      "believes": "Alis was buried in the family niche.",
+      "from_chapter": 3,
+      "corrected_chapter": 3
+    },
+    {
+      "who": "eren_vey",
+      "believes": "The door that scarred him belonged to a wall that no longer existed.",
+      "from_chapter": 1,
+      "corrected_chapter": 5
+    },
+    {
+      "who": "tovan",
+      "believes": "The Latch could not open again.",
+      "from_chapter": 3,
+      "corrected_chapter": 3
+    },
+    {
+      "who": "ivara",
+      "believes": "The red key was an unclaimed tool.",
+      "from_chapter": 5,
+      "corrected_chapter": 5
+    },
+    {
+      "who": "ivara",
+      "believes": "“Unplaced at birth” meant Alis had not taken a first breath.",
+      "from_chapter": 3,
+      "corrected_chapter": 5
+    },
+    {
+      "who": "pell",
+      "believes": "The porter name Eren Vell was the only name the Hall would let him keep.",
+      "from_chapter": 5,
+      "corrected_chapter": 5
+    },
+    {
+      "who": "ivara",
+      "believes": "Alis was Ivara's sister by blood.",
+      "from_chapter": 1,
+      "corrected_chapter": 3
+    },
+    {
+      "who": "ivara",
+      "believes": "“In the niche” meant Alis had been buried.",
+      "from_chapter": 4,
+      "corrected_chapter": 5
+    },
+    {
+      "who": "eren_vey",
+      "believes": "The song he heard was his mother's humming.",
+      "from_chapter": 2,
+      "corrected_chapter": 3
+    },
+    {
+      "who": "ivara",
+      "believes": "She had never met Pell before he became Eren Vell.",
+      "from_chapter": 2,
+      "corrected_chapter": 3
+    }
+  ],
+  "corrections": [
+    {
+      "claim": "Nima believes the Latch was built by her grandmother and belongs to her family.",
+      "stated_chapter": 1,
+      "corrected_chapter": 4,
+      "evidence": "My grandmother didn't make the room. She kept one side from falling away."
+    },
+    {
+      "claim": "Ivara assumes Alis had died and was buried in the family niche.",
+      "stated_chapter": 3,
+      "corrected_chapter": 3,
+      "evidence": "The correction struck like a dropped stone. Ivara had believed Alis dead and buried. She had not been buried."
+    },
+    {
+      "claim": "Eren Vey believes his scar came from a door in a wall that no longer exists.",
+      "stated_chapter": 1,
+      "corrected_chapter": 5,
+      "evidence": "The door that had scarred Eren Vey had not belonged to a vanished wall, as he had believed; it was one of the first house's thresholds, folded away when the room divided."
+    },
+    {
+      "claim": "Tovan believed the Latch could not open again.",
+      "stated_chapter": 3,
+      "corrected_chapter": 3,
+      "evidence": "I believed the Latch could not open again."
+    },
+    {
+      "claim": "Ivara believed she had never met Pell before he became Eren Vell.",
+      "stated_chapter": 2,
+      "corrected_chapter": 3,
+      "evidence": "and the baby Ivara had slept in a drawer padded with old bark."
+    },
+    {
+      "claim": "Ivara believed the red key was an unclaimed tool.",
+      "stated_chapter": 5,
+      "corrected_chapter": 5,
+      "evidence": "Ivara had carried the key ever since, believing it to be an unclaimed tool."
+    },
+    {
+      "claim": "Ivara misread “unplaced at birth” as meaning Alis had not taken a first breath.",
+      "stated_chapter": 3,
+      "corrected_chapter": 5,
+      "evidence": "The Hall's record was accurate about Alis being unplaced at birth, but wrong to treat that as a defect to be corrected."
+    },
+    {
+      "claim": "Tovan told Pell that the seventh tooth was lost.",
+      "stated_chapter": 4,
+      "corrected_chapter": 4,
+      "evidence": "Tovan had lied to Pell about the tooth being lost"
+    },
+    {
+      "claim": "Tovan claimed he knew Alis only from her file, but he had known her.",
+      "stated_chapter": 3,
+      "corrected_chapter": 3,
+      "evidence": "The red key warmed. This was another practiced answer. Tovan had known the child."
+    },
+    {
+      "claim": "Pell believed Eren Vell was the only name the Hall would let him keep.",
+      "stated_chapter": 5,
+      "corrected_chapter": 5,
+      "evidence": "Now he had the old name as well, not as a replacement but as a piece of his history."
+    },
+    {
+      "claim": "Ivara mistook the petition name Lio for a woman who signed it.",
+      "stated_chapter": 1,
+      "corrected_chapter": 1,
+      "evidence": "Ivara understood that the petition had mistaken a room's name for its signer."
+    },
+    {
+      "claim": "The Understair was officially sealed.",
+      "stated_chapter": 1,
+      "corrected_chapter": 2,
+      "evidence": "The passage was still officially sealed, though its door had been painted over"
+    },
+    {
+      "claim": "Tovan claimed he had borrowed the bone comb from the Hall collection.",
+      "stated_chapter": 2,
+      "corrected_chapter": 2,
+      "evidence": "Ivara understood that Tovan had lied about borrowing the comb: it had not come from the collection."
+    },
+    {
+      "claim": "Pell claimed he did not know about the note and did not write.",
+      "stated_chapter": 2,
+      "corrected_chapter": 2,
+      "evidence": "The red key warmed: Pell was lying."
+    },
+    {
+      "claim": "Ivara believed Alis was her sister by blood.",
+      "stated_chapter": 1,
+      "corrected_chapter": 3,
+      "evidence": "She was not your sister by blood. She was your sister by address."
+    },
+    {
+      "claim": "Nima heard her grandmother say the Latch was “ours to protect” as “ours to own.”",
+      "stated_chapter": 4,
+      "corrected_chapter": 4,
+      "evidence": "Nima had mistaken the words for “ours to own.”"
+    },
+    {
+      "claim": "Eren Vey believed the song was only his mother's humming.",
+      "stated_chapter": 2,
+      "corrected_chapter": 3,
+      "evidence": "he had stopped believing the song belonged only to his mother."
+    },
+    {
+      "claim": "Ivara read “in the niche” as “buried.”",
+      "stated_chapter": 4,
+      "corrected_chapter": 4,
+      "evidence": "Ivara had read “in the niche” as “buried” because the Hall's register had used the word unplaced."
+    }
+  ]
+}
