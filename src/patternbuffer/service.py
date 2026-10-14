@@ -54,6 +54,7 @@ from patternbuffer.model import (
     POLICIES,
     SEMANTICS_PREDICATES,
     TASK_RESOLVE,
+    refuse_author_view,
 )
 from patternbuffer.porcelain import Porcelain
 
@@ -293,7 +294,9 @@ class WorldService:
         thread). Takes the first snapshot at once. One world per service.
         ``frame_scope`` (FRAME-CONTINUITY-V1 §5) is the scope the host
         configures for its viewers' `state`, `state_union` and `facts`
-        (default `exact`); a viewer can never name its own."""
+        (default `exact`); a viewer can never name its own. An author frame
+        (`plot:*`) is never a view frame (BEATS-V1 §1): `ValueError`, and the
+        service stays unattached."""
         if frame_scope not in ("exact", "continued", "merged"):
             raise ValueError(f"unknown frame_scope {frame_scope!r}")
         if self._world is not None:
@@ -302,6 +305,7 @@ class WorldService:
             raise ValueError("a read-only snapshot cannot be hosted")
         if not isinstance(view_frame, str) or not view_frame:
             raise ValueError("attach needs a view_frame")
+        refuse_author_view(view_frame, "attach")     # BEATS-V1 §1: before anything binds
         self._gated = (getattr(world.resolver._model, "_patternbuffer_gated_by", None)
                        is self)             # a read: the service writes no handle
         if not self._gated and self._rate is not None:
@@ -353,9 +357,11 @@ class WorldService:
         return self._now if self._now is not None else self._valid_head
 
     def set_view_frame(self, frame: str) -> None:
-        """'Play as X', or a world change: later reads and resolves use it."""
+        """'Play as X', or a world change: later reads and resolves use it.
+        An author frame (`plot:*`) is refused with `ValueError` (BEATS-V1 §1)."""
         if not isinstance(frame, str) or not frame:
             raise ValueError("a view frame is a non-empty frame name")
+        refuse_author_view(frame, "set_view_frame")      # BEATS-V1 §1
         self._view_frame = frame
 
     def session(self, name: str, role: str = "viewer") -> "Session":
@@ -1064,6 +1070,9 @@ class Runner:
                  model_route: Callable[[dict], str] | None = None,
                  mirror_key: bytes | None = None,
                  people: Sequence[str] | None = None) -> None:
+        # BEATS-V1 §1: refuse here, on the caller's thread; `attach` on the pump
+        # thread would surface the same refusal late.
+        refuse_author_view(view_frame, "Runner")
         # A World is bound to the thread that opened it, so the runner opens
         # it ON its pump thread (the owner thread) and closes it there.
         # `open_world(gated)` builds it with `model=gated(host_callable)`.

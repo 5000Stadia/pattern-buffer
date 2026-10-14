@@ -40,7 +40,8 @@ from typing import Any, Callable, Iterable, NamedTuple, Sequence
 
 from patternbuffer.model import (ATTR_PREFIX, CANON, CANON_IDENTITY_EDGES,
                                  CONTAINMENT_FAMILY, MECHANISM_ATTRIBUTES,
-                                 META_ATTRIBUTES, SEMANTICS_PREDICATES)
+                                 META_ATTRIBUTES, SEMANTICS_PREDICATES,
+                                 refuse_author_view)
 from patternbuffer.semantics import AttributeSemantics, valid_declaration
 
 logger = logging.getLogger(__name__)
@@ -543,7 +544,9 @@ def _build(world: Any, view_frame: str, head: int, at: float | None,
 def present_handles(world: Any, view_frame: str, *, at: float | None,
                     key: bytes | None, frame_scope: str = "exact") -> dict[str, str]:
     """handle -> canonical id for the present layer of `world` as of now: the
-    host's own map (the service's `unhandle`). Empty without a key."""
+    host's own map (the service's `unhandle`). Empty without a key. An author
+    frame is never a view frame (BEATS-V1 §1): `ValueError`."""
+    refuse_author_view(view_frame, "present_handles")
     key = _check_key(key)
     if key is None:
         return {}
@@ -568,7 +571,10 @@ def feed(world: Any, view_frame: str, since: str | None = None, *,
     del, put.
 
     `people` is None (off: nothing changes) or the person facts that cross in the
-    people layer (see `export`)."""
+    people layer (see `export`).
+
+    An author frame (`plot:*`) is never a view frame (BEATS-V1 §1): `ValueError`."""
+    refuse_author_view(view_frame, "feed")
     key = _check_key(key)
     # validated against the world's containment family on every call, so a later
     # `relation_family: containment` declaration fails closed (VIEW-PEOPLE-V1 §2)
@@ -715,7 +721,10 @@ def export(world: Any, view_frame: str, *, at: float | None = None,
     an appearance attribute ships canon looks and undoes a disguise: that trade
     is the host's to make for its game, not the engine's. Names are
     canonicalized, deduplicated and sorted (a bare `str` is a `TypeError`;
-    containment attributes, `kind` and bookkeeping attributes a `ValueError`)."""
+    containment attributes, `kind` and bookkeeping attributes a `ValueError`).
+
+    An author frame (`plot:*`) is never a view frame (BEATS-V1 §1): `ValueError`."""
+    refuse_author_view(view_frame, "export")
     answer = feed(world, view_frame, None, at=at, key=key, frame_scope=frame_scope,
                   people=people)
     return apply(_empty_document(world.world_id, view_frame), answer)
