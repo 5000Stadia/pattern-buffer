@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.4 (the metered lane-2 run, `evals/results/2026-10-14-recipe-lane/REPORT.md`, and holo-emitter mdeb447: every golden fact's `source` is either text, which cites a sentence, or authored, which names who authored it; lane 2 grades only text facts. The `exits` gloss says it is only ever `none`). r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -89,7 +89,7 @@ value, detail)` for each of:
 | `locked` | literal | closed: `true`, `false` | `durability: STATE` | none | true while a lock is engaged; a locked door is also state shut *(r1.2, r1.3.1)* |
 | `lit` | literal | closed: `dark`, `dim`, `lit`, `day`, `night` | none | `light_level`, `lighting`, `illumination` | how much light a place has now |
 | `outdoors` | literal | closed: `true`, `false` | `durability: CONSTITUTIVE` | `is_outdoors` | a place open to the sky; written timeless |
-| `exits` | literal | closed: `none` | none | none | an observed "no way out" (see below) |
+| `exits` | literal | closed: `none` | none | none | an observed "no way out": only ever the word none; ways out are connects_to (*r1.4*) |
 | `disposition` | literal | open: `friendly`, `wary`, `hostile`, `timid`, `playful`, `indifferent` | `durability: DISPOSITIONAL` | `temperament`, `demeanor`, `demeanour` | a being's temperament |
 | `code` | literal | open (digits or a word) | none | `passcode`, `combination` | what a keypad or lock opens to |
 
@@ -154,8 +154,20 @@ value, detail)` for each of:
   shape:
   - `entities` carry only `id`, `kind` and `names`;
   - `facts` carry `entity`, `attribute`, `value`, `value_type`, `frame`, `valid_from` or
-    `timeless`, and a `source`: `{"chapter", "sentence"}`, or `{"manifest": true}` for a host
-    declaration such as `fixture`.
+    `timeless`, and a `source`.
+  - *(r1.4, holo-emitter mdeb447)* **Every fact has exactly one of two source forms**, never
+    none:
+    - **text:** `{"chapter": <int>, "sentence": <int>}`. The story states it, and lane 2 grades
+      it;
+    - **authored:** `{"authored": "<who>", "note": "<why>"}`, with `<who>` one of `"manifest"`
+      (a host declaration such as `fixture`), `"holo-emitter planner"`, or `"Kabe <date>"` (a
+      person's own choice), and `note` optional. The story doesn't state it (the code's digits,
+      an unnamed door, start states the text only implies). Lane 2 doesn't grade it: a build
+      gets it from the manifest or the host, not from the text.
+  - r1.3's `{"manifest": true}` becomes `{"authored": "manifest"}`.
+  - **A fact with no source, both forms, or an unknown `authored` value** is refused by the
+    golden loader, naming the fact. That's holo-emitter's rule, "cites its sentence or its
+    author".
 - **Lane 1, every change, no model** (`tests/test_recipe_goldens.py`): each golden loads into a
   fresh world opened with `attribute_default(RECIPE)` and `apply_aliases`, and then:
   - every attribute is a `RECIPE` term or engine-canonical;
@@ -169,8 +181,10 @@ value, detail)` for each of:
       scene.
 - **Lane 2, on demand, metered** (`evals/harness/recipe_lane.py`):
   - the recipe's story text goes through `patternbuffer.build` with `vocabulary=RECIPE`;
-  - it is graded against the golden on folded reads. Containment is compared on the folded
-    location, so any containment-family spelling of the same container matches;
+  - it is graded against the golden's **text** facts only *(r1.4)*, on folded reads.
+    Containment is compared on the folded location, so any containment-family spelling of the
+    same container matches. The report gives the matched count over text facts, and lists the
+    authored facts it skipped, with their authors;
   - each lane-2 run waits for Kabe's yes, like every paid run.
 - **Holo-emitter's drafts** are imported as the first goldens, corrected by the settled points.
   The take-and-drop golden is written from its recipe text.
@@ -183,6 +197,12 @@ value, detail)` for each of:
 - Any engine change. If one proves necessary, it gets its own spec.
 
 ## Tests (no model calls)
+
+0. *(r1.4)* **Sources:**
+   - every fact in the three goldens has exactly one valid source form;
+   - the loader refuses a fact with none, with both, or with an unknown `authored` value;
+   - lane 2 in `--oracle` mode grades only text facts and lists the authored ones it skipped;
+   - the `exits` gloss text is pinned.
 
 1. **`Term` and `Vocabulary`:** an unknown `value_type`, a closed term with no values, a
    duplicate attribute, or an alias claimed by two terms is refused at construction, naming it.
