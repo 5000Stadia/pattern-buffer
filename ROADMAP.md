@@ -140,7 +140,12 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - Every narrator or character read goes through that character's own frame, and beat rows and unwitnessed events are never reachable from it. That is the engine's frames-filter-at-source rule applied to beats.
     - The threat model is the engine leaking, not someone reading files.
   - Next: a spec, after the speed work's current specs land.
+- [ ] R56 Coherence-recipe vocabulary (Kabe approved recipes on 2026-10-13, via holo-emitter m3a6670 and m2c1f42: "Yes to all"). One declared canonical vocabulary so that extraction and every project's writes never fragment:
+  - `controls` (an entity-valued link from a switch, lever, plate or keypad to what it works), with `link_type` and `mode` (latching, momentary) as literals on the source;
+  - `exits · none` as the explicit no-way-out fact (RFC-002: an absence means nothing undeclared);
+  - `disposition` for a being's temperament.
 
+  Each gets a recipe-facts golden for switched-light, code-lock and take-and-drop, checked in two lanes: the golden JSON on every change, and the story text through `patternbuffer.build` on demand.
 
 ## Later
 
