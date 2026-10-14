@@ -1,6 +1,12 @@
 # BEATS-V1: author frames are sealed, and beats are written in one shared shape
 
-**Status:** r0, a shape read for construct and holo-emitter before pbr. Author: pb, 2026-10-14.
+**Status:** r1, for pbr review. It folds in the shape reads of construct (m3a85eb) and holo-emitter (meb1f95):
+- `session:*` frames are not author frames;
+- the reference rule is a read-only lint, never a gate;
+- `patternbuffer.condition/1` is construct's `arc/io.py` JSON, pinned and round-trip tested on both sides;
+- holo-emitter's narrator parses that shape verbatim and needs no engine-side availability read.
+
+r0 was the shape read. Author: pb, 2026-10-14.
 ROADMAP R53.
 **Source:**
 - **Kabe** (holo-emitter's R79 gate, 2026-10-13, relayed in mf409d7): beats should be "assimilated
@@ -41,8 +47,9 @@ Evaluation stays host-side, with construct's evaluator as the reference.
 
 - **Definition.** An **author frame** is a frame whose name starts with `plot:`. Construct
   already uses `plot:main`. This adds a frame class to the lexicon, not a new frame.
-  - *Open for the shape read:* should construct's `session:` frames be author frames too? They
-    hold pacing, not plot. I lean no. Construct says.
+  - *(r1, construct)* **`session:*` is not an author frame.** It holds construct's
+    bookkeeping (turns, transcript, the episode cast), and play reads it every turn.
+  - `model.AUTHOR_FRAME_PREFIX = "plot:"` and `is_author_frame(frame)` are the single test.
 - **Never a view.** The read surfaces that serve a player or a device refuse an author frame as
   their frame, with `ValueError` naming the rule:
   - `mirror.feed` and `mirror.export` (`view_frame`);
@@ -55,15 +62,23 @@ Evaluation stays host-side, with construct's evaluator as the reference.
   - FRAME-CONTINUITY-V1 widens only `knows:` frames;
   - frames filter at source, so a `knows:` read never sees `plot:` rows;
   - an author `record` refuses `plot:*` (AUTHOR-RECORD-V1).
-- **Where the plot can still leak: references from outside.** A canon or `knows:` row that names
-  an id existing only in an author frame carries plot into a player-reachable frame. Examples are
-  a clock effect's `caused_by` pointing at a firing event in `plot:main`, or an effect whose
-  value is a beat id.
-  - *Proposal for the shape read:* the gate skips such a row (`author_frame_reference`), and
-    `caused_by` from a canon effect points at a canon event instead.
-  - Construct's clock commits write effects to canon with `caused_by=<firing id>` today
-    (`arc/executor.py:78–98`), so this needs construct's view before it's specced.
-  - The alternative is a lint (a read that lists such rows) instead of a gate rule.
+- **Where the plot can still leak: references from outside.** A canon or `knows:` row can name
+  an id that exists only in an author frame. That carries plot into a frame a player can reach.
+  - *(r1, construct and holo-emitter)* **A lint, never a gate.** A gate that skipped such a row
+    would drop real world consequences.
+  - Construct's clock effects are fine. Their `caused_by` names a canon event
+    (`event:<clock>_fired_<turn>`, whose kind row is written to canon in the same ingest);
+    `plot:main` keeps only the firing's status.
+  - **`beats.author_references(world, *, frames=("canon",)) -> list[Finding]`** is read-only:
+    no writes, no model. It returns one `Finding(kind, row_id, entity, attribute, target,
+    detail)` per row in the given frames (and every `knows:` frame, when `"knows:*"` is
+    listed), of two kinds:
+    - `author_frame_reference`: the row's entity, entity-valued value or `caused_by` target
+      has rows in an author frame and none in canon;
+    - `dangling_caused_by` *(construct's guard)*: a `caused_by` whose target has no canon row
+      at all. This catches a host that chains into `plot:`.
+  - Holo-emitter runs it at build time, before the export ships to an offline phone. Construct
+    may run it in its build lint.
 - **Readers that may see author frames:**
   - the host's own reads (porcelain with an explicit `frame="plot:…"`);
   - the MCP wrapper, a fully trusted principal (MCP-WRAPPER-V1);
@@ -73,18 +88,37 @@ Evaluation stays host-side, with construct's evaluator as the reference.
 
 ## 2. The beat shape (a written convention; no engine code)
 
-- **Where it lives:** a beat is an ordinary `beat:<id>` entity in an author frame. Its
-  declaration rows are:
-  - `kind beat`;
-  - `achievable_via <condition>` and `unreachable_if <condition>`;
-  - `phase`, `weight`;
-  - `effects <list of fact templates>`, optional.
-- **Conditions** use **construct's grammar and JSON serialization** (`arc/io.py`): the atoms
-  `state_is`, `located`, `in_frame`, `occurred`, `beat_achieved`, `clock_fired`, `quantity` and
-  the host counters, plus `not`, `all_of`, `any_of` and `at_least`.
-  - A condition is stored as one JSON-valued literal.
-  - The schema name `patternbuffer.condition/1` points at construct's serialization, versioned
-    with it.
+- **Where it lives:** a beat is an ordinary entity in an author frame. Construct's
+  `arc/io.py` `_beat_rows` are the reference serialization:
+  - `kind beat` and `part_of <arc>`;
+  - `beat_phase` and `weight`;
+  - `achievable_via <condition>` and, optional, `unreachable_if <condition>` and `correlates`;
+  - `status` (`pending`, `achieved`, `closed`).
+
+  Everything is timeless except `status`.
+- **Conditions: `patternbuffer.condition/1`** *(r1: pinned)*. A condition is stored as a JSON
+  **string** literal (`json.dumps` of the object), exactly as construct writes it.
+  - The object grammar is construct's `expr_to_obj`. An atom is `{"op": <atom>, ...its fields}`:
+    - `state_is {entity, attribute, value}`;
+    - `located {entity, place}`;
+    - `in_frame {frame, entity, attribute, value}`;
+    - `occurred {kind, participants=[], since=null, until=null, min_count=1}`;
+    - `beat_achieved {beat_id, plot_frame="plot:main"}`;
+    - `clock_fired {clock_id, n=1, plot_frame="plot:main"}`;
+    - `turns_elapsed {at_least}` and `turns_quiet {at_least}` (host counters);
+    - `quantity {entity, attribute, cmp, value, frame="canon"}`, with `cmp` one of `>=`, `>`,
+      `<=`, `<`, `==`, `!=`.
+  - The operators are `not {operand}`, `all_of {operands}`, `any_of {operands}` and
+    `at_least {k, operands}`.
+  - The schema is committed as `schemas/patternbuffer.condition-1.json` (JSON Schema
+    2020-12). `beats.validate_condition(obj)` returns the list of problems, empty when valid.
+    It is a shape check only, and evaluates nothing.
+  - **The version string is pinned:** `CONDITION_SCHEMA = "patternbuffer.condition/1"`. A change
+    to either side's grammar is a `/2`. Construct adds a round-trip test against this schema,
+    and pattern-buffer pins a fixture of construct's serialized conditions, so a drift on
+    either side fails a test.
+  - Holo-emitter's narrator parses the same shape verbatim and refuses, with the reason, what it
+    can't evaluate (meb1f95).
 - **Effects** are declarative fact templates (entity, attribute, value, frame), never code. That
   keeps a dependency graph (effect to condition) derivable for solvability (the survey: Gilbert's
   charts, planner reachability). The host writes them when it decides a beat happened. The engine
@@ -102,28 +136,51 @@ Evaluation stays host-side, with construct's evaluator as the reference.
 - Pacing, drama management, clocks firing (whitepaper §14: unsolved, and the host's).
 - Multi-arc frames (`plot:<arc>`), which already fit the `plot:` prefix.
 
-## 4. Tests (for the engine part, once shaped)
+## 4. Where the code goes
 
-1. `mirror.export(world, "plot:main")`, `feed`, `WorldService.set_view_frame("plot:main")` and a
-   session read in `plot:main` each raise, naming the author-frame rule. `knows:` and canon views
-   are unchanged.
-2. A beat row in `plot:main` is absent from every canon and `knows:` read, every mirror export
-   and every widened read (pinning what already holds).
-3. *(If the reference rule is adopted)* a canon row naming a `plot:`-only id is skipped
-   `author_frame_reference`, and the world is unchanged.
+- **Engine core:**
+  - `model.is_author_frame`;
+  - the refusals in `mirror.feed` and `mirror.export`, `WorldService.set_view_frame`, and the
+    session reads.
 
-## 5. Questions for the shape read
+  That is the only engine change.
+- **Outside the core:** `patternbuffer.beats`, beside `vocab` and `build`, holding
+  `CONDITION_SCHEMA`, `validate_condition` and `author_references`, plus the schema file.
 
-- **Construct:**
-  - `session:` frames author or not?
-  - The `caused_by` reference rule: a gate rule, a lint, or neither?
-  - Is `arc/io.py`'s JSON the right shared serialization to name as `patternbuffer.condition/1`?
-- **Holo-emitter:**
-  - Does "never a view" cover your phone and mirror needs?
-  - Is a written beat shape enough for your narrator port, or do you need an engine-side
-    availability read (and for what)?
+## 5. Tests
 
-## 6. What the surveys contributed
+1. `mirror.export(world, "plot:main")`, `mirror.feed(...)`,
+   `WorldService.set_view_frame("plot:main")` and a session read in `plot:main` each raise
+   `ValueError`, naming the author-frame rule. `canon`, `knows:` and `session:main` views are
+   unchanged.
+2. A beat's rows in `plot:main` (construct's `_beat_rows` shape) are absent from every canon and
+   `knows:` read, every mirror export and every widened read. This pins what already holds.
+3. `author_references`:
+   - a canon row whose value is a `plot:`-only id is reported as `author_frame_reference`;
+   - a canon effect whose `caused_by` names a canon event is clean (construct's shape);
+   - a `caused_by` naming an id with no canon row is reported as `dangling_caused_by`;
+   - a `knows:` row naming a `plot:`-only id is reported when `"knows:*"` is listed;
+   - nothing is written.
+4. `validate_condition`:
+   - every atom and operator round-trips through the schema;
+   - a pinned fixture of construct-serialized conditions validates;
+   - an unknown `op`, a missing field, a wrong type and a bad `cmp` each give one named problem.
+5. Full suite green.
+
+## 6. The shape-read answers (r1)
+
+- **Construct** (m3a85eb):
+  - `session:*` is not an author frame;
+  - the reference check is a lint, never a gate;
+  - naming `arc/io.py`'s JSON as `patternbuffer.condition/1` is fine. Pin it, and construct adds
+    a round-trip test.
+- **Holo-emitter** (meb1f95):
+  - "never a view" covers the phone and the mirror;
+  - a build-time lint of plot references is enough;
+  - a written shape is enough: its narrator evaluates offline in the page, where no engine read
+    is possible.
+
+## 7. What the surveys contributed
 
 - **Adopted:**
   - effects as declarative templates, so solvability is derivable (Gilbert, planners);
