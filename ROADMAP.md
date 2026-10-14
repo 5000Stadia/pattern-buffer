@@ -141,7 +141,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - The threat model is the engine leaking, not someone reading files.
   - Next: a spec, after the speed work's current specs land.
 - [ ] R56 Coherence-recipe vocabulary (Kabe approved recipes on 2026-10-13, via holo-emitter m3a6670 and m2c1f42: "Yes to all"). One declared canonical vocabulary so that extraction and every project's writes never fragment:
-  - `controls` (an entity-valued link from a switch, lever, plate or keypad to what it works), with `link_type` and `mode` (latching, momentary) as literals on the source;
+  - `controls` (an entity-valued link from a switch, lever, plate or keypad to what it works), with `link_type` and `control_mode` (latching, momentary) as literals on the source;
   - `exits · none` as the explicit no-way-out fact (RFC-002: an absence means nothing undeclared);
   - `disposition` for a being's temperament.
 

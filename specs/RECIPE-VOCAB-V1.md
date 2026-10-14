@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -84,13 +84,13 @@ value, detail)` for each of:
 |---|---|---|---|---|---|
 | `controls` | entity | n/a | `arity: set_valued`, `durability: CONSTITUTIVE` | `operates`, `powers` | what a switch, lever, plate, button or keypad works: `<switch> controls <light>` |
 | `link_type` | literal | closed: `switch`, `lever`, `plate`, `button`, `keypad`, `dial` | `durability: CONSTITUTIVE` | `control_type` | what kind of control the source is |
-| `mode` | literal | closed: `latching`, `momentary` | `durability: CONSTITUTIVE` | `switch_mode` | latching stays as set; momentary acts only while held |
+| `control_mode` | literal | closed: `latching`, `momentary` | `durability: CONSTITUTIVE` | `mode` is **not** taken (construct's drift events use it), `switch_mode` | latching stays as set; momentary acts only while held |
 | `state` | literal | open: `on`, `off`, `open`, `shut`, `locked` | none (model-judged, as today) | `status` is **not** taken (hosts use it) | a device's or a portal's current setting; RFC-003 reads a portal's `state` |
 | `lit` | literal | closed: `dark`, `dim`, `lit`, `day`, `night` | none | `light_level`, `lighting`, `illumination` | how much light a place has now |
-| `outdoors` | literal | closed: `true`, `false` | `durability: CONSTITUTIVE` | `is_outdoors`, `outside` | a place open to the sky; written timeless |
-| `exits` | literal | closed: `none` | none | `exit`, `way_out` | an observed "no way out" (see below) |
+| `outdoors` | literal | closed: `true`, `false` | `durability: CONSTITUTIVE` | `is_outdoors` | a place open to the sky; written timeless |
+| `exits` | literal | closed: `none` | none | none | an observed "no way out" (see below) |
 | `disposition` | literal | open: `friendly`, `wary`, `hostile`, `timid`, `playful`, `indifferent` | `durability: DISPOSITIONAL` | `temperament`, `demeanor`, `demeanour` | a being's temperament |
-| `code` | literal | open (digits or a word) | none | `passcode`, `combination`, `pin` | what a keypad or lock opens to |
+| `code` | literal | open (digits or a word) | none | `passcode`, `combination` | what a keypad or lock opens to |
 
 - **`exits · none`** is RFC-002's legitimate negation: an observed positive fact with a
   negative-sounding value, never inferred from missing rows. The ways out of a place remain
@@ -104,9 +104,10 @@ value, detail)` for each of:
   - `status` (hosts use it for their own bookkeeping);
   - `light` (the object `obj:light` and the attribute must not collide in readers' minds);
   - `works` and `opens` for `controls` ("works at", "opens onto" mean other things).
-  - *Open point for the shape read:* `pin` is a natural word for a code, but construct's run 11
-    has `obj:lower_pin`. That is an entity, not an attribute, so there's no collision in the
-    fold. I keep `pin` as an alias of `code` unless a reader objects.
+  - *(r1.1, construct)* `outside`, `exit`, `way_out` and `pin`: each is entity-valued in the
+    wild (`X outside place:Y`, `place:A exit place:B`, `obj:plate pin obj:lower_pin`). An alias
+    renames the attribute whatever the value, so aliasing them onto a literal term would turn
+    relations into `wrong_value_type` rows.
 - **Already canonical and not redeclared:** `in`, `held_by`, `worn_by`, `connects_to`,
   `part_of`, `kind`, `role`, `fixture` (host-only, CONTAINMENT-DURABILITY-V1), and `posture`
   (VIEW-PEOPLE-V1).
