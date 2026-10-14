@@ -1,6 +1,6 @@
 # ONE-LOCATION-V1: when a thing moves, extraction writes only where it ends up
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-14. A prompt change to the engine's Ingestor
+**Status:** r1.1 (pbr's r1 RED: the rule forbids only a former location active at the same time as the destination, so an expressly timed earlier interval is kept with its bounds; the probe's oracle is semantic, overlapping active intervals with distinct containers, and it gains a historical-move control). r1, for pbr review. Author: pb, 2026-10-14. A prompt change to the engine's Ingestor
 (both rule sets) and the build library's extract prompt. It doesn't merge until its metered check
 passes, and the check is a paid run that waits for Kabe's yes.
 **Source:** construct's R20 run 11, checked by pb in a read-only copy of its play world.
@@ -17,14 +17,16 @@ passes, and the check is a paid run that waits for Kabe's yes.
 ## The change
 
 1. **The Ingestor, `_EXTRACT_RULES_FULL` and `_EXTRACT_RULES_LEAN`:** one new rule after the
-   held/worn rule:
-   > `- a thing or person is in one place at a time. When the passage moves it, write only where
-   > it ends up ('in', 'held_by' or 'worn_by' the new place or holder), never a row for the place
-   > it left: that is already known. The place it left belongs only in a moved event's 'origin'.`
+   held/worn rule *(r1.1: narrowed)*:
+   > `- a thing or person is in one place at a time. When the passage moves it, write where it
+   > ends up ('in', 'held_by' or 'worn_by' the new place or holder), and never also write the
+   > place it left as if it were still there at the same time. If the text dates an earlier
+   > location ('at dawn it was on the belt; at noon she put it in the locker'), keep that
+   > earlier row with its own time and end it where the move happens (valid_to).`
 2. **The build library, `extract._RULES`:** one sentence after "Attributes: 'in' for all
-   containment and location.":
-   > `A thing is in one place at a time: when the passage moves it, write only where it ends up,
-   > never the place it left.`
+   containment and location." *(r1.1: narrowed)*:
+   > `A thing is in one place at a time: when the passage moves it, write where it ends up, and
+   > never also write the place it left as if it were still there.`
 3. **Nothing else.** No gate or fold change, and no change to the moved-event rule. Its
    `origin` key stays where an origin is recorded when the movement is narrated.
 4. **The pinned prompt texts change.** Tests that pin a prompt are updated to the new text, and
@@ -38,16 +40,27 @@ Cheap and targeted. Sonnet 4.6 at low effort, one run each.
   check (no play text), each a narrated move of a thing or person. A ring off a belt into a hand;
   a page from a book onto a table; a person from a hall into a study; a coat from a peg onto a
   shoulder; and so on.
-  - **Two controls:** a passage where a thing is described but doesn't move, and a passage where
-    a thing is put back where it was.
+  - **Three controls:**
+    - a thing described that doesn't move;
+    - a thing put back where it was;
+    - *(r1.1, pbr)* **a historical move with an expressly timed earlier location** ("At dawn the
+      key hung on the belt. At noon she put it in the locker."). The earlier location must be
+      kept, with an end at or before the move.
   - Each passage is extracted through the engine's `lean` and `full` Ingestor prompts, on the old
-    prompt and the new.
-  - **Pass:**
-    - with the new prompt, no passage yields two containment-family rows for one entity at one
-      valid time;
-    - every moved thing's final location is written;
-    - the controls keep their one location.
-  - The old prompt's count of same-time pairs is reported beside it, as the baseline.
+    prompt and the new, and ingested into a fresh world with `classify="rules"`.
+  - *(r1.1, pbr)* **The oracle is semantic, read from the world, not raw row counts:**
+    - **fail:** an entity with two distinct containment-family targets whose active intervals
+      overlap, or a conflicted containment fold for the entity at any valid time where the
+      passage gives it a place;
+    - **not a fail:** adjacent half-open intervals (one ends where the next begins), and
+      duplicate rows with the same target.
+  - **Pass with the new prompt:**
+    - no fails;
+    - every moved thing's final location is written and is the served fold at the latest time;
+    - the first two controls keep their one location;
+    - the historical control keeps its earlier interval (served at an `as_of` inside it) and its
+      later location.
+  - The old prompt's fail count is reported beside it, as the baseline.
 - **(b) No regression:** the practice book's chapters 1–2 through the library pipeline (as in the
   library comparison), graded with `--through-chapter 2`.
   - Pass: zero leaks, zero wrong merges, and order and final-container scores no lower than the
@@ -62,6 +75,10 @@ Cheap and targeted. Sonnet 4.6 at low effort, one run each.
 2. The build library's `_RULES` contains its sentence exactly once. Without a vocabulary,
    `build_prompt` is otherwise unchanged: the byte-identity test is re-pinned to the new text.
 3. The moved-event rule text is unchanged.
-4. The probe runner (`evals/harness/one_location_probe.py`) parses a stubbed answer and counts
-   same-time pairs per entity. With a stub that writes a pair, it reports a fail.
+4. The probe runner (`evals/harness/one_location_probe.py`) applies the semantic oracle to
+   stubbed answers:
+   - a stub writing two distinct containers at one time fails;
+   - adjacent half-open intervals pass;
+   - duplicate same-target rows pass;
+   - the historical control's two dated rows pass.
 5. Full suite green.
