@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, Mapping
+
+from patternbuffer.model import ID_RE
 
 FIELD_RE = re.compile(r"[a-z][a-z0-9_:]*")
 STATUSES = {"stated", "observed", "inferred", "assumed"}
@@ -25,7 +27,7 @@ HANDLE_RE = re.compile(r"new:(0|[1-9][0-9]*)")
 
 
 def is_handle(value: Any) -> bool:
-    """Whether ``value`` is a local handle ``new:<k>``."""
+    """Whether ``value`` is a build handle ``new:<k>``."""
     return isinstance(value, str) and HANDLE_RE.fullmatch(value) is not None
 
 
@@ -68,11 +70,22 @@ def complete_id(entity_id: str, known: set[str]) -> str | None:
     return None
 
 
-def id_positions(item: dict[str, Any]) -> list[tuple[str, str]]:
+def names_entity(item: Mapping[str, Any]) -> bool:
+    """Whether the item's value is an entity reference as the ingest gate reads
+    it: ``value_type`` ``entity``, or no ``value_type`` (``None``, ``""`` or
+    ``False`` count as none) and a string value matching the id grammar, which
+    the gate then infers to be an entity."""
+    value, value_type = item.get("value"), item.get("value_type")
+    return isinstance(value, str) and (
+        value_type == "entity" or (not value_type and ID_RE.fullmatch(value) is not None))
+
+
+def id_positions(item: Mapping[str, Any]) -> list[tuple[str, str]]:
     """The ids an item names, as ``(position, id)``: its subject, its entity
-    value, its ``caused_by`` and the observer of a ``knows:`` frame."""
+    value (explicit or inferred, :func:`names_entity`), its ``caused_by`` and
+    the observer of a ``knows:`` frame."""
     out = [("subject", item["entity"])]
-    if item.get("value_type") == "entity" and isinstance(item.get("value"), str):
+    if names_entity(item):
         out.append(("value", item["value"]))
     if isinstance(item.get("caused_by"), str):
         out.append(("caused_by", item["caused_by"]))
@@ -87,7 +100,7 @@ def replace_ids(item: dict[str, Any], mapping: dict[str, str]) -> dict[str, Any]
     ``mapping`` (ids it lacks stay as they are)."""
     out = dict(item)
     out["entity"] = mapping.get(out["entity"], out["entity"])
-    if out.get("value_type") == "entity" and isinstance(out.get("value"), str):
+    if names_entity(out):
         out["value"] = mapping.get(out["value"], out["value"])
     if isinstance(out.get("caused_by"), str):
         out["caused_by"] = mapping.get(out["caused_by"], out["caused_by"])

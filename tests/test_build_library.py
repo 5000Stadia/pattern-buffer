@@ -610,6 +610,134 @@ def test_6a_an_escape_colliding_with_two_entries_keeps_its_own_id_and_two_propos
     assert out.receipt.proposals == 2
 
 
+# ------------------------- commit re-validates every result (pbr code review P1)
+
+
+def world_reads(w) -> dict[str, Any]:
+    """Every read a refused commit must leave unchanged."""
+    from patternbuffer.dump import dump
+
+    p = w.porcelain
+    return {"dump": dump(w.buffer), "heads": p.axis_heads(),
+            "facts": p.facts("canon", include_meta=True), "entities": p.entities("canon"),
+            "proposals": p.proposals(),
+            "states": [p.state(e, a) for e in ("person:rex", "person:rex_2", "person:orin")
+                       for a in ("kind", "mood", "carries")]}
+
+
+def hand_made(items, *, picks=(), escapes=(), index=0, chapter=1, first=1, last=4):
+    return b.ChunkResult(index=index, items=tuple(items), escapes=tuple(escapes),
+                         picks=tuple(picks), chapter=chapter, first_sentence=first,
+                         last_sentence=last)
+
+
+def test_p1_an_item_citing_no_sentence_is_refused_and_the_world_is_unchanged(worlds):
+    """pbr's case: a hand-made ChunkResult whose item cites no sentence."""
+    w = worlds()
+    built(worlds, REX_TEXT, REX, {0: {"lines": ["s4|person:rex|mood|amused"]}}, world=w)
+    reg = b.Registry.from_manifest(REX, REX_TEXT)
+    before = world_reads(w)
+    bad = b.ChunkResult(index=0, items=({"entity": "person:rex_2", "attribute": "mood",
+                                         "value": "excited"},), escapes=(), picks=(),
+                        chapter=1, first_sentence=1, last_sentence=4)
+    with pytest.raises(b.CommitRefused, match="cites no sentence"):
+        b.commit(w, reg, [bad], ingest_kwargs={"classify": "rules"})
+    assert world_reads(w) == before
+
+
+@pytest.mark.parametrize("sentence, match", [
+    (5, "outside its chunk"), (0, "outside its chunk"), (-1, "outside its chunk"),
+    (True, "cites no sentence"), ("2", "cites no sentence"), (2.0, "cites no sentence")])
+def test_p1_an_item_citing_outside_its_chunk_is_refused(worlds, sentence, match):
+    w = worlds()
+    reg = b.Registry.from_manifest(REX, REX_TEXT)
+    before = world_reads(w)
+    bad = hand_made([{"entity": "person:rex_2", "attribute": "mood", "value": "excited",
+                      "sentence": sentence}])
+    with pytest.raises(b.CommitRefused, match=match):
+        b.commit(w, reg, [bad])
+    assert world_reads(w) == before
+
+
+GATED_ITEMS = {        # each names Orin (gated at s3 of ORIN_TEXT) in one id position
+    "subject": {"entity": "person:orin", "attribute": "mood", "value": "tired"},
+    "value": {"entity": "place:the_river", "attribute": "carries", "value": "person:orin",
+              "value_type": "entity"},
+    "inferred value": {"entity": "place:the_river", "attribute": "carries",
+                       "value": "person:orin"},
+    "caused_by": {"entity": "place:the_river", "attribute": "level", "value": "high",
+                  "caused_by": "person:orin"},
+    "knows observer": {"entity": "place:the_river", "attribute": "level", "value": "high",
+                       "frame": "knows:person:orin"},
+}
+
+
+@pytest.mark.parametrize("position", sorted(GATED_ITEMS))
+def test_p1_an_item_citing_before_a_named_ids_gate_is_refused(worlds, position):
+    w = worlds()
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    before = world_reads(w)
+    early = hand_made([{**GATED_ITEMS[position], "sentence": 2}])
+    with pytest.raises(b.CommitRefused, match="person:orin is gated at chapter 1 sentence 3"):
+        b.commit(w, reg, [early])
+    assert world_reads(w) == before
+    # at the gate the same item is accepted and written
+    receipt = b.commit(w, reg, [hand_made([{**GATED_ITEMS[position], "sentence": 3}])],
+                       ingest_kwargs={"classify": "rules"})
+    assert receipt.chunk_spans[0]["seq"] is not None
+
+
+def test_p1_malformed_items_and_unknown_ids_are_refused(worlds):
+    w = worlds()
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    before = world_reads(w)
+    for items, match in (
+            (["person:orin|mood|x"], "is not a fact item"),
+            ([{"attribute": "mood", "value": "x", "sentence": 3}], "is not a fact item"),
+            ([{"entity": "person:ghost", "attribute": "mood", "value": "x", "sentence": 3}],
+             "never minted"),
+            ([{"entity": "person:orin", "attribute": "mood", "value": "person:ghost",
+               "sentence": 3}], "never minted"),
+            ([{"entity": "new:0", "attribute": "mood", "value": "x", "sentence": 3}],
+             "undeclared handles")):
+        with pytest.raises(b.CommitRefused, match=match):
+            b.commit(w, reg, [hand_made(items)])
+    assert world_reads(w) == before
+
+
+def test_p1_a_pick_must_choose_among_candidates_of_its_chunk(worlds):
+    w = worlds()
+    reg = b.Registry.from_manifest(b.Manifest(entries=[
+        E("orin", "person", ["Orin"], "Orin kept watch."),
+        E("duke", "person", ["Duke Orsino"], "Duke Orsino entered the hall.")]), DUKE_TEXT)
+    before = world_reads(w)
+    pick = b.Pick(handle="new:0", surface="the watchman",
+                  candidates=("person:orin", "person:duke_orsino"), choice="person:orin",
+                  evidence_quote="Orin kept watch.")
+    early = hand_made([{"entity": "new:0", "attribute": "mood", "value": "x", "sentence": 2}],
+                      picks=[pick], first=1, last=2)
+    with pytest.raises(b.CommitRefused, match="candidates of its chunk"):
+        b.commit(w, reg, [early])
+    assert world_reads(w) == before
+
+
+def test_p1_extract_reads_an_id_shaped_bare_value_as_the_gate_does(worlds):
+    """The gate infers an id-shaped bare value to be an entity, so extract checks
+    it as one and commit rewrites a bare build handle like an @ one."""
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    chunk = b.plan(ORIN_TEXT, reg)[0]
+    early = b.read_output(chunk, {"lines": ["s2|place:the_river|carries|person:orin",
+                                            "s3|place:the_river|carries|person:ghost"]})
+    assert [r.reason for r in early.gate_refused] == ["gate_refused"]
+    assert [r.reason for r in early.refused] == ["unknown_id"]
+    out = built(worlds, ORIN_TEXT, ORIN, {0: {
+        "lines": ["s2|place:the_river|carries|new:0"],
+        "escapes": [esc("new:0", "a ferry", "The ferry left at dawn.", type_="object")]}})
+    assert values(out.world, "place:the_river", "carries") == ["obj:a_ferry"]
+    assert not [r for r in out.world.buffer.all_rows()
+                if isinstance(r.value, str) and r.value.startswith("new:")]
+
+
 # ------------------------------------------------------------ 6b. one allocator
 
 SLUG_TEXT = {

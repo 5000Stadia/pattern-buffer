@@ -19,7 +19,10 @@ The writes, in order:
 7. **Namesakes**: ``reject`` for each listed pair.
 
 Every write is a porcelain call (``ingest_structured``, ``correlate``,
-``reject``), so the ingestor does every write.
+``reject``), so the ingestor does every write. Before the first one, every
+result is re-validated as ``extract`` checks it (each item cites a sentence of
+its chunk, and every id it names is gated at or before that sentence), so a
+hand-made ``ChunkResult`` can write nothing ``extract`` would have refused.
 """
 
 from __future__ import annotations
@@ -163,9 +166,45 @@ def _ingest_kwargs(ingest_kwargs: Mapping[str, Any] | None) -> dict[str, Any]:
     return dict(ingest_kwargs)
 
 
+def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[str]:
+    """One item re-validated as ``extract`` checks it (§3, §4): a fact item that
+    cites a sentence of its chunk (``sentence``, the chunk's own numbering), and
+    every registry id it names (subject, entity value, ``caused_by``, a
+    ``knows:`` observer) gated at or before that sentence. Returns the build
+    handles it uses; raises ``CommitRefused`` for anything else."""
+    where = f"chunk {r.index} items[{n}]"
+    if not (isinstance(item, Mapping) and isinstance(item.get("entity"), str)
+            and isinstance(item.get("attribute"), str) and "value" in item):
+        raise CommitRefused(f"{where} is not a fact item")
+    cited = item.get("sentence")
+    if isinstance(cited, bool) or not isinstance(cited, int):
+        raise CommitRefused(f"{where} cites no sentence")
+    count = r.last_sentence - r.first_sentence + 1
+    if not 1 <= cited <= count:
+        raise CommitRefused(f"{where} cites s{cited}, outside its chunk (s1-s{count})")
+    at = (r.chapter, r.first_sentence + cited - 1)
+    handles: set[str] = set()
+    for position, ident in id_positions(item):
+        if is_handle(ident):
+            handles.add(ident)
+            continue
+        if not registry.knows(ident):
+            raise CommitRefused(f"{where} names {ident!r}, which this registry never minted")
+        gate = registry.identity(ident).gate
+        if gate > at:
+            raise CommitRefused(
+                f"{where}: {position} {ident} is gated at chapter {gate[0]} sentence {gate[1]}; "
+                f"the item cites chapter {at[0]} sentence {at[1]}")
+    return handles
+
+
 def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkResult]:
     """The results in chunk order, refused (``CommitRefused``) before any write
-    when they could not have come from ``extract`` over this registry's plan."""
+    when they could not have come from ``extract`` over this registry's plan:
+    every item is re-validated (its citation, and the effective gate of every
+    id it names at that sentence), every build handle it uses must be declared,
+    and a pick's candidates must be candidates of its chunk. A hand-made
+    ``ChunkResult`` passes only what ``extract`` would have accepted."""
     results = list(results)
     for r in results:
         if not isinstance(r, ChunkResult):
@@ -193,25 +232,27 @@ def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkRe
         if len(set(declared)) != len(declared) or not all(is_handle(h) for h in declared):
             raise CommitRefused(f"chunk {r.index} declares a handle twice or a malformed one")
         used: set[str] = set()
-        for item in r.items:
-            for _, ident in id_positions(item):
-                if is_handle(ident):
-                    used.add(ident)
-                elif not registry.knows(ident):
-                    raise CommitRefused(f"chunk {r.index} names {ident!r}, which this "
-                                        "registry never minted")
+        for n, item in enumerate(r.items):
+            used |= _check_item(registry, r, n, item)
         if used - set(declared):
             raise CommitRefused(f"chunk {r.index} uses undeclared handles "
                                 f"{sorted(used - set(declared))}")
+        last = (r.chapter, r.last_sentence)
         for pick in r.picks:
-            if (len(set(pick.candidates)) < 2 or pick.choice not in pick.candidates
-                    or not all(registry.knows(c) for c in pick.candidates)):
+            if not (isinstance(pick.surface, str) and pick.surface.strip()
+                    and isinstance(pick.evidence_quote, str)
+                    and len(set(pick.candidates)) >= 2 and pick.choice in pick.candidates
+                    and all(registry.knows(c) and registry.identity(c).gate <= last
+                            for c in pick.candidates)):
                 raise CommitRefused(f"chunk {r.index} pick {pick.handle} is not a choice "
-                                    "among two or more registry candidates")
+                                    "among two or more candidates of its chunk")
         for escape in r.escapes:
             if not (isinstance(escape.name, str) and escape.name.strip()
-                    and isinstance(escape.type, str) and escape.type.strip()):
-                raise CommitRefused(f"chunk {r.index} escape {escape.handle} has no name or type")
+                    and isinstance(escape.type, str) and escape.type.strip()
+                    and isinstance(escape.quote, str)
+                    and (escape.species is None or isinstance(escape.species, str))):
+                raise CommitRefused(f"chunk {r.index} escape {escape.handle} has no name, "
+                                    "type or quote")
     return ordered
 
 

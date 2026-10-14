@@ -2,16 +2,16 @@
 
 The model sees the chunk's numbered sentences and its candidates (ids, types,
 names, gates), never a later entry, and writes INGEST-V2's line grammar on
-candidate ids or local handles, each line citing its sentence. Code checks
+candidate ids or build handles, each line citing its sentence. Code checks
 everything it receives:
 
 - a line citing no sentence, or one outside the chunk, is refused;
-- an id that is neither a candidate nor a handle is refused;
+- an id that is neither a candidate nor a build handle is refused;
 - a line naming a candidate (in any id position) from a sentence before that
   candidate's gate is ``gate_refused``;
 - a pick whose choice is not one of its candidates is refused, with its lines;
-- every handle a line uses must be declared by exactly one escape or pick, and
-  every declared handle must be used, or the whole chunk is refused.
+- every build handle a line uses must be declared by exactly one escape or
+  pick, and every declared one must be used, or the whole chunk is refused.
 """
 
 from __future__ import annotations
@@ -114,7 +114,7 @@ used by a line."""
 
 @dataclass(frozen=True)
 class Escape:
-    """A chunk's declaration of a local handle for an entity not among its
+    """A chunk's declaration of a build handle for an entity not among its
     candidates. ``type`` is as the model wrote it; commit coerces a role word
     to ``person`` with that ``role`` (§5 k4)."""
 
@@ -127,7 +127,7 @@ class Escape:
 
 @dataclass(frozen=True)
 class Pick:
-    """A chunk's declaration of a local handle for an ambiguous surface: the
+    """A chunk's declaration of a build handle for an ambiguous surface: the
     candidates it could be and the model's ``choice``, kept as evidence on a
     proposed ``same_as``, never as identity."""
 
@@ -151,13 +151,18 @@ class Refusal:
 
 @dataclass(frozen=True)
 class ChunkResult:
-    """One chunk's extraction (§4). ``items`` are fact items (each with the
-    chunk ``sentence`` it cites) on candidate ids or local handles;
-    ``escapes`` and ``picks`` declare the handles; ``gate_refused`` and
-    ``refused`` record what code dropped; ``error`` is set when the whole chunk
-    is refused (its handles do not balance, or the model call failed), and
-    commit then refuses the build. ``chapter``, ``first_sentence`` and
-    ``last_sentence`` place the chunk; extract sets them from the plan."""
+    """One chunk's extraction (§4). ``items`` are fact items on candidate ids or
+    build handles, each carrying the ``sentence`` it cites, in the chunk's own
+    numbering (``1`` is ``first_sentence``); ``escapes`` and ``picks`` declare
+    the handles; ``gate_refused`` and ``refused`` record what code dropped;
+    ``error`` is set when the whole chunk is refused (its handles do not
+    balance, or the model call failed). ``chapter``, ``first_sentence`` and
+    ``last_sentence`` place the chunk; extract sets them from the plan.
+
+    ``commit`` re-validates every result as extract checks it (each item's
+    citation, and the effective gate of every id it names at that sentence)
+    and refuses the whole build, before any write, for a refused chunk or
+    anything extract would not have accepted."""
 
     index: int
     items: tuple[dict[str, Any], ...]
