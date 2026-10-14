@@ -580,6 +580,9 @@ def test_the_hand_rules_agree_with_a_json_schema_validator_when_one_is_installed
         {"op": "all_of", "operands": {}}, {"op": "located", "entity": "e:a", "place": "p",
                                            "plce": "x"},
         {"op": "not"}, {"op": "all_of", "operands": [{"op": "nope"}]}, [], "x", None,
+        # pbr (code review): a decoded JSON object has lists, never tuples
+        {"op": "all_of", "operands": ()},
+        {"op": "occurred", "kind": "x", "participants": ("e:a",)},
     ]
     for obj in good:
         assert validator.is_valid(obj), obj
@@ -587,3 +590,15 @@ def test_the_hand_rules_agree_with_a_json_schema_validator_when_one_is_installed
     for obj in bad:
         assert not validator.is_valid(obj), obj
         assert validate_condition(obj), obj
+
+
+def test_author_references_refuses_an_empty_frame_selection(tmp_path):
+    """pbr (code review): an empty selection is a ValueError, never a silent []."""
+    w = World(tmp_path / "empty.world", world_id="w:empty", model=StubModel())
+    try:
+        with pytest.raises(ValueError):
+            author_references(w, frames=())
+        with pytest.raises(ValueError):
+            author_references(w, frames=[])
+    finally:
+        w.close()

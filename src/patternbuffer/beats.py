@@ -85,7 +85,7 @@ def _type_name(value: Any) -> str:
         return "number"
     if isinstance(value, str):
         return "string"
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list):
         return "array"
     if isinstance(value, dict):
         return "object"
@@ -114,7 +114,7 @@ def _check_kind(kind: str, value: Any) -> str | None:
         ok = isinstance(value, (int, float)) and not isinstance(value, bool)
         return None if ok else "a number"
     if kind == "strs":
-        ok = isinstance(value, (list, tuple)) and all(isinstance(v, str) for v in value)
+        ok = isinstance(value, list) and all(isinstance(v, str) for v in value)
         return None if ok else "an array of strings"
     if kind == "cmp":
         return None if value in CMP_VALUES and isinstance(value, str) else f"one of {list(CMP_VALUES)}"
@@ -164,7 +164,7 @@ def _check_expr(obj: Any, path: str, depth: int, out: list[str]) -> None:
             _check_expr(obj[child], f"{path}.operand", depth + 1, out)
     elif child in obj:
         operands = obj[child]
-        if not isinstance(operands, (list, tuple)):
+        if not isinstance(operands, list):
             out.append(f"{path}.operands: expected an array, got {_type_name(operands)}")
         else:
             for i, operand in enumerate(operands):
@@ -229,6 +229,8 @@ def author_references(world: Any, *, frames: Iterable[str] = (CANON,)) -> list[F
     if isinstance(frames, str):
         raise TypeError("frames is a list of frame names, not a bare string")
     wanted = tuple(frames)
+    if not wanted:
+        raise ValueError("frames names no frame to lint")
     for name in wanted:
         if not isinstance(name, str) or not name:
             raise ValueError(f"a frame is a non-empty name, not {name!r}")
