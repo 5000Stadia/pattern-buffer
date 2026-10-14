@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.8.3 (pbr's code-review RED: the manifest `fixture` row is gate-timed like every identity row, with no timeless exception; CONTAINMENT-DURABILITY-V1 r1.6 lets a dated host declaration count from its valid time). r1.8.2 (pbr: an identity gated after every committed chunk is refused, never given an earlier chunk's time). r1.8.1 (pbr's r1.8 review: `refer()`'s name vocabulary honours valid time, an ENGINE change; gate mode refuses when there is no chunk to take a time from). r1.8 (construct's wiring review, m3310d2: identity rows carry the story time of their entry's gate, not timeless). r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.9 (the library comparison, `evals/results/2026-10-13-library-compare/REPORT.md`: 3 of 6 runs were refused because a declared build handle had no accepted line, and one refused chunk aborts a build. A build must finish: an unused declaration is dropped with a machine-readable receipt, a refused chunk gets one corrective retry, and every attempt's raw output is kept as a diagnostic. Construct's shape asks m9f306e folded in, marked *(k8–k10)*). r1.8.3 (pbr's code-review RED: the manifest `fixture` row is gate-timed like every identity row, with no timeless exception; CONTAINMENT-DURABILITY-V1 r1.6 lets a dated host declaration count from its valid time). r1.8.2 (pbr: an identity gated after every committed chunk is refused, never given an earlier chunk's time). r1.8.1 (pbr's r1.8 review: `refer()`'s name vocabulary honours valid time, an ENGINE change; gate mode refuses when there is no chunk to take a time from). r1.8 (construct's wiring review, m3310d2: identity rows carry the story time of their entry's gate, not timeless). r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -202,12 +202,64 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
     introduces for an entity not in the registry.
   - `picks` are `Pick(handle, surface, candidates, choice, evidence_quote)`, one per handle the
     chunk uses for an `Ambiguous` surface it chose.
-  - Every handle an item uses is declared by exactly one escape or pick in the same chunk, and
-    every declared handle is used. Otherwise the chunk is refused, as INGEST-V2 refuses orphans.
+  - Every handle an item uses is declared by exactly one escape or pick in the same chunk.
+    Otherwise (used but not declared, or declared twice) the chunk is refused, as INGEST-V2
+    refuses orphans. *(r1.9)* A declared handle that no accepted line uses is dropped (§4a), not a
+    refusal.
 - **The code checks** every id it receives:
   - an id not among the chunk's candidates or escapes is refused, as INGEST-V2's grammar already
     does;
   - a `Pick` whose choice isn't one of its candidates is refused.
+
+### 4a. Finishing a chunk *(r1.9)*
+
+- **An unused declared handle is dropped, not a refusal.** A handle declared by an escape or a pick
+  that no accepted line uses (counted after every per-line refusal, so a declaration whose only
+  line was refused is unused too) is dropped. It is never allocated, so nothing is minted and no
+  row is written for it. The chunk is otherwise accepted.
+  - **Why it is safe:** a declaration with no fact asserts nothing. The dangerous imbalances, a
+    handle used but not declared (INGEST-V2's orphan) and a handle declared twice, still refuse
+    the chunk.
+  - *(k9, construct m9f306e)* **A machine-readable receipt.** `ChunkResult.dropped_handles` lists
+    one `DroppedHandle(chunk, handle, kind, name, candidates, reason)` per drop, with
+    `reason="unused_handle"`.
+    - `kind` is `"escape"` or `"pick"`.
+    - `name` is the escape's name or the pick's surface.
+    - `candidates` is `()` for an escape, and the registry ids a pick stood between.
+    - An escape is by definition a name outside the registry, so only a dropped pick can stand
+      for manifest entries.
+    - The host decides what a drop means. Construct stops a build when a dropped pick's
+      candidates include an entry it holds load-bearing.
+  - Commit's own handle balance (r1.7) is unchanged. It receives only what extract kept, so it
+    never sees a dropped handle, and it still refuses a hand-built `ChunkResult` that declares an
+    unused handle.
+- **One corrective retry.** `extract(plan, registry, model, *, workers=4, retries=1)`.
+  - A chunk whose **answer** was refused (malformed output, or handles used undeclared or declared
+    twice) is asked once more.
+  - A model call that **raised** is not retried here. The injected callable owns its own transport
+    retries (the harness shim already makes three attempts on a timeout), and a corrective
+    sentence says nothing to a timeout, so retrying here would only stack calls. The prompt is the same,
+    plus one closing paragraph: `Your previous answer for this chunk was refused: <error>. Answer
+    again from the same text, following every rule above.`
+  - Per-line refusals (`malformed_line`, `unknown_id`, `citation_outside_chunk`, `gate_refused`)
+    and dropped handles never trigger a retry: the chunk was accepted.
+  - The retry runs in the same `stage="extract"`, `unit="chunk:NN"` label and in the same worker,
+    so the profile counts it under its chunk.
+  - The second result replaces the first. If it is refused too, the chunk is refused with the
+    second error, as before.
+  - `retries=0` is r1.8's behaviour exactly. `retries` is 0 or 1; anything else is a
+    `ValueError`.
+  - *(k8, construct m9f306e)* **One owner.** The library owns this retry, and a host doesn't add
+    its own on top, so calls never stack.
+- **Every attempt kept.** `ChunkResult.attempts` holds one `Attempt(error, raw)` per call made, in
+  order.
+  - `raw` is the model's returned JSON, or `None` when the call raised; `error` is that attempt's
+    chunk error, or `None`.
+  - `len(attempts)` is the chunk's attempt count on its receipt.
+  - `run_book` writes each refused chunk's attempts into `refused_chunks.json`, and each retried
+    chunk's attempts into `retried_chunks.json`.
+  - *(k10, construct m9f306e)* **Diagnostic only.** Raw output is never written to a world, so
+    no read, `refer` included, can see it. Commit doesn't read `attempts` or `dropped_handles`.
 
 ### 5. `commit(world, registry, results, *, time_of=None, ingest_kwargs=None)`: one serial writer
 
@@ -514,6 +566,28 @@ For a book with no author (construct passes its author's manifest instead):
        included, is visible then), its `fixture` row's `valid_from` is its gate time, and a
        containment row on it from a chunk at or after the gate is CONSTITUTIVE 1.0 with no model
        call.
+14b. *(r1.9)* **Finishing a chunk.**
+     - **Dropped handle:** a chunk declaring escape `new:1` with no line using it is accepted.
+       `dropped_handles` holds `DroppedHandle(chunk, "new:1", "escape", <name>, (),
+       "unused_handle")`, no id is minted for it, and every other line commits. The same holds
+       for an unused pick, whose `candidates` are its candidate ids. So does a declaration whose
+       only line was refused as malformed (that line stays in `refused`).
+     - **Still refused:** a handle used but not declared, or declared twice, refuses the chunk.
+     - **Commit unchanged:** a hand-built `ChunkResult` declaring an unused handle is refused by
+       commit before any write.
+     - **One retry:** a fake model refused once (a used-but-undeclared handle), then right. The
+       chunk is accepted with two attempts, the second prompt ends with the corrective paragraph
+       naming the first error, and both calls carry the chunk's label. With `retries=0` the
+       chunk is refused after one attempt.
+     - **Refused twice:** the chunk is refused with the second error, and both attempts keep
+       their raw output.
+     - **A raising call:** a model that raises makes one call, and the chunk is refused with one
+       attempt holding `raw=None`.
+     - **No retry on lines:** a chunk with only per-line refusals or a dropped handle makes one
+       call.
+     - **Bounds:** `retries=2` and `retries=-1` raise `ValueError`.
+     - **Runner:** `run_book --pipeline library` writes `refused_chunks.json` and
+       `retried_chunks.json` with the attempts.
 15. **Full suite green.**
 
 ## Lexicon (added with the build)
