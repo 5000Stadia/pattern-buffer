@@ -490,25 +490,37 @@ def _load_run_inputs(run: Path, graded_path: Path, book: Path | None,
                      world_id: str) -> tuple[Any, Any, Any]:
     """``(spans, chunk_texts, pass0)`` for a run: each ``None`` when the run or
     the book directory does not have it. Raises ``SystemExit`` when the book's
-    chunk plan disagrees with the run's ``chunk_spans.json``."""
+    chunk plan disagrees with the run's ``chunk_spans.json``.
+
+    A ``run_book --pipeline library`` run (BUILD-LIBRARY-V1) carries
+    ``manifest.json``; its chunks are re-planned from the book and that manifest
+    with the library's ``plan``, which is a pure function of the two."""
     spans_path = run / "chunk_spans.json"
     spans = json.loads(spans_path.read_text()) if spans_path.exists() else None
     texts = None
     if spans is not None:
         try:
             try:
-                from run_book import load_book
+                from run_book import library_chunks, load_book
             except ImportError:
-                from evals.harness.run_book import load_book
+                from evals.harness.run_book import library_chunks, load_book
             plan = load_book(book or graded_path.parent)
         except Exception as exc:  # no readable book beside the key: chunk leaks go unmeasured
             logger.warning("chunk texts unavailable (%s): chunk leaks are unmeasured", exc)
         else:
-            texts = {i: text for i, (_, text) in enumerate(plan.chunks)}
-            for c in spans["chunks"]:
-                if c["chunk"] >= len(plan.chunks) or int(plan.chunks[c["chunk"]][0]) != c["chapter"]:
-                    raise SystemExit(f"ABORT: chunk {c['chunk']} of {run.name}'s chunk_spans.json "
-                                     f"does not match the book's chunk plan in {book or graded_path.parent}")
+            library = library_chunks(run, plan)
+            if library is None:
+                texts = {i: text for i, (_, text) in enumerate(plan.chunks)}
+                for c in spans["chunks"]:
+                    if c["chunk"] >= len(plan.chunks) or int(plan.chunks[c["chunk"]][0]) != c["chapter"]:
+                        raise SystemExit(f"ABORT: chunk {c['chunk']} of {run.name}'s chunk_spans.json "
+                                         f"does not match the book's chunk plan in {book or graded_path.parent}")
+            else:
+                texts = {i: text for i, (_, text) in enumerate(library)}
+                for c in spans["chunks"]:
+                    if c["chunk"] >= len(library) or library[c["chunk"]][0] != c["chapter"]:
+                        raise SystemExit(f"ABORT: chunk {c['chunk']} of {run.name}'s chunk_spans.json "
+                                         f"does not match the library plan of {run.name}'s manifest")
     pass0 = None
     if (run / "registry_pass0.json").exists():
         from registry import WorldRegistry

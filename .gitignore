@@ -13,4 +13,6 @@ evals/results/**/*.world
 evals/results/**/staging/
 dist/
 build/
+# ...but the BUILD-LIBRARY-V1 package is source, not a build artifact
+!src/patternbuffer/build/
 evals/corpora/*.world*

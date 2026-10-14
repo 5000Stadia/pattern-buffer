@@ -10,7 +10,8 @@ repair, commit, audit.
 
 Usage (repo root):
     PYTHONPATH=src python evals/harness/run_book.py --book evals/books/<slug> --out DIR \\
-        [--pass0 sequential|parallel] [--merge-gate] [--glean] [--dry-run]
+        [--pass0 sequential|parallel] [--merge-gate] [--glean] [--dry-run] \\
+        [--pipeline ingest-v2|library]
 
 ``--dry-run`` reads the book, prints its segment and chunk counts with an
 estimate, and imports no model. A real run is metered; run it only when it has
@@ -23,6 +24,14 @@ every ``usage.jsonl`` line carries its stage, unit and attempt (BUILD-PROFILE-V1
 
 With ``PB_EVAL_STAGE_MODELS`` set (STAGE-MODELS-V1) each stage runs on its own
 model and effort, and ``meta.json`` records the map and its sha256.
+
+``--pipeline library`` (BUILD-LIBRARY-V1 §7) builds with ``patternbuffer.build``
+instead: category passes write the manifest (stage ``registry``), code mints the
+registry and plans the chunks, ``extract`` runs one labelled call per chunk
+(stage ``extract``), and ``commit`` writes the world (stage ``commit``). It adds
+``manifest.json``, ``plan.json`` and ``build_receipt.json`` to ``DIR``, writes
+the minted registry as ``registry_pass0.json`` and the spans as
+``chunk_spans.json``, so ``grade_book.py`` grades it. INGEST-V2 stays the default.
 
 ``DIR`` receives ``timings.json`` and ``receipt.json`` (rewritten as each stage
 finishes, so a failed run keeps what it spent), ``usage.jsonl`` (one line per
@@ -66,6 +75,12 @@ SCENE_BREAKS = frozenset({"* * *", "***", "---"})
 TARGET_CHUNK_WORDS = 1200
 USAGE_ENV = "PB_EVAL_USAGE_LOG"
 STAGES = ("pass0", "pass1", "escape_repair", "commit", "audit")
+
+# BUILD-LIBRARY-V1 §7: the pipelines a run can use; INGEST-V2 is the default.
+PIPELINES = ("ingest-v2", "library")
+LIBRARY_STAGES = ("registry", "extract", "commit")
+LIBRARY_MAX_WORDS = 1500
+LIBRARY_MANIFEST_FILE = "manifest.json"
 
 # R26's measured sequential build of The Last Honest Meter: its size and wall
 # seconds (evals/results/2026-10-10-r26-build-timings). R26 recorded no tokens,
@@ -269,12 +284,19 @@ class Receipt:
 
 def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
              pass0: str = "sequential", merge_gate: bool = False, glean: bool = False,
-             model_name: str = "injected", profile: bool = True) -> dict[str, Any]:
+             model_name: str = "injected", profile: bool = True,
+             pipeline: str = "ingest-v2") -> dict[str, Any]:
     """Build the book in ``book_dir`` into ``out_dir`` with ``model``; return meta.
 
     Raises ``BookRefused`` before any model call for a book it will not build,
     and ``BookRunAborted`` when pass-1 leaves failed chunks (nothing is
-    committed; the staging stays)."""
+    committed; the staging stays). ``pipeline="library"`` builds with
+    ``patternbuffer.build`` instead (BUILD-LIBRARY-V1 §7, ``_run_library``)."""
+    if pipeline not in PIPELINES:
+        raise BookRefused(f"unknown pipeline {pipeline!r} (pipelines: {', '.join(PIPELINES)})")
+    if pipeline == "library":
+        return _run_library(book_dir, out_dir, model, pass0=pass0, merge_gate=merge_gate,
+                            glean=glean, model_name=model_name)
     from audit import run_audit
 
     plan = load_book(book_dir)
@@ -375,6 +397,167 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
             os.environ[USAGE_ENV] = prior_env
 
 
+# --------------------------------------------- BUILD-LIBRARY-V1: --pipeline library
+
+
+def ledger_labelled(model: Callable[[str, dict], Any]) -> Callable[[str, dict], Any]:
+    """``model`` with each call made under the usage ledger's label for the
+    library's build label (``patternbuffer.build.current_label``), so
+    ``usage.jsonl`` records the call's stage and unit and the stage map routes
+    it (STAGE-MODELS-V1). A call made outside a build label goes as it is."""
+    from patternbuffer.build import current_label
+
+    def call(prompt: str, schema: dict) -> Any:
+        found = current_label()
+        if found is None:
+            return model(prompt, schema)
+        with usage_ledger.label(stage=found["stage"], unit=found["unit"]):
+            return model(prompt, schema)
+
+    return call
+
+
+def library_registry_view(registry: Any, world_id: str) -> Any:
+    """The library registry as the harness's ``WorldRegistry`` (each minted
+    entry and persona id with its type and names), saved as
+    ``registry_pass0.json`` for GRADE-LEAKS-V1's registry-leak check."""
+    from registry import EntityCard, WorldRegistry
+
+    return WorldRegistry(world_id=world_id, entities={
+        ident.id: EntityCard(kind=ident.type, names=list(ident.names))
+        for ident in registry.identities})
+
+
+def library_chunks(run_dir: str | Path, book_plan: BookPlan) -> list[tuple[int, str]] | None:
+    """``(chapter, text)`` per chunk of a ``--pipeline library`` run, re-planned
+    from the book and the run's ``manifest.json`` (the library's plan is a pure
+    function of the two); None for a run without one (an INGEST-V2 run)."""
+    run = Path(run_dir)
+    if not (run / LIBRARY_MANIFEST_FILE).exists():
+        return None
+    from patternbuffer import build
+
+    manifest = build.Manifest.from_dict(json.loads((run / LIBRARY_MANIFEST_FILE).read_text()))
+    meta_path = run / "meta.json"
+    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    text = dict(book_plan.chapters)
+    registry = build.Registry.from_manifest(manifest, text)
+    chunks = build.plan(text, registry, max_words=meta.get("max_words", LIBRARY_MAX_WORDS))
+    return [(c.chapter, c.text) for c in chunks]
+
+
+def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
+                 pass0: str, merge_gate: bool, glean: bool, model_name: str) -> dict[str, Any]:
+    """``run_book(pipeline="library")``: the book built with ``patternbuffer.build``.
+
+    Stages (receipted like INGEST-V2's): ``registry`` (the category passes),
+    ``extract`` (one labelled call per chunk) and ``commit`` (the library's
+    commit, then one classification sweep and the truth scan, as INGEST-V2's
+    commit ends). Each chunk is committed at its chapter number, as INGEST-V2
+    poses its chunks. Raises ``BookRunAborted`` when the manifest does not
+    validate or a chunk is refused (nothing is committed)."""
+    from patternbuffer import World, build
+
+    if pass0 != "sequential" or merge_gate or glean:
+        raise BookRefused("--pass0, --merge-gate and --glean are INGEST-V2 options; "
+                          "--pipeline library takes none of them")
+    plan = load_book(book_dir)
+    from model_shim import StageMapError, stage_map_receipt
+    try:
+        stage_models = stage_map_receipt()
+    except StageMapError as exc:
+        raise BookRunAborted(f"stage map refused: {exc}") from exc
+    run_dir = Path(out_dir)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    world_id = world_id_for(plan.slug)
+    log = fresh_usage_log(run_dir)
+    prior_env = os.environ.get(USAGE_ENV)
+    os.environ[USAGE_ENV] = str(log)
+    usage_ledger.reset()
+    timings: dict[str, float] = {}
+
+    def stage_done(name: str, seconds: float) -> None:
+        timings[f"{name}_s"] = seconds
+        write_json(run_dir / "timings.json", timings)
+
+    receipt = Receipt(run_dir / "receipt.json", log, stage_done)
+    labelled = ledger_labelled(model)
+    text = dict(plan.chapters)
+    try:
+        with receipt.stage("registry"):
+            manifest = build.category_passes(text, labelled)
+        write_json(run_dir / LIBRARY_MANIFEST_FILE, manifest.to_dict())
+        try:
+            registry = build.Registry.from_manifest(manifest, text)
+        except build.ManifestError as exc:
+            write_json(run_dir / "manifest_problems.json", exc.problems)
+            raise BookRunAborted(f"the category passes' manifest does not validate: "
+                                 f"{len(exc.problems)} problem(s), see manifest_problems.json"
+                                 ) from exc
+        library_registry_view(registry, world_id).save(run_dir / "registry_pass0.json")
+        chunks = build.plan(text, registry, max_words=LIBRARY_MAX_WORDS)
+        write_json(run_dir / "plan.json", [c.to_dict() for c in chunks])
+
+        with receipt.stage("extract"):
+            results = build.extract(chunks, registry, labelled, workers=4)
+        refused = [r.index for r in results if r.error]
+        if refused:
+            write_json(run_dir / "refused_chunks.json",
+                       [{"chunk": r.index, "error": r.error} for r in results if r.error])
+            raise BookRunAborted(f"chunks {refused} were refused at extraction; nothing committed")
+
+        world_path = run_dir / "fresh_ingest.world"
+        world_path.unlink(missing_ok=True)
+        with receipt.stage("commit"):
+            world = World(world_path, world_id=world_id, model=model)
+            with usage_ledger.label(stage="commit"):
+                built = build.commit(world, registry, results,
+                                     time_of=lambda i: float(chunks[i].chapter),
+                                     ingest_kwargs={"classify": "defer"})
+                world.classifier.classify_all(batch_size=40)
+            world.truth.scan()
+        write_json(run_dir / "chunk_spans.json", {"chunks": list(built.chunk_spans)})
+        write_json(run_dir / "build_receipt.json", built.to_dict())
+        (run_dir / "ingest_dump.jsonl").write_text(dump(world.buffer))
+        timings["total_s"] = round(sum(v for k, v in timings.items() if k != "total_s"), 1)
+        write_json(run_dir / "timings.json", timings)
+        meta = {
+            "date": date.today().isoformat(),
+            "book": plan.slug,
+            "world_id": world_id,
+            "model": model_name,
+            "pipeline": "BUILD-LIBRARY-V1 (patternbuffer.build)",
+            "chapters": len(plan.chapters),
+            "chunks": len(chunks),
+            "words": plan.words,
+            "log_rows": world.buffer.head(),
+            "entities": len({r.entity for r in world.buffer.all_rows()
+                             if not r.entity.startswith("a:")}),
+            "manifest_entries": len(manifest.entries),
+            "minted": len(built.minted),
+            "mentions": built.mentions,
+            "escapes": built.escapes,
+            "proposals": built.proposals,
+            "correlations": built.correlations,
+            "rejections": built.rejections,
+            "gate_refused": sum(len(r.gate_refused) for r in results),
+            "refused_lines": sum(len(r.refused) for r in results),
+            "max_words": LIBRARY_MAX_WORDS,
+            "timings": timings,
+            "receipt": receipt.total(),
+        }
+        if stage_models is not None:
+            meta["stage_models"] = stage_models
+        write_json(run_dir / "meta.json", meta)
+        world.close()
+        return meta
+    finally:
+        if prior_env is None:
+            os.environ.pop(USAGE_ENV, None)
+        else:
+            os.environ[USAGE_ENV] = prior_env
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--book", required=True, help="book directory (ch01.md ... chNN.md)")
@@ -390,6 +573,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     help="skip objectives.jsonl (calls are still labelled in usage.jsonl)")
     ap.add_argument("--dry-run", action="store_true",
                     help="read the book and print counts and an estimate; import no model")
+    ap.add_argument("--pipeline", choices=PIPELINES, default="ingest-v2",
+                    help="ingest-v2 (default) or library (BUILD-LIBRARY-V1: patternbuffer.build)")
     args = ap.parse_args(argv)
     if not args.dry_run and not args.out:
         ap.error("--out is required unless --dry-run")
@@ -414,7 +599,7 @@ def main(argv: list[str] | None = None,
             model_name = "injected"
         meta = run_book(args.book, args.out, model, pass0=args.pass0,
                         merge_gate=args.merge_gate, glean=args.glean, model_name=model_name,
-                        profile=not args.no_profile)
+                        profile=not args.no_profile, pipeline=args.pipeline)
     except (BookRefused, BookRunAborted) as exc:
         raise SystemExit(f"ABORT: {exc}") from exc
     print(json.dumps(meta, indent=2))
