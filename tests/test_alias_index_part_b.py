@@ -194,6 +194,11 @@ def test_person_by_folded_canon_kind(tmp_path):
     seed_world(w, reg)
     w.ingest_structured([{"entity": "obj:sela", "attribute": "kind", "value": "person",
                           "value_type": "literal", "valid_from": 5.0}])  # a later kind row wins the fold
+    # SESSION-GUARDRAILS-V1: the deferred `kind` rows are now classified at ingest
+    # (CONSTITUTIVE, a guardrail). This test reads the fold with them unclassified
+    # (STATE, "a later kind row wins"), so restore that reading explicitly.
+    for r in w.buffer.visible(entity="obj:sela", attribute="kind"):
+        w.classifier.set(r.id, "STATE")
     assert w.state("obj:sela", "kind").winner.value == "person"
     acted = ai.apply_distinctness(w, reg, ai.build_report(reg, ["x"]))
     assert acted["written"] == []

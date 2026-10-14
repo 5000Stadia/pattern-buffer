@@ -370,10 +370,14 @@ class Porcelain:
         rows = self._w.buffer.all_rows()
         if scope == "session":
             rows = [r for r in rows if r.seq > begin]
-        classified = self._w.classifier.classify_rows(rows, model=model)
-        self._w.ingestor.classify_inline = self._build_prev_inline
-        self._build_head = None
-        self._build_prev_inline = None
+        try:
+            classified = self._w.classifier.classify_rows(rows, model=model)
+        finally:
+            # SESSION-GUARDRAILS-V1: a pass that raises still closes the session;
+            # unreached rows stay unclassified for a later classify_all.
+            self._w.ingestor.classify_inline = self._build_prev_inline
+            self._build_head = None
+            self._build_prev_inline = None
         return {"outcome": "sealed", "classified": classified,
                 "seq_range": [begin + 1, head], "scope": scope}
 
@@ -395,7 +399,8 @@ class Porcelain:
     def build(self, at: float | None = None, model: bool = False,
               scope: str = "session"):
         """Python sugar over begin_build/seal_build: seals on clean exit,
-        aborts (toggle restored, nothing classified) on exception."""
+        aborts (toggle restored, nothing classified) on exception. A seal that
+        itself raises still leaves no session open."""
         self.begin_build(at=at)
         try:
             yield self
