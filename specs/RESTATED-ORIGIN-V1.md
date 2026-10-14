@@ -1,6 +1,6 @@
 # RESTATED-ORIGIN-V1: a move written as both ends keeps only where the thing went
 
-**Status:** r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
+**Status:** r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
 deterministic, with no model and no prompt change.
 **Source:** construct's R20 run 11 (engine 42d0c23, letter "R20 run 11 … one engine-shaped
 question"), checked by pb in a read-only copy of the play world:
@@ -26,16 +26,45 @@ The old place is already in the log, so the restatement adds nothing and only br
 
 Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
 
-0. **Staged validation, without side effects** *(r1.1, pbr)*.
-   - Before any containment row of the call is written, each item is run through every individual
-     pre-write check it would face. That includes canonicalization, frame, identity resolution,
-     the stamped valid time, the interval checks, the edge and cycle checks, and every other
-     per-item skip.
-   - This stage writes nothing: no declarations, no rows, no receipts.
-   - An item that fails a check keeps its existing skip reason, recorded once, exactly as today.
-     It never joins a group.
-   - Only the **eligible writes**, items that would otherwise enter, are grouped below.
-1. **The group.** Eligible writes whose attribute is in the **effective containment family**
+0. **A dry run finds the eligible writes** *(r1.2, pbr; replaces r1.1's per-item staging)*.
+   - When the call holds two or more items, the gate first runs the **whole call**, unchanged and
+     in input order, inside an isolated unit that is always rolled back. It uses the existing
+     machinery: `buffer.atomic_unit` with the ingestor's view snapshot and restore
+     (ATOMIC-ACTIVATION-V1 §B4).
+   - So every earlier item's effect on later ones is exactly the real path's. That covers an
+     earlier `same_as` changing what a later container resolves to, an earlier manual
+     `attr:stowed_in · relation_family · containment` making later `stowed_in` rows containment,
+     a first-use declaration, alias receipts and cursor stamping.
+   - The dry run records, for every containment row that would be written, its item index,
+     resolved entity, frame, stamped valid time and resolved container. Its family is the one in
+     force at that row's write: built-in, declared before the call, or declared earlier in the
+     same call.
+   - **Nothing survives the dry run:**
+     - the transaction rolls back;
+     - the ingestor's in-memory views are restored from the snapshot. That covers the alias map,
+       the attribute-default memo, the scene cursor and `last_skipped`; the build extends the
+       snapshot with any other view the call mutates;
+     - the semantics and identity views are refreshed from the restored log, keyed on the log
+       version;
+     - classification is off inside it (`defer`), so no model is called and no verdict is
+       stored;
+     - its skip receipts are discarded.
+   - The host's `attribute_default` callback may be asked during the dry run and again during
+     the real run. It must be a pure function of the attribute name, which is already its
+     contract (asked "once per attribute", with no promise about calls).
+   - **Item rejected in the dry run:** an item rejected by any ordinary gate check is never an
+     eligible write, so it never joins a group, and its skip is recorded once, by the real run
+     (r1.1's 3b holds).
+   - **The real run** is then the call exactly as today, with each dropped item (step 4)
+     replaced by its `restated_origin` skip at its input position. It is authoritative for
+     everything written.
+   - Dropping a restatement removes only an edge that already exists in the fold. It can't
+     create a cycle, a merge or a declaration that the dry run didn't see, so the real run's
+     other rows are the dry run's.
+   - **A call of one item** skips the dry run: a group needs two rows.
+   - **Atomic calls:** the dry run is its own rolled-back unit, finished before the real atomic
+     unit opens. The units are never nested.
+1. **The group.** The dry run's eligible containment writes. Each one's attribute is in the **effective containment family** at its write
    *(r1.1, pbr)*: the built-in family (`in`, `within`, `held_by`, `worn_by`, `carried_by`) and
    every attribute the world declares `relation_family: containment`
    (`AttributeSemantics.containment_family()`). For an item whose first use would declare its
@@ -102,6 +131,23 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
     stowed_in obj:belt` and `ring in person:tomas`. The restatement is skipped `restated_origin`.
     The same holds when `stowed_in`'s first use in this very call declares it containment
     (projected family).
+3c. *(r1.2, pbr)* **An earlier merge in the same call:** origin `ring in obj:belt`; then one call
+    with `obj:leather_belt same_as obj:belt` first, then `ring in obj:leather_belt` and `ring in
+    person:tomas` at one time. The second spelling resolves to the origin, so it is skipped
+    `restated_origin`, and the merge is written as today.
+3d. *(r1.2, pbr)* **An earlier manual declaration in the same call:** one call with
+    `attr:stowed_in · relation_family · containment` first, then `ring stowed_in obj:belt`
+    (origin `ring in obj:belt` before the call) and `ring in person:tomas` at one time. The
+    `stowed_in` row is skipped `restated_origin`, and the declaration is written.
+3e. *(r1.2)* **Atomic versions** of 1, 3c and 3d: `atomic=True` with `classify="rules"` gives the
+    same rows. Any skip still aborts the set, as `restated_origin` is a skip.
+3f. *(r1.2)* **The dry run leaves no trace:**
+    - after a call whose dry run held a merge, a declaration, a first-use declaration and an
+      alias receipt, the world's dump equals that of a twin world given the same call with the
+      dropped items removed by hand (the same rows, ids and seqs);
+    - the ingestor's views equal a fresh reopen's;
+    - `attribute_default` is a counting stub, so its call count is reported, not asserted;
+    - a one-item call makes no dry run (spy on `atomic_unit`).
 3b. *(r1.1)* **A rejected change beside a restatement:** origin `ring in obj:belt`, then one call
     with `ring in obj:belt` and `ring in obj:ring` (a self-containment cycle).
     - The cycle edge is skipped with its existing reason, exactly once.
