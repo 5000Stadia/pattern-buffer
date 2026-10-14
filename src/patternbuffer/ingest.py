@@ -41,6 +41,7 @@ from patternbuffer.model import (
     VALUE_TYPES,
     WORLD_PHYSICS_SUBJECT,
     Assertion,
+    infer_value_type,
     task_schema,
 )
 from patternbuffer.roles import RoleViolation, WriterRole
@@ -761,9 +762,7 @@ class Ingestor:
                 agent[eid] = it.get("value")
             elif attr == "destination":
                 dest[eid] = it.get("value")
-                vt = it.get("value_type") or (
-                    "entity" if isinstance(it.get("value"), str)
-                    and ID_RE.fullmatch(str(it.get("value"))) else "literal")
+                vt = infer_value_type(it.get("value"), it.get("value_type"))
                 dest_is_entity[eid] = vt == "entity"
 
         for eid in moved_ids:
@@ -1349,10 +1348,7 @@ class Ingestor:
         # Entity inference requires the full id grammar, not a bare ":" —
         # a prose value with a colon ("repaired: the rival arrives") is a
         # literal, never a phantom entity reference (SHAPE-FIX-V1 4a).
-        value_type = item.get("value_type") or (
-            "entity" if isinstance(value, str) and ID_RE.fullmatch(value)
-            else "literal"
-        )
+        value_type = infer_value_type(value, item.get("value_type"))
         # 5. GATE-INVERSE-ALIAS-V1 §2: an inverse relation with an ENTITY value
         # swaps subject and object here — immediately after canonicalization,
         # once value_type is decided, before the mechanism check, the

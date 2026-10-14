@@ -497,5 +497,5 @@ def test_10_a_canon_move_into_a_known_drawer_feeds_a_present_put_and_no_known_op
 
 def test_11_the_author_verb_is_a_service_verb_not_a_porcelain_one():
     reg = build_registry()
-    assert len(reg) == 45 and "record" not in reg
+    assert len(reg) == 46 and "record" not in reg
     assert "record" not in VIEWER_EXCLUDED and "record" not in V1_READS

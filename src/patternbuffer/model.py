@@ -207,6 +207,16 @@ EVENT_PREFIX = "event:"
 # well-formed. One definition for the gate and the porcelain.
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*:[a-z0-9_:]+$")
 
+
+def infer_value_type(value: Any, value_type: Any) -> str:
+    """A row's effective value type at the gate: the ``value_type`` given, or,
+    if absent or empty, ``"entity"`` for a string of the id grammar and
+    ``"literal"`` otherwise. One predicate for the gate and ``bind``
+    (PLAY-BIND-V1 §2), so a row ``bind`` admits is never written with an
+    unchecked entity value."""
+    return value_type or ("entity" if isinstance(value, str) and ID_RE.fullmatch(value)
+                          else "literal")
+
 # A value that LOOKS like an id (GATE-AUTHORITY-V1 §7): a letter-led word, a
 # colon, and no whitespace right after it — `Place:Cellar`, `place:/cellar`,
 # `place:the cellar`, `place:`; never `repaired: the rival arrives`, `12:30`

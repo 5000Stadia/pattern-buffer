@@ -709,6 +709,20 @@ class PatternBuffer:
             "SELECT MAX(valid_from) FROM assertions").fetchone()
         return row[0]
 
+    def ids(self) -> set[str]:
+        """Every id the log has ever named, any frame, any status, any time:
+        each row's subject and each entity value (PLAY-BIND-V1 §2.7, the
+        collision universe; ``same_as`` and ``aka`` endpoints are both).
+        Read-only."""
+        conn = self._live_conn()
+        out = {r[0] for r in conn.execute("SELECT DISTINCT entity FROM assertions")}
+        for (raw,) in conn.execute(
+                "SELECT DISTINCT value FROM assertions WHERE value_type = 'entity'"):
+            value = json.loads(raw, object_hook=decode_hook)
+            if isinstance(value, str):
+                out.add(value)
+        return out
+
     def _select(self, where: str, params: tuple) -> list[Assertion]:
         cur = self._live_conn().execute(
             "SELECT seq, id, world_id, entity, attribute, value_type, value,"

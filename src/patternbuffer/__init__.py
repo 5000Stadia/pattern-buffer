@@ -37,6 +37,7 @@ from patternbuffer.model import (
 )
 from patternbuffer.project import Materialization, Projector
 from patternbuffer.codec import encode_out
+from patternbuffer.bind import Bind, BindResult, RowResult, Side
 from patternbuffer.refer import Refer, Resolution
 from patternbuffer.roles import _make_engine_roles
 from patternbuffer.salience import SalienceIndex
@@ -59,7 +60,7 @@ from patternbuffer.tmaint import AtomicAbort, TruthMaintenance
 __version__ = "0.2.0"
 
 STANCES = frozenset({"fiction", "reality", "hypothetical"})  # letter 026; fixed enum
-__all__ = ["World", "Materialization", "Resolution", "AtomicAbort",
+__all__ = ["World", "Materialization", "Resolution", "BindResult", "RowResult", "Side", "AtomicAbort",
            "SecondWriter", "ReadOnlyWorld", "WorldPhysicsMismatch",
            "ResolveRequest", "task_request", "__version__"]
 
@@ -177,6 +178,8 @@ class World:
         )
         self.refer = Refer(self.buffer, self.indexes, self.registry, model,
                            ingestor=self.ingestor)
+        # PLAY-BIND-V1: the deterministic matcher for a turn's mentions.
+        self.bind = Bind(self.buffer, self.indexes, self.registry)
         # The World Charter (letter 026): a fresh world's genesis write
         # asserts its self-description — stance is ontological stored
         # truth (does this world claim to describe reality?), distinct

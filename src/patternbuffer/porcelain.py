@@ -1370,6 +1370,26 @@ class Porcelain:
             asserted_as_of=asserted_as_of, learn=learn, model=model)
         return encode_out(asdict(resolution))
 
+    # ------------------------------------------------------------- bind
+
+    def bind(self, rows: list[dict], as_of: float, scope: list[str] | None = None,
+             include: list[str] | None = None, widen: list[str] | None = None,
+             mint: list[str] | None = None, frame: str = CANON) -> dict:
+        """Bind a turn's extracted rows to entities that exist at `as_of`
+        (PLAY-BIND-V1): one decision per raw id, one result per row. A
+        person, place or obj id binds by exact id, then name, then unique kind
+        among the candidates (`scope` expanded through contents, `include` as
+        given, every named entity of the `widen` namespaces); a future-only
+        entity is reported, never bound; a miss mints a collision-checked id
+        only in a `mint` namespace. Other namespaces are kept unchanged.
+        Deterministic and read-only: `{"rows": [{"index", "admitted", "row",
+        "subject", "value"}], "mints", "excluded"}`. Admitted means bound, not
+        permission to ingest."""
+        result = self._w.bind(rows, as_of=as_of, scope=tuple(scope or ()),
+                              include=tuple(include or ()), widen=tuple(widen or ()),
+                              mint=tuple(mint or ()), frame=frame)
+        return encode_out(asdict(result))
+
     # ------------------------------------------------------------- ask
 
     def ask(self, question: str, frame: str = CANON,

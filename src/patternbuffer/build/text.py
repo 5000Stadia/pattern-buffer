@@ -26,45 +26,18 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
-_QUOTES = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"'})
-_TOKEN = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)*")
+from patternbuffer.names import (  # noqa: F401  (re-exported: the build library's names)
+    ARTICLES,
+    TITLES,
+    contains_run,
+    fold_quotes,
+    name_key,
+    tokens,
+)
+
 # A sentence ends at terminal punctuation, optionally followed by closing
 # quotes or brackets; the split needs whitespace right after (checked by hand).
 _SENTENCE_END = re.compile(r"[.!?…][\"'”’»)\]}]*")
-
-ARTICLES = frozenset({"the", "a", "an"})
-# The fixed list of leading titles a name key drops (BUILD-LIBRARY-V1 §2:
-# "leading titles from a fixed list"; BookNLP's honorific rule). Matched on
-# whole tokens, so "Mr." and "Mr" are one title.
-TITLES = frozenset(
-    "mr mrs ms miss mx dr doctor prof professor sir dame lady lord madam madame mme mlle "
-    "monsieur master mistress rev reverend father fr mother brother sister capt captain "
-    "lt lieutenant sgt sergeant cpl corporal col colonel maj major gen general adm admiral "
-    "cmdr commander officer inspector detective det constable judge king queen prince "
-    "princess duke duchess count countess baron baroness earl emperor empress aunt uncle"
-    .split())
-
-
-def fold_quotes(text: str) -> str:
-    """Curly single quotes to ``'`` and curly double quotes to ``"``; nothing
-    else changes (``evals/harness/book_gold.fold_quotes``)."""
-    return text.translate(_QUOTES)
-
-
-def tokens(text: str) -> list[str]:
-    """GRADE-LEAKS-V1's whole-token tokenizer: quote folding and lowercase,
-    no article stripping, so ``o'brien`` is one token and ``copper-hand`` two."""
-    return _TOKEN.findall(fold_quotes(text).lower())
-
-
-def contains_run(haystack: Sequence[str], needle: Sequence[str]) -> bool:
-    """Whether ``needle`` occurs as a contiguous run in ``haystack``."""
-    n = len(needle)
-    if n == 0 or n > len(haystack):
-        return False
-    needle = list(needle)
-    return any(list(haystack[i:i + n]) == needle for i in range(len(haystack) - n + 1))
-
 
 def collapse(text: str) -> str:
     """Quote folding and whitespace collapse, outer whitespace dropped: the
@@ -83,16 +56,6 @@ def join_key(name: str) -> str:
         if key.startswith(article):
             return key[len(article):].strip()
     return key
-
-
-def name_key(name: str) -> tuple[str, ...]:
-    """A name's matching key for ``resolve`` (BUILD-LIBRARY-V1 §2): its whole
-    tokens (lowercase, quote folding), with leading titles from :data:`TITLES`
-    dropped while more than one token remains."""
-    toks = tokens(name)
-    while len(toks) > 1 and toks[0] in TITLES:
-        toks = toks[1:]
-    return tuple(toks)
 
 
 def is_description(name: str) -> bool:

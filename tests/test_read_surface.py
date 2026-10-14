@@ -1843,8 +1843,9 @@ def test_s11_registry_declares_refer_and_canonical_attribute():
     # AMBIGUOUS: the count depends on whether batch C's identity_conflicts has
     # landed; both stated counts are accepted.
     # 43 with FRAME-CONTINUITY-V1's continue_frame mutation; 45 with
-    # CLOSURE-READ-V1's closure and distinct_between reads
-    assert len(reg) == (45 if "identity_conflicts" in reg else 41)
+    # CLOSURE-READ-V1's closure and distinct_between reads; 46 with
+    # PLAY-BIND-V1's bind
+    assert len(reg) == (46 if "identity_conflicts" in reg else 41)
 
 
 def test_s11_completeness_still_classifies_every_verb():

@@ -129,6 +129,21 @@ world.refer(description, scope=None, frame="canon",
 world.registry.by_alias(text, asserted_as_of=None, frame="canon") -> set[str]
 ```
 
+### bind: one matcher for a turn's mentions
+
+```python
+p.bind(rows, as_of, scope=None, include=None, widen=None, mint=None,
+       frame="canon") -> {"rows": [...], "mints": {...}, "excluded": [...]}
+# PLAY-BIND-V1. Call it between extract() and ingest_structured(), after your
+# own frame partition, deixis and value typing. Each row's subject and entity
+# value is bound to a candidate that exists at `as_of` (exact id, then name up
+# to number, then unique kind); scope expands through contents, include is an
+# exact roster, widen adds every named entity of a namespace. A future-only
+# entity comes back future_only, never bound; a miss mints only in a `mint`
+# namespace, clear of every id the log has named. event:/fact:/doc: ids pass
+# through. Admitted means bound, not permission: your gates still run.
+```
+
 ### refer learns words, never picks
 
 `refer` writes exactly one thing, and only on a **vocabulary miss**

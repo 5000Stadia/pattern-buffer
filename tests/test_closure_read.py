@@ -191,7 +191,7 @@ def test_3_distinct_block_descriptors_are_unchanged(world):
 def test_5_mcp_serves_both_reads(world):
     _history(world)
     assert {"closure", "distinct_between"} <= set(V1_READS)
-    assert len(build_registry()) == 45
+    assert len(build_registry()) == 46
     assert dispatch(world, "closure", {"entity": A})["result"] == sorted([A, B])
     assert dispatch(world, "distinct_between", {"a": A, "b": D})["result"] == []
 

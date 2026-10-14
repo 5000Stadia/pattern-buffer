@@ -56,8 +56,8 @@ ships with visibly.
 
 A storage and retrieval substrate that lets a language model maintain a complete, queryable, durable model of a world — places, objects, people, relationships, histories, and unknowns — such that any state question is answered by a deterministic query, never by re-reading prose; the world accretes and is re-enterable; and the same engine serves authored fiction (a holodeck, a campaign, a mystery) and real-world tracking (a household, a job site, a vehicle), differing only in resolution policy and provenance discipline.
 
-The frozen porcelain API is additive-only. The bundled MCP server exposes 45
-deterministic verbs — 31 reads and 14 mutations — over one world, and works
+The frozen porcelain API is additive-only. The bundled MCP server exposes 46
+deterministic verbs — 32 reads and 14 mutations — over one world, and works
 with any MCP client. [Construct](https://github.com/5000Stadia/construct)
 runs entirely on this public contract and validates it with its suite.
 

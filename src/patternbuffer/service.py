@@ -96,6 +96,8 @@ VIEWER_EXCLUDED: dict[str, str] = {
     "extract": "reaches the model", "ingest": "a write that reaches the model",
     "ask": "reaches the model",
     "merge_gate": "reaches the model",
+    "bind": "reports future-only entities and checks every id the log has named "
+            "(PLAY-BIND-V1): a host's read, never a viewer's",
 }
 
 # The service's own viewer reads (VIEW-EXPORT-V1 §5): served on the reader
