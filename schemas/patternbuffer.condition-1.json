@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:patternbuffer:schema:condition:1",
+  "title": "patternbuffer.condition/1",
+  "description": "A beat condition (BEATS-V1 \u00a72): the JSON object construct's arc/io.py expr_to_obj writes. A shape only; evaluation is the host's. A beat stores it as a JSON string literal (json.dumps of this object). A field with a default may be omitted; construct's serializer always writes it.",
+  "$ref": "#/$defs/expr",
+  "$defs": {
+    "expr": {
+      "description": "A condition expression: one atom or one operator over expressions.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/state_is"
+        },
+        {
+          "$ref": "#/$defs/located"
+        },
+        {
+          "$ref": "#/$defs/in_frame"
+        },
+        {
+          "$ref": "#/$defs/occurred"
+        },
+        {
+          "$ref": "#/$defs/beat_achieved"
+        },
+        {
+          "$ref": "#/$defs/clock_fired"
+        },
+        {
+          "$ref": "#/$defs/turns_elapsed"
+        },
+        {
+          "$ref": "#/$defs/turns_quiet"
+        },
+        {
+          "$ref": "#/$defs/quantity"
+        },
+        {
+          "$ref": "#/$defs/not"
+        },
+        {
+          "$ref": "#/$defs/all_of"
+        },
+        {
+          "$ref": "#/$defs/any_of"
+        },
+        {
+          "$ref": "#/$defs/at_least"
+        }
+      ]
+    },
+    "state_is": {
+      "description": "The folded value of (entity, attribute) equals value.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "state_is"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "attribute": {
+          "type": "string"
+        },
+        "value": true
+      },
+      "required": [
+        "op",
+        "entity",
+        "attribute",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "located": {
+      "description": "The entity's containment chain includes place.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "located"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "op",
+        "entity",
+        "place"
+      ],
+      "additionalProperties": false
+    },
+    "in_frame": {
+      "description": "The assertion stands in the named frame's current fold.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "in_frame"
+        },
+        "frame": {
+          "type": "string"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "attribute": {
+          "type": "string"
+        },
+        "value": true
+      },
+      "required": [
+        "op",
+        "frame",
+        "entity",
+        "attribute",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "occurred": {
+      "description": "An event of this kind (with these participants, within since..until) happened at least min_count times.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "occurred"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "since": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null
+        },
+        "until": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null
+        },
+        "min_count": {
+          "type": "integer",
+          "default": 1
+        }
+      },
+      "required": [
+        "op",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "beat_achieved": {
+      "description": "The beat's status is achieved in plot_frame.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "beat_achieved"
+        },
+        "beat_id": {
+          "type": "string"
+        },
+        "plot_frame": {
+          "type": "string",
+          "default": "plot:main"
+        }
+      },
+      "required": [
+        "op",
+        "beat_id"
+      ],
+      "additionalProperties": false
+    },
+    "clock_fired": {
+      "description": "The clock has fired at least n times in plot_frame.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "clock_fired"
+        },
+        "clock_id": {
+          "type": "string"
+        },
+        "n": {
+          "type": "integer",
+          "default": 1
+        },
+        "plot_frame": {
+          "type": "string",
+          "default": "plot:main"
+        }
+      },
+      "required": [
+        "op",
+        "clock_id"
+      ],
+      "additionalProperties": false
+    },
+    "turns_elapsed": {
+      "description": "A host counter: turns elapsed is at least at_least.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "turns_elapsed"
+        },
+        "at_least": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "op",
+        "at_least"
+      ],
+      "additionalProperties": false
+    },
+    "turns_quiet": {
+      "description": "A host counter: turns quiet is at least at_least.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "turns_quiet"
+        },
+        "at_least": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "op",
+        "at_least"
+      ],
+      "additionalProperties": false
+    },
+    "quantity": {
+      "description": "The folded accrue total of (entity, attribute) compares to value under cmp.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "quantity"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "attribute": {
+          "type": "string"
+        },
+        "cmp": {
+          "enum": [
+            ">=",
+            ">",
+            "<=",
+            "<",
+            "==",
+            "!="
+          ]
+        },
+        "value": {
+          "type": "number"
+        },
+        "frame": {
+          "type": "string",
+          "default": "canon"
+        }
+      },
+      "required": [
+        "op",
+        "entity",
+        "attribute",
+        "cmp",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "not": {
+      "description": "Negation; unknown stays unknown.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "not"
+        },
+        "operand": {
+          "$ref": "#/$defs/expr"
+        }
+      },
+      "required": [
+        "op",
+        "operand"
+      ],
+      "additionalProperties": false
+    },
+    "all_of": {
+      "description": "Every operand holds.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "all_of"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/expr"
+          }
+        }
+      },
+      "required": [
+        "op",
+        "operands"
+      ],
+      "additionalProperties": false
+    },
+    "any_of": {
+      "description": "At least one operand holds.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "any_of"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/expr"
+          }
+        }
+      },
+      "required": [
+        "op",
+        "operands"
+      ],
+      "additionalProperties": false
+    },
+    "at_least": {
+      "description": "At least k operands hold.",
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "at_least"
+        },
+        "k": {
+          "type": "integer"
+        },
+        "operands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/expr"
+          }
+        }
+      },
+      "required": [
+        "op",
+        "k",
+        "operands"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -66,6 +66,25 @@ INVIOLABLE_CORE = (STRUCTURAL_PREDICATES
 FrameSel = str | tuple[str, ...]
 FRAME_SCOPES = ("exact", "continued", "merged")
 KNOWS_PREFIX = "knows:"
+# BEATS-V1 §1: an author frame (the story's plot, never a character's view) is a
+# frame whose name starts with `plot:`. `session:*` is host bookkeeping, not one.
+AUTHOR_FRAME_PREFIX = "plot:"
+
+
+def is_author_frame(frame: Any) -> bool:
+    """Whether ``frame`` names an author frame (BEATS-V1 §1): a string starting
+    with ``plot:``. The single test every view-frame entry point applies."""
+    return isinstance(frame, str) and frame.startswith(AUTHOR_FRAME_PREFIX)
+
+
+def refuse_author_view(frame: Any, where: str) -> None:
+    """Raise ``ValueError`` naming the author-frame rule when ``frame`` is an
+    author frame (BEATS-V1 §1: an author frame is never a view). ``where`` names
+    the refusing entry point."""
+    if is_author_frame(frame):
+        raise ValueError(
+            f"{where}: {frame!r} is an author frame (names starting "
+            f"{AUTHOR_FRAME_PREFIX!r}); an author frame is never a view frame")
 
 # The resolution policies — the world's one switch (whitepaper §8). Defined
 # here so the buffer can validate the physics row without importing the
