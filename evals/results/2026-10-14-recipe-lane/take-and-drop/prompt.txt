@@ -1,0 +1,74 @@
+Extract world-state facts (build library, chunk)
+
+Write the passage's facts about the world as GRAMMAR LINES, one per line. Each
+line cites the numbered sentence of the passage it comes from:
+
+  s<N>|entity|attribute|value|flags
+
+- s<N>: the sentence the fact comes from, numbered as the passage shows it
+  ([sN]). Every line cites one sentence of this passage.
+- entity: a candidate id below, or a handle new:<k> you declare (NEW and
+  AMBIGUOUS below). Ids are written by the build, never by you.
+- A candidate may be named only from its gate sentence on ("from sN"): a line
+  naming it that cites an earlier sentence is refused.
+- value: @<id> for an entity (a candidate id or a handle); JSON ({...}, [...],
+  "...") for structured or delimiter-bearing literals (approximate quantities
+  as bounds: {"gte": 40000}); ?{"policy": "invent_under_canon"} for an
+  explicitly unresolved aspect; a bare scalar otherwise.
+- flags (comma-separated, optional): t timeless (ONLY identity and structure:
+  names, fixed adjacency); f=knows:<id> knowledge-frame row; s=<status> one of
+  stated|observed|inferred|assumed; doc=<doc:id> document-claimed; cb=<id>
+  caused-by. Do not write vf= or vt=: the build stamps each passage's time.
+- Do not write kind, being_type or species: the build writes every candidate's
+  and handle's type. What a person is at a time (prisoner, captain, widow) is
+  role.
+- Attributes: 'in' for all containment and location.
+- CANON VS KNOWLEDGE: facts about the world are canon rows (no f= flag). Rows
+  with f=knows:X are ADDITIONAL copies marking that X knows a fact, never
+  replacements. A scene where A tells B an established fact yields knows:B rows
+  only.
+- Status: stated for asserted fact; inferred for a character's deduction;
+  assumed for a working theory. Document claims carry doc=.
+- Never invent; atmosphere and sensory texture are not facts.
+
+NEW: a person, animal, creature, place, thing, group or event the passage
+introduces that is no candidate gets a handle new:<k> (k = 0, 1, ... within
+this passage), declared once in "escapes" as {"handle", "type", "name",
+"species", "quote"}: type is one of person, animal, creature, place, object,
+group, event; species is a free word such as dog, only for an animal or
+creature, else null; quote is the passage's exact words that introduce it.
+
+AMBIGUOUS: when a name in the passage fits two or more candidates, write none
+of its facts on a candidate. Give it a handle, declared once in "picks" as
+{"handle", "surface", "candidates", "choice", "evidence_quote"}: surface is the
+passage's words for it; candidates are every candidate id it could be; choice
+is the one you judge it is; evidence_quote is the passage's exact words that
+support the choice. Its facts go on the handle: the build keeps your choice as
+evidence, never as identity.
+
+Every handle a line uses is declared exactly once, and every handle declared is
+used by a line.
+
+Use these attribute names where they fit:
+controls: what a switch, lever, plate, button or keypad works: `<switch> controls <light>`
+link_type: what kind of control the source is (values: switch, lever, plate, button, keypad, dial)
+control_mode: latching stays as set; momentary acts only while held (values: latching, momentary)
+state: a thing's one main setting now: a door's or lid's open or shut, a light's or switch's on or off; never locked
+locked: true while a lock is engaged; a locked door is also state shut (values: true, false)
+lit: how much light a place has now (values: dark, dim, lit, day, night)
+outdoors: a place open to the sky; written timeless (values: true, false)
+exits: an observed "no way out" (values: none)
+disposition: a being's temperament
+code: what a keypad or lock opens to
+
+CANDIDATES (id | type | names | gate):
+place:study | place | study | from s1
+place:hall | place | hall | from s1
+obj:doorway | object | doorway | from s1
+obj:table | object | table | from s2
+obj:book | object | book | from s2
+obj:page | object | page; loose page | from s2
+obj:another_table | object | another table | from s3
+
+PASSAGE (chunk 00, chapter 1):
+[s1] There is a study and a hall, joined by an open doorway. [s2] In the study a book lies on a table, and a loose page lies in the book. [s3] In the hall stands another table.

@@ -1,0 +1,58 @@
+{
+  "chunks": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        131,
+        194
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        195,
+        242
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 2,
+      "cursor": 1.0,
+      "seq": [
+        243,
+        290
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        291,
+        363
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 4,
+      "cursor": 2.0,
+      "seq": [
+        364,
+        419
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 5,
+      "cursor": 2.0,
+      "seq": [
+        420,
+        471
+      ]
+    }
+  ]
+}

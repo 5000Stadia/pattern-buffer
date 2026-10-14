@@ -1,0 +1,58 @@
+2026-10-14 09:17:06,705 patternbuffer.build.categories category pass beings: alias 'the Chair' of 'Tovan Sere' names someone else; dropped
+2026-10-14 09:17:06,705 patternbuffer.build.categories category pass beings: alias 'Pell' of 'Eren Vell' names someone else; dropped
+2026-10-14 09:17:06,705 patternbuffer.build.categories category pass beings: alias 'Pell Aven' of 'Eren Vell' names someone else; dropped
+2026-10-14 09:17:06,705 patternbuffer.build.categories category pass things: alias 'address strips' of 'bark strip' names someone else; dropped
+2026-10-14 09:17:06,705 patternbuffer.build.categories category pass things: alias 'parcel' of 'tin box' names someone else; dropped
+2026-10-14 09:18:27,032 patternbuffer.identity merge place:mouth_room == place:the_tin_orchard (same_as item; decided by statement)
+2026-10-14 09:18:27,438 patternbuffer.ingest ingest skipped edge: person:eren_vey · in · 'obj:brass_map inside his coat' — malformed_id
+2026-10-14 09:18:44,671 patternbuffer.classify containment floor: a:388 judged CONSTITUTIVE at 0.800 (< 0.95); stored STATE
+2026-10-14 09:18:44,839 patternbuffer.tmaint truth maintenance: 15 open conflict(s)
+{
+  "date": "2026-10-14",
+  "book": "book_ch2",
+  "world_id": "w:book_book_ch2",
+  "model": "claude-sonnet-4-6",
+  "pipeline": "BUILD-LIBRARY-V1 (patternbuffer.build)",
+  "chapters": 2,
+  "chunks": 6,
+  "words": 4157,
+  "log_rows": 471,
+  "entities": 56,
+  "manifest_entries": 35,
+  "minted": 53,
+  "mentions": 0,
+  "escapes": 18,
+  "proposals": 0,
+  "correlations": 0,
+  "rejections": 0,
+  "gate_refused": 2,
+  "refused_lines": 9,
+  "max_words": 750,
+  "timings": {
+    "registry_s": 14.4,
+    "extract_s": 79.1,
+    "commit_s": 18.9,
+    "total_s": 112.4
+  },
+  "receipt": {
+    "calls": 18,
+    "calls_without_usage": 0,
+    "input_tokens": 54,
+    "output_tokens": 36676,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 58874,
+    "cost_usd": 0.903546,
+    "cost_known": true,
+    "seconds": 112.4
+  },
+  "stage_models": {
+    "applied": true,
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996",
+    "map": {
+      "default": {
+        "model": "claude-sonnet-4-6",
+        "effort": "low"
+      }
+    }
+  }
+}

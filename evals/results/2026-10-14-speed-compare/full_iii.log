@@ -1,0 +1,56 @@
+2026-10-14 09:21:02,070 patternbuffer.build.categories category pass beings: alias 'the Chair' of 'Tovan Sere' names someone else; dropped
+2026-10-14 09:21:02,071 patternbuffer.build.categories category pass beings: alias 'Pell Aven' of 'Eren Vell' names someone else; dropped
+2026-10-14 09:21:02,071 patternbuffer.build.categories category pass beings: alias 'Pell' of 'Eren Vell' names someone else; dropped
+2026-10-14 09:23:42,378 patternbuffer.identity merge place:mouth_room == place:tin_orchard (same_as item; decided by statement)
+2026-10-14 09:23:44,045 patternbuffer.ingest ingest skipped edge: person:alis_noll · in · 'place:first_house; s=stated' — malformed_id
+2026-10-14 09:24:28,771 patternbuffer.classify containment floor: a:460 judged CONSTITUTIVE at 0.900 (< 0.95); stored STATE
+2026-10-14 09:24:30,117 patternbuffer.tmaint truth maintenance: 31 open conflict(s)
+{
+  "date": "2026-10-14",
+  "book": "the-address-that-hummed",
+  "world_id": "w:book_the_address_that_hummed",
+  "model": "claude-sonnet-4-6",
+  "pipeline": "BUILD-LIBRARY-V1 (patternbuffer.build)",
+  "chapters": 6,
+  "chunks": 18,
+  "words": 11715,
+  "log_rows": 1116,
+  "entities": 98,
+  "manifest_entries": 51,
+  "minted": 95,
+  "mentions": 0,
+  "escapes": 44,
+  "proposals": 2,
+  "correlations": 0,
+  "rejections": 0,
+  "gate_refused": 3,
+  "refused_lines": 65,
+  "max_words": 750,
+  "timings": {
+    "registry_s": 17.6,
+    "extract_s": 158.4,
+    "commit_s": 49.4,
+    "total_s": 225.4
+  },
+  "receipt": {
+    "calls": 42,
+    "calls_without_usage": 0,
+    "input_tokens": 126,
+    "output_tokens": 107511,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 161556,
+    "cost_usd": 2.582379,
+    "cost_known": true,
+    "seconds": 225.4
+  },
+  "stage_models": {
+    "applied": true,
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996",
+    "map": {
+      "default": {
+        "model": "claude-sonnet-4-6",
+        "effort": "low"
+      }
+    }
+  }
+}

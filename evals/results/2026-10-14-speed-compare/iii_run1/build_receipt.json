@@ -1,0 +1,158 @@
+{
+  "chunk_spans": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        131,
+        194
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        195,
+        242
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 2,
+      "cursor": 1.0,
+      "seq": [
+        243,
+        290
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        291,
+        363
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 4,
+      "cursor": 2.0,
+      "seq": [
+        364,
+        419
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 5,
+      "cursor": 2.0,
+      "seq": [
+        420,
+        471
+      ]
+    }
+  ],
+  "correlations": 0,
+  "escapes": 18,
+  "handle_ids": {
+    "00/new:0": "person:ivara_s_mother",
+    "01/new:0": "obj:tray_with_ring_of_grit",
+    "01/new:1": "person:nima_s_grandmother",
+    "01/new:2": "obj:eren_vey_s_sleeping_tag",
+    "01/new:3": "person:lio",
+    "01/new:4": "place:the_vanished_wall",
+    "02/new:0": "place:the_missing_room",
+    "03/new:0": "person:earlier_keeper_of_the_hall",
+    "04/new:0": "obj:seventh_tooth",
+    "04/new:1": "place:hidden_chamber",
+    "04/new:2": "obj:round_door",
+    "04/new:3": "event:great_partition",
+    "04/new:5": "obj:moth",
+    "04/new:6": "obj:porter_cart",
+    "04/new:7": "obj:false_bottom",
+    "05/new:0": "person:pell_aven",
+    "05/new:1": "obj:round_door",
+    "05/new:2": "obj:false_bottom",
+    "05/new:3": "obj:clay_addresses",
+    "05/new:4": "place:chamber_in_the_wall"
+  },
+  "identity_receipts": [],
+  "mentions": 0,
+  "minted": [
+    "place:oru",
+    "group:the_registry",
+    "person:ivara_noll",
+    "place:vellum_hall",
+    "place:mouth_room",
+    "obj:bark_strip",
+    "person:tovan_sere",
+    "obj:red_key",
+    "place:the_understair",
+    "person:eren_vey",
+    "person:eren_vell",
+    "place:the_tin_orchard",
+    "place:the_latch",
+    "obj:tin_box",
+    "obj:blue_thread",
+    "obj:satchel",
+    "person:nima_orrel",
+    "obj:necklace_of_brass_washers",
+    "obj:hinge",
+    "place:the_sleeping_gallery",
+    "obj:sleeping_tag",
+    "person:alis_noll",
+    "person:mara_noll",
+    "obj:recipe_sheet",
+    "obj:handprint_strip",
+    "obj:ledger",
+    "place:the_first_house",
+    "obj:bone_comb",
+    "group:the_hall_s_collection_of_unwanted_instruments",
+    "obj:note",
+    "place:the_sump",
+    "obj:stone_basin",
+    "obj:brass_map",
+    "obj:glass_thimble",
+    "obj:black_thread",
+    "person:ivara_s_mother",
+    "obj:tray_with_ring_of_grit",
+    "person:nima_s_grandmother",
+    "obj:eren_vey_s_sleeping_tag",
+    "person:lio",
+    "place:the_vanished_wall",
+    "place:the_missing_room",
+    "person:earlier_keeper_of_the_hall",
+    "obj:seventh_tooth",
+    "place:hidden_chamber",
+    "obj:round_door",
+    "event:great_partition",
+    "obj:moth",
+    "obj:porter_cart",
+    "obj:false_bottom",
+    "person:pell_aven",
+    "obj:clay_addresses",
+    "place:chamber_in_the_wall"
+  ],
+  "pending_reveals": [],
+  "proposals": 0,
+  "rejections": 0,
+  "skipped": [
+    {
+      "attribute": "in",
+      "entity": "person:eren_vey",
+      "reason": "malformed_id",
+      "value": "obj:brass_map inside his coat"
+    }
+  ],
+  "time_of": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 2.0,
+    "4": 2.0,
+    "5": 2.0
+  }
+}

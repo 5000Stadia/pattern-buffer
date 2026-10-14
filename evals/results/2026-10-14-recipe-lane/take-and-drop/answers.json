@@ -1,0 +1,25 @@
+[
+  {
+    "chunk": 0,
+    "error": null,
+    "attempts": [
+      {
+        "error": null,
+        "raw": {
+          "lines": [
+            "s1|place:study|exits|@place:hall",
+            "s1|obj:doorway|state|open",
+            "s1|place:study|in|@obj:doorway",
+            "s1|place:hall|in|@obj:doorway",
+            "s2|obj:book|in|place:study",
+            "s2|obj:book|in|@obj:table",
+            "s2|obj:page|in|@obj:book",
+            "s3|obj:another_table|in|place:hall"
+          ],
+          "escapes": [],
+          "picks": []
+        }
+      }
+    ]
+  }
+]

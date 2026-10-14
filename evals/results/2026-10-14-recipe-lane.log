@@ -1,0 +1,9 @@
+containment floor: a:15 judged CONSTITUTIVE at 0.900 (< 0.95); stored STATE
+containment floor: a:23 judged CONSTITUTIVE at 0.900 (< 0.95); stored STATE
+containment floor: a:19 judged CONSTITUTIVE at 0.850 (< 0.95); stored STATE
+containment floor: a:20 judged CONSTITUTIVE at 0.850 (< 0.95); stored STATE
+containment floor: a:33 judged CONSTITUTIVE at 0.850 (< 0.95); stored STATE
+containment floor: a:26 judged CONSTITUTIVE at 0.850 (< 0.95); stored STATE
+switched-light: FAIL (9/11 keys), findings 0
+code-lock: FAIL (11/23 keys), findings 0
+take-and-drop: FAIL (4/9 keys), findings 1

@@ -1,0 +1,164 @@
+{
+  "ablation": [
+    {
+      "result": "not measured",
+      "stage": "commit"
+    },
+    {
+      "result": "not measured",
+      "stage": "extract"
+    },
+    {
+      "result": "not measured",
+      "stage": "registry"
+    }
+  ],
+  "build_what_ifs": "unmeasured",
+  "by_model_effort": [],
+  "ceilings": [],
+  "notes": [
+    "no objectives.jsonl: turns, floors and what-ifs are unmeasured"
+  ],
+  "output_bound_fit": {
+    "all": {
+      "latency_vs_input_tokens": {
+        "intercept_s": 16.094,
+        "n": 16,
+        "r2": 0.0441,
+        "seconds_per_1k_tokens": 3.731
+      },
+      "latency_vs_output_tokens": {
+        "intercept_s": -0.037,
+        "n": 16,
+        "r2": 0.9913,
+        "seconds_per_1k_tokens": 12.821
+      }
+    },
+    "commit": {
+      "latency_vs_input_tokens": {
+        "intercept_s": -1.027,
+        "n": 7,
+        "r2": 0.6287,
+        "seconds_per_1k_tokens": 5.956
+      },
+      "latency_vs_output_tokens": {
+        "intercept_s": 2.998,
+        "n": 7,
+        "r2": 0.884,
+        "seconds_per_1k_tokens": 7.098
+      }
+    },
+    "extract": {
+      "latency_vs_input_tokens": {
+        "intercept_s": -82.747,
+        "n": 5,
+        "r2": 0.9016,
+        "seconds_per_1k_tokens": 41.246
+      },
+      "latency_vs_output_tokens": {
+        "intercept_s": -9.279,
+        "n": 5,
+        "r2": 0.9944,
+        "seconds_per_1k_tokens": 14.124
+      }
+    },
+    "registry": {
+      "latency_vs_input_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      }
+    }
+  },
+  "overlapped_pipeline": {
+    "model": "Dependency model (hypothetical, not today's code): a pass-1 chunk's facts can be classified as soon as that chunk is accepted. The commit's K classification batches are spread over the N accepted chunks in acceptance order; batch j becomes ready when chunk ceil(j*N/K) has finished (facts per chunk assumed even). Batches run, with their measured durations, one at a time on a separate worker. Escape repair, the commit's other work (its wall minus the summed batch durations) and the audit stay serial after the last chunk and the last batch, as today. Pass-0 stays as measured.",
+    "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+    "unmeasured": "needs pass-1 chunk and classification-batch objectives and stage walls"
+  },
+  "run_dir": "ii_run1",
+  "stages": [
+    {
+      "api_time_share_of_latency": 0.777,
+      "cached_tokens": 0,
+      "calls": 7,
+      "calls_with_latency": 7,
+      "cost_known": true,
+      "cost_usd": 0.144483,
+      "harness_overhead_s": 12.993,
+      "input_tokens": 21,
+      "latency_max_s": 8.961,
+      "latency_p50_s": 8.561,
+      "latency_p90_s": 8.961,
+      "latency_sum_s": 58.21,
+      "max_concurrent_calls": 4,
+      "objectives": "unmeasured",
+      "out_tok_per_s_median": 89.57,
+      "out_tok_per_s_p10": 77.63,
+      "output_tokens": 5244,
+      "share": 0.1395,
+      "stage": "commit",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 2.5419,
+      "wall_s": 22.9,
+      "workers": 1
+    },
+    {
+      "api_time_share_of_latency": 0.982,
+      "cached_tokens": 0,
+      "calls": 5,
+      "calls_with_latency": 5,
+      "cost_known": true,
+      "cost_usd": 0.558993,
+      "harness_overhead_s": 6.699,
+      "input_tokens": 15,
+      "latency_max_s": 128.688,
+      "latency_p50_s": 74.685,
+      "latency_p90_s": 128.688,
+      "latency_sum_s": 372.335,
+      "max_concurrent_calls": 4,
+      "objectives": "unmeasured",
+      "out_tok_per_s_median": 80.2,
+      "out_tok_per_s_p10": 74.14,
+      "output_tokens": 29646,
+      "share": 0.7843,
+      "stage": "extract",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 2.893,
+      "wall_s": 128.7,
+      "workers": 1
+    },
+    {
+      "api_time_share_of_latency": 0.844,
+      "cached_tokens": 0,
+      "calls": 4,
+      "calls_with_latency": 4,
+      "cost_known": true,
+      "cost_usd": 0.183867,
+      "harness_overhead_s": 5.873,
+      "input_tokens": 12,
+      "latency_max_s": 12.488,
+      "latency_p50_s": 9.398,
+      "latency_p90_s": 12.488,
+      "latency_sum_s": 37.728,
+      "max_concurrent_calls": 4,
+      "objectives": "unmeasured",
+      "out_tok_per_s_median": 40.86,
+      "out_tok_per_s_p10": 32.01,
+      "output_tokens": 1681,
+      "share": 0.0762,
+      "stage": "registry",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 3.0182,
+      "wall_s": 12.5,
+      "workers": 1
+    }
+  ],
+  "total_wall_s": 164.1,
+  "turns": []
+}

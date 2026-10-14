@@ -1,0 +1,355 @@
+{
+  "chunk_spans": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        221,
+        270
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        271,
+        323
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 2,
+      "cursor": 1.0,
+      "seq": [
+        324,
+        371
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        372,
+        444
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 4,
+      "cursor": 2.0,
+      "seq": [
+        445,
+        490
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 5,
+      "cursor": 2.0,
+      "seq": [
+        491,
+        540
+      ]
+    },
+    {
+      "chapter": 3,
+      "chunk": 6,
+      "cursor": 3.0,
+      "seq": [
+        541,
+        584
+      ]
+    },
+    {
+      "chapter": 3,
+      "chunk": 7,
+      "cursor": 3.0,
+      "seq": [
+        585,
+        649
+      ]
+    },
+    {
+      "chapter": 3,
+      "chunk": 8,
+      "cursor": 3.0,
+      "seq": [
+        650,
+        677
+      ]
+    },
+    {
+      "chapter": 4,
+      "chunk": 9,
+      "cursor": 4.0,
+      "seq": [
+        678,
+        746
+      ]
+    },
+    {
+      "chapter": 4,
+      "chunk": 10,
+      "cursor": 4.0,
+      "seq": [
+        747,
+        788
+      ]
+    },
+    {
+      "chapter": 4,
+      "chunk": 11,
+      "cursor": 4.0,
+      "seq": [
+        789,
+        825
+      ]
+    },
+    {
+      "chapter": 5,
+      "chunk": 12,
+      "cursor": 5.0,
+      "seq": [
+        826,
+        874
+      ]
+    },
+    {
+      "chapter": 5,
+      "chunk": 13,
+      "cursor": 5.0,
+      "seq": [
+        875,
+        927
+      ]
+    },
+    {
+      "chapter": 5,
+      "chunk": 14,
+      "cursor": 5.0,
+      "seq": [
+        928,
+        974
+      ]
+    },
+    {
+      "chapter": 6,
+      "chunk": 15,
+      "cursor": 6.0,
+      "seq": [
+        975,
+        1033
+      ]
+    },
+    {
+      "chapter": 6,
+      "chunk": 16,
+      "cursor": 6.0,
+      "seq": [
+        1034,
+        1077
+      ]
+    },
+    {
+      "chapter": 6,
+      "chunk": 17,
+      "cursor": 6.0,
+      "seq": [
+        1078,
+        1112
+      ]
+    }
+  ],
+  "correlations": 0,
+  "escapes": 44,
+  "handle_ids": {
+    "01/new:0": "obj:tray_with_ring_of_grit",
+    "01/new:1": "place:sleeping_gallery",
+    "01/new:2": "person:eren_vey_s_mother",
+    "01/new:3": "obj:eren_vey_s_sleeping_tag",
+    "01/new:4": "person:nima_s_grandmother",
+    "01/new:5": "place:orchard_sub_floor",
+    "02/new:0": "place:eren_vey_s_birthplace",
+    "02/new:1": "place:path_to_the_orchard",
+    "02/new:2": "place:the_missing_room",
+    "03/new:0": "person:earlier_keeper_of_the_hall",
+    "03/new:1": "obj:folded_note",
+    "03/new:2": "obj:stone_basin",
+    "04/new:0": "obj:round_door",
+    "04/new:1": "event:great_partition",
+    "05/new:0": "person:pell",
+    "05/new:1": "obj:the_moth",
+    "05/new:2": "obj:spool",
+    "05/new:3": "obj:false_bottom",
+    "05/new:4": "place:round_door",
+    "05/new:5": "obj:stone_basin",
+    "05/new:6": "obj:clay_addresses",
+    "06/new:0": "person:pell",
+    "06/new:1": "event:the_partition",
+    "07/new:0": "person:pell_aven",
+    "08/new:0": "person:pell_aven",
+    "09/new:0": "person:pell",
+    "09/new:1": "person:nima_s_grandmother",
+    "10/new:0": "person:nima_s_grandmother",
+    "10/new:1": "obj:paper_folds",
+    "11/new:0": "person:pell",
+    "11/new:1": "group:the_other_keepers",
+    "11/new:2": "obj:the_path_through_the_wall",
+    "11/new:3": "group:several_doorways_in_the_divided_city",
+    "11/new:4": "event:the_voice_at_the_last_threshold",
+    "12/new:0": "place:the_room_with_four_names",
+    "12/new:1": "person:pell",
+    "12/new:2": "person:eren_vey_s_mother",
+    "13/new:0": "person:ivara_s_mother",
+    "13/new:2": "place:room_that_lost_its_address",
+    "13/new:3": "event:the_partition_2",
+    "14/new:0": "person:pell",
+    "14/new:1": "obj:drawer",
+    "14/new:2": "obj:table",
+    "14/new:3": "obj:stool",
+    "14/new:4": "obj:crooked_line_mark",
+    "15/new:0": "obj:stool_2",
+    "15/new:1": "obj:new_bark_strip",
+    "16/new:0": "person:the_porter",
+    "16/new:1": "person:pell_aven",
+    "16/new:2": "place:the_shared_wall",
+    "16/new:3": "place:the_hall_s_record_room",
+    "16/new:4": "obj:new_drawer",
+    "16/new:5": "person:the_clerk_responsible_for_the_map",
+    "17/new:0": "person:unknown_person_walking_home",
+    "17/new:1": "group:trainees"
+  },
+  "identity_receipts": [],
+  "mentions": 0,
+  "minted": [
+    "place:oru",
+    "group:the_registry",
+    "person:ivara_noll",
+    "place:vellum_hall",
+    "place:mouth_room",
+    "person:tovan_sere",
+    "group:the_younger_clerks",
+    "obj:bark_strip",
+    "obj:red_key",
+    "place:understair",
+    "person:eren_vey",
+    "person:eren_vell",
+    "place:tin_orchard",
+    "obj:metal_fruit",
+    "place:the_latch",
+    "person:lio",
+    "obj:tin_box",
+    "obj:blue_thread",
+    "obj:satchel",
+    "person:nima_orrel",
+    "obj:brass_washers",
+    "obj:hinge",
+    "obj:sleeping_tag",
+    "person:alis_noll",
+    "person:mara_noll",
+    "obj:shell_milk_recipe_sheet",
+    "group:the_first_hall_clerks",
+    "obj:handprint_strip",
+    "obj:ledger",
+    "obj:bone_comb",
+    "group:the_hall_s_collection_of_unwanted_instruments",
+    "place:sump",
+    "obj:brass_map",
+    "obj:glass_thimble",
+    "obj:black_thread",
+    "place:first_house",
+    "group:the_hall_s_first_examiners",
+    "person:chalk_moth",
+    "obj:chalk_moth",
+    "obj:child_sized_chair",
+    "place:the_family_niche",
+    "place:the_hidden_chamber",
+    "obj:numbered_spool",
+    "obj:seventh_tooth",
+    "place:nacre_stair",
+    "obj:winter_roll",
+    "obj:bark_strip_bearing_the_word_latch",
+    "obj:paper_bird",
+    "group:the_hall_s_assembly",
+    "obj:address_strip",
+    "group:the_senior_clerks",
+    "obj:tray_with_ring_of_grit",
+    "place:sleeping_gallery",
+    "person:eren_vey_s_mother",
+    "obj:eren_vey_s_sleeping_tag",
+    "person:nima_s_grandmother",
+    "place:orchard_sub_floor",
+    "place:eren_vey_s_birthplace",
+    "place:path_to_the_orchard",
+    "place:the_missing_room",
+    "person:earlier_keeper_of_the_hall",
+    "obj:folded_note",
+    "obj:stone_basin",
+    "obj:round_door",
+    "event:great_partition",
+    "person:pell",
+    "obj:the_moth",
+    "obj:spool",
+    "obj:false_bottom",
+    "place:round_door",
+    "obj:clay_addresses",
+    "event:the_partition",
+    "person:pell_aven",
+    "obj:paper_folds",
+    "group:the_other_keepers",
+    "obj:the_path_through_the_wall",
+    "group:several_doorways_in_the_divided_city",
+    "event:the_voice_at_the_last_threshold",
+    "place:the_room_with_four_names",
+    "person:ivara_s_mother",
+    "place:room_that_lost_its_address",
+    "event:the_partition_2",
+    "obj:drawer",
+    "obj:table",
+    "obj:stool",
+    "obj:crooked_line_mark",
+    "obj:stool_2",
+    "obj:new_bark_strip",
+    "person:the_porter",
+    "place:the_shared_wall",
+    "place:the_hall_s_record_room",
+    "obj:new_drawer",
+    "person:the_clerk_responsible_for_the_map",
+    "person:unknown_person_walking_home",
+    "group:trainees"
+  ],
+  "pending_reveals": [],
+  "proposals": 2,
+  "rejections": 0,
+  "skipped": [
+    {
+      "attribute": "in",
+      "entity": "person:alis_noll",
+      "reason": "malformed_id",
+      "value": "place:first_house; s=stated"
+    }
+  ],
+  "time_of": {
+    "0": 1.0,
+    "1": 1.0,
+    "10": 4.0,
+    "11": 4.0,
+    "12": 5.0,
+    "13": 5.0,
+    "14": 5.0,
+    "15": 6.0,
+    "16": 6.0,
+    "17": 6.0,
+    "2": 1.0,
+    "3": 2.0,
+    "4": 2.0,
+    "5": 2.0,
+    "6": 3.0,
+    "7": 3.0,
+    "8": 3.0,
+    "9": 4.0
+  }
+}

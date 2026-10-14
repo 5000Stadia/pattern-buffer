@@ -1,0 +1,26 @@
+[
+  {
+    "chunk": 0,
+    "error": null,
+    "attempts": [
+      {
+        "error": null,
+        "raw": {
+          "lines": [
+            "s1|place:room|exits|none|t,s=stated",
+            "s2|place:room|lit|dark|s=stated",
+            "s3|obj:light_switch|in|@place:room|s=stated",
+            "s3|obj:light_switch|link_type|switch|t",
+            "s3|obj:light_switch|control_mode|latching|t",
+            "s3|obj:light_switch|controls|@obj:light|t",
+            "s3|obj:light|in|@place:room|s=stated",
+            "s3|person:dog|in|@place:room|s=stated",
+            "s3|person:dog|disposition|friendly|s=stated"
+          ],
+          "escapes": [],
+          "picks": []
+        }
+      }
+    ]
+  }
+]

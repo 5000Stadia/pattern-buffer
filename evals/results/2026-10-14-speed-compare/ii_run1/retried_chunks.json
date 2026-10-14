@@ -1,0 +1,183 @@
+[
+  {
+    "attempts": [
+      {
+        "error": "handles: declared twice: new:1",
+        "raw": {
+          "escapes": [
+            {
+              "handle": "new:0",
+              "name": "the Chair",
+              "quote": "once the Chair had gone",
+              "species": null,
+              "type": "person"
+            },
+            {
+              "handle": "new:1",
+              "name": "Eren Vey",
+              "quote": "a mark beside Eren Vey's birthplace",
+              "species": null,
+              "type": "person"
+            },
+            {
+              "handle": "new:2",
+              "name": "the missing room",
+              "quote": "Somewhere under the grit, the missing room tapped once.",
+              "species": null,
+              "type": "place"
+            }
+          ],
+          "lines": [
+            "s1|person:ivara_noll|holds|@obj:red_key|s=stated",
+            "s2|obj:red_key|temperature_quality|cold|s=stated",
+            "s3|person:ivara_noll|perception|second note under Mouth Room tone|s=stated",
+            "s3|place:mouth_room|emits_tone|true|t",
+            "s5|place:vellum_hall|routine|calls all clerks to map at dawn|s=stated",
+            "s6|obj:bark_strip|in|place:tin_orchard|s=stated",
+            "s6|obj:bark_strip|status|new appearance|s=stated",
+            "s7|obj:bark_strip|has_words|false|s=stated",
+            "s7|obj:bark_strip|markings|pair of small handprints|s=stated",
+            "s8|group:the_younger_clerks|belief|a child touched the wet bark|s=stated",
+            "s9|person:tovan_sere|response|said nothing|s=stated",
+            "s10|person:tovan_sere|action|turned strip face down|s=stated",
+            "s10|person:tovan_sere|order_to|@person:ivara_noll|s=stated",
+            "s11|person:ivara_noll|action|turned strip face up after Chair left|s=stated",
+            "s11|new:0|role|Chair|s=stated",
+            "s12|obj:handprint_strip|handprint_size|matches Ivara's hands before she could speak|s=stated",
+            "s13|obj:handprint_strip|carried_by|@person:ivara_noll|s=stated",
+            "s13|person:ivara_noll|brought_to|@person:tovan_sere|s=stated",
+            "s14|obj:ledger_with_a_cracked_spine|held_by|@person:tovan_sere|s=stated",
+            "s15|obj:ledger_with_a_cracked_spine|content|Hall repairs and private notes about residents|s=stated",
+            "s15|obj:ledger_with_a_cracked_spine|private_notes_author|@person:tovan_sere|s=stated",
+            "s16|obj:ledger_with_a_cracked_spine|first_page_content|list of places joined and separated in red ink|s=stated",
+            "s17|obj:ledger_with_a_cracked_spine|records|clerk who authorized each division|s=stated",
+            "s18|person:mara_noll|listed_beside|first division|s=stated",
+            "s19|person:tovan_sere|listed_beside|second division|s=stated",
+            "s21|person:mara_noll|action|argued against dividing first house|s=stated",
+            "s21|person:mara_noll|action|signed order to protect children inside|s=stated",
+            "s22|person:tovan_sere|action|signed follow-up making division permanent|s=stated",
+            "s24|person:mara_noll|instruction_to|@person:tovan_sere|s=stated",
+            "s24|person:mara_noll|requested|keep address quiet|s=stated",
+            "s28|person:tovan_sere|action|shut ledger before Ivara could read other names|s=stated",
+            "s29|new:1|birthplace_mark|open door drawn in blue|s=observed",
+            "s30|person:tovan_sere|action|did not cover mark|s=stated",
+            "s32|obj:handprint_strip|carried_by|@person:ivara_noll|s=stated",
+            "s32|person:ivara_noll|departed_from|@place:vellum_hall|s=stated",
+            "s35|place:tin_orchard|path_condition|shallow groove in stone|s=stated",
+            "s37|obj:necklace_of_brass_washers|sound|distant chime at gate|s=observed",
+            "s38|person:nima_orrel|role|Orchard keeper|s=stated",
+            "s38|person:nima_orrel|activity|evening count of trees that offered fruit|s=stated",
+            "s39|obj:necklace_of_brass_washers|counts|Nima's years|s=stated",
+            "s40|place:tin_orchard|grows_food|false|s=stated",
+            "s41|place:tin_orchard|each_tree_holds|a memory with a hard shell|s=stated",
+            "s42|place:tin_orchard|access_rule|fruit opened only by person who put address inside|s=stated",
+            "s43|new:2|action|tapped once under grit|s=stated",
+            "s44|person:ivara_noll|action|pressed handprint strip to ground|s=stated"
+          ],
+          "picks": [
+            {
+              "candidates": [
+                "person:eren_vey",
+                "person:eren_vell"
+              ],
+              "choice": "person:eren_vey",
+              "evidence_quote": "a mark beside Eren Vey's birthplace",
+              "handle": "new:1",
+              "surface": "Eren Vey"
+            }
+          ]
+        }
+      },
+      {
+        "error": null,
+        "raw": {
+          "escapes": [
+            {
+              "handle": "new:0",
+              "name": "the Chair",
+              "quote": "once the Chair had gone",
+              "species": null,
+              "type": "person"
+            },
+            {
+              "handle": "new:1",
+              "name": "Eren Vey's birthplace",
+              "quote": "a mark beside Eren Vey's birthplace",
+              "species": null,
+              "type": "place"
+            },
+            {
+              "handle": "new:2",
+              "name": "the missing room",
+              "quote": "the missing room tapped once",
+              "species": null,
+              "type": "place"
+            }
+          ],
+          "lines": [
+            "s1|person:ivara_noll|in|place:vellum_hall|s=stated",
+            "s1|obj:red_key|in|person:ivara_noll|s=stated",
+            "s1|person:ivara_noll|action|touched red key through cuff|s=stated",
+            "s2|obj:red_key|temperature|cold|s=observed",
+            "s3|person:ivara_noll|perception|hears a quiet second note under Mouth Room tone|s=stated",
+            "s5|place:vellum_hall|event|called all clerks to the map at dawn|s=stated",
+            "s6|obj:bark_strip|in|place:tin_orchard|s=stated",
+            "s6|obj:bark_strip|status|newly appeared|s=stated",
+            "s7|obj:bark_strip|content|pair of small handprints, no words|s=stated",
+            "s8|group:the_younger_clerks|belief|a child touched the wet bark|s=stated",
+            "s9|person:tovan_sere|action|said nothing|s=stated",
+            "s10|person:tovan_sere|action|turned strip face down|s=stated",
+            "s10|person:tovan_sere|directive_to|person:ivara_noll|s=stated",
+            "s10|person:tovan_sere|directive|leave strip alone|s=stated",
+            "s11|person:ivara_noll|action|turned strip face up after Chair left|s=stated",
+            "s11|new:0|role|Chair|s=stated",
+            "s12|obj:handprint_strip|attribute|handprints match size of Ivara's hands before she could speak|s=observed",
+            "s13|person:ivara_noll|action|took handprint strip to Tovan at end of morning shift|s=stated",
+            "s13|obj:handprint_strip|in|person:tovan_sere|s=stated",
+            "s14|person:tovan_sere|action|brought out ledger with cracked spine|s=stated",
+            "s15|obj:ledger_with_a_cracked_spine|content|Hall repairs and private notes about residents|s=stated",
+            "s15|obj:ledger_with_a_cracked_spine|author_of_notes|person:tovan_sere|s=stated",
+            "s16|obj:ledger_with_a_cracked_spine|content|list of places joined and separated, in red ink on first page|s=stated",
+            "s17|obj:ledger_with_a_cracked_spine|content|name of authorizing clerk beside each place|s=stated",
+            "s18|person:mara_noll|role|authorized first division|s=stated",
+            "s19|person:tovan_sere|role|authorized second division|s=stated",
+            "s21|person:mara_noll|action|argued against dividing first house but signed order to protect children inside|s=stated",
+            "s22|person:tovan_sere|action|signed follow-up making division permanent|s=stated",
+            "s24|person:mara_noll|directive_to|person:tovan_sere|s=stated",
+            "s24|person:mara_noll|directive|keep the address quiet|s=stated",
+            "s28|person:tovan_sere|action|shut ledger before Ivara could read other names|s=stated",
+            "s29|amb:eren|birthplace|new:1|s=stated",
+            "s29|new:1|attribute|open door drawn in blue beside it in ledger|s=stated",
+            "s31|person:tovan_sere|state|beginning to understand what he owed them|s=inferred",
+            "s32|person:ivara_noll|action|left Hall with handprint strip in coat|s=stated",
+            "s32|obj:handprint_strip|in|person:ivara_noll|s=stated",
+            "s35|place:tin_orchard|path_attribute|shallow groove in stone|s=stated",
+            "s37|person:nima_orrel|role|Orchard keeper|s=stated",
+            "s37|obj:necklace_of_brass_washers|sound|distant chime at gate|s=observed",
+            "s38|person:nima_orrel|action|began evening count, one washer per tree that offered fruit to a family|s=stated",
+            "s39|obj:necklace_of_brass_washers|attribute|counts Nima's years|s=stated",
+            "s40|place:tin_orchard|attribute|trees grow no food|s=stated",
+            "s41|place:tin_orchard|attribute|each tree holds a memory with a hard shell|s=stated",
+            "s42|place:tin_orchard|rule|fruit opened only by person who put address inside|s=stated",
+            "s43|new:2|action|tapped once under grit|s=stated",
+            "s44|person:ivara_noll|action|pressed handprint strip to ground|s=stated",
+            "s45|person:ivara_noll|perception|felt a child's fingers push back from other side|s=stated"
+          ],
+          "picks": [
+            {
+              "candidates": [
+                "person:eren_vey",
+                "person:eren_vell"
+              ],
+              "choice": "person:eren_vey",
+              "evidence_quote": "a mark beside Eren Vey's birthplace",
+              "handle": "amb:eren",
+              "surface": "Eren Vey"
+            }
+          ]
+        }
+      }
+    ],
+    "chunk": 1
+  }
+]

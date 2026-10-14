@@ -1,0 +1,40 @@
+{
+  "chunks": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        126,
+        208
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        209,
+        245
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 2,
+      "cursor": 2.0,
+      "seq": [
+        246,
+        360
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        361,
+        416
+      ]
+    }
+  ]
+}

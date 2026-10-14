@@ -1,0 +1,134 @@
+{
+  "chunk_spans": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        134,
+        209
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        210,
+        255
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 2,
+      "cursor": 2.0,
+      "seq": [
+        256,
+        366
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        367,
+        417
+      ]
+    }
+  ],
+  "correlations": 0,
+  "escapes": 19,
+  "handle_ids": {
+    "00/new:0": "person:nima_s_grandmother",
+    "01/new:0": "person:the_chair",
+    "01/new:1": "place:eren_vey_s_birthplace",
+    "01/new:2": "place:the_missing_room",
+    "02/new:0": "person:earlier_keeper_of_the_hall",
+    "02/new:1": "group:hall_s_collection_of_unwanted_instruments",
+    "02/new:2": "obj:folded_paper_note",
+    "02/new:3": "obj:stone_basin",
+    "02/new:4": "obj:round_door",
+    "02/new:5": "place:lost_property_shelf",
+    "02/new:7": "event:great_partition",
+    "03/new:0": "person:pell_aven",
+    "03/new:1": "obj:round_door",
+    "03/new:2": "obj:stone_basin",
+    "03/new:3": "place:first_house",
+    "03/new:4": "obj:false_bottom",
+    "03/new:5": "obj:clay_addresses",
+    "03/new:6": "place:chamber_in_the_wall",
+    "03/new:7": "obj:moth",
+    "03/new:8": "obj:spool",
+    "03/new:9": "place:surface_passage"
+  },
+  "identity_receipts": [],
+  "mentions": 0,
+  "minted": [
+    "place:oru",
+    "group:the_registry",
+    "person:ivara_noll",
+    "place:vellum_hall",
+    "place:mouth_room",
+    "obj:bark_strip",
+    "person:tovan_sere",
+    "group:the_younger_clerks",
+    "obj:red_key",
+    "place:understair",
+    "person:eren_vey",
+    "person:eren_vell",
+    "place:tin_orchard",
+    "place:the_latch",
+    "person:lio",
+    "obj:tin_box",
+    "obj:parcel_tied_with_blue_thread",
+    "obj:satchel",
+    "person:nima_orrel",
+    "obj:necklace_of_brass_washers",
+    "obj:hinge",
+    "place:sleeping_gallery",
+    "obj:sleeping_tag",
+    "person:alis_noll",
+    "person:mara_noll",
+    "obj:recipe_sheet",
+    "group:the_first_hall_clerks",
+    "obj:handprint_strip",
+    "obj:ledger_with_a_cracked_spine",
+    "obj:bone_comb",
+    "place:sump",
+    "obj:brass_map",
+    "obj:glass_thimble",
+    "obj:black_thread",
+    "obj:seventh_tooth",
+    "group:the_hall_s_first_examiners",
+    "person:nima_s_grandmother",
+    "person:the_chair",
+    "place:eren_vey_s_birthplace",
+    "place:the_missing_room",
+    "person:earlier_keeper_of_the_hall",
+    "group:hall_s_collection_of_unwanted_instruments",
+    "obj:folded_paper_note",
+    "obj:stone_basin",
+    "obj:round_door",
+    "place:lost_property_shelf",
+    "event:great_partition",
+    "person:pell_aven",
+    "place:first_house",
+    "obj:false_bottom",
+    "obj:clay_addresses",
+    "place:chamber_in_the_wall",
+    "obj:moth",
+    "obj:spool",
+    "place:surface_passage"
+  ],
+  "pending_reveals": [],
+  "proposals": 0,
+  "rejections": 0,
+  "skipped": [],
+  "time_of": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 2.0,
+    "3": 2.0
+  }
+}

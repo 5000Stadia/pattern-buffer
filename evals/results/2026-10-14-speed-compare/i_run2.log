@@ -1,0 +1,56 @@
+2026-10-14 09:07:37,281 patternbuffer.build.categories category pass beings: alias 'the Chair' of 'Tovan Sere' names someone else; dropped
+2026-10-14 09:07:37,282 patternbuffer.build.categories category pass beings: alias 'Pell' of 'Eren Vell' names someone else; dropped
+2026-10-14 09:07:37,282 patternbuffer.build.categories category pass beings: alias 'Pell Aven' of 'Eren Vell' names someone else; dropped
+2026-10-14 09:07:37,282 patternbuffer.build.categories category pass things: alias 'address strips' of 'bark strip' names someone else; dropped
+2026-10-14 09:09:20,038 model_shim model shim parse failure (attempt 1): Expecting ',' delimiter: line 81 column 45 (char 5583)
+2026-10-14 09:10:52,789 patternbuffer.classify containment floor: a:334 judged CONSTITUTIVE at 0.850 (< 0.95); stored STATE
+2026-10-14 09:11:05,990 patternbuffer.tmaint truth maintenance: 15 open conflict(s)
+{
+  "date": "2026-10-14",
+  "book": "book_ch2",
+  "world_id": "w:book_book_ch2",
+  "model": "claude-sonnet-4-6",
+  "pipeline": "BUILD-LIBRARY-V1 (patternbuffer.build)",
+  "chapters": 2,
+  "chunks": 4,
+  "words": 4157,
+  "log_rows": 407,
+  "entities": 52,
+  "manifest_entries": 35,
+  "minted": 50,
+  "mentions": 0,
+  "escapes": 15,
+  "proposals": 0,
+  "correlations": 0,
+  "rejections": 0,
+  "gate_refused": 1,
+  "refused_lines": 8,
+  "max_words": 1500,
+  "timings": {
+    "registry_s": 14.9,
+    "extract_s": 151.0,
+    "commit_s": 57.6,
+    "total_s": 223.5
+  },
+  "receipt": {
+    "calls": 16,
+    "calls_without_usage": 0,
+    "input_tokens": 48,
+    "output_tokens": 38699,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 57749,
+    "cost_usd": 0.927123,
+    "cost_known": true,
+    "seconds": 223.5
+  },
+  "stage_models": {
+    "applied": true,
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996",
+    "map": {
+      "default": {
+        "model": "claude-sonnet-4-6",
+        "effort": "low"
+      }
+    }
+  }
+}

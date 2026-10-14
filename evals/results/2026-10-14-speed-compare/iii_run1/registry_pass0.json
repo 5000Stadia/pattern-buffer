@@ -1,0 +1,300 @@
+{
+  "attributes": {},
+  "entities": {
+    "group:the_hall_s_collection_of_unwanted_instruments": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the Hall's collection of unwanted instruments"
+      ]
+    },
+    "group:the_registry": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the Registry"
+      ]
+    },
+    "obj:bark_strip": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "bark strip"
+      ]
+    },
+    "obj:black_thread": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "black thread"
+      ]
+    },
+    "obj:blue_thread": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "blue thread"
+      ]
+    },
+    "obj:bone_comb": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "bone comb"
+      ]
+    },
+    "obj:brass_map": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "brass map"
+      ]
+    },
+    "obj:glass_thimble": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "glass thimble"
+      ]
+    },
+    "obj:handprint_strip": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "handprint strip"
+      ]
+    },
+    "obj:hinge": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "hinge"
+      ]
+    },
+    "obj:ledger": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "ledger"
+      ]
+    },
+    "obj:necklace_of_brass_washers": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "necklace of brass washers"
+      ]
+    },
+    "obj:note": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "note"
+      ]
+    },
+    "obj:recipe_sheet": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "recipe sheet"
+      ]
+    },
+    "obj:red_key": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "red key"
+      ]
+    },
+    "obj:satchel": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "satchel"
+      ]
+    },
+    "obj:sleeping_tag": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "sleeping tag"
+      ]
+    },
+    "obj:stone_basin": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "stone basin"
+      ]
+    },
+    "obj:tin_box": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "tin box"
+      ]
+    },
+    "person:alis_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Alis Noll",
+        "Alis"
+      ]
+    },
+    "person:eren_vell": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Eren Vell",
+        "Eren"
+      ]
+    },
+    "person:eren_vey": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Eren Vey",
+        "Eren"
+      ]
+    },
+    "person:ivara_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Ivara Noll",
+        "Ivara"
+      ]
+    },
+    "person:mara_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Mara Noll",
+        "Mara"
+      ]
+    },
+    "person:nima_orrel": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Nima Orrel",
+        "Nima"
+      ]
+    },
+    "person:tovan_sere": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Tovan Sere",
+        "Tovan"
+      ]
+    },
+    "place:mouth_room": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Mouth Room"
+      ]
+    },
+    "place:oru": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Oru"
+      ]
+    },
+    "place:the_first_house": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the first house"
+      ]
+    },
+    "place:the_latch": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the Latch"
+      ]
+    },
+    "place:the_sleeping_gallery": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the sleeping gallery"
+      ]
+    },
+    "place:the_sump": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the Sump"
+      ]
+    },
+    "place:the_tin_orchard": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the Tin Orchard",
+        "the Orchard"
+      ]
+    },
+    "place:the_understair": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the Understair"
+      ]
+    },
+    "place:vellum_hall": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Vellum Hall",
+        "the Hall"
+      ]
+    }
+  },
+  "places": [],
+  "timeline": {
+    "anchors": {},
+    "origin": ""
+  },
+  "world_id": "w:book_book_ch2"
+}

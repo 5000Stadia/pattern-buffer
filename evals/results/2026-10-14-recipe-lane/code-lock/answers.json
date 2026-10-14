@@ -1,0 +1,39 @@
+[
+  {
+    "chunk": 0,
+    "error": null,
+    "attempts": [
+      {
+        "error": null,
+        "raw": {
+          "lines": [
+            "s1|place:room|in|new:0|t",
+            "s2|place:room|lit|dark|s=stated",
+            "s3|obj:light_switch|in|@place:room|t",
+            "s3|obj:light|in|@place:room|t",
+            "s3|obj:light_switch|controls|@obj:light|t",
+            "s3|obj:light_switch|link_type|switch|t",
+            "s3|obj:light_switch|control_mode|latching|t",
+            "s3|obj:light_switch|state|off|s=stated",
+            "s3|obj:light|state|off|s=stated",
+            "s3|person:dog|in|@place:room|s=stated",
+            "s3|person:dog|disposition|friendly|s=stated",
+            "s4|obj:keypad|in|@place:room|t",
+            "s4|obj:keypad|link_type|keypad|t",
+            "s4|place:room|exits|none|s=stated"
+          ],
+          "escapes": [
+            {
+              "handle": "new:0",
+              "type": "place",
+              "name": "world",
+              "species": null,
+              "quote": "the world is empty, except for a room"
+            }
+          ],
+          "picks": []
+        }
+      }
+    ]
+  }
+]

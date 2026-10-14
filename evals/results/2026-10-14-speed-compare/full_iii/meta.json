@@ -1,0 +1,49 @@
+{
+  "book": "the-address-that-hummed",
+  "chapters": 6,
+  "chunks": 18,
+  "correlations": 0,
+  "date": "2026-10-14",
+  "entities": 98,
+  "escapes": 44,
+  "gate_refused": 3,
+  "log_rows": 1116,
+  "manifest_entries": 51,
+  "max_words": 750,
+  "mentions": 0,
+  "minted": 95,
+  "model": "claude-sonnet-4-6",
+  "pipeline": "BUILD-LIBRARY-V1 (patternbuffer.build)",
+  "proposals": 2,
+  "receipt": {
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 161556,
+    "calls": 42,
+    "calls_without_usage": 0,
+    "cost_known": true,
+    "cost_usd": 2.582379,
+    "input_tokens": 126,
+    "output_tokens": 107511,
+    "seconds": 225.4
+  },
+  "refused_lines": 65,
+  "rejections": 0,
+  "stage_models": {
+    "applied": true,
+    "map": {
+      "default": {
+        "effort": "low",
+        "model": "claude-sonnet-4-6"
+      }
+    },
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996"
+  },
+  "timings": {
+    "commit_s": 49.4,
+    "extract_s": 158.4,
+    "registry_s": 17.6,
+    "total_s": 225.4
+  },
+  "words": 11715,
+  "world_id": "w:book_the_address_that_hummed"
+}

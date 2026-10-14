@@ -1,0 +1,604 @@
+[
+  {
+    "recipe": "switched-light",
+    "vocabulary": "recipe",
+    "oracle": false,
+    "unseeded": [],
+    "chunks": 1,
+    "refused_chunks": [],
+    "passed": false,
+    "keys": [
+      {
+        "entity": "place:room",
+        "attribute": "exits",
+        "frame": "canon",
+        "expected": [
+          "\"none\""
+        ],
+        "observed": [
+          "\"none\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "place:room",
+        "attribute": "lit",
+        "frame": "canon",
+        "expected": [
+          "\"dark\""
+        ],
+        "observed": [
+          "\"dark\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:light",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "controls",
+        "frame": "canon",
+        "expected": [
+          "\"obj:light\""
+        ],
+        "observed": [
+          "\"obj:light\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "link_type",
+        "frame": "canon",
+        "expected": [
+          "\"switch\""
+        ],
+        "observed": [
+          "\"switch\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "control_mode",
+        "frame": "canon",
+        "expected": [
+          "\"latching\""
+        ],
+        "observed": [
+          "\"latching\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:light",
+        "attribute": "state",
+        "frame": "canon",
+        "expected": [
+          "\"off\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "person:dog",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "person:dog",
+        "attribute": "disposition",
+        "frame": "canon",
+        "expected": [
+          "\"friendly\""
+        ],
+        "observed": [
+          "\"friendly\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "person:dog",
+        "attribute": "posture",
+        "frame": "canon",
+        "expected": [
+          "\"all_fours\""
+        ],
+        "observed": [],
+        "ok": false
+      }
+    ],
+    "ok": 9,
+    "total": 11,
+    "extra": [],
+    "ids": {
+      "place:room": "place:room",
+      "obj:switch": "obj:light_switch",
+      "obj:light": "obj:light",
+      "person:dog": "person:dog"
+    },
+    "findings": [],
+    "skipped": []
+  },
+  {
+    "recipe": "code-lock",
+    "vocabulary": "recipe",
+    "oracle": false,
+    "unseeded": [
+      "place:outside",
+      "obj:door"
+    ],
+    "chunks": 1,
+    "refused_chunks": [],
+    "passed": false,
+    "keys": [
+      {
+        "entity": "place:outside",
+        "attribute": "outdoors",
+        "frame": "canon",
+        "expected": [
+          "true"
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      },
+      {
+        "entity": "place:room",
+        "attribute": "lit",
+        "frame": "canon",
+        "expected": [
+          "\"dark\""
+        ],
+        "observed": [
+          "\"dark\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:light",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "controls",
+        "frame": "canon",
+        "expected": [
+          "\"obj:light\""
+        ],
+        "observed": [
+          "\"obj:light\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "link_type",
+        "frame": "canon",
+        "expected": [
+          "\"switch\""
+        ],
+        "observed": [
+          "\"switch\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "control_mode",
+        "frame": "canon",
+        "expected": [
+          "\"latching\""
+        ],
+        "observed": [
+          "\"latching\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:light",
+        "attribute": "state",
+        "frame": "canon",
+        "expected": [
+          "\"off\""
+        ],
+        "observed": [
+          "\"off\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "person:dog",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "person:dog",
+        "attribute": "disposition",
+        "frame": "canon",
+        "expected": [
+          "\"friendly\""
+        ],
+        "observed": [
+          "\"friendly\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "person:dog",
+        "attribute": "posture",
+        "frame": "canon",
+        "expected": [
+          "\"all_fours\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "place:outside",
+        "attribute": "lit",
+        "frame": "canon",
+        "expected": [
+          "\"day\""
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      },
+      {
+        "entity": "obj:door",
+        "attribute": "fixture",
+        "frame": "canon",
+        "expected": [
+          "true"
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      },
+      {
+        "entity": "obj:door",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      },
+      {
+        "entity": "obj:door",
+        "attribute": "connects_to",
+        "frame": "canon",
+        "expected": [
+          "\"place:outside\""
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      },
+      {
+        "entity": "obj:keypad",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:room\""
+        ],
+        "observed": [
+          "\"place:room\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:keypad",
+        "attribute": "controls",
+        "frame": "canon",
+        "expected": [
+          "\"obj:door\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:keypad",
+        "attribute": "link_type",
+        "frame": "canon",
+        "expected": [
+          "\"keypad\""
+        ],
+        "observed": [
+          "\"keypad\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:keypad",
+        "attribute": "control_mode",
+        "frame": "canon",
+        "expected": [
+          "\"latching\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:keypad",
+        "attribute": "code",
+        "frame": "canon",
+        "expected": [
+          "\"4071\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:keypad",
+        "attribute": "code",
+        "frame": "knows:person:dog",
+        "expected": [
+          "\"4071\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:door",
+        "attribute": "locked",
+        "frame": "canon",
+        "expected": [
+          "true"
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      },
+      {
+        "entity": "obj:door",
+        "attribute": "state",
+        "frame": "canon",
+        "expected": [
+          "\"shut\""
+        ],
+        "observed": null,
+        "ok": false,
+        "why": "entity_missing"
+      }
+    ],
+    "ok": 11,
+    "total": 23,
+    "extra": [
+      {
+        "entity": "place:room",
+        "attribute": "location",
+        "value": "place:world"
+      },
+      {
+        "entity": "obj:switch",
+        "attribute": "state",
+        "value": "off"
+      },
+      {
+        "entity": "place:room",
+        "attribute": "exits",
+        "value": "none"
+      }
+    ],
+    "ids": {
+      "place:room": "place:room",
+      "place:outside": null,
+      "obj:switch": "obj:light_switch",
+      "obj:light": "obj:light",
+      "person:dog": "person:dog",
+      "obj:door": null,
+      "obj:keypad": "obj:keypad"
+    },
+    "findings": [],
+    "skipped": []
+  },
+  {
+    "recipe": "take-and-drop",
+    "vocabulary": "recipe",
+    "oracle": false,
+    "unseeded": [],
+    "chunks": 1,
+    "refused_chunks": [],
+    "passed": false,
+    "keys": [
+      {
+        "entity": "obj:doorway",
+        "attribute": "fixture",
+        "frame": "canon",
+        "expected": [
+          "true"
+        ],
+        "observed": [
+          "true"
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:doorway",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:study\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "place:study",
+        "attribute": "connects_to",
+        "frame": "canon",
+        "expected": [
+          "\"obj:doorway\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:doorway",
+        "attribute": "connects_to",
+        "frame": "canon",
+        "expected": [
+          "\"place:hall\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:doorway",
+        "attribute": "state",
+        "frame": "canon",
+        "expected": [
+          "\"open\""
+        ],
+        "observed": [
+          "\"open\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:study_table",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:study\""
+        ],
+        "observed": [],
+        "ok": false
+      },
+      {
+        "entity": "obj:book",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"obj:study_table\""
+        ],
+        "observed": [
+          "\"place:study\""
+        ],
+        "ok": false
+      },
+      {
+        "entity": "obj:page",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"obj:book\""
+        ],
+        "observed": [
+          "\"obj:book\""
+        ],
+        "ok": true
+      },
+      {
+        "entity": "obj:hall_table",
+        "attribute": "location",
+        "frame": "canon",
+        "expected": [
+          "\"place:hall\""
+        ],
+        "observed": [
+          "\"place:hall\""
+        ],
+        "ok": true
+      }
+    ],
+    "ok": 4,
+    "total": 9,
+    "extra": [
+      {
+        "entity": "place:study",
+        "attribute": "exits",
+        "value": "place:hall"
+      },
+      {
+        "entity": "place:study",
+        "attribute": "location",
+        "value": "obj:doorway"
+      },
+      {
+        "entity": "place:hall",
+        "attribute": "location",
+        "value": "obj:doorway"
+      }
+    ],
+    "ids": {
+      "place:study": "place:study",
+      "place:hall": "place:hall",
+      "obj:doorway": "obj:doorway",
+      "obj:study_table": "obj:table",
+      "obj:book": "obj:book",
+      "obj:page": "obj:page",
+      "obj:hall_table": "obj:another_table"
+    },
+    "findings": [
+      {
+        "kind": "wrong_value_type",
+        "entity": "place:study",
+        "attribute": "exits",
+        "value": "place:hall",
+        "detail": "'exits' is literal-valued; this row's value is an entity"
+      }
+    ],
+    "skipped": []
+  }
+]

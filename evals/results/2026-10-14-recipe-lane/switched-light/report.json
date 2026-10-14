@@ -1,0 +1,150 @@
+{
+  "recipe": "switched-light",
+  "vocabulary": "recipe",
+  "oracle": false,
+  "unseeded": [],
+  "chunks": 1,
+  "refused_chunks": [],
+  "passed": false,
+  "keys": [
+    {
+      "entity": "place:room",
+      "attribute": "exits",
+      "frame": "canon",
+      "expected": [
+        "\"none\""
+      ],
+      "observed": [
+        "\"none\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "place:room",
+      "attribute": "lit",
+      "frame": "canon",
+      "expected": [
+        "\"dark\""
+      ],
+      "observed": [
+        "\"dark\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"place:room\""
+      ],
+      "observed": [
+        "\"place:room\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:light",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"place:room\""
+      ],
+      "observed": [
+        "\"place:room\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "controls",
+      "frame": "canon",
+      "expected": [
+        "\"obj:light\""
+      ],
+      "observed": [
+        "\"obj:light\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "link_type",
+      "frame": "canon",
+      "expected": [
+        "\"switch\""
+      ],
+      "observed": [
+        "\"switch\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "control_mode",
+      "frame": "canon",
+      "expected": [
+        "\"latching\""
+      ],
+      "observed": [
+        "\"latching\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:light",
+      "attribute": "state",
+      "frame": "canon",
+      "expected": [
+        "\"off\""
+      ],
+      "observed": [],
+      "ok": false
+    },
+    {
+      "entity": "person:dog",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"place:room\""
+      ],
+      "observed": [
+        "\"place:room\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "person:dog",
+      "attribute": "disposition",
+      "frame": "canon",
+      "expected": [
+        "\"friendly\""
+      ],
+      "observed": [
+        "\"friendly\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "person:dog",
+      "attribute": "posture",
+      "frame": "canon",
+      "expected": [
+        "\"all_fours\""
+      ],
+      "observed": [],
+      "ok": false
+    }
+  ],
+  "ok": 9,
+  "total": 11,
+  "extra": [],
+  "ids": {
+    "place:room": "place:room",
+    "obj:switch": "obj:light_switch",
+    "obj:light": "obj:light",
+    "person:dog": "person:dog"
+  },
+  "findings": [],
+  "skipped": []
+}

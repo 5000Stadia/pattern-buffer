@@ -1,0 +1,127 @@
+{
+  "chunk_spans": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        126,
+        208
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        209,
+        245
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 2,
+      "cursor": 2.0,
+      "seq": [
+        246,
+        360
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        361,
+        416
+      ]
+    }
+  ],
+  "correlations": 0,
+  "escapes": 14,
+  "handle_ids": {
+    "00/new:0": "person:nima_s_grandmother",
+    "00/new:1": "place:floor_under_the_tin_orchard_s_floor",
+    "01/new:0": "place:missing_room",
+    "02/new:0": "person:earlier_keeper_of_the_hall",
+    "02/new:1": "group:hall_s_collection_of_unwanted_instruments",
+    "02/new:2": "obj:stone_basin",
+    "02/new:3": "obj:the_moth",
+    "02/new:4": "place:hidden_chamber",
+    "02/new:5": "obj:round_door",
+    "02/new:6": "mention:eren_1",
+    "02/new:7": "event:great_partition",
+    "03/new:0": "person:pell",
+    "03/new:1": "obj:round_door",
+    "03/new:2": "obj:stone_basin",
+    "03/new:3": "place:first_house",
+    "03/new:4": "obj:the_moth",
+    "03/new:5": "obj:spool",
+    "03/new:6": "place:chamber_in_the_wall"
+  },
+  "identity_receipts": [],
+  "mentions": 1,
+  "minted": [
+    "place:oru",
+    "group:the_registry",
+    "person:ivara_noll",
+    "place:vellum_hall",
+    "place:mouth_room",
+    "obj:bark_strip",
+    "person:tovan_sere",
+    "obj:red_key",
+    "place:the_understair",
+    "person:eren_vey",
+    "person:eren_vell",
+    "place:the_tin_orchard",
+    "place:the_latch",
+    "person:lio",
+    "obj:tin_box",
+    "obj:parcel_tied_with_blue_thread",
+    "obj:satchel",
+    "person:nima_orrel",
+    "obj:necklace_of_brass_washers",
+    "obj:hinge",
+    "place:the_sleeping_gallery",
+    "obj:sleeping_tag",
+    "person:alis_noll",
+    "person:mara_noll",
+    "obj:recipe_sheet",
+    "group:the_first_hall_clerks",
+    "obj:handprint_strip",
+    "obj:ledger_with_a_cracked_spine",
+    "obj:bone_comb",
+    "obj:note",
+    "place:the_sump",
+    "obj:brass_map",
+    "obj:glass_thimble",
+    "obj:black_thread",
+    "obj:seventh_tooth",
+    "group:the_hall_s_first_examiners",
+    "person:nima_s_grandmother",
+    "place:floor_under_the_tin_orchard_s_floor",
+    "place:missing_room",
+    "person:earlier_keeper_of_the_hall",
+    "group:hall_s_collection_of_unwanted_instruments",
+    "obj:stone_basin",
+    "obj:the_moth",
+    "place:hidden_chamber",
+    "obj:round_door",
+    "mention:eren_1",
+    "event:great_partition",
+    "person:pell",
+    "place:first_house",
+    "obj:spool",
+    "place:chamber_in_the_wall"
+  ],
+  "pending_reveals": [],
+  "proposals": 1,
+  "rejections": 0,
+  "skipped": [],
+  "time_of": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 2.0,
+    "3": 2.0
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "recipe": "take-and-drop",
+  "vocabulary": "recipe",
+  "oracle": false,
+  "unseeded": [],
+  "chunks": 1,
+  "refused_chunks": [],
+  "passed": false,
+  "keys": [
+    {
+      "entity": "obj:doorway",
+      "attribute": "fixture",
+      "frame": "canon",
+      "expected": [
+        "true"
+      ],
+      "observed": [
+        "true"
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:doorway",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"place:study\""
+      ],
+      "observed": [],
+      "ok": false
+    },
+    {
+      "entity": "place:study",
+      "attribute": "connects_to",
+      "frame": "canon",
+      "expected": [
+        "\"obj:doorway\""
+      ],
+      "observed": [],
+      "ok": false
+    },
+    {
+      "entity": "obj:doorway",
+      "attribute": "connects_to",
+      "frame": "canon",
+      "expected": [
+        "\"place:hall\""
+      ],
+      "observed": [],
+      "ok": false
+    },
+    {
+      "entity": "obj:doorway",
+      "attribute": "state",
+      "frame": "canon",
+      "expected": [
+        "\"open\""
+      ],
+      "observed": [
+        "\"open\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:study_table",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"place:study\""
+      ],
+      "observed": [],
+      "ok": false
+    },
+    {
+      "entity": "obj:book",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"obj:study_table\""
+      ],
+      "observed": [
+        "\"place:study\""
+      ],
+      "ok": false
+    },
+    {
+      "entity": "obj:page",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"obj:book\""
+      ],
+      "observed": [
+        "\"obj:book\""
+      ],
+      "ok": true
+    },
+    {
+      "entity": "obj:hall_table",
+      "attribute": "location",
+      "frame": "canon",
+      "expected": [
+        "\"place:hall\""
+      ],
+      "observed": [
+        "\"place:hall\""
+      ],
+      "ok": true
+    }
+  ],
+  "ok": 4,
+  "total": 9,
+  "extra": [
+    {
+      "entity": "place:study",
+      "attribute": "exits",
+      "value": "place:hall"
+    },
+    {
+      "entity": "place:study",
+      "attribute": "location",
+      "value": "obj:doorway"
+    },
+    {
+      "entity": "place:hall",
+      "attribute": "location",
+      "value": "obj:doorway"
+    }
+  ],
+  "ids": {
+    "place:study": "place:study",
+    "place:hall": "place:hall",
+    "obj:doorway": "obj:doorway",
+    "obj:study_table": "obj:table",
+    "obj:book": "obj:book",
+    "obj:page": "obj:page",
+    "obj:hall_table": "obj:another_table"
+  },
+  "findings": [
+    {
+      "kind": "wrong_value_type",
+      "entity": "place:study",
+      "attribute": "exits",
+      "value": "place:hall",
+      "detail": "'exits' is literal-valued; this row's value is an entity"
+    }
+  ],
+  "skipped": []
+}

@@ -1,0 +1,427 @@
+{
+  "attributes": {},
+  "entities": {
+    "group:the_first_hall_clerks": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the first Hall clerks"
+      ]
+    },
+    "group:the_hall_s_assembly": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the Hall's assembly"
+      ]
+    },
+    "group:the_hall_s_collection_of_unwanted_instruments": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the Hall's collection of unwanted instruments"
+      ]
+    },
+    "group:the_hall_s_first_examiners": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the Hall's first examiners"
+      ]
+    },
+    "group:the_registry": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the Registry"
+      ]
+    },
+    "group:the_senior_clerks": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the senior clerks"
+      ]
+    },
+    "group:the_younger_clerks": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "the younger clerks"
+      ]
+    },
+    "obj:address_strip": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "address strip"
+      ]
+    },
+    "obj:bark_strip": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "bark strip"
+      ]
+    },
+    "obj:bark_strip_bearing_the_word_latch": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "bark strip bearing the word LATCH"
+      ]
+    },
+    "obj:black_thread": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "black thread"
+      ]
+    },
+    "obj:blue_thread": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "blue thread"
+      ]
+    },
+    "obj:bone_comb": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "bone comb"
+      ]
+    },
+    "obj:brass_map": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "brass map"
+      ]
+    },
+    "obj:brass_washers": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "brass washers"
+      ]
+    },
+    "obj:chalk_moth": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "chalk moth"
+      ]
+    },
+    "obj:child_sized_chair": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "child-sized chair"
+      ]
+    },
+    "obj:glass_thimble": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "glass thimble"
+      ]
+    },
+    "obj:handprint_strip": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "handprint strip"
+      ]
+    },
+    "obj:hinge": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "hinge"
+      ]
+    },
+    "obj:ledger": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "ledger"
+      ]
+    },
+    "obj:metal_fruit": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "metal fruit"
+      ]
+    },
+    "obj:numbered_spool": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "numbered spool"
+      ]
+    },
+    "obj:paper_bird": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "paper bird"
+      ]
+    },
+    "obj:red_key": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "red key"
+      ]
+    },
+    "obj:satchel": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "satchel"
+      ]
+    },
+    "obj:seventh_tooth": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "seventh tooth"
+      ]
+    },
+    "obj:shell_milk_recipe_sheet": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "shell-milk recipe sheet"
+      ]
+    },
+    "obj:sleeping_tag": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "sleeping tag"
+      ]
+    },
+    "obj:tin_box": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "tin box"
+      ]
+    },
+    "obj:winter_roll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "winter roll"
+      ]
+    },
+    "person:alis_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Alis Noll",
+        "Alis"
+      ]
+    },
+    "person:chalk_moth": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "creature",
+      "names": [
+        "chalk moth"
+      ]
+    },
+    "person:eren_vell": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Eren Vell",
+        "Eren"
+      ]
+    },
+    "person:eren_vey": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Eren Vey",
+        "Eren"
+      ]
+    },
+    "person:ivara_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Ivara Noll",
+        "Ivara"
+      ]
+    },
+    "person:lio": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Lio"
+      ]
+    },
+    "person:mara_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Mara Noll",
+        "Mara"
+      ]
+    },
+    "person:nima_orrel": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Nima Orrel",
+        "Nima"
+      ]
+    },
+    "person:tovan_sere": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Tovan Sere",
+        "Tovan"
+      ]
+    },
+    "place:first_house": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "First House"
+      ]
+    },
+    "place:mouth_room": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Mouth Room"
+      ]
+    },
+    "place:nacre_stair": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Nacre Stair"
+      ]
+    },
+    "place:oru": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Oru"
+      ]
+    },
+    "place:sump": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Sump"
+      ]
+    },
+    "place:the_family_niche": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the family niche"
+      ]
+    },
+    "place:the_hidden_chamber": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the hidden chamber"
+      ]
+    },
+    "place:the_latch": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "the Latch"
+      ]
+    },
+    "place:tin_orchard": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Tin Orchard",
+        "the Orchard"
+      ]
+    },
+    "place:understair": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Understair"
+      ]
+    },
+    "place:vellum_hall": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Vellum Hall"
+      ]
+    }
+  },
+  "places": [],
+  "timeline": {
+    "anchors": {},
+    "origin": ""
+  },
+  "world_id": "w:book_the_address_that_hummed"
+}
