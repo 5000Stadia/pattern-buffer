@@ -1,6 +1,6 @@
 # PLAY-BIND-V1: one deterministic matcher for a turn's mentions (R55)
 
-**Status:** r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
+**Status:** r1.2 (pbr's r1 RED: a value side is exactly what ingest would write as entity-valued, in any namespace; an exact id's existence is checked before any name match, so a future-only id is never bound by its slug; number folding becomes a pair rule with a minimum stem and a finite exception list; the collision universe and identity normalization are defined). r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
 (`bind`) and one read-only MCP verb. No write path, gate, fold or prompt changes.
 **Source:**
 - R55, placed first in M5 "Continuity in play". Kabe, via the monitor, settled g70803c on 2026-10-14: "R55 comes out of
@@ -55,10 +55,12 @@ same log give the same result.
 
 ## 2. One raw id, step by step
 
-A row has a **subject side** (`entity`), and a **value side** exactly when `value_type == "entity"`. *(r1.1)* `bind`
-infers no entity values from a value's shape. The host types values before calling: construct's relation-based
-detector, with explicit literal suppression, runs first. So an untyped `in · person:you` stays a literal here, and a
-literal `name · "obj:chain"` never becomes a side.
+A row has a **subject side** (`entity`), and a **value side** exactly when ingest would write the value as
+entity-valued. *(r1.2, pbr)* That is ingest's own inference (`ingest.py`, the gate's `value_type` line): the
+`value_type` given, or, if absent or empty, `"entity"` when the value is a string matching `model.ID_RE`, in any
+namespace, otherwise `"literal"`. `bind` imports that one predicate, so a row it admits can never be written with an
+unchecked entity value. The host types values before calling (construct's detector, with explicit literal
+suppression), so a literal `name · "obj:chain"` arrives as `value_type: "literal"` and is never a side.
 
 *(r1.1)* **One decision per raw id per call.** `bind` first gathers every distinct raw id raised by any side of any
 row. A raw id's surfaces are the union of every row's `name`, `names` and `aliases` where it is the subject, plus its
@@ -66,10 +68,14 @@ slug read as words. That evidence applies to its value sides too. Each raw id is
 the decision applies to every side that raised it.
 
 1. **Malformed:** the id fails the entity-id grammar. Outcome `malformed`.
-2. **Pass-through:** a namespace other than `person`, `place` or `obj` (for example `fact`, `event` or `doc`). Outcome
-   `kept`, with the id unchanged. The host's own policy covers these namespaces.
-3. **Exact id:** the id's `same_as` closure is a candidate. Outcome `bound`, signal `id`. If the closure exists at
-   `as_of` but isn't a candidate, the outcome is `out_of_scope` with that id, and the host decides.
+2. **Exact id, first** *(r1.2, pbr)*. Take the raw id's canonical representative (§2a).
+   - If it **exists at `as_of`** and is a candidate, the outcome is `bound`, signal `id`.
+   - If it exists at `as_of` but isn't a candidate, `out_of_scope` with that id.
+   - If it exists at the head but **not at `as_of`**, `future_only`, listing it. That ends the decision: no name or
+     kind match can bind a future-only id to a current entity.
+3. **Pass-through:** an id that doesn't exist at all, in a namespace other than `person`, `place` or `obj` (for
+   example a new `event:` or `fact:` id). Outcome `kept`, with the id unchanged. It is still classified as a side,
+   and an existing one was already decided in step 2. The host's own policy covers these namespaces.
 4. **Name:** compare the mention's surfaces with every compatible candidate's names.
    - **The raw id's surfaces:** gathered across the call as above (`tomas_reed_chains` gives "tomas reed chains").
      *(r1.1)* When the surfaces disagree, every surface is tried. If they match different candidates, the outcome is
@@ -84,7 +90,8 @@ the decision applies to every side that raised it.
    - One matching candidate gives `bound`, signal `name`. Two or more give `ambiguous`, listing them.
 5. **Kind:** no name matched. If exactly one compatible candidate's folded `kind` equals the side's folded slug, the
    outcome is `bound`, signal `kind` (refer's unique-kind-in-scope). Two or more give `ambiguous`.
-6. **Future-only:** steps 3–5 are run again over entities that exist at the head in `frame` but not at `as_of`. *(r1.1)*
+6. **Future-only by name or kind:** steps 4–5 are run again over entities that exist at the head in `frame` but not
+   at `as_of`. *(r1.1)*
    This search is **global**: every compatible entity in the frame, whatever `scope`, `include` and `widen` hold.
    Any hit gives `future_only`, with the ids in `Side.candidates`, so the host can tell a plain miss from a known
    later entity. `bind` never binds to one and never mints over one. Refusing a
@@ -93,18 +100,36 @@ the decision applies to every side that raised it.
 7. **Mint:** the namespace is in `mint`. *(r1.1)* `mint` constrains only `person`, `place` and `obj`. The `fact`, `event`
    and `doc` namespaces are deliberately left alone (step 2): they are pass-through, and the host's own policy governs
    them. Outcome `minted`, with a new id: the namespace plus the slug, collision-checked
-   against **every id in the log, any frame, any time**, and against this call's earlier mints. A taken id gets `_2`,
+   against **every id in the log, any frame, any time**, and against this call's earlier mints. *(r1.2, pbr)* "Every id"
+   means every row subject, every entity value (by ingest's predicate, above), and every `same_as` and `aka`
+   endpoint. A forward reference that so far appears only as a value is taken too. A taken id gets `_2`,
    then `_3`, and so on. One call mints a given raw id once: every side that raised it gets the same new id.
 8. **Otherwise:** `unknown`. The namespace isn't allowed to mint.
 
-## 3. Number folding
+### 2a. Identity and existence *(r1.2, pbr)*
 
-Applied to every token of both keys, so "chain" meets "chains" and "berry" meets "berries":
-- `…ies` (more than 4 letters) becomes `…y`;
-- `…ches`, `…shes`, `…sses` and `…xes` drop `es`;
-- otherwise a final `s` is dropped, if the token is longer than 3 letters and doesn't end `ss`.
+- **Canonical representative:** every raw id, `scope` member, `include` member and candidate is first mapped through
+  the `same_as` closure as the identity registry holds it at the head (`IdentityRegistry.resolve`), the same mapping
+  ingest applies at its gate. Candidates are a set of canonical ids, and a bound side carries the canonical id.
+- **Exists at `t`:** some member of the closure has a row in `frame`, asserted at or before the head, whose
+  `valid_from` is at or before `t`, or which is timeless. A closure exists at `as_of` if any member does, and binds
+  as its canonical id. Ending (`valid_to`) doesn't un-exist an entity: a broken pot still exists.
+- **Exists at the head:** some member has any row in `frame`.
+- **A candidate's names:** the `name` and alias rows of every closure member, visible in `frame` at `as_of`, plus
+  learned aliases. Each member's slug is read as words.
 
-So "glass", "bus" and "gas" keep their `s`. The fold is used only for matching and is never stored.
+## 3. Number matching *(r1.2: a pair rule, never a stem)*
+
+Two tokens `a` and `b` match when they are equal, or when one is the other's plural by exactly one of these, with the
+shorter at least 3 letters:
+- `b == a + "s"` (chain/chains, key/keys, dog/dogs);
+- `b == a + "es"`, where `a` ends in `ch`, `sh`, `s`, `x` or `z` (match/matches, box/boxes, bus/buses);
+- `a` ends in a consonant plus `y`, and `b == a[:-1] + "ies"` (berry/berries).
+
+Nothing is stemmed on its own, so "analysis", "status", "series" and "news" are never cut down. A finite exception list
+blocks pairs whose plural has its own sense: news/new, means/mean, arms/arm, goods/good, glasses/glass,
+papers/paper, works/work, customs/custom, quarters/quarter, manners/manner, spirits/spirit. The comparison is used only
+for matching and is never stored.
 
 ## 4. The result
 
@@ -193,8 +218,23 @@ restriction, so it replaces `resolve_rows`' matcher only, not movement's.
    - `include` adds exactly its ids, with no expansion, and one that doesn't exist at `as_of` lands in `excluded`;
    - `widen=("place",)` adds every place with a name or alias row existing at `as_of`, and not a place with only a
      slug.
-9. **Number folding:** "chains"/"chain", "berries"/"berry", "boxes"/"box" and "matches"/"match" fold together;
-   "glass", "bus" and "gas" keep their `s`.
+9. **Number matching:**
+   - chains/chain, keys/key, berries/berry, boxes/box, matches/match and buses/bus match;
+   - news/new, glasses/glass and arms/arm don't (the exception list);
+   - analysis/analysi, status/statu and series/sery never arise, since nothing is stemmed: "analysis" matches only
+     "analysis";
+   - gas/ga doesn't, since the shorter token is under 3 letters.
+9a. *(r1.2)* **Value sides follow ingest:**
+   - an untyped `in · event:later` is a side, and if `event:later` exists only at the head, the row gives
+     `future_only` and isn't admitted;
+   - an untyped `in · person:you` is a side;
+   - the predicate is the one ingest uses (a test pins both to the same function).
+9b. *(r1.2)* **Exact id before name:** a head-only `obj:lantern_2`, read where an in-scope `obj:lantern` exists, gives
+    `future_only`, never `bound` to `obj:lantern`.
+9c. *(r1.2)* **Collision universe:** a slug that so far appears only as an entity value elsewhere gets `_2` when
+    minted.
+9d. *(r1.2)* **Closure:** with `obj:a same_as obj:b`, where only `obj:b` has a row before `as_of`, a mention of `obj:a`
+    binds the canonical id and counts as existing.
 10. **No write and deterministic:** the log length and sidecar count are unchanged after `bind`, and the same call twice
     gives equal results.
 11. **MCP:** the server lists 46 verbs, and `bind` round-trips the result as JSON.
