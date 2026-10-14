@@ -1,6 +1,6 @@
 # CONTAINMENT-DURABILITY-V1: a movable's location is never made permanent by a guess
 
-**Status:** r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
+**Status:** r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
 - no per-world floor (`attr:in` is inviolable core);
 - the being and fixture tests use only what the classifier can see, bounded at the row's own log position;
 - no sidecar schema change;
@@ -64,9 +64,24 @@ fold.
      `ingest(text)`, which always runs `extracted=True`, and `ingest_structured(…, extracted=True)`.
      The skip happens at the gate, before anything is written. Structured host ingestion
      (`extracted=False`, the default) may write it.
-   - **The build library** refuses `fixture` in model output too: `patternbuffer.build`'s
-     `grammar_problem()` rejects an item whose attribute canonicalizes to `fixture`. A fixture
-     declared through the library comes only from the host's manifest, never from extraction.
+   - **The build library** *(r1.3, pbr)*. Two changes to BUILD-LIBRARY-V1, made in this item's
+     build:
+     - **The host route.** `Entry` gains `fixture: bool = False`. It is valid only for the
+       non-being types `object` and `place`. validate() refuses it on a being with
+       `fixture_on_being`. Commit's manifest writer emits, after the entry's shape rows and before
+       any chunk fact, one host row: `<id> · fixture · true`, timeless, canon, written through
+       `ingest_structured` with `extracted=False` (host authority).
+     - **The model route is closed after canonicalization.** For every model-result item (chunk
+       facts and the facts on escape and pick handles), commit's pre-write check `_checked()`
+       canonicalizes the item's attribute through the **target world's** `canonical_attribute`. That
+       is the same alias map the gate will apply. Any item that canonicalizes to `fixture` is refused
+       (`CommitRefused`) before any write.
+     - So a world alias such as `fixed -> fixture` can't carry a model guess past the check.
+       `grammar_problem()`'s literal refusal of `fixture` stays as the first, world-independent
+       line.
+     - Model items are **not** switched to `extracted=True`. That mode also runs the moved-event
+       coordinate pass, which would change what the library writes. The canonicalized check is the
+       narrower close.
    - So a model guess can never make a location permanent, whether by a CONSTITUTIVE verdict
      (rule 3) or by writing a fixture declaration.
    - **The exact check** *(r1.1, pbr)*:
@@ -136,7 +151,14 @@ fold.
      guardrail;
    - *(r1.2)* the same item with `extracted=False` (a host) is written, and the guardrail applies;
    - *(r1.2)* a build-library extraction line with attribute `fixture` is refused by
-     `grammar_problem()`.
+     `grammar_problem()`;
+   - *(r1.3, pbr)* in a world where the host declared an alias `fixed -> fixture`, a model item
+     `obj:page · fixed · true` is refused by commit's `_checked()` with the world unchanged, and a
+     later `obj:page in obj:book` goes to the model and the floor;
+   - *(r1.3)* a manifest `Entry(..., type="object", fixture=True)` for `obj:barred_door` writes
+     `fixture = true` as a host row before any chunk fact, and its containment row gets the fixture
+     guardrail (CONSTITUTIVE 1.0, no model call);
+   - *(r1.3)* `fixture=True` on a being is refused by validate() (`fixture_on_being`).
 3. **The floor:**
    - a model verdict of CONSTITUTIVE 0.7 on `obj:execution_page in obj:book` is stored STATE, with
      the confidence and the demoted mark;
