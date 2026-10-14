@@ -297,19 +297,21 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
     BUILD-SPEED-V1 options (INGEST-V2 refuses any non-default value)."""
     if pipeline not in PIPELINES:
         raise BookRefused(f"unknown pipeline {pipeline!r} (pipelines: {', '.join(PIPELINES)})")
-    speed = (max_words, classify_workers, extract_workers)
+    # BUILD-SPEED-V1: every speed option is checked by exact type and range
+    # first, whatever the pipeline (so 1500.0 or True never pass as a default),
+    # and only then is a valid non-default value refused on INGEST-V2.
+    if type(max_words) is not int or max_words < 100:
+        raise BookRefused(f"max_words must be an integer of at least 100, got {max_words!r}")
+    for name, value in (("classify_workers", classify_workers),
+                        ("extract_workers", extract_workers)):
+        if type(value) is not int or value < 1:
+            raise BookRefused(f"{name} must be an integer of at least 1, got {value!r}")
     if pipeline == "library":
-        if type(max_words) is not int or max_words < 100:
-            raise BookRefused(f"max_words must be an integer of at least 100, got {max_words!r}")
-        for name, value in (("classify_workers", classify_workers),
-                            ("extract_workers", extract_workers)):
-            if type(value) is not int or value < 1:
-                raise BookRefused(f"{name} must be an integer of at least 1, got {value!r}")
         return _run_library(book_dir, out_dir, model, pass0=pass0, merge_gate=merge_gate,
                             glean=glean, model_name=model_name, max_words=max_words,
                             classify_workers=classify_workers,
                             extract_workers=extract_workers)
-    if speed != (LIBRARY_MAX_WORDS, 1, 4):
+    if (max_words, classify_workers, extract_workers) != (LIBRARY_MAX_WORDS, 1, 4):
         raise BookRefused("--max-words, --classify-workers and --extract-workers are "
                           "--pipeline library options; INGEST-V2 takes none of them")
     from audit import run_audit

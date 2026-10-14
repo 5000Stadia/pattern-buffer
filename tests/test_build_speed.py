@@ -401,3 +401,17 @@ def test_7_run_book_refuses_bad_values_before_any_call(tmp_path):
     with pytest.raises(rb.BookRefused, match="--pipeline library options"):
         rb.run_book(book, tmp_path / "o", model, max_words=750)
     assert model.prompts == [] and not (tmp_path / "o").exists()
+
+
+@pytest.mark.parametrize("kw", [{"max_words": 1500.0}, {"classify_workers": True},
+                                {"extract_workers": 4.0}, {"max_words": True}])
+def test_7_default_equal_invalid_values_are_refused_on_ingest_v2_too(tmp_path, kw):
+    """pbr (code review): 1500.0, True and 4.0 compare equal to the defaults, so a
+    tuple-equality check let them into an INGEST-V2 run. Types are checked first,
+    whatever the pipeline: no call, no output."""
+    book = tb.write_book(tmp_path / "toybook")
+    model = FakeModel(chunks=TOY_EXTRACT, categories=TOY_CATEGORIES)
+    with pytest.raises(rb.BookRefused, match="must be an integer"):
+        rb.run_book(book, tmp_path / "o", model, pipeline="ingest-v2", **kw)
+    assert model.prompts == [] and not (tmp_path / "o").exists()
+
