@@ -1,0 +1,2494 @@
+{
+ "prompt": "old",
+ "summary": {
+  "lean": {
+   "passages": 15,
+   "oracle_fails": 6,
+   "passages_failing": 9
+  },
+  "full": {
+   "passages": 15,
+   "oracle_fails": 5,
+   "passages_failing": 9
+  }
+ },
+ "results": [
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:silver_ring",
+     "held_by",
+     "person:mara",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m01",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:mara",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:silver_ring",
+     "attribute": "kind",
+     "value": "silver ring",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:leather_belt",
+     "attribute": "kind",
+     "value": "leather belt",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:silver_ring",
+     "attribute": "held_by",
+     "value": "person:mara",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "observed"
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:last_page: in obj:oak_table (0.0, inf) overlaps held_by person:teodor (0.0, inf)"
+   ],
+   "problems": [],
+   "ok": false,
+   "rows": [
+    [
+     "obj:last_page",
+     "in",
+     "obj:oak_table",
+     0.0,
+     null
+    ],
+    [
+     "obj:last_page",
+     "held_by",
+     "person:teodor",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m02",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:teodor",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:ledger",
+     "attribute": "kind",
+     "value": "ledger",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:last_page",
+     "attribute": "kind",
+     "value": "page",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:oak_table",
+     "attribute": "kind",
+     "value": "table",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:oak_table",
+     "attribute": "material",
+     "value": "oak",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:last_page",
+     "attribute": "in",
+     "value": "obj:oak_table",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:last_page",
+     "attribute": "held_by",
+     "value": "person:teodor",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred",
+     "valid_to": null
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "person:wren",
+     "in",
+     "place:study",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m03",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:wren",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "person:wren",
+     "attribute": "in",
+     "value": "place:study",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_moves_to_study",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "complete": true
+    },
+    {
+     "entity": "event:wren_moves_to_study",
+     "attribute": "agent",
+     "value": "person:wren",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_moves_to_study",
+     "attribute": "origin",
+     "value": "place:great_hall",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_moves_to_study",
+     "attribute": "destination",
+     "value": "place:study",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:grey_coat",
+     "worn_by",
+     "person:odile",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m04",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:odile",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:grey_coat",
+     "attribute": "kind",
+     "value": "coat",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:grey_coat",
+     "attribute": "color",
+     "value": "grey",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:grey_coat",
+     "attribute": "worn_by",
+     "value": "person:odile",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:candle_stub: held_by person:bram (0.0, inf) overlaps in obj:brass_holder (0.0, inf)",
+    "obj:candle_stub: containment fold conflicted at None"
+   ],
+   "problems": [
+    "obj:candle_stub: final fold is conflicted 'obj:drawer', wanted ['holder']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:candle_stub",
+     "in",
+     "obj:drawer",
+     0.0,
+     0.0
+    ],
+    [
+     "obj:candle_stub",
+     "held_by",
+     "person:bram",
+     0.0,
+     null
+    ],
+    [
+     "obj:candle_stub",
+     "in",
+     "obj:brass_holder",
+     0.0,
+     null
+    ],
+    [
+     "obj:brass_holder",
+     "in",
+     "obj:sill",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m05",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:bram",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "kind",
+     "value": "candle stub",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:brass_holder",
+     "attribute": "kind",
+     "value": "brass holder",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:drawer",
+     "attribute": "kind",
+     "value": "drawer",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:sill",
+     "attribute": "kind",
+     "value": "sill",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "in",
+     "value": "obj:drawer",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_from": null,
+     "valid_to": 0
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "held_by",
+     "value": "person:bram",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred",
+     "valid_from": 0,
+     "valid_to": null
+    },
+    {
+     "entity": "obj:brass_holder",
+     "attribute": "in",
+     "value": "obj:sill",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": false,
+     "valid_from": 0
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "in",
+     "value": "obj:brass_holder",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_from": 0
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:sealed_letter: held_by person:courier (0.0, inf) overlaps held_by person:clerk (0.0, inf)",
+    "obj:sealed_letter: held_by person:courier (0.0, inf) overlaps in place:pigeonhole_east (0.0, inf)",
+    "obj:sealed_letter: held_by person:clerk (0.0, inf) overlaps in place:pigeonhole_east (0.0, inf)",
+    "obj:sealed_letter: containment fold conflicted at None",
+    "obj:sealed_letter: containment fold conflicted at 0.0"
+   ],
+   "problems": [
+    "obj:sealed_letter: final fold is conflicted 'person:clerk', wanted ['pigeonhole']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:sealed_letter",
+     "held_by",
+     "person:courier",
+     0.0,
+     null
+    ],
+    [
+     "obj:sealed_letter",
+     "held_by",
+     "person:clerk",
+     0.0,
+     null
+    ],
+    [
+     "obj:sealed_letter",
+     "in",
+     "place:pigeonhole_east",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m06",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:courier",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "person:clerk",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:sealed_letter",
+     "attribute": "kind",
+     "value": "sealed letter",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:sealed_letter",
+     "attribute": "held_by",
+     "value": "person:courier",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred"
+    },
+    {
+     "entity": "obj:sealed_letter",
+     "attribute": "held_by",
+     "value": "person:clerk",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "place:pigeonhole_east",
+     "attribute": "kind",
+     "value": "pigeonhole",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:pigeonhole_east",
+     "attribute": "label",
+     "value": "East",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:sealed_letter",
+     "attribute": "in",
+     "value": "place:pigeonhole_east",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:fish_crate",
+     "in",
+     "place:cellar",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m07",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:ilse",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:fish_crate",
+     "attribute": "kind",
+     "value": "fish crate",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:fish_crate",
+     "attribute": "in",
+     "value": "place:cellar",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:ilse_moves_crate_to_cellar",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "complete": true
+    },
+    {
+     "entity": "event:ilse_moves_crate_to_cellar",
+     "attribute": "agent",
+     "value": "person:ilse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:ilse_moves_crate_to_cellar",
+     "attribute": "origin",
+     "value": "obj:cart",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:ilse_moves_crate_to_cellar",
+     "attribute": "destination",
+     "value": "place:cellar",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "calder: no containment row written"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "place:lamp_room",
+     "in",
+     "place:lighthouse",
+     null,
+     null
+    ]
+   ],
+   "id": "m08",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:calder",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:harbour_office",
+     "attribute": "kind",
+     "value": "harbour office",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:lighthouse",
+     "attribute": "kind",
+     "value": "lighthouse",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:lamp_room",
+     "attribute": "kind",
+     "value": "lamp room",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:lamp_room",
+     "attribute": "in",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred",
+     "timeless": true
+    },
+    {
+     "entity": "event:calder_move_harbour_to_lighthouse",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_harbour_to_lighthouse",
+     "attribute": "agent",
+     "value": "person:calder",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_harbour_to_lighthouse",
+     "attribute": "origin",
+     "value": "place:harbour_office",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_harbour_to_lighthouse",
+     "attribute": "destination",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_harbour_to_lighthouse",
+     "attribute": "manner",
+     "value": "walk",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "complete": true
+    },
+    {
+     "entity": "event:calder_move_lighthouse_to_lamp_room",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_lighthouse_to_lamp_room",
+     "attribute": "agent",
+     "value": "person:calder",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_lighthouse_to_lamp_room",
+     "attribute": "origin",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_lighthouse_to_lamp_room",
+     "attribute": "destination",
+     "value": "place:lamp_room",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_move_lighthouse_to_lamp_room",
+     "attribute": "complete",
+     "value": true,
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "person:calder",
+     "attribute": "in",
+     "value": "place:lamp_room",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:map: held_by person:sorrel (0.0, inf) overlaps in obj:satchel (0.0, inf)"
+   ],
+   "problems": [
+    "obj:map: final fold is known 'obj:satchel', wanted ['wall']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:map",
+     "held_by",
+     "person:sorrel",
+     0.0,
+     null
+    ],
+    [
+     "obj:map",
+     "in",
+     "obj:satchel",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m09",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:sorrel",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:map",
+     "attribute": "kind",
+     "value": "map",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:map",
+     "attribute": "held_by",
+     "value": "person:sorrel",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred"
+    },
+    {
+     "entity": "obj:satchel",
+     "attribute": "kind",
+     "value": "satchel",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:map",
+     "attribute": "in",
+     "value": "obj:satchel",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_to": null,
+     "correction": false
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:cat: in place:windowsill (0.0, inf) overlaps in obj:rug (0.0, inf)",
+    "obj:cat: containment fold conflicted at None",
+    "obj:cat: containment fold conflicted at 0.0"
+   ],
+   "problems": [
+    "obj:cat: final fold is conflicted 'place:windowsill', wanted ['rug']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:cat",
+     "in",
+     "place:windowsill",
+     0.0,
+     null
+    ],
+    [
+     "obj:cat",
+     "in",
+     "obj:rug",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m10",
+   "kind": "move",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:pell",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:cat",
+     "attribute": "kind",
+     "value": "cat",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:cat",
+     "attribute": "in",
+     "value": "place:windowsill",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_to": null
+    },
+    {
+     "entity": "place:windowsill",
+     "attribute": "kind",
+     "value": "windowsill",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:rug",
+     "attribute": "kind",
+     "value": "rug",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:cat",
+     "attribute": "in",
+     "value": "obj:rug",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "obj:lantern: final fold is known 'place:cellar_door', wanted ['hook']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:lantern",
+     "in",
+     "place:cellar_door",
+     0.0,
+     null
+    ],
+    [
+     "obj:iron_hook",
+     "in",
+     "place:cellar_door",
+     0.0,
+     null
+    ]
+   ],
+   "id": "c1",
+   "kind": "control_static",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "obj:lantern",
+     "attribute": "kind",
+     "value": "lantern",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:lantern",
+     "attribute": "in",
+     "value": "place:cellar_door",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "observed"
+    },
+    {
+     "entity": "obj:iron_hook",
+     "attribute": "kind",
+     "value": "iron hook",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:iron_hook",
+     "attribute": "in",
+     "value": "place:cellar_door",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "observed"
+    },
+    {
+     "entity": "obj:lantern",
+     "attribute": "hung_from",
+     "value": "obj:iron_hook",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "place:cellar_door",
+     "attribute": "kind",
+     "value": "cellar door",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:compass",
+     "in",
+     "place:shelf",
+     0.0,
+     null
+    ]
+   ],
+   "id": "c2",
+   "kind": "control_put_back",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "person:ines",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:compass",
+     "attribute": "kind",
+     "value": "compass",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:compass",
+     "attribute": "in",
+     "value": "place:shelf",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "obj:key: the dated earlier location ['belt'] was not kept"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:key",
+     "held_by",
+     "person:she",
+     6.0,
+     12.0
+    ],
+    [
+     "obj:key",
+     "in",
+     "obj:locker",
+     12.0,
+     null
+    ]
+   ],
+   "id": "c3",
+   "kind": "control_historical",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "obj:key",
+     "attribute": "kind",
+     "value": "key",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:key",
+     "attribute": "held_by",
+     "value": "person:she",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_from": 6.0,
+     "valid_to": 12.0
+    },
+    {
+     "entity": "obj:locker",
+     "attribute": "kind",
+     "value": "locker",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:key",
+     "attribute": "in",
+     "value": "obj:locker",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_from": 12.0
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:brass_peg: in obj:oiled_cloth (0.0, inf) overlaps held_by person:courier (0.0, inf)"
+   ],
+   "problems": [
+    "obj:brass_peg: 2 distinct containers",
+    "obj:oiled_cloth: final fold is known 'person:courier', wanted ['pocket']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:brass_peg",
+     "in",
+     "obj:oiled_cloth",
+     0.0,
+     null
+    ],
+    [
+     "obj:brass_peg",
+     "held_by",
+     "person:courier",
+     0.0,
+     null
+    ],
+    [
+     "obj:oiled_cloth",
+     "in",
+     "person:courier",
+     0.0,
+     null
+    ]
+   ],
+   "id": "c4",
+   "kind": "control_nested",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "obj:brass_peg",
+     "attribute": "kind",
+     "value": "brass peg",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:brass_peg",
+     "attribute": "in",
+     "value": "obj:oiled_cloth",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:oiled_cloth",
+     "attribute": "kind",
+     "value": "oiled cloth",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:oiled_cloth",
+     "attribute": "in",
+     "value": "person:courier",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred"
+    },
+    {
+     "entity": "obj:brass_peg",
+     "attribute": "held_by",
+     "value": "person:courier",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred"
+    },
+    {
+     "entity": "person:courier",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "place:greystone_fort",
+     "in",
+     "place:northern_marches",
+     null,
+     null
+    ]
+   ],
+   "id": "c5",
+   "kind": "control_place_beside",
+   "mode": "lean",
+   "items": [
+    {
+     "entity": "place:greystone_fort",
+     "attribute": "kind",
+     "value": "fort",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "Greystone"
+     ]
+    },
+    {
+     "entity": "place:greystone_fort",
+     "attribute": "in",
+     "value": "place:northern_marches",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:greystone_fort",
+     "attribute": "on",
+     "value": "place:wend_river",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:wend_river",
+     "attribute": "kind",
+     "value": "river",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "the Wend"
+     ]
+    },
+    {
+     "entity": "place:northern_marches",
+     "attribute": "kind",
+     "value": "region",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:silver_ring: held_by person:mara (0.0, inf) overlaps in obj:leather_belt (0.0, inf)",
+    "obj:silver_ring: containment fold conflicted at None",
+    "obj:silver_ring: containment fold conflicted at 0.0"
+   ],
+   "problems": [
+    "obj:silver_ring: final fold is conflicted 'person:mara', wanted ['mara']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:silver_ring",
+     "held_by",
+     "person:mara",
+     0.0,
+     null
+    ],
+    [
+     "obj:silver_ring",
+     "in",
+     "obj:leather_belt",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m01",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:mara",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:silver_ring",
+     "attribute": "kind",
+     "value": "silver ring",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:leather_belt",
+     "attribute": "kind",
+     "value": "leather belt",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:silver_ring",
+     "attribute": "held_by",
+     "value": "person:mara",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:silver_ring",
+     "attribute": "in",
+     "value": "obj:leather_belt",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_to": null
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:last_page",
+     "in",
+     "obj:oak_table",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m02",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:teodor",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:ledger",
+     "attribute": "kind",
+     "value": "ledger",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:last_page",
+     "attribute": "kind",
+     "value": "page",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:last_page",
+     "attribute": "part_of",
+     "value": "obj:ledger",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:oak_table",
+     "attribute": "kind",
+     "value": "table",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "the oak table"
+     ]
+    },
+    {
+     "entity": "obj:last_page",
+     "attribute": "in",
+     "value": "obj:oak_table",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "wren: no containment row written"
+   ],
+   "ok": false,
+   "rows": [],
+   "id": "m03",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:wren",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:great_hall",
+     "attribute": "kind",
+     "value": "great hall",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:study",
+     "attribute": "kind",
+     "value": "study",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "event:wren_to_study",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_to_study",
+     "attribute": "agent",
+     "value": "person:wren",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_to_study",
+     "attribute": "origin",
+     "value": "place:great_hall",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_to_study",
+     "attribute": "destination",
+     "value": "place:study",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:wren_to_study",
+     "attribute": "complete",
+     "value": true,
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "person:wren",
+     "attribute": "in",
+     "value": "place:study",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:grey_coat",
+     "worn_by",
+     "person:odile",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m04",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:odile",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:grey_coat",
+     "attribute": "kind",
+     "value": "coat",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:grey_coat",
+     "attribute": "color",
+     "value": "grey",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:grey_coat",
+     "attribute": "worn_by",
+     "value": "person:odile",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:candle_stub: held_by person:bram (0.0, inf) overlaps in obj:brass_holder (0.0, inf)",
+    "obj:candle_stub: containment fold conflicted at None",
+    "obj:candle_stub: containment fold conflicted at 0.0"
+   ],
+   "problems": [
+    "obj:candle_stub: final fold is conflicted 'person:bram', wanted ['holder']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:candle_stub",
+     "held_by",
+     "person:bram",
+     0.0,
+     null
+    ],
+    [
+     "obj:candle_stub",
+     "in",
+     "obj:brass_holder",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m05",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:bram",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "kind",
+     "value": "candle stub",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "held_by",
+     "value": "person:bram",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:brass_holder",
+     "attribute": "kind",
+     "value": "brass holder",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:brass_holder",
+     "attribute": "in",
+     "value": "obj:drawer_sill",
+     "value_type": "unresolved",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:candle_stub",
+     "attribute": "in",
+     "value": "obj:brass_holder",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [
+    "doc:sealed_letter: held_by person:courier (0.0, inf) overlaps in obj:pigeonhole_east (0.0, inf)",
+    "doc:sealed_letter: containment fold conflicted at None",
+    "doc:sealed_letter: containment fold conflicted at 0.0"
+   ],
+   "problems": [
+    "doc:sealed_letter: final fold is conflicted 'person:courier', wanted ['pigeonhole']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "doc:sealed_letter",
+     "held_by",
+     "person:courier",
+     0.0,
+     null
+    ],
+    [
+     "doc:sealed_letter",
+     "in",
+     "obj:pigeonhole_east",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m06",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:courier",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "person:clerk",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "doc:sealed_letter",
+     "attribute": "kind",
+     "value": "letter",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "the sealed letter"
+     ]
+    },
+    {
+     "entity": "doc:sealed_letter",
+     "attribute": "sealed",
+     "value": true,
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:pigeonhole_east",
+     "attribute": "kind",
+     "value": "pigeonhole",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "the pigeonhole marked East"
+     ]
+    },
+    {
+     "entity": "obj:pigeonhole_east",
+     "attribute": "label",
+     "value": "East",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "doc:sealed_letter",
+     "attribute": "held_by",
+     "value": "person:courier",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "doc:sealed_letter",
+     "attribute": "in",
+     "value": "obj:pigeonhole_east",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:fish_crate",
+     "in",
+     "place:cellar",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m07",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:ilse",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:fish_crate",
+     "attribute": "kind",
+     "value": "fish crate",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:cart",
+     "attribute": "kind",
+     "value": "cart",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:cellar",
+     "attribute": "kind",
+     "value": "cellar",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:fish_crate",
+     "attribute": "in",
+     "value": "place:cellar",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:ilse_drags_crate_to_cellar",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "complete": true
+    },
+    {
+     "entity": "event:ilse_drags_crate_to_cellar",
+     "attribute": "agent",
+     "value": "person:ilse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:ilse_drags_crate_to_cellar",
+     "attribute": "origin",
+     "value": "obj:cart",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:ilse_drags_crate_to_cellar",
+     "attribute": "destination",
+     "value": "place:cellar",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "calder: no containment row written"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "place:lamp_room",
+     "in",
+     "place:lighthouse",
+     null,
+     null
+    ]
+   ],
+   "id": "m08",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:calder",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:harbour_office",
+     "attribute": "kind",
+     "value": "harbour office",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:lighthouse",
+     "attribute": "kind",
+     "value": "lighthouse",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:lamp_room",
+     "attribute": "kind",
+     "value": "lamp room",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:lamp_room",
+     "attribute": "in",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "event:calder_harbour_to_lighthouse",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_harbour_to_lighthouse",
+     "attribute": "agent",
+     "value": "person:calder",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_harbour_to_lighthouse",
+     "attribute": "origin",
+     "value": "place:harbour_office",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_harbour_to_lighthouse",
+     "attribute": "destination",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_harbour_to_lighthouse",
+     "attribute": "manner",
+     "value": "walk",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_harbour_to_lighthouse",
+     "attribute": "complete",
+     "value": true,
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "person:calder",
+     "attribute": "in",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_climb_lamp_room",
+     "attribute": "kind",
+     "value": "moved",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_climb_lamp_room",
+     "attribute": "agent",
+     "value": "person:calder",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_climb_lamp_room",
+     "attribute": "origin",
+     "value": "place:lighthouse",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_climb_lamp_room",
+     "attribute": "destination",
+     "value": "place:lamp_room",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "event:calder_climb_lamp_room",
+     "attribute": "complete",
+     "value": true,
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "person:calder",
+     "attribute": "in",
+     "value": "place:lamp_room",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:map: held_by person:sorrel (0.0, inf) overlaps in obj:satchel (0.0, inf)",
+    "obj:map: containment fold conflicted at None",
+    "obj:map: containment fold conflicted at 0.0"
+   ],
+   "problems": [
+    "obj:map: final fold is conflicted 'person:sorrel', wanted ['wall']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:map",
+     "held_by",
+     "person:sorrel",
+     0.0,
+     null
+    ],
+    [
+     "obj:map",
+     "in",
+     "obj:satchel",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m09",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:sorrel",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:map",
+     "attribute": "kind",
+     "value": "map",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "aliases": [
+      "the folded map"
+     ]
+    },
+    {
+     "entity": "obj:map",
+     "attribute": "held_by",
+     "value": "person:sorrel",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:satchel",
+     "attribute": "kind",
+     "value": "satchel",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "aliases": [
+      "the satchel"
+     ]
+    },
+    {
+     "entity": "obj:map",
+     "attribute": "in",
+     "value": "obj:satchel",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_to": null
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:cat",
+     "in",
+     "obj:rug",
+     0.0,
+     null
+    ]
+   ],
+   "id": "m10",
+   "kind": "move",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:pell",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:cat",
+     "attribute": "kind",
+     "value": "cat",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:cat",
+     "attribute": "in",
+     "value": "obj:rug",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:rug",
+     "attribute": "kind",
+     "value": "rug",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "obj:lantern: final fold is known 'place:cellar_door', wanted ['hook']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:lantern",
+     "in",
+     "place:cellar_door",
+     0.0,
+     null
+    ],
+    [
+     "obj:iron_hook",
+     "in",
+     "place:cellar_door",
+     0.0,
+     null
+    ]
+   ],
+   "id": "c1",
+   "kind": "control_static",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "obj:lantern",
+     "attribute": "kind",
+     "value": "lantern",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:lantern",
+     "attribute": "in",
+     "value": "place:cellar_door",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:iron_hook",
+     "attribute": "kind",
+     "value": "iron hook",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:iron_hook",
+     "attribute": "in",
+     "value": "place:cellar_door",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:lantern",
+     "attribute": "hung_from",
+     "value": "obj:iron_hook",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "place:cellar_door",
+     "attribute": "kind",
+     "value": "cellar door",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:compass",
+     "in",
+     "obj:shelf",
+     0.0,
+     null
+    ]
+   ],
+   "id": "c2",
+   "kind": "control_put_back",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "person:ines",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:compass",
+     "attribute": "kind",
+     "value": "compass",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:compass",
+     "attribute": "in",
+     "value": "obj:shelf",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [],
+   "ok": true,
+   "rows": [
+    [
+     "obj:key",
+     "held_by",
+     "obj:belt",
+     6.0,
+     12.0
+    ],
+    [
+     "obj:key",
+     "in",
+     "obj:locker",
+     12.0,
+     null
+    ]
+   ],
+   "id": "c3",
+   "kind": "control_historical",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "obj:key",
+     "attribute": "kind",
+     "value": "key",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:locker",
+     "attribute": "kind",
+     "value": "locker",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:key",
+     "attribute": "held_by",
+     "value": "obj:belt",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_from": 6.0,
+     "valid_to": 12.0
+    },
+    {
+     "entity": "obj:key",
+     "attribute": "in",
+     "value": "obj:locker",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "valid_from": 12.0
+    }
+   ]
+  },
+  {
+   "fails": [
+    "obj:brass_peg: in obj:oiled_cloth (0.0, inf) overlaps held_by person:courier (0.0, inf)"
+   ],
+   "problems": [
+    "obj:brass_peg: 2 distinct containers",
+    "obj:oiled_cloth: final fold is known 'person:courier', wanted ['pocket']"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "obj:brass_peg",
+     "in",
+     "obj:oiled_cloth",
+     0.0,
+     null
+    ],
+    [
+     "obj:brass_peg",
+     "held_by",
+     "person:courier",
+     0.0,
+     null
+    ],
+    [
+     "obj:oiled_cloth",
+     "in",
+     "person:courier",
+     0.0,
+     null
+    ]
+   ],
+   "id": "c4",
+   "kind": "control_nested",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "obj:brass_peg",
+     "attribute": "kind",
+     "value": "brass peg",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:brass_peg",
+     "attribute": "in",
+     "value": "obj:oiled_cloth",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:oiled_cloth",
+     "attribute": "kind",
+     "value": "oiled cloth",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "obj:oiled_cloth",
+     "attribute": "in",
+     "value": "person:courier",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated"
+    },
+    {
+     "entity": "obj:brass_peg",
+     "attribute": "held_by",
+     "value": "person:courier",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "inferred"
+    },
+    {
+     "entity": "person:courier",
+     "attribute": "kind",
+     "value": "person",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "person:courier",
+     "attribute": "pocket_side",
+     "value": "left",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated"
+    }
+   ]
+  },
+  {
+   "fails": [],
+   "problems": [
+    "place:greystone: 'in' a wend (should be adjacent_to)",
+    "place:greystone: 'in' a river (should be adjacent_to)"
+   ],
+   "ok": false,
+   "rows": [
+    [
+     "place:greystone",
+     "in",
+     "place:wend_river_northern_marches",
+     null,
+     null
+    ]
+   ],
+   "id": "c5",
+   "kind": "control_place_beside",
+   "mode": "full",
+   "items": [
+    {
+     "entity": "place:greystone",
+     "attribute": "kind",
+     "value": "fort",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "Greystone",
+      "the fort of Greystone"
+     ]
+    },
+    {
+     "entity": "place:greystone",
+     "attribute": "in",
+     "value": "place:wend_river_northern_marches",
+     "value_type": "entity",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true
+    },
+    {
+     "entity": "place:wend_river_northern_marches",
+     "attribute": "kind",
+     "value": "region",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "the northern marches"
+     ]
+    },
+    {
+     "entity": "place:wend_river",
+     "attribute": "kind",
+     "value": "river",
+     "value_type": "literal",
+     "frame": "canon",
+     "status": "stated",
+     "timeless": true,
+     "aliases": [
+      "the Wend river"
+     ]
+    }
+   ]
+  }
+ ]
+}

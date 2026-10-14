@@ -1,0 +1,24 @@
+# One-location probe (new prompt)
+
+| passage | lean | full |
+|---|---|---|
+| c1 | pass | pass |
+| c2 | pass | pass |
+| c3 | pass | FAIL: obj:key: the dated earlier location ['belt'] was not kept |
+| c4 | pass | FAIL: obj:oiled_cloth: final fold is known 'person:courier', wanted ['pocket'] |
+| c5 | pass | pass |
+| m01 | FAIL: obj:silver_ring: held_by person:mara (0.0, inf) overlaps in obj:leather_belt (0.0, inf); obj:silver_ring: containment fold conflicted at None; obj:silver_ring: containment fold conflicted at 0.0; obj:silver_ring: final fold is conflicted 'person:mara', wanted ['mara'] | FAIL: obj:silver_ring: containment fold conflicted at None; obj:silver_ring: final fold is conflicted 'obj:leather_belt', wanted ['mara'] |
+| m02 | FAIL: obj:last_page: in obj:ledger (0.0, inf) overlaps in obj:oak_table (0.0, inf) | pass |
+| m03 | pass | FAIL: wren: no containment row written |
+| m04 | FAIL: obj:grey_coat: in obj:peg (0.0, inf) overlaps worn_by person:odile (0.0, inf); obj:grey_coat: containment fold conflicted at None; obj:grey_coat: containment fold conflicted at 0.0; obj:grey_coat: final fold is conflicted 'obj:peg', wanted ['odile'] | FAIL: obj:grey_coat: worn_by person:odile (0.0, inf) overlaps in obj:peg (0.0, inf); obj:grey_coat: containment fold conflicted at None; obj:grey_coat: containment fold conflicted at 0.0; obj:grey_coat: final fold is conflicted 'person:odile', wanted ['odile'] |
+| m05 | pass | FAIL: obj:candle_stub: in obj:drawer (0.0, inf) overlaps held_by person:bram (0.0, inf); obj:candle_stub: in obj:drawer (0.0, inf) overlaps in obj:brass_holder (0.0, inf); obj:candle_stub: held_by person:bram (0.0, inf) overlaps in obj:brass_holder (0.0, inf); obj:candle_stub: containment fold conflicted at None; obj:candle_stub: containment fold conflicted at 0.0; obj:candle_stub: final fold is conflicted 'obj:drawer', wanted ['holder'] |
+| m06 | FAIL: obj:sealed_letter: held_by person:courier (0.0, inf) overlaps in obj:pigeonhole_east (0.0, inf) | FAIL: doc:sealed_letter: held_by person:courier (0.0, inf) overlaps held_by person:clerk (0.0, inf); doc:sealed_letter: held_by person:courier (0.0, inf) overlaps in place:pigeonhole_east (0.0, inf); doc:sealed_letter: held_by person:clerk (0.0, inf) overlaps in place:pigeonhole_east (0.0, inf); doc:sealed_letter: containment fold conflicted at None; doc:sealed_letter: containment fold conflicted at 0.0; doc:sealed_letter: final fold is conflicted 'person:courier', wanted ['pigeonhole'] |
+| m07 | FAIL: obj:fish_crate: in obj:cart (0.0, inf) overlaps in place:cellar (0.0, inf) | pass |
+| m08 | FAIL: calder: no containment row written | FAIL: calder: no containment row written |
+| m09 | FAIL: obj:map: containment fold conflicted at None; obj:map: final fold is conflicted 'obj:satchel', wanted ['wall'] | FAIL: obj:map: in obj:satchel (0.0, inf) overlaps held_by person:sorrel (0.0, inf); obj:map: in obj:satchel (0.0, inf) overlaps in place:wall (0.0, inf); obj:map: held_by person:sorrel (0.0, inf) overlaps in place:wall (0.0, inf); obj:map: containment fold conflicted at None; obj:map: containment fold conflicted at 0.0; obj:map: final fold is conflicted 'obj:satchel', wanted ['wall'] |
+| m10 | FAIL: obj:cat: containment fold conflicted at None; obj:cat: final fold is conflicted 'place:windowsill', wanted ['rug'] | FAIL: obj:cat: containment fold conflicted at None; obj:cat: final fold is conflicted 'place:windowsill', wanted ['rug'] |
+
+| mode | oracle fails | passages failing |
+|---|---|---|
+| lean | 7 | 8/15 |
+| full | 6 | 10/15 |
