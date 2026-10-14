@@ -64,7 +64,7 @@ Canon identity therefore stays as it is: the truth, timeless. The grader gains t
 - **The development set** is this book plus *The Last Honest Meter*. *The Weather That Would Not
   Leave* is run only on frozen designs.
 
-## Step 4. The registry first, as category passes *(r3: Kabe's passes, co-designed with construct)*
+## Step 4. The registry first, as category passes *(r3: Kabe's passes, co-designed with construct; BUILD-LIBRARY-V1 merged 2026-10-13)*
 Kabe (via construct ma2f75e): "Pass for cast list, pass for locations, etc". Construct's proposal
 is `/home/k/Newproject/docs/design/SEEDING-REGISTRY-FIRST.md`; pb's read is m52998c. This replaces
 r2's single whole-book cast call.
