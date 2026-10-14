@@ -36,8 +36,8 @@ there was nothing left for it to clear for merge.
   belt row ended and the hand row began". Both land at the passage's time, and the fold sees two
   parents.
 - **The model is trying to say it.** Containment rows carrying a `valid_to` key rose from 9 of 54
-  (old prompt) to 21 of 58 (new). These are mostly the old location, marked with
-  `"valid_to": null`: an end it has no number for. It knows the old place ended; the output shape
+  (old prompt) to 21 of 58 (new). Of the 20 whose entity matches a passage's expectation, 18
+  are a non-final (old) location, marked with `"valid_to": null`: an end it has no number for. It knows the old place ended; the output shape
   gives it no way to say so.
 
 ## What would fix it (a proposal, for spec and review)
