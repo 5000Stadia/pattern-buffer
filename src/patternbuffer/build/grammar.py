@@ -82,8 +82,10 @@ def names_entity(item: Mapping[str, Any]) -> bool:
 
 def id_positions(item: Mapping[str, Any]) -> list[tuple[str, str]]:
     """The ids an item names, as ``(position, id)``: its subject, its entity
-    value (explicit or inferred, :func:`names_entity`), its ``caused_by`` and
-    the observer of a ``knows:`` frame."""
+    value (explicit or inferred, :func:`names_entity`), its ``caused_by``, the
+    observer of a ``knows:`` frame, and its ``source`` (``doc=`` or ``src=``,
+    r1.7). A source may also be document provenance (``doc:letter_1``), which
+    the caller tells apart (``Registry.source_problem``)."""
     out = [("subject", item["entity"])]
     if names_entity(item):
         out.append(("value", item["value"]))
@@ -92,6 +94,8 @@ def id_positions(item: Mapping[str, Any]) -> list[tuple[str, str]]:
     frame = item.get("frame")
     if isinstance(frame, str) and frame.startswith("knows:"):
         out.append(("frame", frame.removeprefix("knows:")))
+    if isinstance(item.get("source_doc"), str):
+        out.append(("source", item["source_doc"]))
     return out
 
 
@@ -102,13 +106,74 @@ def replace_ids(item: dict[str, Any], mapping: dict[str, str]) -> dict[str, Any]
     out["entity"] = mapping.get(out["entity"], out["entity"])
     if names_entity(out):
         out["value"] = mapping.get(out["value"], out["value"])
-    if isinstance(out.get("caused_by"), str):
-        out["caused_by"] = mapping.get(out["caused_by"], out["caused_by"])
+    for field in ("caused_by", "source_doc"):
+        if isinstance(out.get(field), str):
+            out[field] = mapping.get(out[field], out[field])
     frame = out.get("frame")
     if isinstance(frame, str) and frame.startswith("knows:"):
         inner = frame.removeprefix("knows:")
         out["frame"] = "knows:" + mapping.get(inner, inner)
     return out
+
+
+# The keys an item from `parse_line` can carry (BUILD-LIBRARY-V1 r1.7): commit
+# accepts no other, so a result can say nothing the grammar could not.
+GRAMMAR_KEYS = frozenset({"entity", "attribute", "value", "value_type", "timeless",
+                          "valid_from", "valid_to", "frame", "status", "source_doc",
+                          "caused_by", "correction"})
+
+
+def grammar_problem(item: Mapping[str, Any]) -> str | None:
+    """Why ``item`` is not an item :func:`parse_line` could write, or None: its
+    keys are within :data:`GRAMMAR_KEYS` and each holds what the grammar puts
+    there (a field-shaped entity and attribute, JSON data as the value,
+    ``value_type`` only ``entity`` or ``unresolved``, a status from
+    :data:`STATUSES`, ``timeless`` and ``correction`` only ``true``)."""
+    extra = sorted(str(k) for k in set(item) - GRAMMAR_KEYS)
+    if extra:
+        return f"keys the grammar never writes: {', '.join(extra)}"
+    for field in ("entity", "attribute"):
+        value = item.get(field)
+        if not isinstance(value, str) or FIELD_RE.fullmatch(value) is None:
+            return f"{field} {value!r} is not a field the grammar writes"
+    if "value" not in item:
+        return "no value"
+    if not _json_data(item["value"]):
+        return "the value is not JSON data"
+    if "value_type" in item:
+        value_type = item["value_type"]
+        if value_type == "entity":
+            if not isinstance(item["value"], str):
+                return "an entity value must be an id string"
+        elif value_type == "unresolved":
+            if not isinstance(item["value"], dict):
+                return "an unresolved value must be an object"
+        else:
+            return f"value_type {value_type!r} is not one the grammar writes"
+    for flag in ("timeless", "correction"):
+        if flag in item and item[flag] is not True:
+            return f"{flag} is {item[flag]!r}; the grammar writes only true"
+    for flag in ("valid_from", "valid_to"):
+        if flag in item and (isinstance(item[flag], bool)
+                             or not isinstance(item[flag], (int, float))):
+            return f"{flag} {item[flag]!r} is not a number"
+    for flag in ("frame", "source_doc", "caused_by"):
+        if flag in item and not isinstance(item[flag], str):
+            return f"{flag} {item[flag]!r} is not a string"
+    if "status" in item and item["status"] not in STATUSES:
+        return f"status {item['status']!r} is not one the grammar writes"
+    return None
+
+
+def _json_data(value: Any) -> bool:
+    """Whether ``value`` is JSON data as the grammar decodes it."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return True
+    if isinstance(value, list):
+        return all(_json_data(v) for v in value)
+    if isinstance(value, dict):
+        return all(isinstance(k, str) and _json_data(v) for k, v in value.items())
+    return False
 
 
 # ------------------------------------------- INGEST-V2's value and flag syntax

@@ -20,9 +20,11 @@ The writes, in order:
 
 Every write is a porcelain call (``ingest_structured``, ``correlate``,
 ``reject``), so the ingestor does every write. Before the first one, every
-result is re-validated as ``extract`` checks it (each item cites a sentence of
-its chunk, and every id it names is gated at or before that sentence), so a
-hand-made ``ChunkResult`` can write nothing ``extract`` would have refused.
+result is re-validated as ``extract`` checks it (r1.7: exactly extract's
+language — the grammar's keys, a citation inside the chunk, every id it names,
+sources included, gated at or before that sentence, and balanced build
+handles), so a hand-made ``ChunkResult`` can write nothing ``extract`` would
+have refused.
 """
 
 from __future__ import annotations
@@ -32,7 +34,13 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
 from patternbuffer.build.extract import ChunkResult, Pick
-from patternbuffer.build.grammar import handle_number, id_positions, is_handle, replace_ids
+from patternbuffer.build.grammar import (
+    grammar_problem,
+    handle_number,
+    id_positions,
+    is_handle,
+    replace_ids,
+)
 from patternbuffer.build.manifest import BEINGS, NAMESPACE, SPECIES_TYPES, TYPES, normalize_type
 from patternbuffer.build.registry import (
     Ambiguous,
@@ -167,15 +175,20 @@ def _ingest_kwargs(ingest_kwargs: Mapping[str, Any] | None) -> dict[str, Any]:
 
 
 def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[str]:
-    """One item re-validated as ``extract`` checks it (§3, §4): a fact item that
-    cites a sentence of its chunk (``sentence``, the chunk's own numbering), and
-    every registry id it names (subject, entity value, ``caused_by``, a
-    ``knows:`` observer) gated at or before that sentence. Returns the build
-    handles it uses; raises ``CommitRefused`` for anything else."""
+    """One item re-validated as ``extract`` checks it (§3, §4, r1.7): an item
+    the grammar could write (its keys within ``GRAMMAR_KEYS`` plus
+    ``sentence``, each holding what the grammar puts there), citing a sentence
+    of its chunk (the chunk's own numbering), with every registry id it names
+    (subject, entity value, ``caused_by``, a ``knows:`` observer, a source)
+    gated at or before that sentence, and no ``person:`` source that names no
+    entry or persona. Returns the build handles it uses; raises
+    ``CommitRefused`` for anything else."""
     where = f"chunk {r.index} items[{n}]"
-    if not (isinstance(item, Mapping) and isinstance(item.get("entity"), str)
-            and isinstance(item.get("attribute"), str) and "value" in item):
+    if not isinstance(item, Mapping):
         raise CommitRefused(f"{where} is not a fact item")
+    problem = grammar_problem({k: v for k, v in item.items() if k != "sentence"})
+    if problem is not None:
+        raise CommitRefused(f"{where} is not a fact item the grammar writes: {problem}")
     cited = item.get("sentence")
     if isinstance(cited, bool) or not isinstance(cited, int):
         raise CommitRefused(f"{where} cites no sentence")
@@ -187,6 +200,12 @@ def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[st
     for position, ident in id_positions(item):
         if is_handle(ident):
             handles.add(ident)
+            continue
+        if position == "source":
+            found = registry.source_problem(ident, *at)
+            if found is not None:
+                raise CommitRefused(f"{where}: {found[1]}; the item cites chapter {at[0]} "
+                                    f"sentence {at[1]}")
             continue
         if not registry.knows(ident):
             raise CommitRefused(f"{where} names {ident!r}, which this registry never minted")
@@ -200,11 +219,13 @@ def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[st
 
 def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkResult]:
     """The results in chunk order, refused (``CommitRefused``) before any write
-    when they could not have come from ``extract`` over this registry's plan:
-    every item is re-validated (its citation, and the effective gate of every
-    id it names at that sentence), every build handle it uses must be declared,
-    and a pick's candidates must be candidates of its chunk. A hand-made
-    ``ChunkResult`` passes only what ``extract`` would have accepted."""
+    when they could not have come from ``extract`` over this registry's plan
+    (r1.7: commit accepts exactly extract's language): every item is one the
+    grammar could write, citing a sentence of its chunk, with the effective gate
+    of every id it names at or before that sentence; every build handle used is
+    declared and every declared one used; a pick's candidates are candidates of
+    its chunk. A hand-made ``ChunkResult`` passes only what ``extract`` would
+    have accepted."""
     results = list(results)
     for r in results:
         if not isinstance(r, ChunkResult):
@@ -236,7 +257,10 @@ def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkRe
             used |= _check_item(registry, r, n, item)
         if used - set(declared):
             raise CommitRefused(f"chunk {r.index} uses undeclared handles "
-                                f"{sorted(used - set(declared))}")
+                                f"{sorted(used - set(declared), key=handle_number)}")
+        if set(declared) - used:
+            raise CommitRefused(f"chunk {r.index} declares build handles no item uses: "
+                                f"{sorted(set(declared) - used, key=handle_number)}")
         last = (r.chapter, r.last_sentence)
         for pick in r.picks:
             if not (isinstance(pick.surface, str) and pick.surface.strip()

@@ -19,6 +19,10 @@ BEINGS = frozenset({"person", "animal", "creature"})
 SPECIES_TYPES = frozenset({"animal", "creature"})
 NAMESPACE = {"person": "person", "animal": "person", "creature": "person",
              "place": "place", "object": "obj", "group": "group", "event": "event"}
+# The namespaces beings are filed under (``person:``): the engine reads a
+# ``person:`` source as a speaker's identity (``source_class``), so such a
+# source must name an entry or persona (r1.7).
+BEING_NAMESPACES = frozenset(NAMESPACE[t] for t in BEINGS)
 
 # The codes a ManifestError item carries. The first nine are the spec's list
 # (§1); ``species_not_allowed`` (a species on a type other than animal or

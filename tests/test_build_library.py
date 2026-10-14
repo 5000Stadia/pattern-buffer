@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from patternbuffer import World, build as b
 from patternbuffer.build import text as btext
 from patternbuffer.build.extract import build_prompt
-from patternbuffer.build.grammar import parse_line
+from patternbuffer.build.grammar import grammar_problem, parse_line
 from patternbuffer.model import ID_RE
 from patternbuffer.testing import rule_classifier_fallback
 
@@ -389,7 +389,8 @@ def test_4_a_line_citing_outside_its_chunk_or_citing_nothing_is_refused():
     reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
     chunk = b.plan(ORIN_TEXT, reg)[0]
     result = b.read_output(chunk, {"lines": ["s9|person:orin|mood|x", "s0|person:orin|mood|x",
-                                             "person:orin|mood|x", "[s4]|person:orin|sings|true"]})
+                                             "person:orin|mood|x", "[s4]|person:orin|sings|true"]},
+                           reg)
     assert [(r.where, r.reason) for r in result.refused] == [
         ("lines[0]", "citation_outside_chunk"), ("lines[1]", "citation_outside_chunk"),
         ("lines[2]", "malformed_line")]
@@ -558,9 +559,10 @@ def test_6_a_pick_outside_its_candidates_is_refused_with_its_lines(worlds):
 def test_6_a_pick_needs_two_known_candidates():
     reg = b.Registry.from_manifest(HOLMES, HOLMES_TEXT)
     chunk = b.plan(HOLMES_TEXT, reg)[0]
-    one = b.read_output(chunk, holmes_pick(candidates=(SHERLOCK,))[0])
+    one = b.read_output(chunk, holmes_pick(candidates=(SHERLOCK,))[0], reg)
     assert [r.reason for r in one.refused][:1] == ["pick_not_ambiguous"]
-    stranger = b.read_output(chunk, holmes_pick(candidates=(SHERLOCK, "person:moriarty"))[0])
+    stranger = b.read_output(chunk, holmes_pick(candidates=(SHERLOCK, "person:moriarty"))[0],
+                             reg)
     assert [r.reason for r in stranger.refused][:1] == ["pick_candidate_unknown"]
 
 
@@ -570,14 +572,14 @@ def test_6_a_pick_needs_two_known_candidates():
 def test_6a_an_undeclared_or_unused_handle_refuses_the_chunk(worlds):
     reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
     chunk = b.plan(ORIN_TEXT, reg)[0]
-    undeclared = b.read_output(chunk, {"lines": ["s3|new:0|mood|x"]})
+    undeclared = b.read_output(chunk, {"lines": ["s3|new:0|mood|x"]}, reg)
     assert undeclared.error == "handles: used but not declared: new:0"
     unused = b.read_output(chunk, {"lines": ["s3|person:orin|mood|x"], "escapes": [
-        {"handle": "new:1", "type": "person", "name": "a ferryman", "quote": "The ferry"}]})
+        {"handle": "new:1", "type": "person", "name": "a ferryman", "quote": "The ferry"}]}, reg)
     assert unused.error == "handles: declared but not used: new:1"
     twice = b.read_output(chunk, {"lines": ["s3|new:0|mood|x"], "escapes": [
         {"handle": "new:0", "type": "person", "name": "a", "quote": ""},
-        {"handle": "new:0", "type": "person", "name": "b", "quote": ""}]})
+        {"handle": "new:0", "type": "person", "name": "b", "quote": ""}]}, reg)
     assert twice.error == "handles: declared twice: new:0"
     with pytest.raises(b.CommitRefused, match="refused at extraction"):
         b.commit(worlds(), reg, [undeclared])
@@ -727,7 +729,7 @@ def test_p1_extract_reads_an_id_shaped_bare_value_as_the_gate_does(worlds):
     reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
     chunk = b.plan(ORIN_TEXT, reg)[0]
     early = b.read_output(chunk, {"lines": ["s2|place:the_river|carries|person:orin",
-                                            "s3|place:the_river|carries|person:ghost"]})
+                                            "s3|place:the_river|carries|person:ghost"]}, reg)
     assert [r.reason for r in early.gate_refused] == ["gate_refused"]
     assert [r.reason for r in early.refused] == ["unknown_id"]
     out = built(worlds, ORIN_TEXT, ORIN, {0: {
@@ -736,6 +738,134 @@ def test_p1_extract_reads_an_id_shaped_bare_value_as_the_gate_does(worlds):
     assert values(out.world, "place:the_river", "carries") == ["obj:a_ferry"]
     assert not [r for r in out.world.buffer.all_rows()
                 if isinstance(r.value, str) and r.value.startswith("new:")]
+
+
+# ----------------- commit accepts exactly extract's language (pbr re-review, r1.7)
+
+
+@pytest.mark.parametrize("decl", [
+    b.Escape("new:0", "object", "forged lantern", None, "a lantern"),
+    b.Pick("new:0", "Rex", ("person:rex", "person:rex_2"), "person:rex",
+           "Rex the dog barked at the gate."),
+], ids=["escape", "pick"])
+def test_r17_a_declared_handle_no_item_uses_is_refused_and_the_world_is_unchanged(worlds,
+                                                                                    decl):
+    """pbr's P1a: a hand-made result declaring a build handle no item uses."""
+    w = worlds()
+    reg = b.Registry.from_manifest(REX, REX_TEXT)
+    before = world_reads(w)
+    forged = hand_made([], escapes=[decl] if isinstance(decl, b.Escape) else [],
+                       picks=[decl] if isinstance(decl, b.Pick) else [])
+    with pytest.raises(b.CommitRefused, match="declares build handles no item uses"):
+        b.commit(w, reg, [forged])
+    assert world_reads(w) == before
+    assert not rows(w, "obj:forged_lantern") and not rows(w, "mention:rex_1")
+
+
+# Rex the man is named at s1; Rèx the dog first at s2 ("Rèx" slugs like "Rex",
+# so the dog is person:rex_2, but its tokens differ, so its gate is s2).
+REX2_TEXT = {1: "Rex walked into the yard. His dog Rèx trotted after him. Rex laughed. "
+                "Rèx barked.\n"}
+REX2 = b.Manifest(entries=[
+    E("man", "person", ["Rex"], "Rex walked into the yard."),
+    E("dog", "animal", ["Rèx"], "His dog Rèx trotted after him.", species="dog"),
+])
+
+
+def test_r17_an_early_same_as_side_key_is_refused_with_nothing_written(worlds):
+    """pbr's P1b: a cited-s1 item on person:rex carrying same_as person:rex_2,
+    which is gated at s2, would have written a canon maybe_same_as."""
+    reg = b.Registry.from_manifest(REX2, REX2_TEXT)
+    assert [(i.id, i.gate) for i in reg.identities] == [("person:rex", (1, 1)),
+                                                       ("person:rex_2", (1, 2))]
+    w = worlds()
+    before = world_reads(w)
+    early = hand_made([{"entity": "person:rex", "attribute": "mood", "value": "calm",
+                        "sentence": 1, "same_as": "person:rex_2"}])
+    with pytest.raises(b.CommitRefused, match="keys the grammar never writes: same_as"):
+        b.commit(w, reg, [early])
+    assert world_reads(w) == before
+    assert rows(w, attribute="maybe_same_as") == []
+
+
+@pytest.mark.parametrize("extra", [
+    {"aliases": ["the ferryman"]}, {"confidence": 0.9}, {"arity": "set_valued"},
+    {"complete": True}, {"fold_policy": "accrue"}, {"valid_form": 3.0},
+    {"status": "generated"}, {"status": "retracted"}, {"value_type": "delta"},
+    {"value_type": "literal"}, {"timeless": False}, {"correction": 1},
+    {"valid_from": "3"}, {"frame": 7}, {"value": {1, 2}}, {"attribute": "Mood"},
+], ids=lambda extra: "-".join(f"{k}={v}" for k, v in extra.items()))
+def test_r17_an_item_the_grammar_could_not_write_is_refused_with_nothing_written(worlds,
+                                                                                extra):
+    w = worlds()
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    before = world_reads(w)
+    item = {"entity": "person:orin", "attribute": "mood", "value": "x", "sentence": 3, **extra}
+    with pytest.raises(b.CommitRefused, match="is not a fact item the grammar writes"):
+        b.commit(w, reg, [hand_made([item])])
+    assert world_reads(w) == before
+
+
+SOURCES = ["s2|place:the_river|level|high|src=person:orin",       # Orin is gated at s3
+           "s3|place:the_river|level|high|src=person:orin",       # at the gate
+           "s2|place:the_river|level|high|doc=doc:letter_1",      # document provenance
+           "s3|place:the_river|level|high|src=person:ghost",      # no such person
+           "s3|place:the_river|level|high|src=person:Mara Senn",  # person-shaped, not an id
+           "s3|place:the_river|level|high|src=the ferry log"]     # free-text provenance
+
+
+def test_r17_extract_gates_a_source_like_every_id_position():
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    chunk = b.plan(ORIN_TEXT, reg)[0]
+    result = b.read_output(chunk, {"lines": SOURCES}, reg)
+    assert [(r.where, r.reason) for r in result.gate_refused] == [("lines[0]", "gate_refused")]
+    assert [(r.where, r.reason) for r in result.refused] == [
+        ("lines[3]", "unknown_id"), ("lines[4]", "unknown_id")]
+    assert [i["source_doc"] for i in result.items] == [
+        "person:orin", "doc:letter_1", "the ferry log"]
+
+
+def test_r17_extract_checks_sources_against_the_whole_registry_privately():
+    manifest = b.Manifest(entries=[E("orin", "person", ["Orin"], "Orin kept watch."),
+                                   E("duke", "person", ["Duke Orsino"],
+                                     "Duke Orsino entered the hall.")])
+    reg = b.Registry.from_manifest(manifest, DUKE_TEXT)
+    chunk = b.plan(DUKE_TEXT, reg)[0]
+    assert "duke" not in build_prompt(chunk, reg.book).lower()    # no later identity shown
+    result = b.read_output(chunk, {"lines": [
+        "s2|person:orin|warned_of|rider|src=person:duke_orsino"]}, reg)
+    assert [r.reason for r in result.gate_refused] == ["gate_refused"]
+    assert "chapter 3 sentence 1" in result.gate_refused[0].detail
+
+
+@pytest.mark.parametrize("source, cited, refused", [
+    ("person:orin", 2, "person:orin is gated at chapter 1 sentence 3"),
+    ("person:orin", 3, None),
+    ("doc:letter_1", 2, None),
+    ("person:ghost", 3, "names no entity of this registry"),
+    ("person:Mara Senn", 3, "names no entity of this registry"),
+])
+def test_r17_commit_gates_a_source_like_every_id_position(worlds, source, cited, refused):
+    w = worlds()
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    before = world_reads(w)
+    item = {"entity": "place:the_river", "attribute": "level", "value": "high",
+            "sentence": cited, "source_doc": source}
+    if refused is not None:
+        with pytest.raises(b.CommitRefused, match=refused):
+            b.commit(w, reg, [hand_made([item])])
+        assert world_reads(w) == before
+        return
+    b.commit(w, reg, [hand_made([item])], ingest_kwargs={"classify": "rules"})
+    assert values(w, rows(w, "place:the_river", "level")[0].id, "source") == [source]
+
+
+def test_r17_a_build_handle_as_a_source_is_rewritten_to_its_id(worlds):
+    out = built(worlds, ORIN_TEXT, ORIN, {0: {
+        "lines": ["s3|place:the_river|level|high|src=new:0"],
+        "escapes": [esc("new:0", "a boatman", "Orin cast off the rope.")]}})
+    row = rows(out.world, "place:the_river", "level")[0]
+    assert values(out.world, row.id, "source") == ["person:a_boatman"]
 
 
 # ------------------------------------------------------------ 6b. one allocator
@@ -1468,6 +1598,7 @@ def test_the_library_grammar_is_ingest_v2s_with_a_citation(line):
     if expected.get("valid_from") == 7.0 and "vf=" not in line:
         del expected["valid_from"]                   # the harness stamps its cursor; commit poses
     assert parse_line("s3|" + line) == (3, expected)
+    assert grammar_problem(expected) is None        # commit accepts what the grammar writes
     with pytest.raises(ValueError, match="missing sentence citation"):
         parse_line(line)
 

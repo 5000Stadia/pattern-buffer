@@ -9,6 +9,11 @@ everything it receives:
 - an id that is neither a candidate nor a build handle is refused;
 - a line naming a candidate (in any id position) from a sentence before that
   candidate's gate is ``gate_refused``;
+- a source (``doc=`` or ``src=``) is an id position too (r1.7): checked against
+  the whole registry, privately (the prompt shows only the chunk's
+  candidates), a registry id is gated like any other, an unknown ``person:``
+  source is refused, and any other source (``doc:letter_1``) is document
+  provenance and stands;
 - a pick whose choice is not one of its candidates is refused, with its lines;
 - every build handle a line uses must be declared by exactly one escape or
   pick, and every declared one must be used, or the whole chunk is refused.
@@ -211,18 +216,19 @@ def extract(plan: Sequence[Chunk], registry: Registry,
         return []
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(labelled_context("extract", f"chunk:{c.index:02d}").run,
-                               _extract_chunk, c, registry.book, model) for c in chunks]
+                               _extract_chunk, c, registry, model) for c in chunks]
         return [f.result() for f in futures]
 
 
-def _extract_chunk(chunk: Chunk, book: Book, model: Callable[[str, dict], Any]) -> ChunkResult:
-    prompt = build_prompt(chunk, book)
+def _extract_chunk(chunk: Chunk, registry: Registry,
+                   model: Callable[[str, dict], Any]) -> ChunkResult:
+    prompt = build_prompt(chunk, registry.book)
     try:
         out = model(prompt, copy.deepcopy(EXTRACT_SCHEMA))
     except Exception as exc:  # the chunk is refused; the caller decides about a retry
         logger.warning("extract: chunk %d: model call failed: %s", chunk.index, exc)
         return _empty(chunk, f"model call failed: {type(exc).__name__}: {exc}")
-    return read_output(chunk, out)
+    return read_output(chunk, out, registry)
 
 
 def _empty(chunk: Chunk, error: str) -> ChunkResult:
@@ -231,9 +237,11 @@ def _empty(chunk: Chunk, error: str) -> ChunkResult:
                        last_sentence=chunk.last_sentence, error=error)
 
 
-def read_output(chunk: Chunk, out: Any) -> ChunkResult:
+def read_output(chunk: Chunk, out: Any, registry: Registry) -> ChunkResult:
     """Check one model output against its chunk and return the ``ChunkResult``
-    (§4): every rule in this module's docstring, applied by code."""
+    (§4): every rule in this module's docstring, applied by code. ``registry``
+    is the one the chunk was planned from; only its source check reads past the
+    chunk's candidates (r1.7)."""
     if not isinstance(out, Mapping) or not isinstance(out.get("lines"), list):
         return _empty(chunk, "malformed output: expected an object with a 'lines' list")
     raw_escapes = out.get("escapes") if out.get("escapes") is not None else []
@@ -279,6 +287,13 @@ def read_output(chunk: Chunk, out: Any) -> ChunkResult:
         for position, ident in id_positions(item):
             if is_handle(ident):
                 used.setdefault(ident, []).append(k)
+                continue
+            if position == "source":
+                found = registry.source_problem(ident, chunk.chapter, chunk.absolute(sentence))
+                if found is not None and found[0] == "gate_refused":
+                    gated = gated or Refusal(where, found[0], found[1])
+                elif found is not None:
+                    problem = problem or Refusal(where, found[0], found[1])
                 continue
             done = complete_id(ident, known)
             if done is None:

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from patternbuffer.build.manifest import (
+    BEING_NAMESPACES,
     BEINGS,
     NAMESPACE,
     TYPES,
@@ -269,6 +270,27 @@ class Registry:
         if len(matches) == 1:
             return Resolved(matches[0])
         return Ambiguous(tuple(matches))
+
+    def source_problem(self, source: str, chapter: int,
+                       sentence: int) -> tuple[str, str] | None:
+        """Whether a fact's source (``doc=`` or ``src=``) may stand at
+        ``(chapter, sentence)`` (r1.7). None for an entry or persona id gated
+        by then, and for document provenance: any source outside a being
+        namespace, such as ``doc:letter_1``. Otherwise ``(reason, detail)``:
+        ``gate_refused`` for a registry id gated later, ``unknown_id`` for a
+        ``person:`` source naming no entry or persona (the engine reads a
+        ``person:`` source as a speaker's identity, so it is never taken for a
+        document). A build handle is the caller's to check."""
+        if self.knows(source):
+            gate = self.identity(source).gate
+            if gate > (chapter, sentence):
+                return ("gate_refused", f"source {source} is gated at chapter {gate[0]} "
+                                        f"sentence {gate[1]}")
+            return None
+        namespace, colon, _ = source.partition(":")
+        if colon and namespace in BEING_NAMESPACES:
+            return "unknown_id", f"source {source!r} names no entity of this registry"
+        return None
 
     def candidates_at(self, chapter: int, sentence: int) -> list[Identity]:
         """Every entry and persona gated at or before ``(chapter, sentence)``,
