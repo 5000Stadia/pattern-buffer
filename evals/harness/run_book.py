@@ -446,6 +446,11 @@ def library_chunks(run_dir: str | Path, book_plan: BookPlan) -> list[tuple[int, 
     return [(c.chapter, c.text) for c in chunks]
 
 
+def _attempts_json(result: Any) -> list[dict[str, Any]]:
+    """A ``ChunkResult``'s attempts as JSON: each call's error and raw output."""
+    return [{"error": a.error, "raw": a.raw} for a in result.attempts]
+
+
 def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
                  pass0: str, merge_gate: bool, glean: bool, model_name: str) -> dict[str, Any]:
     """``run_book(pipeline="library")``: the book built with ``patternbuffer.build``.
@@ -500,10 +505,16 @@ def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str
 
         with receipt.stage("extract"):
             results = build.extract(chunks, registry, labelled, workers=4)
+        # Raw model output is diagnostic only: these files, never a world (k10).
+        retried = [r for r in results if len(r.attempts) > 1]
+        if retried:
+            write_json(run_dir / "retried_chunks.json",
+                       [{"chunk": r.index, "attempts": _attempts_json(r)} for r in retried])
         refused = [r.index for r in results if r.error]
         if refused:
             write_json(run_dir / "refused_chunks.json",
-                       [{"chunk": r.index, "error": r.error} for r in results if r.error])
+                       [{"chunk": r.index, "error": r.error, "attempts": _attempts_json(r)}
+                        for r in results if r.error])
             raise BookRunAborted(f"chunks {refused} were refused at extraction; nothing committed")
 
         world_path = run_dir / "fresh_ingest.world"

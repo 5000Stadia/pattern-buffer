@@ -16,7 +16,10 @@ everything it receives:
   provenance and stands;
 - a pick whose choice is not one of its candidates is refused, with its lines;
 - every build handle a line uses must be declared by exactly one escape or
-  pick, and every declared one must be used, or the whole chunk is refused.
+  pick, or the whole chunk is refused (r1.9: so is a handle declared twice). A
+  declared handle no accepted line uses is not a refusal: a parsed one is
+  dropped with a ``DroppedHandle`` receipt and never allocated, a malformed one
+  is an ordinary per-item refusal (§4a).
 """
 
 from __future__ import annotations
@@ -114,8 +117,8 @@ is the one you judge it is; evidence_quote is the passage's exact words that
 support the choice. Its facts go on the handle: the build keeps your choice as
 evidence, never as identity.
 
-Every handle a line uses is declared exactly once, and every handle declared is
-used by a line."""
+Every handle a line uses is declared exactly once. A handle you declare that no
+line uses is dropped."""
 
 
 @dataclass(frozen=True)
@@ -156,13 +159,43 @@ class Refusal:
 
 
 @dataclass(frozen=True)
+class DroppedHandle:
+    """A parsed escape or pick no accepted line used (§4a, r1.9): dropped, never
+    allocated, reported so a host can decide what it means. ``kind`` is
+    ``"escape"`` or ``"pick"``; ``name`` is the escape's name or the pick's
+    surface; ``candidates`` is ``()`` for an escape and the registry ids a pick
+    stood between; ``reason`` is ``"unused_handle"``."""
+
+    chunk: int
+    handle: str
+    kind: str
+    name: str
+    candidates: tuple[str, ...]
+    reason: str = "unused_handle"
+
+
+@dataclass(frozen=True)
+class Attempt:
+    """One model call made for a chunk (§4a): the ``error`` that attempt's answer
+    gave the chunk (None when it was accepted) and ``raw``, the model's returned
+    JSON (None when the call raised). Diagnostic only: never written to a
+    world."""
+
+    error: str | None
+    raw: Any
+
+
+@dataclass(frozen=True)
 class ChunkResult:
     """One chunk's extraction (§4). ``items`` are fact items on candidate ids or
     build handles, each carrying the ``sentence`` it cites, in the chunk's own
     numbering (``1`` is ``first_sentence``); ``escapes`` and ``picks`` declare
     the handles; ``gate_refused`` and ``refused`` record what code dropped;
-    ``error`` is set when the whole chunk is refused (its handles do not
-    balance, or the model call failed). ``chapter``, ``first_sentence`` and
+    ``error`` is set when the whole chunk is refused (its output is malformed,
+    a handle is used undeclared or declared twice, or the model call failed).
+    ``dropped_handles`` receipts the declarations no accepted line used
+    (r1.9), and ``attempts`` holds one ``Attempt`` per model call, in order;
+    commit reads neither. ``chapter``, ``first_sentence`` and
     ``last_sentence`` place the chunk; extract sets them from the plan.
 
     ``commit`` re-validates every result as extract checks it (each item's
@@ -180,6 +213,8 @@ class ChunkResult:
     gate_refused: tuple[Refusal, ...] = ()
     refused: tuple[Refusal, ...] = ()
     error: str | None = None
+    dropped_handles: tuple[DroppedHandle, ...] = ()
+    attempts: tuple[Attempt, ...] = ()
 
 
 def build_prompt(chunk: Chunk, book: Book) -> str:
@@ -197,14 +232,24 @@ def build_prompt(chunk: Chunk, book: Book) -> str:
 
 
 def extract(plan: Sequence[Chunk], registry: Registry,
-            model: Callable[[str, dict], Any], *, workers: int = 4) -> list[ChunkResult]:
+            model: Callable[[str, dict], Any], *, workers: int = 4,
+            retries: int = 1) -> list[ChunkResult]:
     """Extract every chunk of ``plan`` with ``model``, ``workers`` at a time
     (§4). Each call is labelled ``stage="extract"``, ``unit="chunk:NN"`` and runs
     in its own copy of the caller's context, taken inside that label. Returns
     one ``ChunkResult`` per chunk, in plan order. A model call that raises
-    refuses its chunk (``error``); nothing is retried."""
+    refuses its chunk (``error``) and is not retried here.
+
+    ``retries`` is 0 or 1 (an exact int, never a bool; anything else raises
+    ``ValueError`` before any call). With 1, a chunk whose call returned an
+    answer that refused the whole chunk (``error`` set) is asked once more, in
+    the same label and worker, with the same prompt plus the refusal named; the
+    second result replaces the first (§4a). Every call is kept in
+    ``ChunkResult.attempts``."""
     if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
         raise ValueError(f"workers must be a positive integer, got {workers!r}")
+    if type(retries) is not int or retries not in (0, 1):
+        raise ValueError(f"retries must be the int 0 or 1, got {retries!r}")
     chunks = list(plan)
     for chunk in chunks:
         if not (registry.book.has_sentence(chunk.chapter, chunk.first_sentence)
@@ -217,19 +262,44 @@ def extract(plan: Sequence[Chunk], registry: Registry,
         return []
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(labelled_context("extract", f"chunk:{c.index:02d}").run,
-                               _extract_chunk, c, registry, model) for c in chunks]
+                               _extract_chunk, c, registry, model, retries) for c in chunks]
         return [f.result() for f in futures]
 
 
+def retry_prompt(prompt: str, error: str) -> str:
+    """``prompt`` plus the corrective closing paragraph for a refused answer,
+    set off by a blank line."""
+    return (f"{prompt.rstrip()}\n\nYour previous answer for this chunk was refused: {error}. "
+            "Answer again from the same text, following every rule above.")
+
+
 def _extract_chunk(chunk: Chunk, registry: Registry,
-                   model: Callable[[str, dict], Any]) -> ChunkResult:
+                   model: Callable[[str, dict], Any], retries: int = 0) -> ChunkResult:
     prompt = build_prompt(chunk, registry.book)
+    attempts: list[Attempt] = []
+    result, returned = _attempt(chunk, registry, model, prompt, attempts)
+    if retries and returned and result.error is not None:
+        logger.warning("extract: chunk %d refused (%s); asking once more",
+                       chunk.index, result.error)
+        result, _ = _attempt(chunk, registry, model, retry_prompt(prompt, result.error),
+                             attempts)
+    return replace(result, attempts=tuple(attempts))
+
+
+def _attempt(chunk: Chunk, registry: Registry, model: Callable[[str, dict], Any],
+             prompt: str, attempts: list[Attempt]) -> tuple[ChunkResult, bool]:
+    """One model call for ``chunk``: its ``ChunkResult`` and whether the call
+    returned (a raise is ``False``). Appends the call's ``Attempt``."""
     try:
         out = model(prompt, copy.deepcopy(EXTRACT_SCHEMA))
-    except Exception as exc:  # the chunk is refused; the caller decides about a retry
+    except Exception as exc:  # the chunk is refused; the injected callable owns transport retries
         logger.warning("extract: chunk %d: model call failed: %s", chunk.index, exc)
-        return _empty(chunk, f"model call failed: {type(exc).__name__}: {exc}")
-    return read_output(chunk, out, registry)
+        error = f"model call failed: {type(exc).__name__}: {exc}"
+        attempts.append(Attempt(error, None))
+        return _empty(chunk, error), False
+    result = read_output(chunk, out, registry)
+    attempts.append(Attempt(result.error, out))
+    return result, True
 
 
 def _empty(chunk: Chunk, error: str) -> ChunkResult:
@@ -320,7 +390,9 @@ def read_output(chunk: Chunk, out: Any, registry: Registry) -> ChunkResult:
         else:
             lines.append((where, sentence, replace_ids(item, mapping)))
 
-    # 3. The declarations, and the handle balance.
+    # 3. The declarations, and the handle balance. A handle used but undeclared
+    #    or declared twice refuses the chunk; one declared and unused (counted
+    #    over the lines that survived) is dropped or refused item by item below.
     declared: dict[str, tuple[str, int]] = {}
     twice: set[str] = set()
     for kind, raws in (("escapes", raw_escapes), ("picks", raw_picks)):
@@ -335,20 +407,16 @@ def read_output(chunk: Chunk, out: Any, registry: Registry) -> ChunkResult:
             else:
                 declared[handle] = (kind, n)
     undeclared = sorted(set(used) - set(declared), key=handle_number)
-    unused = sorted(set(declared) - set(used), key=handle_number)
-    if twice or undeclared or unused:
+    if twice or undeclared:
         problems = []
         if undeclared:
             problems.append(f"used but not declared: {', '.join(undeclared)}")
-        if unused:
-            problems.append(f"declared but not used: {', '.join(unused)}")
         if twice:
             problems.append(f"declared twice: {', '.join(sorted(twice, key=handle_number))}")
         return replace(_empty(chunk, "handles: " + "; ".join(problems)),
                        refused=tuple(refused), gate_refused=tuple(gate_refused))
 
-    escapes: list[Escape] = []
-    picks: list[Pick] = []
+    parsed_decls: dict[str, Escape | Pick] = {}
     bad_handles: set[str] = set()
     for handle, (kind, n) in sorted(declared.items(), key=lambda kv: handle_number(kv[0])):
         raw = (raw_escapes if kind == "escapes" else raw_picks)[n]
@@ -359,14 +427,14 @@ def read_output(chunk: Chunk, out: Any, registry: Registry) -> ChunkResult:
                 refused.append(Refusal(where, "malformed_escape", reason))
                 bad_handles.add(handle)
             else:
-                escapes.append(escape)
+                parsed_decls[handle] = escape
         else:
             pick, code, reason = _pick(handle, raw, known)
             if pick is None:
                 refused.append(Refusal(where, code, reason))
                 bad_handles.add(handle)
             else:
-                picks.append(pick)
+                parsed_decls[handle] = pick
 
     # 4. Lines on a refused declaration's handle go with it.
     items: list[dict[str, Any]] = []
@@ -380,10 +448,28 @@ def read_output(chunk: Chunk, out: Any, registry: Registry) -> ChunkResult:
                                    f"{', '.join(bad)} was refused with its declaration"))
             continue
         items.append({**item, "sentence": sentence})
+
+    # 5. A parsed declaration no kept item uses is dropped, with a receipt.
+    kept = {i for item in items for _, i in id_positions(item) if is_handle(i)}
+    escapes: list[Escape] = []
+    picks: list[Pick] = []
+    dropped: list[DroppedHandle] = []
+    for handle, decl in parsed_decls.items():
+        if isinstance(decl, Escape):
+            if handle in kept:
+                escapes.append(decl)
+            else:
+                dropped.append(DroppedHandle(chunk.index, handle, "escape", decl.name, ()))
+        elif handle in kept:
+            picks.append(decl)
+        else:
+            dropped.append(DroppedHandle(chunk.index, handle, "pick", decl.surface,
+                                         decl.candidates))
     return ChunkResult(index=chunk.index, items=tuple(items), escapes=tuple(escapes),
                        picks=tuple(picks), chapter=chunk.chapter,
                        first_sentence=chunk.first_sentence, last_sentence=chunk.last_sentence,
-                       gate_refused=tuple(gate_refused), refused=tuple(refused))
+                       gate_refused=tuple(gate_refused), refused=tuple(refused),
+                       dropped_handles=tuple(dropped))
 
 
 def _text(raw: Mapping[str, Any], field: str) -> str | None:
