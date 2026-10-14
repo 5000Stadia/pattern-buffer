@@ -50,8 +50,21 @@ Approved by Kabe (gate g460a1c, "All ok seems reasonable go for it").
    twice: new:1"), and the corrective retry (BUILD-LIBRARY-V1 r1.9.1) passed. That build
    finished, where yesterday it would have aborted.
    - Separately, in two runs (i run 1, chunk 2; i run 2, chunk 0) one chunk was called twice
-     with no library retry recorded. That came from the call layer below the library, and the
-     logs don't say why. It's worth a look, since the extra call there cost 140 s of the wall.
+     with no library retry recorded. *(Found on 2026-10-14, from the logs and code, with no
+     calls.)*
+     - **The cause is the model shim's own JSON retry.** Each run's log has one line
+       `model shim parse failure (attempt 1): Expecting ',' delimiter`, at the moment the first
+       call ended (09:03:45 and 09:09:20). The shim then waits 15 s and asks again, with "Your
+       previous reply was not valid JSON" appended. The second prompt is exactly those 59
+       characters longer in both runs.
+     - **Both failures were long answers at today's 1500-word chunks:** 10,120 and 7,783 output
+       tokens, each one missing comma deep in the JSON. None of the 30 extract calls at 750
+       words failed to parse, which is one more reason for setting (iii).
+     - **It cost:** in i run 1, 142 s of call plus the 15 s back-off, on the wall's slowest chunk.
+       In i run 2 the retry overlapped the slowest chunk and added about 5 s.
+     - **Why the usage log hid it:** the shim writes each call's receipt before parsing the
+       answer, so the failed call reads `outcome: ok`. A small fix is proposed:
+       record that call as `parse_failure`, as BARE-CALL already does for `multi_turn`.
 
 ## Recommendation
 

@@ -1,6 +1,6 @@
 # BARE-CALL-V1: every build model call is one bare call
 
-**Status:** r1.2 (a multi-turn retry carries its own corrective sentence, like the parse-failure retry). r1.1 (pbr r1 RED: a multi-turn answer is rejected through the retry path; every *attempt* is bare; the child's environment is trimmed to what authentication needs). For pbr review. Author: pb, 2026-10-13. Harness only.
+**Status:** r1.3 (the speed comparison's two unexplained extra calls were the shim's JSON retry, and their receipts read `ok`: a call whose answer fails to parse is recorded as `outcome: "parse_failure"`). r1.2 (a multi-turn retry carries its own corrective sentence, like the parse-failure retry). r1.1 (pbr r1 RED: a multi-turn answer is rejected through the retry path; every *attempt* is bare; the child's environment is trimmed to what authentication needs). For pbr review. Author: pb, 2026-10-13. Harness only.
 **Source:** consult c4bb1f2, point 1, accepted by Kabe on gate g936be9 (2026-10-13). Kabe also
 said yes to a 2-chapter profiling build on the practice book once this is merged. The point:
 "Each 'model call' is a whole Claude Code agent session … the 176–282 s pass-0 calls and the
@@ -70,6 +70,16 @@ The prompt still goes on stdin.
 
   Its JSON is never returned to the pipeline. An envelope without `num_turns` (an older CLI) is
   accepted, and its call line says `num_turns: null`.
+- *(r1.3)* **A parse failure is recorded as one.** Today the receipt is written before the answer
+  is parsed, so a call whose JSON fails to parse reads `outcome: "ok"`. The two extra calls in the
+  speed comparison (`evals/results/2026-10-14-speed-compare/REPORT.md`, finding 5) were these:
+  only the run log showed them.
+  - For a one-turn call that exits 0, the shim parses the answer before writing the receipt. If
+    the parse fails, the call line's outcome is `"parse_failure"`; otherwise `"ok"`.
+  - Nothing else about the attempt changes: the same warning, the same corrective sentence, the
+    same back-off and retry, and the same tokens, cost and sizes on the call line.
+  - The outcomes are then `ok`, `error`, `timeout`, `multi_turn` and `parse_failure`.
+    `usage_ledger.record`'s docstring lists them all.
 - **The shim exposes its argv** as one function, `bare_argv(model) -> list[str]`, so the test can
   assert it without running `claude`.
 - `PB_SHIM_LEGACY=1` restores the old command line, for one comparison run if ever wanted. The
@@ -101,6 +111,10 @@ merge (covered by Kabe's yes on the profiling build). Its output goes into the p
      caller;
    - a multi-turn first attempt followed by a one-turn second returns the second's JSON;
    - `num_turns: 1` gives `"ok"`, and an absent `num_turns` is accepted with `null`.
+3b. *(r1.3)* **Parse failures:** an unparseable first answer followed by a good one returns the
+    second's JSON and writes two call lines, `["parse_failure", "ok"]`. Three unparseable answers
+    raise `ModelShimError` after three `"parse_failure"` lines. A good answer still writes one
+    `"ok"`.
 3a. *(r1.1)* **The environment:** the child's environment holds only the listed variables.
     `PB_EVAL_USAGE_LOG` and an arbitrary `CLAUDE_FOO` set in the parent are absent, and `HOME` is
     present.
