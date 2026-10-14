@@ -1,6 +1,6 @@
 # PLAY-BIND-V1: one deterministic matcher for a turn's mentions (R55)
 
-**Status:** r1.2 (pbr's r1 RED: a value side is exactly what ingest would write as entity-valued, in any namespace; an exact id's existence is checked before any name match, so a future-only id is never bound by its slug; number folding becomes a pair rule with a minimum stem and a finite exception list; the collision universe and identity normalization are defined). r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
+**Status:** r1.3 (pbr's r1.2 RED: an id outside `person`, `place` and `obj` is always kept unchanged and never identity-resolved; the exact-id step applies to those three namespaces only; the value predicate says `value_type == "entity"` explicitly). r1.2 (pbr's r1 RED: a value side is exactly what ingest would write as entity-valued, in any namespace; an exact id's existence is checked before any name match, so a future-only id is never bound by its slug; number folding becomes a pair rule with a minimum stem and a finite exception list; the collision universe and identity normalization are defined). r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
 (`bind`) and one read-only MCP verb. No write path, gate, fold or prompt changes.
 **Source:**
 - R55, placed first in M5 "Continuity in play". Kabe, via the monitor, settled g70803c on 2026-10-14: "R55 comes out of
@@ -56,9 +56,9 @@ same log give the same result.
 ## 2. One raw id, step by step
 
 A row has a **subject side** (`entity`), and a **value side** exactly when ingest would write the value as
-entity-valued. *(r1.2, pbr)* That is ingest's own inference (`ingest.py`, the gate's `value_type` line): the
-`value_type` given, or, if absent or empty, `"entity"` when the value is a string matching `model.ID_RE`, in any
-namespace, otherwise `"literal"`. `bind` imports that one predicate, so a row it admits can never be written with an
+entity-valued. *(r1.2, pbr)* That is ingest's own inference (`ingest.py`, the gate's `value_type` line). A value is a
+side when its `value_type` is `"entity"`, or when `value_type` is absent or empty and the value is a string matching
+`model.ID_RE`, in any namespace. *(r1.3)* Any other given type (`literal`, `unresolved`, `delta`) is not a side. `bind` imports that one predicate, so a row it admits can never be written with an
 unchecked entity value. The host types values before calling (construct's detector, with explicit literal
 suppression), so a literal `name · "obj:chain"` arrives as `value_type: "literal"` and is never a side.
 
@@ -68,14 +68,16 @@ slug read as words. That evidence applies to its value sides too. Each raw id is
 the decision applies to every side that raised it.
 
 1. **Malformed:** the id fails the entity-id grammar. Outcome `malformed`.
-2. **Exact id, first** *(r1.2, pbr)*. Take the raw id's canonical representative (§2a).
+2. **Pass-through** *(r1.3: moved before identity)*: an id in any namespace other than `person`, `place` or `obj` (for
+   example `event:`, `fact:` or `doc:`). Outcome `kept`, with the id unchanged, whether or not it exists. It is still
+   classified as a side, by ingest's predicate, but it is never identity-resolved, rewritten, or checked for
+   existence. Its identity policy is the host's.
+3. **Exact id, first** *(r1.2, pbr; `person`, `place` and `obj` only)*. Take the raw id's canonical representative
+   (§2a).
    - If it **exists at `as_of`** and is a candidate, the outcome is `bound`, signal `id`.
    - If it exists at `as_of` but isn't a candidate, `out_of_scope` with that id.
    - If it exists at the head but **not at `as_of`**, `future_only`, listing it. That ends the decision: no name or
      kind match can bind a future-only id to a current entity.
-3. **Pass-through:** an id that doesn't exist at all, in a namespace other than `person`, `place` or `obj` (for
-   example a new `event:` or `fact:` id). Outcome `kept`, with the id unchanged. It is still classified as a side,
-   and an existing one was already decided in step 2. The host's own policy covers these namespaces.
 4. **Name:** compare the mention's surfaces with every compatible candidate's names.
    - **The raw id's surfaces:** gathered across the call as above (`tomas_reed_chains` gives "tomas reed chains").
      *(r1.1)* When the surfaces disagree, every surface is tried. If they match different candidates, the outcome is
@@ -98,7 +100,7 @@ the decision applies to every side that raised it.
    future-only name, minting, or proposing `same_as` is the host's call (construct refuses in movement, equipment
    and Growth).
 7. **Mint:** the namespace is in `mint`. *(r1.1)* `mint` constrains only `person`, `place` and `obj`. The `fact`, `event`
-   and `doc` namespaces are deliberately left alone (step 2): they are pass-through, and the host's own policy governs
+   and `doc` namespaces are deliberately left alone: they are pass-through (step 2), and the host's own policy governs
    them. Outcome `minted`, with a new id: the namespace plus the slug, collision-checked
    against **every id in the log, any frame, any time**, and against this call's earlier mints. *(r1.2, pbr)* "Every id"
    means every row subject, every entity value (by ingest's predicate, above), and every `same_as` and `aka`
@@ -228,8 +230,9 @@ restriction, so it replaces `resolve_rows`' matcher only, not movement's.
      "analysis";
    - gas/ga doesn't, since the shorter token is under 3 letters.
 9a. *(r1.2)* **Value sides follow ingest:**
-   - an untyped `in · event:later` is a side, and if `event:later` exists only at the head, the row gives
-     `future_only` and isn't admitted;
+   - an untyped `in · event:later` is a side, `kept` unchanged, *(r1.3)* even when `event:later` exists only at the
+     head. Identity for that namespace is the host's;
+   - `value_type: "literal"`, `"unresolved"` or `"delta"` with an id-shaped value is not a side;
    - an untyped `in · person:you` is a side;
    - the predicate is the one ingest uses (a test pins both to the same function).
 9b. *(r1.2)* **Exact id before name:** a head-only `obj:lantern_2`, read where an in-scope `obj:lantern` exists, gives
