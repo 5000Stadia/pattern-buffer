@@ -13,27 +13,17 @@ One append-only log of perspective-scoped, time-indexed assertions about entitie
 
 > A player places a pipe in a drawer in session 12 of a D&D campaign. Two hundred sessions pass without a mention. At retirement, the player opens the drawer — and the pipe is there, exactly as placed, with the original moment's full history behind it. No maintenance was ever performed. In this architecture, **silence is persistence**: state is folded from the log, never re-inferred and never kept alive by mention. The world remembers so the model doesn't have to.
 
-**Status: pre-1.0; substrate validated in BOTH modes, the ingestion-fidelity
-front closed by a measured contract.** The engine passes its 2574-test
-invariant suite, and the chapter test
-(ingest a complete noir mystery, delete the prose, interrogate the store
-against a hand-authored answer key) has been graded across three full runs.
-The substrate's invariants held in all of them — sealed containers stayed
-sealed, contradictions were flagged and never merged, knowledge frames never
-leaked, the two-time-axis fold answered late-revealed history correctly. Each
-run also surfaced exactly one engine refinement at the fold (a working
-assumption outholding evidence; a wrong inference outholding authored canon),
-each fixed, tested, and generalized the same day — that progression is now
-the **evidence-rank** rule. A registry-first ingestion pipeline
-(whole-document scaffold → parallel compact-grammar extraction → audited
-single commit) replaced serial prompt-iterated extraction after measurement
-showed prose contracts fragment differently every round; identity and key
-fragmentation died as failure classes, and pass-0 registry quality is where
-the remaining extraction failures concentrate. Run 4, with its checkable
-predictions, is in flight. Tracking mode is now proven as more than a policy
-flag: trust decays with **unconfirmed wall time** under declared per-attribute
-half-lives, while in fiction the page stays true forever — same log, same
-reads, two honest physics.
+**Status: v0.2.0.** The engine has zero runtime dependencies and a frozen,
+additive-only porcelain contract. Its invariant suite has about 2,588 tests.
+The substrate works for both fiction and tracking: time-indexed facts, frames,
+identity, containment, provenance, conflicts, and deterministic reads stay in
+the log rather than being re-inferred from prose.
+
+The registry-first build library turns a book into a world through a documented
+pipeline. On 2026-10-14, the six-chapter practice book (about 11.5k words)
+built in 225 seconds for $2.58, with zero wrong merges and zero leaks. Object
+movement remains the weak area; it is an open fidelity problem, not hidden by
+the score. See `evals/results/2026-10-14-speed-compare/REPORT.md`.
 
 ## Install
 
@@ -66,6 +56,11 @@ ships with visibly.
 
 A storage and retrieval substrate that lets a language model maintain a complete, queryable, durable model of a world — places, objects, people, relationships, histories, and unknowns — such that any state question is answered by a deterministic query, never by re-reading prose; the world accretes and is re-enterable; and the same engine serves authored fiction (a holodeck, a campaign, a mystery) and real-world tracking (a household, a job site, a vehicle), differing only in resolution policy and provenance discipline.
 
+The frozen porcelain API is additive-only. The bundled MCP server exposes 45
+deterministic verbs — 31 reads and 14 mutations — over one world, and works
+with any MCP client. [Construct](https://github.com/5000Stadia/construct)
+runs entirely on this public contract and validates it with its suite.
+
 The buffer holds the pattern; materialization is re-entry; degradation is the failure we exist to prevent; the arch is how the operator steps outside the world to inspect it; and where nothing has been established, you don't get invented detail — **you see the grid.**
 
 ## Documents
@@ -75,31 +70,41 @@ The buffer holds the pattern; materialization is re-entry; degradation is the fa
 - **[docs/ADOPTION.md](docs/ADOPTION.md)** — for agents (and humans) integrating the library: exact signatures, typed outcomes, the three-seam recipe, MUST/NEVER rules.
 - **[docs/HOST-DISCIPLINE.md](docs/HOST-DISCIPLINE.md)** — the adopter's discipline brief: the seven categories every fact must be classified along to ingest with fidelity, and the structural retrieval strategies (the four correlation axes + the correlation sweep) to surface every relevant, related detail for any subject.
 - **[docs/INGESTION-PLAYBOOK.md](docs/INGESTION-PLAYBOOK.md)** — evidence-based rules for deserializing narrative into a world: the extractor contract, feeding mechanics, what the gate guards, and measured ingestion baselines.
+- **[ROADMAP.md](ROADMAP.md)** — delivered milestones, open work, and the evidence behind each step.
 - **[docs/reference/assertion-world-model-original.md](docs/reference/assertion-world-model-original.md)** — the framework-agnostic design document this project was founded on, preserved verbatim for lineage.
 
-*A note on provenance citations.* Specs and the whitepaper's decision record
-cite the project's internal review trail: "the founder" is the project owner,
-who arbitrates design crossroads; "letter NNN" / "dev_inbox" / "Cx NNN" refer
-to an archived numbered correspondence with an independent review agent
-(Codex); "AgentPost" is the local message channel that replaced it; "pbr",
-"c", and "K"/"Kernos CC" are the dedicated reviewer, the first live host
-(Construct), and the intended primary host's maintainer respectively. These
-citations are preserved verbatim as review provenance — the artifacts are
-private, but every design decision they gate is restated in the whitepaper
-and specs themselves.
+*A note on citations.* Specs and the whitepaper's decision record cite an
+internal review trail: "the founder" is the project owner; "letter NNN",
+"Cx NNN" and "AgentPost" refer to correspondence with independent review
+agents; "pbr" is the dedicated reviewer and "c" the first live host
+(Construct). The correspondence is private, but every decision it gates is
+restated in the whitepaper and specs.
 
 ## The road
 
-1. ~~Recover and commit the *Last Honest Meter* eval seed (the chapter test's ground truth).~~ Done — v1-final, `evals/last_honest_meter/`.
-2. ~~Engine spike: `PatternBuffer` + derived indexes + classifier + projector + resolver + `refer()` tier 1.~~ Done — `src/patternbuffer/`.
-3. ~~The chapter test, runs 1–4~~: substrate validated; registry-first ingestion (INGEST-V2) landed; run 4 scored **22/33 (best graded run, all remaining failures extraction-class not shape-class)** — the substrate holds; ingestion fidelity (pass-0 registry quality) is the open score lever. Receipts: `evals/results/`.
-4. ~~The shipped example world: `examples/anchor/`~~ — stamped (`STAMP.json`, run 4): a bible-verified noir mystery as a queryable database, with a zero-API-key scripted tour and 8 open truth-maintenance conflict flags shipped visibly (honesty is the product). Not yet packaged to PyPI.
-5. ~~The messy-dialogue micro-eval (the honest bridge from fiction ingestion to tracking-mode ingestion).~~ Done — **10/10** on the reality-divergence battery (`evals/results/2026-06-12-micro-v1-final/`); tracking-mode ingestion validated against sloppy conversational fragments.
-6. ~~The porcelain API + host integration.~~ Done — and proven in the strongest form. The frozen contract (`porcelain-v0.1`, additive-only): five load-bearing verbs — `ingest` (+`ingest_structured`) / `snapshot` / `ask` / `materialize` / `resolve`+`refer()` — over a fuller read-and-identity family (`state`, `where`, `aggregate`, `neighborhood`, `frame_diff`, `who_knows`, `correlate`, `route`, `entities`, `facts`, build sessions, `axis_heads`, …). The first *live* host, [Construct](https://github.com/5000Stadia/construct) (an interactive-fiction engine — `pattern` → `construct` loads it → `holonovel`), runs **entirely on this contract**: zero engine-internal reaches, its 800+-test suite green on the pure public surface. The engine-independent claim, demonstrated rather than asserted. (Intended primary host: [Kernos](https://github.com/5000Stadia/Kernos), adapter pattern.)
-7. ~~The interactive-fiction milestone (thunk stability across sessions, frame-scoped NPCs, multi-path mystery, clocks, loop closure).~~ Met in the field — every item is exercised in [Construct](https://github.com/5000Stadia/construct)'s live suite (the first host runs entirely on the frozen porcelain). These are host-layer criteria, proven by the adopter, not a further engine deliverable.
-8. ~~The MCP wrapper~~ — built: `pip install pbuffer[mcp]` → `patternbuffer-mcp --world w.world --world-id w:id` serves the frozen porcelain's **43 deterministic verbs** over stdio to any MCP client — read, query, and *build* a world with zero Python (the genuinely model-free subset; model-backed verbs are V1.1 via sampling). One server ↔ one world; a connected client is a fully **trusted world principal** — frame entitlement for untrusted consumers stays host-mediated. The framework-agnostic claim, proven by demonstration. Far field: the first host's V2 roadmap publicly assigns branch-worlds simulation and its curiosity loop to this engine — the two roadmaps meet in the middle.
-9. ~~Tracking mode: the second-mode thesis, proven~~ (TRACKING-MODE-V1). Trust and story time are now formally separate axes. In **fiction**, confidence recency is *permanent* — the page is true, and story-time liveness belongs to salience, not trust. In **tracking** worlds (`observe_or_unknown`), trust decays with **unconfirmed wall time** under declared per-attribute half-lives (`DecayPolicy` — data, not config: `attr:in · decay_halflife_seconds · 2 days`), fail-closed (`unconfigured`/`unconfirmed` exclude recency and renormalize, never fake a score) with a finite-clock contract (a broken clock can never manufacture freshness). `confidence()` carries `recency`, `recency_status`, `last_confirmed_at_wallclock` on every result — "last confirmed June 19, 22 days unconfirmed" is one join. The mode selector is the *policy*, never a stance judgment: the engine applies **no plausibility bias** to observer reports in either mode. Receipts: `evals/the_grey_house/` (the replayable tracking eval), 14/14 scorecard.
-10. ~~The ingestion-fidelity contract, evidence-gated end to end~~ (INGESTION-FIDELITY-V1 → V2). V1 shipped `fidelity_audit()` — the structural gap read (coreference collision groups, unstamped timed facts, orphans, open conflicts) the host joins for severity. The first live host's full rebuild then delivered the measured signals: the coreference seal took live collisions 8→4 with zero severe, and the audit residue decomposed into exactly one real defect class — standing personal properties (`build`, `occupation`, kinship, `can_*`) authored as timed state. V2 shipped that contract narrowly: timeless means *true across the world's whole history* (facts of origin only — everything acquired gets its earliest supported time; age is never timeless), the classifier prefers standing classes for enduring-baseline traits, kinship-of-origin is one host declaration (`attribute_default`), and merge-induced self-edges receipt distinctly (`merged_self_edge`). The remaining candidate (background-homonym coreference) was **parked forever with cause** — every residual group unvouched, none load-bearing, replay-proved harmless. Machinery without a measured victim doesn't ship (the first live host now carries a co-presence tripwire — telemetry-only — that would surface such a victim; a fire returns here as measured rows).
+1. **M1 — Substrate.** Done. The append-only assertion log, derived indexes,
+   deterministic fold, frames, provenance, and policy-separated fiction and
+   tracking worlds form the durable core. Measured along the way: the chapter
+   test (a whole noir mystery ingested, the prose deleted, the store graded
+   against a hand-authored key) reached 22/33 on run 4, with every remaining
+   failure in extraction rather than the substrate; the messy-dialogue battery
+   scored 10/10; and tracking mode's wall-time trust decay shipped
+   (TRACKING-MODE-V1). The graded example world is in `examples/anchor/`.
+2. **M2 — Self-audit (October 2026).** Done. The engine's read, fold,
+   classification, identity, and ingestion boundaries were audited and tightened
+   against replayable evidence.
+3. **M3 — Book in, world out.** Done. `patternbuffer.build` is the
+   registry-first build library: it plans a book, extracts compact assertions,
+   commits one world, and leaves receipts that can be graded.
+4. **M4 — One world for every module.** Done. `WorldService` provides one
+   serialized world handle; `view/1` exports a player's view plus a change feed
+   for offline mirrors, with a small JavaScript `apply()` module. The public
+   surface also includes author-side `record`, resolve requests and
+   resolve-unmarked, closure and facts reads, `merge_gate`, tracked beats with
+   author frames, and `patternbuffer.vocab` with recipe golden facts.
+5. **Open work.** Whole-book fidelity and object movement need more measured
+   improvement. The engine will keep reporting those failures rather than
+   smoothing them over.
 
 ## License
 
