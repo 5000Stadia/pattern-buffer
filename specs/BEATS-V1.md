@@ -161,7 +161,8 @@ Evaluation stays host-side, with construct's evaluator as the reference.
    - `attach` refuses before any reader snapshot opens, and the service stays unattached.
    - `canon`, `knows:` and `session:main` views are unchanged.
    - An introspection test enumerates the public `service`/`mirror` callables with a
-     `view_frame` parameter and asserts each refuses.
+     `view_frame` parameter, **including public class constructors** (`Runner.__init__`) and
+     methods (`WorldService.attach`), and asserts each refuses.
 2. A beat's rows in `plot:main` (construct's `_beat_rows` shape) are absent from every canon and
    `knows:` read, every mirror export and every widened read. This pins what already holds.
 3. `author_references`:
