@@ -57,7 +57,7 @@ _REVIEW_FLOOR = 0.6
 # outranks every later STATE move on its key, so a guessed permanence freezes
 # a movable where it was first seen; a wrong STATE on a real fixture costs
 # little. Not per-world: `attr:in` is inviolable core.
-CONTAINMENT_CONSTITUTIVE_FLOOR = 0.9
+CONTAINMENT_CONSTITUTIVE_FLOOR = 0.95
 
 _SIDECAR_SCHEMA = """
 CREATE TABLE IF NOT EXISTS sidecar_classification (

@@ -343,34 +343,50 @@ def test_3_a_high_confidence_constitutive_stays(make_world):
     assert verdict(w, row) == (CONSTITUTIVE, 0.95)
 
 
-def test_3_the_floor_is_a_module_constant_09_and_exactly_at_it_stays():
-    assert CONTAINMENT_CONSTITUTIVE_FLOOR == 0.9
+def test_3_the_floor_is_a_module_constant_095_and_exactly_at_it_stays():
+    assert CONTAINMENT_CONSTITUTIVE_FLOOR == 0.95
+
+
+def test_3_r1_5_the_corpus_boundary_cases(make_world):
+    """r1.5: 0.93 on `execution_page in ledger` is STATE; the barred door stays
+    CONSTITUTIVE at 0.95 and is STATE at 0.90."""
+    w, _ = make_world(Stub({("obj:execution_page", "in"): (CONSTITUTIVE, 0.93),
+                            ("obj:barred_door", "in"): (CONSTITUTIVE, 0.95),
+                            ("obj:iron_door", "in"): (CONSTITUTIVE, 0.9)}))
+    page = w.ingest_structured([contain("obj:execution_page", "obj:ledger")])[0]
+    door = w.ingest_structured([contain("obj:barred_door", "place:cell")])[0]
+    low = w.ingest_structured([contain("obj:iron_door", "place:cell")])[0]
+    assert verdict(w, page) == (STATE, 0.93)
+    assert verdict(w, door) == (CONSTITUTIVE, 0.95)
+    assert verdict(w, low) == (STATE, 0.9)
 
 
 def test_3_exactly_at_the_floor_stays_constitutive_and_just_below_is_demoted(make_world):
-    stub = Stub({("obj:a", "in"): (CONSTITUTIVE, 0.9), ("obj:b", "in"): (CONSTITUTIVE, 0.899)})
+    stub = Stub({("obj:a", "in"): (CONSTITUTIVE, 0.95), ("obj:b", "in"): (CONSTITUTIVE, 0.949)})
     w, _ = make_world(stub)
     a = w.ingest_structured([contain("obj:a", "obj:box")])[0]
     bb = w.ingest_structured([contain("obj:b", "obj:box")])[0]
-    assert verdict(w, a) == (CONSTITUTIVE, 0.9)
-    assert verdict(w, bb) == (STATE, 0.899)
+    assert verdict(w, a) == (CONSTITUTIVE, 0.95)
+    assert verdict(w, bb) == (STATE, 0.949)
 
 
 def test_3_r1_1_the_batch_path_gives_the_same_stored_classes(make_world):
     verdicts = {("obj:execution_page", "in"): (CONSTITUTIVE, 0.7),
-                ("obj:barred_door", "in"): (CONSTITUTIVE, 0.95)}
+                ("obj:barred_door", "in"): (CONSTITUTIVE, 0.95),
+                ("obj:ledger_page", "in"): (CONSTITUTIVE, 0.93)}
     single, _ = make_world(Stub(verdicts), "single")
     batch, _ = make_world(Stub(verdicts), "batch")
-    items = [contain("obj:execution_page", "obj:book"), contain("obj:barred_door", "place:cell")]
+    items = [contain("obj:execution_page", "obj:book"), contain("obj:barred_door", "place:cell"),
+             contain("obj:ledger_page", "obj:ledger")]
     s_rows = single.ingest_structured(items)
     b_rows = batch.ingest_structured(items, classify="defer")
     batch.classifier.classify_all(batch_size=10)
     assert [verdict(single, r) for r in s_rows] == [verdict(batch, r) for r in b_rows]
-    assert [verdict(batch, r) for r in b_rows] == [(STATE, 0.7), (CONSTITUTIVE, 0.95)]
+    assert [verdict(batch, r) for r in b_rows] == [(STATE, 0.7), (CONSTITUTIVE, 0.95), (STATE, 0.93)]
     # the batch ingest path (classify="batch") agrees too
     third, _ = make_world(Stub(verdicts), "third")
     t_rows = third.ingest_structured(items, classify="batch")
-    assert [verdict(third, r) for r in t_rows] == [(STATE, 0.7), (CONSTITUTIVE, 0.95)]
+    assert [verdict(third, r) for r in t_rows] == [(STATE, 0.7), (CONSTITUTIVE, 0.95), (STATE, 0.93)]
 
 
 def test_3_a_failed_model_call_never_makes_a_location_permanent(make_world):
@@ -479,7 +495,7 @@ def _corpus():
 FLOOR = CONTAINMENT_CONSTITUTIVE_FLOOR
 NAMED = {("obj:execution_page", "obj:book"), ("obj:split_seal", "obj:execution_page"),
          ("obj:wedge", "obj:fall_board")}
-FIXTURES_KEPT = {("obj:iron_barred_door", "place:cell_12"), ("obj:slit_window", "place:cell_12")}
+
 
 
 def _replay_audit(make_world):
@@ -510,7 +526,10 @@ def _replay_audit(make_world):
     return rows, stored
 
 
-def test_6_no_portable_object_ends_constitutive_below_the_floor(make_world):
+def test_6_no_named_portable_object_ends_constitutive(make_world):
+    """r1.5: every named portable object is STATE, including the verdicts that
+    reached 0.9: `execution_page in book` (0.90, 0.92 in the probe), `execution_page
+    in ledger` (0.93) and `wet_line` (0.90)."""
     rows, stored = _replay_audit(make_world)
     demoted = []
     for r, (dur, conf) in zip(rows, stored):
@@ -522,25 +541,33 @@ def test_6_no_portable_object_ends_constitutive_below_the_floor(make_world):
             demoted.append((r["entity"], r["value"], r["confidence"]))
         else:
             assert dur == CONSTITUTIVE, r
-    # the named portable objects: every verdict the floor can reach is demoted
-    named = [(r, v) for r, v in zip(rows, stored) if (r["entity"], r["value"]) in NAMED]
-    assert {(r["entity"], r["value"]) for r, _ in named} == NAMED
-    for r, (dur, conf) in named:
-        assert (dur == CONSTITUTIVE) == (conf >= FLOOR)
-    # the recorded evidence for the 0.9 default (see the build report)
-    assert len(demoted) == 18
-    assert sorted(c for _, _, c in demoted)[-1] == 0.86
+    for r, (dur, conf) in zip(rows, stored):
+        if (r["entity"], r["value"]) in NAMED:
+            assert dur == STATE, r
+    survivors = {(r["entity"], r["value"]) for r, (dur, _) in zip(rows, stored)
+                 if dur == CONSTITUTIVE and not r["entity"].startswith("place:")}
+    assert not survivors & NAMED
+    # the three the 0.9 floor left frozen are now STATE
+    for key, confidence in ((("obj:execution_page", "obj:book"), 0.9),
+                            (("obj:execution_page", "obj:ledger"), 0.93),
+                            (("obj:wet_line", "obj:ledger"), 0.9)):
+        assert any((r["entity"], r["value"], r["confidence"]) == (*key, confidence)
+                   and dur == STATE for r, (dur, _) in zip(rows, stored)), key
+    # the recorded evidence for the 0.95 default: 24 of the 30 object-subject rows
+    assert len(demoted) == 24
+    assert max(c for _, _, c in demoted) == 0.93
+    print("demoted at 0.95:", sorted(demoted, key=lambda t: (t[2], t[0])))
 
 
-def test_6_the_barred_door_and_the_cell_window_stay_constitutive(make_world):
+def test_6_the_cell_window_and_the_barred_door_at_095_stay_constitutive(make_world):
     rows, stored = _replay_audit(make_world)
-    kept = {(r["entity"], r["value"]): (dur, conf)
-            for r, (dur, conf) in zip(rows, stored) if (r["entity"], r["value"]) in FIXTURES_KEPT}
-    assert kept[("obj:slit_window", "place:cell_12")] == (CONSTITUTIVE, 0.96)
-    # the door's archived verdicts were 0.95, 0.90 and 0.84: the first two stay
+    window = [(dur, conf) for r, (dur, conf) in zip(rows, stored)
+              if (r["entity"], r["value"]) == ("obj:slit_window", "place:cell_12")]
+    assert window == [(CONSTITUTIVE, 0.96)]
+    # the door's archived verdicts were 0.95, 0.90 and 0.84: only the first stays
     door = [(dur, conf) for r, (dur, conf) in zip(rows, stored)
             if (r["entity"], r["value"]) == ("obj:iron_barred_door", "place:cell_12")]
-    assert door == [(CONSTITUTIVE, 0.95), (CONSTITUTIVE, 0.9), (STATE, 0.84)]
+    assert door == [(CONSTITUTIVE, 0.95), (STATE, 0.9), (STATE, 0.84)]
 
 
 @pytest.mark.parametrize("effort", ["low", "none"])
