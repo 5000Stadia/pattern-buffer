@@ -1,6 +1,6 @@
 # RESTATED-ORIGIN-V1: a move written as both ends keeps only where the thing went
 
-**Status:** r1.4 (pbr's r1.3 RED: the host's `attribute_default` contract is unchanged, because a call that would consult it skips the rule entirely; and the rollback's log-version bump is stated, not denied). r1.3 (pbr's r1.2 RED: the dry run is a dedicated mode with no classification or sidecar work at all, the injected clock isn't called in it, and the host's `attribute_default` is still asked once per attribute, its dry-run answer handed to the real run). r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
+**Status:** r1.5 (pbr's r1.4 RED: a pre-call prediction of callback use can't see the gate's rewrites, such as a person's `kind` becoming `role`, or same-call semantics changing canonicalization. So the dry run itself detects it: the host's callback is replaced inside the dry run by a sentinel that aborts the dry run the moment the gate would consult it). r1.4 (pbr's r1.3 RED: the host's `attribute_default` contract is unchanged, because a call that would consult it skips the rule entirely; and the rollback's log-version bump is stated, not denied). r1.3 (pbr's r1.2 RED: the dry run is a dedicated mode with no classification or sidecar work at all, the injected clock isn't called in it, and the host's `attribute_default` is still asked once per attribute, its dry-run answer handed to the real run). r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
 deterministic, with no model and no prompt change.
 **Source:** construct's R20 run 11 (engine 42d0c23, letter "R20 run 11 … one engine-shaped
 question"), checked by pb in a read-only copy of the play world:
@@ -58,20 +58,25 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
        from `self._clock()`, the dry run uses a fixed placeholder. The value can't affect any
        eligibility check, since it is a meta row on the new assertion. The real run calls the
        clock exactly as today: same count, same values.
-     - *(r1.4, pbr; replaces r1.3's recorded asks)* **The host's `attribute_default` is never
+     - *(r1.5, pbr; replaces r1.4's pre-call check)* **The host's `attribute_default` is never
        asked by the dry run, and its contract is unchanged.**
-       - Before any dry run, the gate checks whether the call would consult the callback. That
-         is, whether a callback is set and any item's attribute is one the callback has not been
-         asked about: its pre-call canonical name is not in the ingestor's checked set, carries
-         no declaration, and isn't core.
-       - If so, **the rule is skipped for the whole call:** no dry run, and the call is written
-         exactly as today, with the callback consulted at the real declaration step as now.
+       - Inside the dry run, the ingestor's callback is replaced by a private sentinel. If the
+         gate reaches the point where it would consult the callback, for any attribute, by any
+         path, the sentinel raises a private signal. This covers a pre-call name, a rewrite
+         (a person's `kind` becoming `role`), an alias exposed by an earlier same-call
+         declaration, and a first-use declaration.
+       - The signal aborts the dry run, which is rolled back and restored like any dry run.
+         **The rule is skipped for the whole call**, and the call is written exactly as today,
+         with the real callback consulted at its real declaration step, once.
+       - This is exact by construction: the dry run runs the real gate path, so it detects
+         every route to the callback that the real run would take, and calls the host's
+         callback on none of them.
+       - When no callback is set, nothing is replaced.
        - This costs little. The callback is consulted once per attribute per world, so only a
-         call introducing a new attribute name skips the rule. Construct's per-turn settle calls
-         mostly reuse known attributes.
-       - Both alternatives were rejected. Calling the callback speculatively would make it
-         observable for a first use that ends up dropped, which pre-feature behaviour never
-         does. Requiring every host's callback to be speculation-safe would be a new contract.
+         call reaching a fresh attribute skips the rule.
+       - Rejected: calling the callback speculatively (observable for a first use that is
+         finally dropped), and requiring every host callback to be speculation-safe (a new
+         contract).
      - The build lists every external call the gate path can make (the model, the clock, the
        `attribute_default` callback, any other injected callable it finds). A test proves the
        dry run makes none of them.
@@ -188,6 +193,15 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
       - The same call after `stowed_in` is already known (a prior call used it) runs the rule
         and drops the restatement, with the callback not asked again;
     - *(r1.4)* a call with no callback set, or with only known attributes, runs the rule;
+    - *(r1.5, pbr's scenario)* recording callback, `role` never asked yet; after a ring-in-belt
+      origin, one call `[person:eva kind captain, ring in obj:belt, ring in person:tomas]`.
+      - The dry run aborts at the `role` rewrite's declaration step, and the rule is skipped (no
+        `restated_origin`).
+      - The callback is asked about `role` exactly once, by the real run.
+      - Every row is written as without the feature;
+    - *(r1.5)* an earlier same-call `attr:foo · structural · true` that stops later `foo` rows
+      canonicalizing through a pre-existing `foo -> bar` alias reaches a fresh `foo`. The dry run
+      aborts, the rule is skipped, and the callback is asked about `foo` once, by the real run;
     - *(r1.3, r1.4)* the dry run alone (exercised through a test seam that stops after it)
       leaves the classifier's sidecar rows, its in-memory verdicts and memo, the dump and every
       read unchanged. `log_version` advances, and the next read rebuilds the same answers. That holds for a call with guardrailed rows (a `person:` containment
