@@ -40,6 +40,7 @@ import json
 import logging
 import sys
 import tempfile
+from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -47,6 +48,10 @@ HERE = Path(__file__).parent
 ROOT = HERE.parent.parent
 RECIPE_DIR = ROOT / "evals" / "recipes"
 SCHEMA = "patternbuffer.recipe-facts/1"
+# RECIPE-VOCAB-V1 §6 (r1.4, r1.4.1): a fact's source is text or authored, never both.
+TEXT_KEYS = frozenset({"chapter", "sentence"})
+AUTHORED_KEYS = frozenset({"authored", "note"})
+FIXED_AUTHORS = ("manifest", "holo-emitter planner")
 
 from patternbuffer import World, build
 from patternbuffer.build.extract import build_prompt
@@ -87,6 +92,60 @@ def load_golden(name: str) -> dict[str, Any]:
     return golden
 
 
+def source_problem(source: Any, sentences: int) -> str | None:
+    """Why ``source`` is not one of the two source forms (RECIPE-VOCAB-V1 §6), or
+    None when it is. ``sentences`` is the story's sentence count (``Book({1: story})``,
+    1-based).
+
+    text:     exactly ``{"chapter": 1, "sentence": N}``, N an int in 1..sentences
+    authored: exactly ``{"authored": WHO}`` or ``{"authored": WHO, "note": str}``,
+              WHO one of ``manifest``, ``holo-emitter planner``, ``Kabe YYYY-MM-DD``"""
+    if not isinstance(source, dict) or not source:
+        return "no source (it cites a sentence or names its author)"
+    keys = set(source)
+    if keys & TEXT_KEYS and keys & AUTHORED_KEYS:
+        return f"source mixes the text and authored forms ({sorted(keys)})"
+    if keys & TEXT_KEYS:
+        if keys != TEXT_KEYS:
+            return f"a text source is exactly chapter and sentence, not {sorted(keys)}"
+        chapter, sentence = source["chapter"], source["sentence"]
+        for label, number in (("chapter", chapter), ("sentence", sentence)):
+            if not isinstance(number, int) or isinstance(number, bool):
+                return f"source {label} {number!r} is not an integer"
+        if chapter != 1:
+            return f"source chapter is {chapter}, but a golden's story is chapter 1"
+        if not 1 <= sentence <= sentences:
+            return f"source sentence {sentence} is outside 1..{sentences}"
+        return None
+    if "authored" in keys and keys <= AUTHORED_KEYS:
+        if not _author_ok(source["authored"]):
+            return (f"authored {source['authored']!r} is not 'manifest', "
+                    "'holo-emitter planner' or 'Kabe YYYY-MM-DD'")
+        if "note" in source and not isinstance(source["note"], str):
+            return f"source note {source['note']!r} is not a string"
+        return None
+    return f"source keys {sorted(keys)} are neither a text nor an authored source"
+
+
+def _author_ok(who: Any) -> bool:
+    if not isinstance(who, str):
+        return False
+    if who in FIXED_AUTHORS:
+        return True
+    if not who.startswith("Kabe "):
+        return False
+    day = who.removeprefix("Kabe ")
+    try:
+        return date.fromisoformat(day).isoformat() == day
+    except ValueError:
+        return False
+
+
+def is_text(fact: Mapping[str, Any]) -> bool:
+    """True when the story states ``fact`` (a text source: lane 2 grades it)."""
+    return "chapter" in fact["source"]
+
+
 def golden_problems(golden: Mapping[str, Any]) -> list[str]:
     """Every way ``golden`` departs from the ``patternbuffer.recipe-facts/1`` shape."""
     out: list[str] = []
@@ -97,18 +156,17 @@ def golden_problems(golden: Mapping[str, Any]) -> list[str]:
             out.append(f"entity {entity.get('id')!r} carries {sorted(entity)}, "
                        "not exactly id/kind/names")
     ids = {e.get("id") for e in golden.get("entities", [])}
+    story = golden.get("story")
+    sentences = len(Book({1: story}).sentences(1)) if isinstance(story, str) else 0
     for n, fact in enumerate(golden.get("facts", [])):
         where = f"fact {n} ({fact.get('entity')} {fact.get('attribute')})"
         if fact.get("entity") not in ids:
             out.append(f"{where}: its entity is not in `entities`")
         if ("valid_from" in fact) == bool(fact.get("timeless")):
             out.append(f"{where}: exactly one of valid_from or timeless")
-        source = fact.get("source")
-        if not (isinstance(source, dict)
-                and (source == {"manifest": True}
-                     or (isinstance(source.get("chapter"), int)
-                         and isinstance(source.get("sentence"), int)))):
-            out.append(f"{where}: source is not {{chapter, sentence}} or {{manifest: true}}")
+        problem = source_problem(fact.get("source"), sentences)
+        if problem:
+            out.append(f"{where}: {problem}")
         if fact.get("value_type") not in ("entity", "literal"):
             out.append(f"{where}: value_type {fact.get('value_type')!r}")
     return out
@@ -129,8 +187,8 @@ def open_world(path: Path, world_id: str, *, model: Callable[[str, dict], Any] |
 
 def golden_items(golden: Mapping[str, Any]) -> list[dict[str, Any]]:
     """The golden as ``ingest_structured`` items: each entity's kind and names
-    (timeless), then each fact in order. A manifest-sourced fact is written as
-    the host's own declaration."""
+    (timeless), then each fact in order, text or authored alike (the reference
+    world is the whole golden)."""
     items: list[dict[str, Any]] = []
     for entity in golden["entities"]:
         items.append({"entity": entity["id"], "attribute": "kind",
@@ -165,15 +223,15 @@ def manifest_for(golden: Mapping[str, Any]) -> tuple[build.Manifest, list[str]]:
     """The build manifest for a golden's story, and the golden ids it cannot
     seed. An entity is an entry when one of its names occurs in the story as a
     whole-token run; its anchor quote is the first such sentence, whole (a
-    sentence occurs once). A fact sourced ``{"manifest": true}`` on an entity
-    makes its entry ``fixture=True`` (the build library's host route). The
+    sentence occurs once). A ``fixture`` fact sourced ``{"authored": "manifest"}``
+    on an entity makes its entry ``fixture=True`` (the build library's host route). The
     unseeded entities are left for the model to declare as escapes."""
     story = golden["story"]
     book = Book({1: story})
     entries: list[build.Entry] = []
     unseeded: list[str] = []
     fixtures = {f["entity"] for f in golden["facts"]
-                if f["source"] == {"manifest": True} and f["attribute"] == "fixture"}
+                if f["source"].get("authored") == "manifest" and f["attribute"] == "fixture"}
     for entity in golden["entities"]:
         anchor = _anchor(book, story, entity["names"])
         if anchor is None:
@@ -248,15 +306,23 @@ def grade(golden: Mapping[str, Any], reference: World, built: World,
     """Grade ``built`` against the golden on folded reads. ``reference`` is the
     golden loaded into a world; ``ids`` maps golden id -> ``built``'s id.
 
-    Each distinct (entity, attribute, frame) of the golden's facts (identity
+    Each distinct (entity, attribute, frame) of the golden's TEXT facts (identity
     rows aside; the containment family is one key, ``location``) is read in
     both worlds, and ``ok`` means the served values match. A golden entity the
-    build has no id for fails its keys as ``entity_missing``. The report also
-    carries ``extra``: keys the build holds that the golden does not (not graded)."""
+    build has no id for fails its keys as ``entity_missing``. Authored facts
+    (the story doesn't state them) are not graded: the report lists them under
+    ``skipped_authored``, each with its author, beside ``text_facts`` and
+    ``authored_facts`` counts. It also carries ``extra``: keys the build holds
+    that the golden neither grades nor lists as authored (not graded)."""
     forward = {g: b for g, b in ids.items() if b is not None}
     back = {b: g for g, b in forward.items()}
     keys: list[tuple[str, str, str]] = []
-    for fact in golden["facts"]:
+    skipped_authored = [
+        {"entity": f["entity"], "attribute": f["attribute"], "value": f["value"],
+         "frame": f["frame"], "authored": f["source"]["authored"]}
+        for f in golden["facts"] if not is_text(f)]
+    text_facts = [f for f in golden["facts"] if is_text(f)]
+    for fact in text_facts:
         attribute = reference.canonical_attribute(fact["attribute"])
         if attribute in IDENTITY_ATTRIBUTES:
             continue
@@ -282,6 +348,10 @@ def grade(golden: Mapping[str, Any], reference: World, built: World,
                         "expected": expected, "observed": observed,
                         "ok": observed == expected})
     graded = {(r["entity"], r["attribute"]) for r in results}
+    # an authored fact is listed under skipped_authored, not as an unexpected extra
+    for fact in skipped_authored:
+        attribute = reference.canonical_attribute(fact["attribute"])
+        graded.add((fact["entity"], "location" if attribute in CONTAINMENT else attribute))
     extra = []
     for fact in built.porcelain.facts("canon", bookkeeping=False):
         entity = back.get(fact["entity"], fact["entity"])
@@ -293,7 +363,8 @@ def grade(golden: Mapping[str, Any], reference: World, built: World,
         extra.append({"entity": entity, "attribute": attribute, "value": fact["value"]})
     return {"passed": all(r["ok"] for r in results), "keys": results,
             "ok": sum(r["ok"] for r in results), "total": len(results),
-            "extra": extra, "ids": dict(ids)}
+            "text_facts": len(text_facts), "authored_facts": len(skipped_authored),
+            "skipped_authored": skipped_authored, "extra": extra, "ids": dict(ids)}
 
 
 def finding_dicts(world: World, vocabulary: Vocabulary | None) -> list[dict[str, Any]]:
@@ -306,15 +377,16 @@ def finding_dicts(world: World, vocabulary: Vocabulary | None) -> list[dict[str,
 
 def oracle_model(golden: Mapping[str, Any], registry: build.Registry) -> Callable[[str, dict], Any]:
     """A scripted model that answers each prompt with the golden's facts as
-    grammar lines (for the seeded entities; kind, name and fixture rows are the
-    build's and the host's, never a model's). A free check that the lane's
+    grammar lines (its text facts only, and only for the seeded entities: an
+    authored fact is the host's or the manifest's, never a model's; kind, name and
+    fixture rows are the build's and the host's). A free check that the lane's
     wiring (manifest, extract, commit, grade) holds; single-chunk stories only."""
     names_of = {i.id: list(i.names) for i in registry.identities}
     ids = ids_by_name(golden, names_of)
 
     def line(fact: Mapping[str, Any]) -> str | None:
         entity = ids.get(fact["entity"])
-        if entity is None or fact["attribute"] in (*IDENTITY_ATTRIBUTES, "fixture"):
+        if not is_text(fact) or entity is None or fact["attribute"] in (*IDENTITY_ATTRIBUTES, "fixture"):
             return None
         if fact["value_type"] == "entity":
             target = ids.get(fact["value"])
@@ -450,7 +522,13 @@ def main(argv: list[str] | None = None) -> int:
     _write(out_dir / "report.json", reports)
     for r in reports:
         print(f"{r['recipe']}: {'PASS' if r.get('passed') else 'FAIL'} "
-              f"({r.get('ok', 0)}/{r.get('total', 0)} keys), findings {len(r.get('findings', []))}")
+              f"({r.get('ok', 0)}/{r.get('total', 0)} keys over {r.get('text_facts', 0)} text facts; "
+              f"{r.get('authored_facts', 0)} authored facts skipped), "
+              f"findings {len(r.get('findings', []))}")
+        for skipped in r.get("skipped_authored", []):
+            print(f"    skipped (authored by {skipped['authored']}): "
+                  f"{skipped['entity']} {skipped['attribute']} {skipped['value']!r} "
+                  f"[{skipped['frame']}]")
     return 0 if all(r.get("passed") for r in reports) else 1
 
 

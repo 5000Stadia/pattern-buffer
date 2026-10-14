@@ -202,7 +202,7 @@ RECIPE = Vocabulary("recipe", (
          semantics={"durability": "CONSTITUTIVE"}, aliases=("is_outdoors",),
          gloss="a place open to the sky; written timeless"),
     Term("exits", LITERAL, values=("none",), open_values=False,
-         gloss='an observed "no way out"'),
+         gloss='an observed "no way out": only ever the word none; ways out are connects_to'),
     Term("disposition", LITERAL,
          values=("friendly", "wary", "hostile", "timid", "playful", "indifferent"),
          open_values=True, semantics={"durability": "DISPOSITIONAL"},

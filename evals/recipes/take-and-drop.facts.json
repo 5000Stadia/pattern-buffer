@@ -1,7 +1,7 @@
 {
   "schema": "patternbuffer.recipe-facts/1",
   "recipe": "take-and-drop",
-  "note": "RECIPE-VOCAB-V1 r1.3 golden, from holo-emitter's story and shape for the recipe. Containment is `in` throughout (the engine has no separate `on`): the book is `in` the study table, the page `in` the book. Added by pb for routes and placement: the doorway and the study table are `in place:study`, and `place:study connects_to obj:doorway`, so a route study -> doorway -> hall exists. The play (the book taken: held_by person:player, then put down: in the hall table) is not canon here; it is written by the lane-1 read test.",
+  "note": "RECIPE-VOCAB-V1 r1.3 golden, from holo-emitter's story and shape for the recipe. Containment is `in` throughout (the engine has no separate `on`): the book is `in` the study table, the page `in` the book. Added by pb for routes and placement: the doorway and the study table are `in place:study`, and `place:study connects_to obj:doorway`, so a route study -> doorway -> hall exists. The play (the book taken: held_by person:player, then put down: in the hall table) is not canon here; it is written by the lane-1 read test. Sources (r1.4): 8 facts cite the story's sentences; 1 is authored (the doorway's `fixture`, by the manifest), so lane 2 does not grade it.",
   "story": "There is a study and a hall, joined by an open doorway. In the study a book lies on a table, and a loose page lies in the book. In the hall stands another table.",
   "entities": [
     {
@@ -64,7 +64,8 @@
       "frame": "canon",
       "timeless": true,
       "source": {
-        "manifest": true
+        "authored": "manifest",
+        "note": "a host declaration: the doorway is part of the building, not a thing to pick up"
       }
     },
     {

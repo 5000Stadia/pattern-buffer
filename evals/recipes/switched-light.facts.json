@@ -1,7 +1,7 @@
 {
   "schema": "patternbuffer.recipe-facts/1",
   "recipe": "switched-light",
-  "note": "RECIPE-VOCAB-V1 r1.3 golden. Imported from holo-emitter's draft (m046211); the draft already carried the settled shapes (an observed `exits · none`, `control_mode`, entities with only id/kind/names).",
+  "note": "RECIPE-VOCAB-V1 r1.3 golden. Imported from holo-emitter's draft (m046211); the draft already carried the settled shapes (an observed `exits · none`, `control_mode`, entities with only id/kind/names). Sources (r1.4): 9 facts cite the story's sentences; 2 are authored by the holo-emitter planner because the story only implies them (the light is off, the dog is on all fours), so lane 2 does not grade them.",
   "story": "the world is empty, except for a room with no exits. The room is completely dark. There is a light switch in the room, that if flipped turns on a light, the brightly illuminate the room and shows that there is a friendly dog.",
   "entities": [
     {
@@ -126,8 +126,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 3
+        "authored": "holo-emitter planner",
+        "note": "the story says the switch turns the light on, which implies off but does not say it is off"
       }
     },
     {
@@ -162,8 +162,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 3
+        "authored": "holo-emitter planner",
+        "note": "the story gives no posture: the dog 'is on all fours' is the demo's own start state"
       }
     }
   ]

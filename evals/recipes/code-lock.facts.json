@@ -1,7 +1,7 @@
 {
   "schema": "patternbuffer.recipe-facts/1",
   "recipe": "code-lock",
-  "note": "RECIPE-VOCAB-V1 r1.3 golden. Imported from holo-emitter's draft (m046211) and corrected by the settled points: `outdoors` is a timeless boolean; the door's `fixture` is a timeless manifest row (the draft gave it valid_from 0); the code is a canon row plus the same row in knows:person:dog; the door is `locked · true` and also `state · shut` (r1.2/r1.3). The draft cited sentence 5, but the story has four sentences: the door, the keypad and the outside are all in sentence 4.",
+  "note": "RECIPE-VOCAB-V1 r1.3 golden. Imported from holo-emitter's draft (m046211) and corrected by the settled points: `outdoors` is a timeless boolean; the door's `fixture` is a timeless manifest row (the draft gave it valid_from 0); the code is a canon row plus the same row in knows:person:dog; the door is `locked · true` and also `state · shut` (r1.2/r1.3). The draft cited sentence 5, but the story has four sentences: the door, the keypad and the outside are all in sentence 4. Sources (r1.4): 10 facts cite the story's sentences; 13 are authored (12 by the holo-emitter planner, the door's `fixture` by the manifest) because the story never names a door or the outdoors and never gives the code's digits, so lane 2 does not grade them.",
   "story": "the world is empty, except for a room. The room is completely dark. There is a light switch in the room, that if flipped turns on a light, the brightly illuminate the room and shows that there is a friendly dog. The dog only says a four digit code to the main player, and the only way to exit the room is a keypad with a four digit number.",
   "entities": [
     {
@@ -62,8 +62,8 @@
       "value_type": "literal",
       "frame": "canon",
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story never names the outdoors; only 'the only way to exit the room' is said"
       },
       "timeless": true
     },
@@ -147,8 +147,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 3
+        "authored": "holo-emitter planner",
+        "note": "the story says the switch turns the light on, which implies off but does not say it is off"
       }
     },
     {
@@ -183,8 +183,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 3
+        "authored": "holo-emitter planner",
+        "note": "the story gives no posture: the dog 'is on all fours' is the demo's own start state"
       }
     },
     {
@@ -195,8 +195,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story never names the outdoors, so it gives no light level for it"
       }
     },
     {
@@ -207,7 +207,8 @@
       "frame": "canon",
       "timeless": true,
       "source": {
-        "manifest": true
+        "authored": "manifest",
+        "note": "the story names no door; the host declares it a fixture"
       }
     },
     {
@@ -218,8 +219,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story names no door; the planner places it in the room"
       }
     },
     {
@@ -230,8 +231,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story names no door; the planner joins it to outside"
       }
     },
     {
@@ -254,8 +255,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the keypad's target is the door, which the story never names"
       }
     },
     {
@@ -278,8 +279,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story says the keypad is the way out, but never how it behaves; the planner picks latching (and its target, the unnamed door)"
       }
     },
     {
@@ -290,8 +291,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story says there is a four digit number but not its digits"
       }
     },
     {
@@ -302,8 +303,8 @@
       "frame": "knows:person:dog",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story says the dog says a code but not its digits"
       }
     },
     {
@@ -314,8 +315,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story names no door or lock; the planner starts the door locked"
       }
     },
     {
@@ -326,8 +327,8 @@
       "frame": "canon",
       "valid_from": 0,
       "source": {
-        "chapter": 1,
-        "sentence": 4
+        "authored": "holo-emitter planner",
+        "note": "the story names no door; the planner starts it shut"
       }
     }
   ]

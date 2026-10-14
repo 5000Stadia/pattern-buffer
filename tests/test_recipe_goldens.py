@@ -9,6 +9,7 @@ manifest, its grader, and its scripted-oracle wiring check) are tested here too.
 
 from __future__ import annotations
 
+import copy
 import json
 import sys
 from pathlib import Path
@@ -64,7 +65,7 @@ def test_6_the_golden_has_the_recipe_facts_shape(name):
         assert set(fact) <= {"entity", "attribute", "value", "value_type", "frame",
                              "valid_from", "timeless", "source"}, fact
         if fact["attribute"] == "fixture":
-            assert fact["source"] == {"manifest": True}
+            assert fact["source"].get("authored") == "manifest"
 
 
 def test_6_a_malformed_golden_is_named():
@@ -85,6 +86,96 @@ def test_6_every_attribute_is_a_term_or_engine_canonical_and_the_world_is_clean(
             f"{fact['attribute']} is an alias, not the canonical name"
     assert check(w, RECIPE) == []
     assert check(w, RECIPE, frame="knows:person:dog") == []
+
+
+# ------------------------------------------- sources (r1.4, r1.4.1)
+
+FIVE = {  # a tiny golden: 3 sentences, one fact whose source each test swaps
+    "schema": "patternbuffer.recipe-facts/1", "recipe": "t",
+    "story": "A room. A lamp. A dog.",
+    "entities": [{"id": "place:room", "kind": "place", "names": ["room"]}],
+    "facts": [{"entity": "place:room", "attribute": "lit", "value": "dark",
+               "value_type": "literal", "frame": "canon", "valid_from": 0}]}
+
+
+def with_source(source):
+    golden = copy.deepcopy(FIVE)
+    if source is not ...:
+        golden["facts"][0]["source"] = source
+    return golden
+
+
+def problems_for(source):
+    return lane.golden_problems(with_source(source))
+
+
+def test_0_the_story_has_the_sentences_the_loader_counts():
+    assert len(lane.Book({1: FIVE["story"]}).sentences(1)) == 3
+
+
+@pytest.mark.parametrize("name", lane.RECIPES)
+def test_0_every_golden_fact_has_exactly_one_valid_source_form(name):
+    golden = json.loads(lane.golden_path(name).read_text())
+    count = len(lane.Book({1: golden["story"]}).sentences(1))
+    for fact in golden["facts"]:
+        source = fact["source"]
+        assert lane.source_problem(source, count) is None, fact
+        assert (set(source) == {"chapter", "sentence"}) != ("authored" in source)
+        if "authored" in source:
+            assert isinstance(source.get("note", ""), str) and source["note"], fact
+
+
+def test_0_the_goldens_split_into_text_and_authored_as_the_lane_report_found():
+    counts = {}
+    for name in lane.RECIPES:
+        facts = lane.load_golden(name)["facts"]
+        counts[name] = (sum(lane.is_text(f) for f in facts),
+                        sorted({f["source"]["authored"] for f in facts if not lane.is_text(f)}))
+    assert counts == {
+        "switched-light": (9, ["holo-emitter planner"]),
+        "code-lock": (10, ["holo-emitter planner", "manifest"]),
+        "take-and-drop": (8, ["manifest"])}
+
+
+def test_0_the_loader_refuses_none_both_and_an_unknown_author_naming_the_fact():
+    for source in (..., None, {}, {"manifest": True}, {"chapter": 1, "sentence": 1, "authored": "manifest"},
+                   {"authored": "somebody"}, {"authored": 3}):
+        problems = problems_for(source)
+        assert len(problems) == 1 and "fact 0 (place:room lit)" in problems[0], (source, problems)
+    assert problems_for({"authored": "manifest"}) == []
+    assert problems_for({"authored": "holo-emitter planner", "note": "why"}) == []
+
+
+def test_0_the_kabe_author_is_exactly_kabe_and_a_real_date():
+    for refused in ("Kabe 2026-02-30", "Kabe 2026-1-5", "Kabe", "kabe 2026-10-14",
+                    "Kabe  2026-10-14", "Kabe 20261014", "Kabe 2026-10-14 "):
+        assert len(problems_for({"authored": refused})) == 1, refused
+    assert problems_for({"authored": "Kabe 2026-10-14"}) == []
+
+
+def test_0_an_extra_key_a_mixed_source_and_a_non_integer_sentence_are_refused():
+    for source in ({"chapter": 1, "sentence": 1, "note": "n"}, {"authored": "manifest", "why": "n"},
+                   {"chapter": 1, "authored": "manifest"}, {"chapter": 1},
+                   {"authored": "manifest", "sentence": 1}, {"note": "only a note"},
+                   {"chapter": 1, "sentence": "1"}, {"chapter": 1, "sentence": 1.0},
+                   {"chapter": "1", "sentence": 1}, {"authored": "manifest", "note": 7}):
+        assert len(problems_for(source)) == 1, source
+
+
+def test_0_a_text_source_cites_a_sentence_that_exists():
+    for source in ({"chapter": 0, "sentence": 1}, {"chapter": 2, "sentence": 1},
+                   {"chapter": True, "sentence": 1}, {"chapter": 1, "sentence": 0},
+                   {"chapter": 1, "sentence": -1}, {"chapter": 1, "sentence": True},
+                   {"chapter": 1, "sentence": 4}):
+        assert len(problems_for(source)) == 1, source
+    assert problems_for({"chapter": 1, "sentence": 1}) == []
+    assert problems_for({"chapter": 1, "sentence": 3}) == []     # the last sentence itself
+
+
+def test_0_the_exits_gloss_text_is_pinned():
+    exits = RECIPE.term("exits")
+    assert exits.gloss == ('an observed "no way out": only ever the word none; '
+                           'ways out are connects_to')
 
 
 # ----------------------------------------------------- switched-light
@@ -211,7 +302,7 @@ def test_lane2_a_manifest_fixture_row_makes_the_entry_a_fixture():
     golden = lane.load_golden("switched-light")
     golden["facts"].append({"entity": "obj:switch", "attribute": "fixture", "value": True,
                             "value_type": "literal", "frame": "canon", "valid_from": 0,
-                            "source": {"manifest": True}})
+                            "source": {"authored": "manifest"}})
     manifest, _ = lane.manifest_for(golden)
     assert [e.key for e in manifest.entries if e.fixture] == ["switch"]
 
@@ -233,19 +324,22 @@ def _graded(tmp_path, name, mutate=None):
 
 def test_lane2_the_golden_graded_against_itself_passes(tmp_path):
     report = _graded(tmp_path, "code-lock")
-    assert report["passed"] and report["ok"] == report["total"] > 10
+    assert report["passed"] and report["ok"] == report["total"] == 10
     assert report["extra"] == []
 
 
 def test_lane2_a_different_value_a_missing_key_and_a_missing_entity_fail(tmp_path):
     def mutate(w):
         w.porcelain.ingest_structured([
+            {"entity": "place:room", "attribute": "lit", "value": "lit", "valid_from": 5},
             {"entity": "obj:light", "attribute": "state", "value": "on", "valid_from": 5},
             {"entity": "obj:ghost", "attribute": "kind", "value": "object", "timeless": True},
             {"entity": "obj:ghost", "attribute": "colour", "value": "grey", "valid_from": 5}])
     report = _graded(tmp_path, "switched-light", mutate)
     failed = {(k["entity"], k["attribute"]) for k in report["keys"] if not k["ok"]}
-    assert failed == {("obj:light", "state")} and not report["passed"]
+    # the room's light level (a text fact) is graded; the light's state (authored) is not
+    assert failed == {("place:room", "lit")} and not report["passed"]
+    assert ("obj:light", "state") not in {(k["entity"], k["attribute"]) for k in report["keys"]}
     assert {"entity": "obj:ghost", "attribute": "colour", "value": "grey"} in report["extra"]
 
 
@@ -270,25 +364,50 @@ def test_lane2_containment_is_graded_on_the_folded_location(tmp_path):
 
 def test_lane2_the_scripted_oracle_runs_the_whole_lane_with_no_model(tmp_path):
     """A free wiring check of manifest -> extract (with the vocabulary) -> commit
-    -> grade. code-lock's door and outside are not in its text, so the oracle
-    (which declares no escapes) cannot seed them: exactly those keys fail."""
+    -> grade. The oracle emits lines for text facts only, and lane 2 grades text
+    facts only, so all three recipes pass; code-lock's door and outside are
+    authored (its text never names them), and the report lists what it skipped."""
     def refuse(prompt, schema):
         raise AssertionError("the oracle run made a model call")
 
     reports = {n: lane.run_recipe(n, tmp_path, refuse, oracle=True) for n in lane.RECIPES}
-    assert reports["switched-light"]["passed"] and reports["take-and-drop"]["passed"]
-    for name in ("switched-light", "take-and-drop"):
+    assert all(r["passed"] for r in reports.values())
+    for name in lane.RECIPES:
         assert reports[name]["findings"] == []
+        facts = lane.load_golden(name)["facts"]
+        assert reports[name]["text_facts"] == sum(lane.is_text(f) for f in facts)
+        assert reports[name]["authored_facts"] == sum(not lane.is_text(f) for f in facts)
     code_lock = reports["code-lock"]
-    failed = {(k["entity"], k["attribute"]) for k in code_lock["keys"] if not k["ok"]}
-    assert failed and all(e in code_lock["unseeded"] or a == "controls" for e, a in failed)
-    assert ("obj:keypad", "controls") in failed
+    graded = {(k["entity"], k["attribute"]) for k in code_lock["keys"]}
+    assert ("obj:door", "state") not in graded and ("obj:keypad", "code") not in graded
+    assert ("obj:keypad", "controls") not in graded and ("obj:light", "state") not in graded
+    skipped = {(s["entity"], s["attribute"], s["frame"]): s["authored"]
+               for s in code_lock["skipped_authored"]}
+    assert len(skipped) == 13
+    assert skipped[("obj:door", "fixture", "canon")] == "manifest"
+    assert skipped[("obj:keypad", "code", "knows:person:dog")] == "holo-emitter planner"
     prompt = (tmp_path / "switched-light" / "prompt.txt").read_text()
     assert "Use these attribute names where they fit:" in prompt
     baseline = lane.run_recipe("switched-light", tmp_path / "plain", refuse, vocabulary=None,
                                oracle=True)
     assert "Use these attribute names" not in (tmp_path / "plain" / "switched-light" / "prompt.txt").read_text()
     assert baseline["vocabulary"] is None
+
+
+def test_lane2_the_oracle_speaks_only_text_facts_and_grading_ignores_authored_ones(tmp_path):
+    golden = lane.load_golden("code-lock")
+    manifest, _ = lane.manifest_for(golden)
+    registry = lane.build.Registry.from_manifest(manifest, {1: golden["story"]})
+    lines = lane.oracle_model(golden, registry)("", {})["lines"]
+    assert len(lines) == 10      # the 10 text facts, none authored (all 10 are on seeded entities)
+    keypad = next(e for e in registry.identities if "keypad" in e.names).id
+    assert not any(f"|{keypad}|controls|" in line or "|4071" in line or '"4071"' in line
+                   for line in lines)
+    assert not any(line.split("|")[2] in ("state", "locked", "posture", "code") for line in lines)
+    report = _graded(tmp_path, "code-lock")
+    assert report["text_facts"] == 10 and report["authored_facts"] == 13
+    assert {k["attribute"] for k in report["keys"]} == {
+        "lit", "location", "controls", "link_type", "control_mode", "disposition"}
 
 
 def test_lane2_dry_run_calls_no_model_and_writes_nothing(tmp_path, capsys, monkeypatch):
