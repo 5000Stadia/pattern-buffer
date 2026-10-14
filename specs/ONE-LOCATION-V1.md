@@ -56,11 +56,11 @@ Cheap and targeted. Sonnet 4.6 at low effort, one run each.
   - **Five controls:**
     - a thing described that doesn't move;
     - a thing put back where it was;
-    - *(r1.2)* **a nested container** ("The brass peg lay in a twist of oiled cloth in Pike's
-      left pocket."). It passes when the peg has one container, the cloth, and the cloth is in
+    - *(r1.2)* **a nested container** ("The brass peg lay in a twist of oiled cloth in the
+      courier's left pocket."). It passes when the peg has one container, the cloth, and the cloth is in
       the pocket;
-    - *(r1.2)* **a place beside a river within a region** ("The fort of Ironwatch stands on the
-      Frostwake river, in the northern frontier."). It passes when the place has at most one
+    - *(r1.2)* **a place beside a river within a region** ("The fort of Greystone stands on the
+      Wend river, in the northern marches."). It passes when the place has at most one
       `in` (the region), and the river relation, if written, is `adjacent_to`;
     - *(r1.1, pbr)* **a historical move with an expressly timed earlier location** ("At dawn the
       key hung on the belt. At noon she put it in the locker."). The earlier location must be
