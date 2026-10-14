@@ -1,6 +1,6 @@
 # RESTATED-ORIGIN-V1: a move written as both ends keeps only where the thing went
 
-**Status:** r1.3 (pbr's r1.2 RED: the dry run is a dedicated mode with no classification or sidecar work at all, the injected clock isn't called in it, and the host's `attribute_default` is still asked once per attribute, its dry-run answer handed to the real run). r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
+**Status:** r1.4 (pbr's r1.3 RED: the host's `attribute_default` contract is unchanged, because a call that would consult it skips the rule entirely; and the rollback's log-version bump is stated, not denied). r1.3 (pbr's r1.2 RED: the dry run is a dedicated mode with no classification or sidecar work at all, the injected clock isn't called in it, and the host's `attribute_default` is still asked once per attribute, its dry-run answer handed to the real run). r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
 deterministic, with no model and no prompt change.
 **Source:** construct's R20 run 11 (engine 42d0c23, letter "R20 run 11 … one engine-shaped
 question"), checked by pb in a read-only copy of the play world:
@@ -58,16 +58,31 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
        from `self._clock()`, the dry run uses a fixed placeholder. The value can't affect any
        eligibility check, since it is a meta row on the new assertion. The real run calls the
        clock exactly as today: same count, same values.
-     - **The host's `attribute_default` is asked at most once per attribute, as documented.**
-       The dry run asks it for each attribute's first use and records the answer. The real run
-       takes that recorded answer instead of asking again. An attribute first met only in the
-       real run (impossible, since the real run is the same call) would be asked there.
+     - *(r1.4, pbr; replaces r1.3's recorded asks)* **The host's `attribute_default` is never
+       asked by the dry run, and its contract is unchanged.**
+       - Before any dry run, the gate checks whether the call would consult the callback. That
+         is, whether a callback is set and any item's attribute is one the callback has not been
+         asked about: its pre-call canonical name is not in the ingestor's checked set, carries
+         no declaration, and isn't core.
+       - If so, **the rule is skipped for the whole call:** no dry run, and the call is written
+         exactly as today, with the callback consulted at the real declaration step as now.
+       - This costs little. The callback is consulted once per attribute per world, so only a
+         call introducing a new attribute name skips the rule. Construct's per-turn settle calls
+         mostly reuse known attributes.
+       - Both alternatives were rejected. Calling the callback speculatively would make it
+         observable for a first use that ends up dropped, which pre-feature behaviour never
+         does. Requiring every host's callback to be speculation-safe would be a new contract.
      - The build lists every external call the gate path can make (the model, the clock, the
        `attribute_default` callback, any other injected callable it finds). A test proves the
-       dry run makes none of them except the recorded `attribute_default` asks.
-   - **No trace** now also means: the classifier's sidecar table, in-memory verdicts and memo,
-     and the buffer's log version are unchanged by the dry run alone. Only the rolled-back unit
-     ever saw its rows.
+       dry run makes none of them.
+   - **No trace** now also means: the classifier's sidecar table, in-memory verdicts and memo
+     are unchanged by the dry run alone. Only the rolled-back unit ever saw its rows.
+   - *(r1.4, pbr)* **The log version moves, by design.** Like every rolled-back atomic unit, the
+     dry run's rollback calls `_forget_view()`, which advances `log_version`. That is a cache
+     invalidation, not a change of truth: every derived view rebuilds from the restored log on
+     its next read and serves the same answers. The rule doesn't restore the old version number,
+     which would let a stale cache survive. The test asserts equal reads and an equal dump, not
+     an equal version.
 
    - **Item rejected in the dry run:** an item rejected by any ordinary gate check is never an
      eligible write, so it never joins a group, and its skip is recorded once, by the real run
@@ -163,11 +178,19 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
       alias receipt, the world's dump equals that of a twin world given the same call with the
       dropped items removed by hand (the same rows, ids and seqs);
     - the ingestor's views equal a fresh reopen's;
-    - *(r1.3)* `attribute_default` is a counting stub, asked exactly once per first-used
-      attribute across the dry run and the real run together;
-    - *(r1.3)* the dry run alone (exercised through a test seam that stops after it) leaves the
-      classifier's sidecar rows, its in-memory verdicts and memo, the buffer's log version and
-      the dump unchanged. That holds for a call with guardrailed rows (a `person:` containment
+    - *(r1.4, pbr's scenario)* A recording `attribute_default` declares `stowed_in`
+      containment. With prior `ring in obj:belt`, one call holds `ring stowed_in obj:belt`
+      (stowed_in's first use) and then `ring in person:tomas`.
+      - The rule is skipped for the call: no dry run, and no `restated_origin`.
+      - The callback is asked about `stowed_in` once, by the real run, exactly as without the
+        feature.
+      - Both rows are written, and the key reads conflicted, as today.
+      - The same call after `stowed_in` is already known (a prior call used it) runs the rule
+        and drops the restatement, with the callback not asked again;
+    - *(r1.4)* a call with no callback set, or with only known attributes, runs the rule;
+    - *(r1.3, r1.4)* the dry run alone (exercised through a test seam that stops after it)
+      leaves the classifier's sidecar rows, its in-memory verdicts and memo, the dump and every
+      read unchanged. `log_version` advances, and the next read rebuilds the same answers. That holds for a call with guardrailed rows (a `person:` containment
       row, a `name` row) and a structural row;
     - *(r1.3)* observe mode: a counting clock is called the same number of times, and the stored
       `learned_at_wallclock` values are the same, as for the same call with the rule disabled;
