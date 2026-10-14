@@ -1,6 +1,6 @@
 # CONTAINMENT-DURABILITY-V1: a movable's location is never made permanent by a guess
 
-**Status:** r1.1, answering pbr's r1 RED by narrowing:
+**Status:** r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
 - no per-world floor (`attr:in` is inviolable core);
 - the being and fixture tests use only what the classifier can see, bounded at the row's own log position;
 - no sidecar schema change;
@@ -59,6 +59,16 @@ fold.
    canon.
    - `fixture` is added to the **structural predicates**, so its own row is CONSTITUTIVE by
      guardrail and never model-judged.
+   - **Host-only** *(r1.2, pbr)*. A `fixture` item is **skipped**, with a typed receipt
+     `fixture_not_host`, when the ingest call is in extracted (prose-authored) mode. That covers
+     `ingest(text)`, which always runs `extracted=True`, and `ingest_structured(…, extracted=True)`.
+     The skip happens at the gate, before anything is written. Structured host ingestion
+     (`extracted=False`, the default) may write it.
+   - **The build library** refuses `fixture` in model output too: `patternbuffer.build`'s
+     `grammar_problem()` rejects an item whose attribute canonicalizes to `fixture`. A fixture
+     declared through the library comes only from the host's manifest, never from extraction.
+   - So a model guess can never make a location permanent, whether by a CONSTITUTIVE verdict
+     (rule 3) or by writing a fixture declaration.
    - **The exact check** *(r1.1, pbr)*:
      1. The classifier reads
         `buffer.visible(entity=row.entity, attribute="fixture", frame="canon", asserted_as_of=row.seq)`:
@@ -119,7 +129,14 @@ fold.
    - a `fixture = true` ingested **after** the containment row doesn't reclassify it, on first
      classification or on `rebuild()`;
    - `true` then `false` (both before the row): the latest decides, so no fixture;
-   - a retracted `true` doesn't count.
+   - a retracted `true` doesn't count;
+   - *(r1.2, pbr)* `ingest_structured([obj:page · fixture · true], extracted=True)` and the prose
+     `ingest()` path are skipped with `fixture_not_host`, writing nothing. A later
+     `obj:page in obj:book` therefore goes to the model and the floor, never to the fixture
+     guardrail;
+   - *(r1.2)* the same item with `extracted=False` (a host) is written, and the guardrail applies;
+   - *(r1.2)* a build-library extraction line with attribute `fixture` is refused by
+     `grammar_problem()`.
 3. **The floor:**
    - a model verdict of CONSTITUTIVE 0.7 on `obj:execution_page in obj:book` is stored STATE, with
      the confidence and the demoted mark;
