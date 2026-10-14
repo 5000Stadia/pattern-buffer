@@ -1,6 +1,6 @@
 # CONTAINMENT-DURABILITY-V1: a movable's location is never made permanent by a guess
 
-**Status:** r1.4 (pbr r1.3: `fixture` is typed exactly, round-trips through JSON, and travels to commit on the registry's identity record). r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
+**Status:** r1.5 (from the build's corpus replay: the floor rises from 0.9 to 0.95). r1.4 (pbr r1.3: `fixture` is typed exactly, round-trips through JSON, and travels to commit on the registry's identity record). r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
 - no per-world floor (`attr:in` is inviolable core);
 - the being and fixture tests use only what the classifier can see, bounded at the row's own log position;
 - no sidecar schema change;
@@ -111,8 +111,18 @@ fold.
 3. **No guessed permanence for movables.** For every other non-place subject (objects and anything
    unnamespaced), the model still judges.
    - **A low-confidence CONSTITUTIVE is stored as STATE.** A CONSTITUTIVE verdict with confidence
-     below `CONTAINMENT_CONSTITUTIVE_FLOOR` (a module constant, **0.9**) is stored as **STATE**, with
-     the model's confidence kept.
+     below `CONTAINMENT_CONSTITUTIVE_FLOOR` (a module constant, **0.95**) is stored as **STATE**,
+     with the model's confidence kept.
+   - *(r1.5)* **Why 0.95, from construct's corpus** (replayed in the build, 30 object-subject
+     rows):
+     - At 0.9, three portable objects stayed CONSTITUTIVE because the archived confidence reached the
+       floor: `execution_page` in `book` (0.90, 0.92), `execution_page` in `ledger` (0.93) and
+       `wet_line` in `ledger` (0.90). Construct's own named flicker case would still freeze.
+     - At 0.95, 24 of the 30 rows are demoted, and those three are freed.
+     - The cost is one barred-door verdict at 0.90 becoming STATE. A door with no later moves still
+       folds to its only location, and a host who needs certainty declares `fixture` (rule 2).
+     - That is the precision-first trade this spec states. The cell window (0.96) and the other
+       high-confidence fixtures stay.
    - *(r1.1, pbr)* **One helper.** The normalization is a single function, applied in **both**
      `classify()` (single row) and `_classify_batch()`, so the two paths can't drift.
    - **No schema change.** The demotion adds no field to `Classification` or the sidecar, and stored
@@ -179,7 +189,9 @@ fold.
 3. **The floor:**
    - a model verdict of CONSTITUTIVE 0.7 on `obj:execution_page in obj:book` is stored STATE, with
      the confidence and the demoted mark;
-   - CONSTITUTIVE 0.95 on `obj:barred_door in place:cell` stays CONSTITUTIVE;
+   - *(r1.5)* CONSTITUTIVE 0.93 on `obj:execution_page in obj:ledger` is stored STATE;
+   - CONSTITUTIVE 0.95 on `obj:barred_door in place:cell` stays CONSTITUTIVE, while one at 0.90 is
+     stored STATE;
    - *(r1.1)* the same verdicts through `_classify_batch` give the same stored classes (the
      single-row and batch paths agree);
    - *(r1.1)* each demotion logs one `INFO` record naming the row.
@@ -190,10 +202,12 @@ fold.
    fixture containment -> CONSTITUTIVE".
 6. **Construct's corpus** (read-only copies of the effort-probe rows, through a fake model returning
    the archived verdicts):
-   - none of the named portable objects ends CONSTITUTIVE;
-   - the barred door and the cell window stay CONSTITUTIVE.
+   - *(r1.5)* none of the named portable objects ends CONSTITUTIVE, including `execution_page` in
+     `book` (0.90, 0.92), in `ledger` (0.93), and `wet_line` (0.90);
+   - the cell window (0.96) and the barred door at 0.95 stay CONSTITUTIVE, and the barred door at
+     0.90 is STATE.
 
-   The report lists every demoted row and its confidence, which is the evidence for the 0.9
+   The report lists every demoted row and its confidence, which is the evidence for the 0.95
    default.
 7. **Unchanged elsewhere:** the chapter-test battery and the ingestion-fidelity numbers either don't
    move, or every movement is listed and explained.
