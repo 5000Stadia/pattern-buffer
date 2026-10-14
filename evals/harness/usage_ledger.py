@@ -72,9 +72,9 @@ def record(provider: str, model: str, usage: Mapping[str, Any] | None,
     means the provider reported nothing, which is counted, not guessed.
 
     The keyword fields are the call's profile (BUILD-PROFILE-V1): ``started``
-    (epoch seconds), ``latency_s``, ``outcome`` (``ok``, ``timeout`` or
-    ``error``), the prompt and response sizes, and the claude CLI's own
-    ``num_turns`` and durations. Each is ``None`` when the caller did not
+    (epoch seconds), ``latency_s``, ``outcome`` (``ok``, ``timeout``,
+    ``error``, ``multi_turn`` or ``parse_failure``; BARE-CALL-V1), the prompt
+    and response sizes, and the claude CLI's own ``num_turns`` and durations. Each is ``None`` when the caller did not
     measure it. ``effort`` (STAGE-MODELS-V1) is the ``--effort`` the call ran at;
     ``None`` is the CLI's default. The current ``label`` is written beside them. None of them
     touches ``snapshot()``."""

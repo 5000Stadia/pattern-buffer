@@ -307,11 +307,20 @@ def claude_model(prompt: str, schema: dict) -> dict:
         turns = extras["num_turns"]
         multi_turn = (not _legacy() and proc.returncode == 0
                       and turns is not None and turns > 1)
+        # BARE-CALL-V1 r1.3: every other zero-exit reply is parsed before its
+        # receipt is written, so a reply that fails to parse reads parse_failure
+        parsed: dict | None = None
+        parse_err: Exception | None = None
+        if proc.returncode == 0 and not multi_turn:
+            try:
+                parsed = _extract_json(text)
+            except (ModelShimError, json.JSONDecodeError) as exc:
+                parse_err = exc
+        outcome = ("error" if proc.returncode != 0 else "multi_turn" if multi_turn
+                   else "parse_failure" if parse_err is not None else "ok")
         usage_ledger.record("claude", model, usage, cost, started=started, latency_s=latency,
-                            outcome=("multi_turn" if multi_turn
-                                     else "ok" if proc.returncode == 0 else "error"),
-                            prompt_chars=len(full), response_chars=len(text), effort=effort,
-                            **extras)
+                            outcome=outcome, prompt_chars=len(full),
+                            response_chars=len(text), effort=effort, **extras)
         if multi_turn:
             last_err = ModelShimError(f"claude reported num_turns={turns}; one turn expected")
             logger.warning("model shim multi-turn answer rejected (attempt %d): "
@@ -333,12 +342,11 @@ def claude_model(prompt: str, schema: dict) -> dict:
             )
             logger.warning("model shim attempt %d failed: %s", attempt, last_err)
             continue
-        try:
-            return _extract_json(text)
-        except (ModelShimError, json.JSONDecodeError) as exc:
-            last_err = exc
-            logger.warning("model shim parse failure (attempt %d): %s", attempt, exc)
-            full += "\n\nYour previous reply was not valid JSON. JSON object ONLY."
+        if parse_err is None:
+            return parsed
+        last_err = parse_err
+        logger.warning("model shim parse failure (attempt %d): %s", attempt, parse_err)
+        full += "\n\nYour previous reply was not valid JSON. JSON object ONLY."
     raise ModelShimError(f"model call failed after retries: {last_err}")
 
 

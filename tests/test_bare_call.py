@@ -145,6 +145,47 @@ def test_3_num_turns_one_is_ok_and_absent_is_accepted_as_null(monkeypatch, tmp_p
     assert absent["outcome"] == "ok" and absent["num_turns"] is None
 
 
+# 3b ------------------------------------------------------- parse failures
+
+def test_3b_a_parse_failure_then_a_good_reply_records_both(monkeypatch, tmp_path):
+    _patch(monkeypatch, Fake([_env_line("not json"), _env_line('{"good": 2}')]))
+    assert model_shim.claude_model("p", {}) == {"good": 2}
+    assert [l["outcome"] for l in _lines(tmp_path)] == ["parse_failure", "ok"]
+
+
+def test_3b_three_parse_failures_raise_after_three_lines(monkeypatch, tmp_path):
+    _patch(monkeypatch, Fake([_env_line("not json")]))
+    with pytest.raises(model_shim.ModelShimError, match="after retries"):
+        model_shim.claude_model("p", {})
+    assert [l["outcome"] for l in _lines(tmp_path)] == ["parse_failure"] * 3
+
+
+def test_3b_a_good_reply_is_one_ok(monkeypatch, tmp_path):
+    _patch(monkeypatch, Fake([_env_line(num_turns=1)]))
+    assert model_shim.claude_model("p", {}) == {"ok": True}
+    assert [l["outcome"] for l in _lines(tmp_path)] == ["ok"]
+
+
+@pytest.mark.parametrize("legacy", [True, False])
+def test_3b_legacy_and_absent_turn_count_replies_are_parsed_first(monkeypatch, tmp_path,
+                                                                  legacy):
+    """pbr: precedence is timeout, error, bare multi_turn, then every zero-exit
+    reply is parsed, so legacy and absent-num_turns replies are covered."""
+    if legacy:
+        monkeypatch.setenv("PB_SHIM_LEGACY", "1")
+    _patch(monkeypatch, Fake([_env_line("not json"), _env_line()]))
+    assert model_shim.claude_model("p", {}) == {"ok": True}
+    lines = _lines(tmp_path)
+    assert [l["outcome"] for l in lines] == ["parse_failure", "ok"]
+    assert lines[0]["num_turns"] is None
+
+
+def test_3b_a_multi_turn_reply_that_also_fails_to_parse_is_multi_turn(monkeypatch, tmp_path):
+    _patch(monkeypatch, Fake([_env_line("not json", num_turns=2), _env_line()]))
+    assert model_shim.claude_model("p", {}) == {"ok": True}
+    assert [l["outcome"] for l in _lines(tmp_path)] == ["multi_turn", "ok"]
+
+
 # 3a ------------------------------------------------------------ environment
 
 def test_3a_child_env_holds_only_the_allowlist(monkeypatch):
