@@ -874,6 +874,7 @@ class Ingestor:
         prev_inline = self.classify_inline
         if classify in ("batch", "defer", "rules"):
             self.classify_inline = False
+        head_before = self._buffer.head()
         prev_collect = self._classify_collect   # save/restore (re-entrancy-safe)
         self._classify_collect = collect
         prev_cursor_auth = self._cursor_authoritative
@@ -896,6 +897,8 @@ class Ingestor:
                 appended.extend(self._ingest_item(item, frame))
             if collect:
                 self._classifier.classify_rows(collect, model=(classify == "batch"))
+            elif collect is None and not self.classify_inline:
+                self._classify_guarded_since(head_before)
             return appended
         finally:
             # Always reflect THIS call's skips, even if an item raised mid-batch
@@ -906,6 +909,18 @@ class Ingestor:
             self._extracted = prev_extracted
             self.last_skipped = list(self._skipped or [])
             self._skipped = None
+
+    def _classify_guarded_since(self, head_before: int) -> None:
+        """SESSION-GUARDRAILS-V1: at the end of a call whose classification was
+        deferred (neither inline nor collected for a per-call batch), classify
+        every row the call appended, by log position and whatever wrote it (the
+        gate, ``add_alias``, ``maybe_same_as`` evidence, the §12 side rows,
+        ``_declare``), when a guardrail decides it. Ambiguous rows stay
+        unclassified for the seal / ``classify_all``; already-classified rows
+        are skipped; the model is never called."""
+        for row in self._buffer.rows_after(head_before):
+            if self._classifier.get(row.id) is None:
+                self._classifier.classify_if_guarded(row)
 
     # ------------------------------------------------- atomic (§B / §C)
 
@@ -1040,6 +1055,7 @@ class Ingestor:
         collect: list[Assertion] | None = [] if classify in ("batch", "rules") else None
         prev_inline = self.classify_inline
         self.classify_inline = False
+        head_before = self._buffer.head()
         prev_collect = self._classify_collect
         self._classify_collect = collect
         prev_cursor_auth = self._cursor_authoritative
@@ -1057,6 +1073,8 @@ class Ingestor:
                     appended.append(truth.retract(op["assertion_id"], op["reason"]))
             if collect:
                 self._classifier.classify_rows(collect, model=(classify == "batch"))
+            elif collect is None:
+                self._classify_guarded_since(head_before)
             return appended
         finally:
             self.classify_inline = prev_inline

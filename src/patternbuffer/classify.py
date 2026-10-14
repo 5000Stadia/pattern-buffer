@@ -203,6 +203,23 @@ class Classifier:
         self._store(c)
         return c
 
+    def classify_if_guarded(self, row: Assertion) -> Classification | None:
+        """SESSION-GUARDRAILS-V1: apply only the deterministic guardrails.
+
+        When a guardrail decides the row, store and return the same
+        ``Classification`` that ``classify`` / ``classify_rows`` would store for
+        it. Otherwise return ``None``: no model call, nothing stored."""
+        verdict = self._guardrails(row)
+        if verdict is None:
+            return None
+        durability, confidence = verdict
+        c = Classification(
+            row.id, durability, confidence,
+            durability == CONSTITUTIVE and confidence < _REVIEW_FLOOR,
+        )
+        self._store(c)
+        return c
+
     def _ask_model(self, row: Assertion) -> tuple[str, float]:
         prompt = (
             "Classify the lifetime of this fact about a world.\n"

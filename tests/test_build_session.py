@@ -35,10 +35,14 @@ def test_session_defers_then_seal_classifies(world):
     assert receipt["outcome"] == "build_open"
     p.ingest_structured(_items(3))          # default classify= — session wins
     rows = [r for r in world.buffer.all_rows() if r.seq > receipt["since_seq"]]
-    assert rows and all(world.classifier.get(r.id) is None for r in rows)
+    # SESSION-GUARDRAILS-V1: a guardrail-decided row (the structural `kind`) is
+    # classified at ingest; only the ambiguous rows wait for the seal.
+    pending = [r for r in rows if world.classifier._guardrails(r) is None]
+    assert pending and len(pending) < len(rows)
+    assert all(world.classifier.get(r.id) is None for r in pending)
     sealed = p.seal_build()
     assert sealed["outcome"] == "sealed" and sealed["scope"] == "session"
-    assert sealed["classified"] == len(rows)
+    assert sealed["classified"] == len(pending)
     assert all(world.classifier.get(r.id) is not None for r in rows)
     assert world.ingestor.classify_inline is True      # toggle restored
 
@@ -86,8 +90,11 @@ def test_per_call_rules_inside_session_composes(world):
 def test_scope_all_sweeps_presession_deferred(world):
     p = world.porcelain
     p.ingest_structured(_items(1, prefix="obj:pre"), classify="defer")
-    pre = [r for r in world.buffer.visible() if r.entity == "obj:pre_0"]
-    assert all(world.classifier.get(r.id) is None for r in pre)
+    # (the guardrail-decided `kind` row is classified at ingest; the ambiguous
+    # `state` row is what stays pending until the sweep)
+    pre = [r for r in world.buffer.visible() if r.entity == "obj:pre_0"
+           and r.attribute == "state"]
+    assert pre and all(world.classifier.get(r.id) is None for r in pre)
     p.begin_build()
     p.ingest_structured(_items(1, prefix="obj:in"))
     p.seal_build(scope="all")

@@ -778,10 +778,15 @@ STORED = {
 #: left out. The spec's 84, 98, 92, 287, 285 counted that one pair (the vaults) in
 #: four registries (r23 run1, run2, par1b, par2b). r2.2 bars event against
 #: non-event; before it the counts were 83, 97, 92, 286, 284.
-CANDIDATES = {"r23-run1": 65, "r23-run2": 77, "r26-seq": 73, "r26-par1b": 228, "r26-par2b": 208}
+#: r26-par1b 228 -> 231: SESSION-GUARDRAILS-V1, see SPLIT_PAIRS below.
+CANDIDATES = {"r23-run1": 65, "r23-run2": 77, "r26-seq": 73, "r26-par1b": 231, "r26-par2b": 208}
 BATCHES = {"r23-run1": 3, "r23-run2": 4, "r26-seq": 3, "r26-par1b": 10, "r26-par2b": 9}
 GOLD_DIFFERENT = {"r23-run1": 4, "r23-run2": 8, "r26-seq": 4, "r26-par1b": 15, "r26-par2b": 8}
-SPLIT_PAIRS = {"r23-run1": 0, "r23-run2": 0, "r26-seq": 0, "r26-par1b": 4, "r26-par2b": 7}
+#: r26-par1b split pairs 4 -> 5 (SESSION-GUARDRAILS-V1: the seeded scratch world's
+#: guardrail `kind` rows are now classified at the deferred call, so reconcile
+#: blocks one merge, as it does in a classified world; classify_all gives the same
+#: numbers. The old 4 measured a never-classified world, every row read as STATE.)
+SPLIT_PAIRS = {"r23-run1": 0, "r23-run2": 0, "r26-seq": 0, "r26-par1b": 5, "r26-par2b": 7}
 ORACLE_F1_FLOOR = {"r26-par1b": 0.8483, "r26-par2b": 0.8339}
 
 
@@ -812,7 +817,7 @@ def test_pass_mark_1_candidate_recall_and_counts(oracle_effects, name):
 
 
 def test_pass_mark_1_totals():
-    assert sum(SPLIT_PAIRS.values()) == 11 and sum(GOLD_DIFFERENT.values()) == 39
+    assert sum(SPLIT_PAIRS.values()) == 12 and sum(GOLD_DIFFERENT.values()) == 39
     assert sum(GOLD_DIFFERENT.values()) + 4 == 43     # plus the held-apart vault pair, four times
 
 

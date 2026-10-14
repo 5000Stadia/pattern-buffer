@@ -143,7 +143,10 @@ def test_s1_o1a_a_deferred_move_has_its_record(world):
     assert list(before) == ["event:walk_1"]
     assert {r.attribute for r in before["event:walk_1"]} == {
         "kind", "agent", "origin", "destination"}
-    assert all(w.classifier.get(r.id) is None for r in before["event:walk_1"])
+    # SESSION-GUARDRAILS-V1: a deferred call classifies the guardrail rows at the
+    # call, and an event row is one (EVENT), so the records are classified
+    # already; classify_all() has nothing left to change.
+    assert all(w.classifier.durability(r.id) == EVENT for r in before["event:walk_1"])
     w.classifier.classify_all()
     assert all(w.classifier.durability(r.id) == EVENT for r in before["event:walk_1"])
     assert w.indexes.event_records() == before
@@ -689,7 +692,11 @@ def test_s4_o4h_identity_sees_an_events_kind(tmp_path, build):
     try:
         _seed_wren(w, build=build)
         event_rows = [r for r in w.buffer.all_rows() if r.entity == "event:wren"]
-        assert all((w.classifier.get(r.id) is None) == build for r in event_rows)
+        # SESSION-GUARDRAILS-V1: in a session only the rows no guardrail decides
+        # wait for the seal; the guardrail rows are classified at ingest.
+        assert all((w.classifier.get(r.id) is None)
+                   == (build and w.classifier._guardrails(r) is None)
+                   for r in event_rows)
         out = w.porcelain.reconcile()
         assert out["merges"] == 0
         assert w.registry.resolve("event:wren") != w.registry.resolve("person:wren")

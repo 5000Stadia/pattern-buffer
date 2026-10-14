@@ -1159,7 +1159,9 @@ def test_s8_a_tracking_sweep_judges_only_the_facts(tmp_path):
     w = _tracked_world(tmp_path, stub)
     w.ingest_structured(_TRACKED_WRITES, classify="defer")
     calls = len(stub.calls)
-    assert w.classifier.classify_all() == 10
+    # SESSION-GUARDRAILS-V1: the five stamps (guardrail STATE 0.5) are classified
+    # at the deferred call, so classify_all() finishes only the five facts.
+    assert w.classifier.classify_all() == 5
     assert len(stub.calls) - calls == 5
     stamps = [r for r in w.buffer.all_rows() if r.attribute == "learned_at_wallclock"]
     assert len(stamps) == 5

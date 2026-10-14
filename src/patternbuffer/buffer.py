@@ -597,6 +597,11 @@ class PatternBuffer:
         """The full log in append order (dump/rebuild substrate)."""
         return self._select("", ())
 
+    def rows_after(self, seq: int) -> list[Assertion]:
+        """Every row with ``seq`` above the given one, in append order (the
+        rows a call appended, when ``seq`` is the head before it)."""
+        return self._select("WHERE a.seq > ?", (seq,))
+
     def visible(
         self,
         *,

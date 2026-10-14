@@ -337,7 +337,10 @@ def test_abort_open_build_on_shutdown_leaves_rows_unclassified(tmp_path):
         {"entity": "obj:ghost", "attribute": "state", "value": "half",
          "valid_from": 1.0}],
         "classify": "defer"})
-    row_ids = [r.id for r in w.buffer.visible() if r.entity == "obj:ghost"]
+    # SESSION-GUARDRAILS-V1: the guardrail-decided `kind` row is classified at
+    # the ingest call; the ambiguous `state` row is what the abort leaves alone.
+    row_ids = [r.id for r in w.buffer.visible()
+               if r.entity == "obj:ghost" and r.attribute == "state"]
     assert row_ids
     w.close()                                     # server shutdown: abort, close
     assert w.porcelain._build_head is None        # session did not survive
