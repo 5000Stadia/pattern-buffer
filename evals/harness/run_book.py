@@ -79,7 +79,14 @@ STAGES = ("pass0", "pass1", "escape_repair", "commit", "audit")
 # BUILD-LIBRARY-V1 §7: the pipelines a run can use; INGEST-V2 is the default.
 PIPELINES = ("ingest-v2", "library")
 LIBRARY_STAGES = ("registry", "extract", "commit")
-LIBRARY_MAX_WORDS = 1500
+# BUILD-DEFAULTS-V1: the library pipeline's defaults are the speed comparison's
+# setting (iii), the fastest at equal quality (evals/results/2026-10-14-speed-compare).
+LIBRARY_MAX_WORDS = 750
+LIBRARY_EXTRACT_WORKERS = 8
+LIBRARY_CLASSIFY_WORKERS = 4
+# The chunk size of every library run that predates BUILD-SPEED-V1 and so
+# recorded no max_words: re-planning one must cut it as it was built.
+PRE_SPEED_MAX_WORDS = 1500
 LIBRARY_MANIFEST_FILE = "manifest.json"
 
 # R26's measured sequential build of The Last Honest Meter: its size and wall
@@ -286,7 +293,8 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
              pass0: str = "sequential", merge_gate: bool = False, glean: bool = False,
              model_name: str = "injected", profile: bool = True,
              pipeline: str = "ingest-v2", max_words: int = LIBRARY_MAX_WORDS,
-             classify_workers: int = 1, extract_workers: int = 4) -> dict[str, Any]:
+             classify_workers: int = LIBRARY_CLASSIFY_WORKERS,
+             extract_workers: int = LIBRARY_EXTRACT_WORKERS) -> dict[str, Any]:
     """Build the book in ``book_dir`` into ``out_dir`` with ``model``; return meta.
 
     Raises ``BookRefused`` before any model call for a book it will not build,
@@ -311,7 +319,8 @@ def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, di
                             glean=glean, model_name=model_name, max_words=max_words,
                             classify_workers=classify_workers,
                             extract_workers=extract_workers)
-    if (max_words, classify_workers, extract_workers) != (LIBRARY_MAX_WORDS, 1, 4):
+    if (max_words, classify_workers, extract_workers) != (
+            LIBRARY_MAX_WORDS, LIBRARY_CLASSIFY_WORKERS, LIBRARY_EXTRACT_WORKERS):
         raise BookRefused("--max-words, --classify-workers and --extract-workers are "
                           "--pipeline library options; INGEST-V2 takes none of them")
     from audit import run_audit
@@ -459,7 +468,7 @@ def library_chunks(run_dir: str | Path, book_plan: BookPlan) -> list[tuple[int, 
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     text = dict(book_plan.chapters)
     registry = build.Registry.from_manifest(manifest, text)
-    chunks = build.plan(text, registry, max_words=meta.get("max_words", LIBRARY_MAX_WORDS))
+    chunks = build.plan(text, registry, max_words=meta.get("max_words", PRE_SPEED_MAX_WORDS))
     return [(c.chapter, c.text) for c in chunks]
 
 
@@ -470,8 +479,9 @@ def _attempts_json(result: Any) -> list[dict[str, Any]]:
 
 def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
                  pass0: str, merge_gate: bool, glean: bool, model_name: str,
-                 max_words: int = LIBRARY_MAX_WORDS, classify_workers: int = 1,
-                 extract_workers: int = 4) -> dict[str, Any]:
+                 max_words: int = LIBRARY_MAX_WORDS,
+                 classify_workers: int = LIBRARY_CLASSIFY_WORKERS,
+                 extract_workers: int = LIBRARY_EXTRACT_WORKERS) -> dict[str, Any]:
     """``run_book(pipeline="library")``: the book built with ``patternbuffer.build``.
 
     Stages (receipted like INGEST-V2's): ``registry`` (the category passes),
@@ -573,6 +583,8 @@ def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str
             "gate_refused": sum(len(r.gate_refused) for r in results),
             "refused_lines": sum(len(r.refused) for r in results),
             "max_words": max_words,
+            "extract_workers": extract_workers,
+            "classify_workers": classify_workers,
             "timings": timings,
             "receipt": receipt.total(),
         }
@@ -608,11 +620,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--max-words", type=int, default=LIBRARY_MAX_WORDS,
                     help="library pipeline: the most words in a chunk, an int of at least 100 "
                          f"(default {LIBRARY_MAX_WORDS})")
-    ap.add_argument("--classify-workers", type=int, default=1,
+    ap.add_argument("--classify-workers", type=int, default=LIBRARY_CLASSIFY_WORKERS,
                     help="library pipeline: parallel classification batch calls at commit "
-                         "(default 1, serial)")
-    ap.add_argument("--extract-workers", type=int, default=4,
-                    help="library pipeline: parallel chunk extraction calls (default 4)")
+                         f"(default {LIBRARY_CLASSIFY_WORKERS}; 1 is serial)")
+    ap.add_argument("--extract-workers", type=int, default=LIBRARY_EXTRACT_WORKERS,
+                    help="library pipeline: parallel chunk extraction calls "
+                         f"(default {LIBRARY_EXTRACT_WORKERS})")
     args = ap.parse_args(argv)
     if args.max_words < 100:
         ap.error("--max-words must be an integer of at least 100")

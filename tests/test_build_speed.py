@@ -323,13 +323,15 @@ def test_6_workers_one_keeps_todays_batch_size_handling(worlds):
 # ---------------------------------------------------------------- 7. harness
 
 
-def test_7_defaults_reproduce_todays_argv_and_calls():
+def test_7_defaults_are_setting_iii_and_the_old_setting_is_reachable():
+    """BUILD-DEFAULTS-V1: no flags give setting (iii); flags still reach the old one."""
     args = rb.parse_args(["--book", "x", "--out", "y"])
-    assert (args.max_words, args.classify_workers, args.extract_workers) == (1500, 1, 4)
-    assert args.max_words == rb.LIBRARY_MAX_WORDS
-    args = rb.parse_args(["--book", "x", "--out", "y", "--max-words", "750",
-                          "--classify-workers", "4", "--extract-workers", "8"])
     assert (args.max_words, args.classify_workers, args.extract_workers) == (750, 4, 8)
+    assert (args.max_words, args.classify_workers, args.extract_workers) == (
+        rb.LIBRARY_MAX_WORDS, rb.LIBRARY_CLASSIFY_WORKERS, rb.LIBRARY_EXTRACT_WORKERS)
+    args = rb.parse_args(["--book", "x", "--out", "y", "--max-words", "1500",
+                          "--classify-workers", "1", "--extract-workers", "4"])
+    assert (args.max_words, args.classify_workers, args.extract_workers) == (1500, 1, 4)
 
 
 @pytest.mark.parametrize("flags", [["--max-words", "99"], ["--max-words", "x"],
@@ -375,20 +377,52 @@ def library_run(tmp_path, *flags):
 
 
 def test_7_the_options_reach_their_calls(tmp_path, spies):
-    meta = library_run(tmp_path, "--max-words", "750", "--classify-workers", "4",
-                       "--extract-workers", "8")
-    assert spies["plan"] == {"max_words": 750}
-    assert spies["extract"] == {"workers": 8}
-    assert spies["classify_all"] == ((), {"batch_size": 40, "workers": 4})
-    assert meta["max_words"] == 750
-
-
-def test_7_the_defaults_reach_the_same_calls_as_before(tmp_path, spies):
-    meta = library_run(tmp_path)
+    meta = library_run(tmp_path, "--max-words", "1500", "--classify-workers", "1",
+                       "--extract-workers", "4")
     assert spies["plan"] == {"max_words": 1500}
     assert spies["extract"] == {"workers": 4}
     assert spies["classify_all"] == ((), {"batch_size": 40, "workers": 1})
-    assert meta["max_words"] == 1500
+    assert (meta["max_words"], meta["extract_workers"], meta["classify_workers"]) == (1500, 4, 1)
+
+
+def test_7_the_defaults_reach_their_calls_and_meta(tmp_path, spies):
+    meta = library_run(tmp_path)
+    assert spies["plan"] == {"max_words": 750}
+    assert spies["extract"] == {"workers": 8}
+    assert spies["classify_all"] == ((), {"batch_size": 40, "workers": 4})
+    assert (meta["max_words"], meta["extract_workers"], meta["classify_workers"]) == (750, 8, 4)
+
+
+def test_7_an_older_run_is_re_planned_at_its_own_chunk_size(tmp_path, spies):
+    """BUILD-DEFAULTS-V1 §3: a run whose meta.json has no max_words predates
+    BUILD-SPEED-V1 and was cut at 1500; a recorded value is used as it is."""
+    library_run(tmp_path)
+    out, book = tmp_path / "out", rb.load_book(tmp_path / "toybook")
+    meta = json.loads((out / "meta.json").read_text())
+    del meta["max_words"]
+    (out / "meta.json").write_text(json.dumps(meta))
+    assert rb.library_chunks(out, book)
+    assert spies["plan"] == {"max_words": rb.PRE_SPEED_MAX_WORDS} == {"max_words": 1500}
+    meta["max_words"] = 750
+    (out / "meta.json").write_text(json.dumps(meta))
+    rb.library_chunks(out, book)
+    assert spies["plan"] == {"max_words": 750}
+
+
+def test_7_ingest_v2_takes_its_defaults(tmp_path, monkeypatch):
+    """The INGEST-V2 refusal compares against the constants: no speed options
+    pass it, and the run goes on to read the book."""
+    class Reached(Exception):
+        pass
+
+    def load_book(_):
+        raise Reached
+
+    monkeypatch.setattr(rb, "load_book", load_book)
+    model = FakeModel(chunks=TOY_EXTRACT, categories=TOY_CATEGORIES)
+    with pytest.raises(Reached):
+        rb.run_book(tmp_path / "book", tmp_path / "o", model)
+    assert model.prompts == []
 
 
 def test_7_run_book_refuses_bad_values_before_any_call(tmp_path):
@@ -399,14 +433,15 @@ def test_7_run_book_refuses_bad_values_before_any_call(tmp_path):
         with pytest.raises(rb.BookRefused):
             rb.run_book(book, tmp_path / "o", model, pipeline="library", **kw)
     with pytest.raises(rb.BookRefused, match="--pipeline library options"):
-        rb.run_book(book, tmp_path / "o", model, max_words=750)
+        rb.run_book(book, tmp_path / "o", model, max_words=1500)
     assert model.prompts == [] and not (tmp_path / "o").exists()
 
 
-@pytest.mark.parametrize("kw", [{"max_words": 1500.0}, {"classify_workers": True},
-                                {"extract_workers": 4.0}, {"max_words": True}])
+@pytest.mark.parametrize("kw", [{"max_words": 750.0}, {"classify_workers": 4.0},
+                                {"classify_workers": True}, {"extract_workers": 8.0},
+                                {"max_words": True}])
 def test_7_default_equal_invalid_values_are_refused_on_ingest_v2_too(tmp_path, kw):
-    """pbr (code review): 1500.0, True and 4.0 compare equal to the defaults, so a
+    """pbr (code review): 750.0, 4.0 and 8.0 compare equal to the defaults, so a
     tuple-equality check let them into an INGEST-V2 run. Types are checked first,
     whatever the pipeline: no call, no output."""
     book = tb.write_book(tmp_path / "toybook")
