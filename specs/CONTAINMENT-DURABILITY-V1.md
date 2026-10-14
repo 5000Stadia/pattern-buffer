@@ -1,6 +1,6 @@
 # CONTAINMENT-DURABILITY-V1: a movable's location is never made permanent by a guess
 
-**Status:** r1.5 (from the build's corpus replay: the floor rises from 0.9 to 0.95). r1.4 (pbr r1.3: `fixture` is typed exactly, round-trips through JSON, and travels to commit on the registry's identity record). r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
+**Status:** r1.6 (pbr's RED on BUILD-LIBRARY-V1 r1.8.2: a host declaration may be dated, and counts from its own valid time, so a gate-timed manifest fixture still declares). r1.5 (from the build's corpus replay: the floor rises from 0.9 to 0.95). r1.4 (pbr r1.3: `fixture` is typed exactly, round-trips through JSON, and travels to commit on the registry's identity record). r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
 - no per-world floor (`attr:in` is inviolable core);
 - the being and fixture tests use only what the classifier can see, bounded at the row's own log position;
 - no sidecar schema change;
@@ -100,8 +100,22 @@ fold.
         `buffer.visible(entity=row.entity, attribute="fixture", frame="canon", asserted_as_of=row.seq)`:
         the declarations visible when the containment row itself was written. Retractions are
         honoured, as `visible` already does.
-     2. Of those, only timeless literal-boolean rows count. The **latest-asserted** one decides: if
-        it is `true`, the row is **CONSTITUTIVE, 1.0**.
+     2. Of those, only literal-boolean rows **in force at the containment row's valid time** count
+        *(r1.6)*. A declaration is in force when it is open-ended (`valid_to` null) and either
+        timeless (`valid_from` null) or dated no later than the containment row (the row's own
+        `valid_from` is set and the declaration's `valid_from` is at or before it). A dated
+        declaration never applies to a timeless containment row, and a closed declaration
+        (`valid_to` set) never counts. The **latest-asserted** counted one decides: if it is
+        `true`, the row is **CONSTITUTIVE, 1.0**.
+        - *(r1.6)* **Why dated declarations now count.** BUILD-LIBRARY-V1 r1.8 dates every identity
+          row at its entry's gate, so a story's later reader can't see an entry before the text
+          meets it. A timeless `fixture` row would list the entry at every earlier horizon (pbr
+          reproduced `entities(canon, as_of=1.0)` holding a well first met at 40.0), which is an
+          identity leak. Dating the declaration closes the leak, and this rule keeps it declaring.
+        - *(r1.6)* **Why this is still only the host's.** Every route a model has to a `fixture`
+          row stays closed (rules r1.2 and r1.3: `fixture_not_host`, `grammar_problem()`, and
+          commit's canonicalized check), so every counted row is a host's. The valid-time test only
+          stops a declaration applying to a time it doesn't cover.
      3. A `false` row, or no row, means no fixture.
    - Because the read is bounded at `row.seq`, a declaration written after the containment row
      never reclassifies it, on first classification or on `rebuild()`. A later `fixture = false`
@@ -165,6 +179,11 @@ fold.
    - a `fixture = true` ingested **after** the containment row doesn't reclassify it, on first
      classification or on `rebuild()`;
    - `true` then `false` (both before the row): the latest decides, so no fixture;
+   - *(r1.6, replacing r1.1's "not timeless" case)* dated declarations: `fixture = true` valid from
+     1.0, open-ended, then `obj:door in place:cell` at 2.0 is CONSTITUTIVE 1.0 with no model call;
+     valid from 3.0 (later than the row) goes to the model; valid 1.0 to 1.5 (closed) goes to the
+     model; valid from 1.0 against a timeless containment row goes to the model. The non-boolean
+     and non-canon cases stay as in r1.1;
    - a retracted `true` doesn't count;
    - *(r1.2, pbr)* `ingest_structured([obj:page · fixture · true], extracted=True)` and the prose
      `ingest()` path are skipped with `fixture_not_host`, writing nothing. A later
