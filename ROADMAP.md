@@ -146,6 +146,7 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
   - `disposition` for a being's temperament.
 
   Each gets a recipe-facts golden for switched-light, code-lock and take-and-drop, checked in two lanes: the golden JSON on every change, and the story text through `patternbuffer.build` on demand.
+  - Settled with holo-emitter (2026-10-14, m5f3da8, m342c1a): `outdoors` is a timeless literal fact, not an entity field; a code is a canon row plus the same row in `knows:<who>`; `fixture` is sourced from the host's manifest, never a sentence; held things are `held_by` in the golden (what extraction writes), and the grader compares containment on the folded location, so construct's `in · person:player` still matches.
 
 ## Later
 
