@@ -43,6 +43,7 @@ from patternbuffer.build.labels import labelled_context
 from patternbuffer.build.plan import Chunk
 from patternbuffer.build.registry import Registry
 from patternbuffer.build.text import Book
+from patternbuffer.vocab import Vocabulary
 
 logger = logging.getLogger(__name__)
 
@@ -217,15 +218,18 @@ class ChunkResult:
     attempts: tuple[Attempt, ...] = ()
 
 
-def build_prompt(chunk: Chunk, book: Book) -> str:
-    """The chunk's prompt: the stable head, the rules, its candidates and its
-    numbered passage."""
+def build_prompt(chunk: Chunk, book: Book, vocabulary: Vocabulary | None = None) -> str:
+    """The chunk's prompt: the stable head, the rules, (given a ``vocabulary``)
+    its section of attribute names, then the chunk's candidates and its
+    numbered passage. Without a vocabulary the prompt is what it always was,
+    byte for byte (RECIPE-VOCAB-V1 §5)."""
     rows = []
     for c in chunk.candidates:
         kind = f"{c.type}, {c.species}" if c.species else c.type
         rows.append(f"{c.id} | {kind} | {'; '.join(c.names)} | from s{c.gate}")
     passage = book.numbered(chunk.chapter, chunk.first_sentence, chunk.last_sentence)
-    return (f"{EXTRACT_HEAD}\n\n{_RULES}\n\n"
+    section = f"{vocabulary.prompt_section()}\n\n" if vocabulary is not None else ""
+    return (f"{EXTRACT_HEAD}\n\n{_RULES}\n\n{section}"
             "CANDIDATES (id | type | names | gate):\n"
             + ("\n".join(rows) if rows else "(none)")
             + f"\n\nPASSAGE (chunk {chunk.index:02d}, chapter {chunk.chapter}):\n{passage}\n")
@@ -233,7 +237,7 @@ def build_prompt(chunk: Chunk, book: Book) -> str:
 
 def extract(plan: Sequence[Chunk], registry: Registry,
             model: Callable[[str, dict], Any], *, workers: int = 4,
-            retries: int = 1) -> list[ChunkResult]:
+            retries: int = 1, vocabulary: Vocabulary | None = None) -> list[ChunkResult]:
     """Extract every chunk of ``plan`` with ``model``, ``workers`` at a time
     (§4). Each call is labelled ``stage="extract"``, ``unit="chunk:NN"`` and runs
     in its own copy of the caller's context, taken inside that label. Returns
@@ -245,11 +249,16 @@ def extract(plan: Sequence[Chunk], registry: Registry,
     answer that refused the whole chunk (``error`` set) is asked once more, in
     the same label and worker, with the same prompt plus the refusal named; the
     second result replaces the first (§4a). Every call is kept in
-    ``ChunkResult.attempts``."""
+    ``ChunkResult.attempts``.
+
+    ``vocabulary`` (RECIPE-VOCAB-V1 §5) adds the vocabulary's attribute names
+    to every prompt; ``None`` leaves the prompt unchanged."""
     if isinstance(workers, bool) or not isinstance(workers, int) or workers < 1:
         raise ValueError(f"workers must be a positive integer, got {workers!r}")
     if type(retries) is not int or retries not in (0, 1):
         raise ValueError(f"retries must be the int 0 or 1, got {retries!r}")
+    if vocabulary is not None and not isinstance(vocabulary, Vocabulary):
+        raise ValueError(f"vocabulary must be a Vocabulary or None, got {vocabulary!r}")
     chunks = list(plan)
     for chunk in chunks:
         if not (registry.book.has_sentence(chunk.chapter, chunk.first_sentence)
@@ -262,7 +271,8 @@ def extract(plan: Sequence[Chunk], registry: Registry,
         return []
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(labelled_context("extract", f"chunk:{c.index:02d}").run,
-                               _extract_chunk, c, registry, model, retries) for c in chunks]
+                               _extract_chunk, c, registry, model, retries, vocabulary)
+                   for c in chunks]
         return [f.result() for f in futures]
 
 
@@ -274,8 +284,9 @@ def retry_prompt(prompt: str, error: str) -> str:
 
 
 def _extract_chunk(chunk: Chunk, registry: Registry,
-                   model: Callable[[str, dict], Any], retries: int = 0) -> ChunkResult:
-    prompt = build_prompt(chunk, registry.book)
+                   model: Callable[[str, dict], Any], retries: int = 0,
+                   vocabulary: Vocabulary | None = None) -> ChunkResult:
+    prompt = build_prompt(chunk, registry.book, vocabulary)
     attempts: list[Attempt] = []
     result, returned = _attempt(chunk, registry, model, prompt, attempts)
     if retries and returned and result.error is not None:
