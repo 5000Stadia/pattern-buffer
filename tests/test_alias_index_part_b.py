@@ -516,8 +516,12 @@ EXPECTED = {
     "r23-run1": {"today": (0.7517, 0, 1), "reconcile": (0.7471, 1, 0), "default": (0.7517, 0, 0)},
     "r23-run2": {"today": (0.7347, 0, 1), "reconcile": (0.7303, 1, 0), "default": (0.7347, 0, 0)},
     "r26-seq": {"today": (0.7517, 0, 0), "reconcile": (0.7517, 0, 0), "default": (0.7517, 0, 0)},
-    "r26-par1b": {"today": (0.8320, 0, 13), "reconcile": (0.8264, 1, 4),
-                  "default": (0.8320, 0, 4)},
+    # r26-par1b reconcile/default fragmented 4 -> 5 (SESSION-GUARDRAILS-V1: guardrail
+    # `kind` rows are now classified at the deferred call, so one reconcile merge
+    # (23 -> 22) is blocked as in a classified world; classify_all gives the same
+    # numbers; the old 4 measured a never-classified, all-STATE world).
+    "r26-par1b": {"today": (0.8320, 0, 13), "reconcile": (0.8264, 1, 5),
+                  "default": (0.8320, 0, 5)},
     "r26-par2b": {"today": (0.7961, 0, 13), "reconcile": (0.7910, 1, 7),
                   "default": (0.7961, 0, 7)},
 }
