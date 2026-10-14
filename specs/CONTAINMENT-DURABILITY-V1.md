@@ -1,6 +1,12 @@
 # CONTAINMENT-DURABILITY-V1: a movable's location is never made permanent by a guess
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-13. An engine change to the classifier.
+**Status:** r1.1, answering pbr's r1 RED by narrowing:
+- no per-world floor (`attr:in` is inviolable core);
+- the being and fixture tests use only what the classifier can see, bounded at the row's own log position;
+- no sidecar schema change;
+- one floor helper for both classify paths.
+
+For pbr review. Author: pb, 2026-10-13. An engine change to the classifier.
 **Source:** construct's measurement on run 10's played world (m72c587).
 - At low effort, the classifier judged clearly portable objects' containment rows CONSTITUTIVE:
   - `obj:execution_page in obj:book`;
@@ -43,21 +49,44 @@ Four rules, all in `Classifier._guardrails` and the classifier's prompts. Nothin
 fold.
 
 1. **Beings move.** A containment-family row whose subject is a being is **STATE, 0.95**, by
-   guardrail, with no model call. A being is PERSON-ROLES-V1's person test: a `person:` closure
-   member, or a canon kind folded to `person`.
+   guardrail, with no model call.
+   - *(r1.1, pbr)* **A being** here is a subject id in the `person:` namespace, as written on the
+     row. The classifier sees the buffer and attribute semantics only. Identity closure and the
+     kind fold live elsewhere, and the fold reads the classifier, so they aren't used here.
+   - Every being minted by `patternbuffer.build` and by construct is `person:`.
+   - A being under another namespace still goes to the model, where rule 3's floor applies.
 2. **Declared fixtures stay.** A host may declare a thing a fixture: `<entity> · fixture · true`, in
    canon.
    - `fixture` is added to the **structural predicates**, so its own row is CONSTITUTIVE by
      guardrail and never model-judged.
-   - A containment-family row whose subject has a visible canon `fixture = true` row (read directly
-     from the buffer, as of the row being classified, with no fold) is **CONSTITUTIVE, 1.0**.
+   - **The exact check** *(r1.1, pbr)*:
+     1. The classifier reads
+        `buffer.visible(entity=row.entity, attribute="fixture", frame="canon", asserted_as_of=row.seq)`:
+        the declarations visible when the containment row itself was written. Retractions are
+        honoured, as `visible` already does.
+     2. Of those, only timeless literal-boolean rows count. The **latest-asserted** one decides: if
+        it is `true`, the row is **CONSTITUTIVE, 1.0**.
+     3. A `false` row, or no row, means no fixture.
+   - Because the read is bounded at `row.seq`, a declaration written after the containment row
+     never reclassifies it, on first classification or on `rebuild()`. A later `fixture = false`
+     governs only containment rows written after it.
+   - The subject is the id as written, with no closure. A fixture declared on a merged twin
+     doesn't count.
 3. **No guessed permanence for movables.** For every other non-place subject (objects and anything
-   unnamespaced), the model still judges. But a **CONSTITUTIVE verdict with confidence below
-   `CONTAINMENT_CONSTITUTIVE_FLOOR`** is stored as **STATE**, with the model's confidence kept and a
-   `demoted: "containment_floor"` mark on the classification record.
-   - The floor is **0.9** by default, set from construct's corpus (test 6), and can be overridden per
-     world by a durability-pin-style declaration on `attr:in`:
-     `attr:in · constitutive_floor · <0..1>`.
+   unnamespaced), the model still judges.
+   - **A low-confidence CONSTITUTIVE is stored as STATE.** A CONSTITUTIVE verdict with confidence
+     below `CONTAINMENT_CONSTITUTIVE_FLOOR` (a module constant, **0.9**) is stored as **STATE**, with
+     the model's confidence kept.
+   - *(r1.1, pbr)* **One helper.** The normalization is a single function, applied in **both**
+     `classify()` (single row) and `_classify_batch()`, so the two paths can't drift.
+   - **No schema change.** The demotion adds no field to `Classification` or the sidecar, and stored
+     records keep their current shape. Each demotion is logged at `INFO` with the row id and the
+     model's confidence. The corpus test (test 6) recomputes demotions from the archived verdicts it
+     feeds the fake model.
+   - **No per-world floor.** `attr:in` is in the inviolable core, and every semantics declaration
+     on it is refused (`check_declaration_authority`). A per-world floor would need a core exception
+     nothing yet requires, so V1 has none.
+
 4. **The prompt.** Both classifier prompts replace "ambiguous fixture containment -> CONSTITUTIVE"
    with "an object's location is STATE unless the object is clearly built into the place (a door, a
    window, a fixed fitting); when unsure, STATE."
@@ -81,15 +110,23 @@ fold.
 
 ## Tests
 
-1. **Beings:** `person:mara in place:hall` and a `kind = person` NPC's `in` are STATE by guardrail,
-   with no model call.
-2. **Fixtures:** with `obj:door · fixture · true`, `obj:door in place:cell` is CONSTITUTIVE 1.0 with
-   no model call. Without the declaration it goes to the model.
+1. **Beings:** `person:mara in place:hall` is STATE by guardrail, with no model call. *(r1.1)* An
+   `npc:smuggler in place:hall` goes to the model, and a CONSTITUTIVE 0.7 verdict there is demoted
+   by rule 3.
+2. **Fixtures** *(r1.1)*:
+   - with `obj:door · fixture · true` ingested **before** it, `obj:door in place:cell` is
+     CONSTITUTIVE 1.0 with no model call. Without the declaration it goes to the model;
+   - a `fixture = true` ingested **after** the containment row doesn't reclassify it, on first
+     classification or on `rebuild()`;
+   - `true` then `false` (both before the row): the latest decides, so no fixture;
+   - a retracted `true` doesn't count.
 3. **The floor:**
    - a model verdict of CONSTITUTIVE 0.7 on `obj:execution_page in obj:book` is stored STATE, with
      the confidence and the demoted mark;
    - CONSTITUTIVE 0.95 on `obj:barred_door in place:cell` stays CONSTITUTIVE;
-   - a world pin of `constitutive_floor = 0.6` keeps the 0.7 verdict CONSTITUTIVE.
+   - *(r1.1)* the same verdicts through `_classify_batch` give the same stored classes (the
+     single-row and batch paths agree);
+   - *(r1.1)* each demotion logs one `INFO` record naming the row.
 4. **The flicker, end to end:** a page in a book, then a take (`held_by person:player`), then a drop
    (`in place:hall`). With the demotion, the page reads `in place:hall`. Without it (the old rule,
    simulated), it reads `in obj:book`.
