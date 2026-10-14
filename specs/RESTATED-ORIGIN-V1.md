@@ -1,6 +1,6 @@
 # RESTATED-ORIGIN-V1: a move written as both ends keeps only where the thing went
 
-**Status:** r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
+**Status:** r1.3 (pbr's r1.2 RED: the dry run is a dedicated mode with no classification or sidecar work at all, the injected clock isn't called in it, and the host's `attribute_default` is still asked once per attribute, its dry-run answer handed to the real run). r1.2 (pbr's r1.1 RED: the eligible group must see the call's own earlier identity merges and declarations exactly as the real write does, so it is found by a rolled-back dry run of the whole call with ordinary sequential semantics, not by checking each item against the pre-call state). r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
 deterministic, with no model and no prompt change.
 **Source:** construct's R20 run 11 (engine 42d0c23, letter "R20 run 11 … one engine-shaped
 question"), checked by pb in a read-only copy of the play world:
@@ -46,12 +46,29 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
        snapshot with any other view the call mutates;
      - the semantics and identity views are refreshed from the restored log, keyed on the log
        version;
-     - classification is off inside it (`defer`), so no model is called and no verdict is
-       stored;
      - its skip receipts are discarded.
-   - The host's `attribute_default` callback may be asked during the dry run and again during
-     the real run. It must be a pure function of the attribute name, which is already its
-     contract (asked "once per attribute", with no promise about calls).
+   - *(r1.3, pbr)* **A dedicated dry-run mode, not `defer`.** Inside the dry run the ingestor
+     does **no classification work of any kind**. There is no inline, batch or rules
+     classification, and no `_classify_guarded_since`, so `Classifier.classify_if_guarded` and
+     its `_store` are never reached. Nothing touches the classifier's sidecar, memo or verdict
+     state, and there's no commit. The dry run records would-be writes and appends rows only
+     inside its rolled-back unit.
+   - *(r1.3, pbr)* **No external calls in the dry run:**
+     - **The injected clock is not called.** Where the gate would stamp `learned_at_wallclock`
+       from `self._clock()`, the dry run uses a fixed placeholder. The value can't affect any
+       eligibility check, since it is a meta row on the new assertion. The real run calls the
+       clock exactly as today: same count, same values.
+     - **The host's `attribute_default` is asked at most once per attribute, as documented.**
+       The dry run asks it for each attribute's first use and records the answer. The real run
+       takes that recorded answer instead of asking again. An attribute first met only in the
+       real run (impossible, since the real run is the same call) would be asked there.
+     - The build lists every external call the gate path can make (the model, the clock, the
+       `attribute_default` callback, any other injected callable it finds). A test proves the
+       dry run makes none of them except the recorded `attribute_default` asks.
+   - **No trace** now also means: the classifier's sidecar table, in-memory verdicts and memo,
+     and the buffer's log version are unchanged by the dry run alone. Only the rolled-back unit
+     ever saw its rows.
+
    - **Item rejected in the dry run:** an item rejected by any ordinary gate check is never an
      eligible write, so it never joins a group, and its skip is recorded once, by the real run
      (r1.1's 3b holds).
@@ -146,7 +163,14 @@ Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
       alias receipt, the world's dump equals that of a twin world given the same call with the
       dropped items removed by hand (the same rows, ids and seqs);
     - the ingestor's views equal a fresh reopen's;
-    - `attribute_default` is a counting stub, so its call count is reported, not asserted;
+    - *(r1.3)* `attribute_default` is a counting stub, asked exactly once per first-used
+      attribute across the dry run and the real run together;
+    - *(r1.3)* the dry run alone (exercised through a test seam that stops after it) leaves the
+      classifier's sidecar rows, its in-memory verdicts and memo, the buffer's log version and
+      the dump unchanged. That holds for a call with guardrailed rows (a `person:` containment
+      row, a `name` row) and a structural row;
+    - *(r1.3)* observe mode: a counting clock is called the same number of times, and the stored
+      `learned_at_wallclock` values are the same, as for the same call with the rule disabled;
     - a one-item call makes no dry run (spy on `atomic_unit`).
 3b. *(r1.1)* **A rejected change beside a restatement:** origin `ring in obj:belt`, then one call
     with `ring in obj:belt` and `ring in obj:ring` (a self-containment cycle).
