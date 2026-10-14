@@ -29,6 +29,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 from patternbuffer.build.grammar import (
     complete_id,
+    grammar_problem,
     handle_number,
     id_positions,
     is_handle,
@@ -270,6 +271,10 @@ def read_output(chunk: Chunk, out: Any, registry: Registry) -> ChunkResult:
         if got is None:
             continue
         sentence, item = got
+        problem_text = grammar_problem(item)
+        if problem_text is not None:
+            refused.append(Refusal(where, "malformed_line", f"{problem_text}: {raw!r}"))
+            continue
         if not 1 <= sentence <= count:
             refused.append(Refusal(where, "citation_outside_chunk",
                                    f"s{sentence} is not a sentence of this chunk "

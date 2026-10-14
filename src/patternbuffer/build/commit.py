@@ -3,8 +3,10 @@
 The writes, in order:
 
 0. **Shape rows first** for every minted id (:func:`shape_rows`).
-1. **The manifest**: each entry's shape rows, name and alias rows, and role;
-   then each persona's shape rows and name (on the persona id only, k7).
+1. **The manifest**: each entry's shape rows, name and alias rows, and role,
+   then its host `fixture = true` row when the entry declares one
+   (CONTAINMENT-DURABILITY-V1; written with ``extracted=False``); then each
+   persona's shape rows and name (on the persona id only, k7).
 2. **Allocation, before any fact**: each chunk's handles, in (chunk index,
    handle number) order. A pick gets a provisional ``mention:<slug>_<n>`` with
    its shape (2a); an escape joins an earlier escape id or is minted like an
@@ -130,8 +132,10 @@ class _Writer:
         self.kwargs = dict(kwargs)
         self.skipped: list[dict[str, Any]] = []
 
-    def put(self, items: list[dict[str, Any]], at: float | None = None) -> Any:
-        receipt = self.porcelain.ingest_structured(items, at=at, **self.kwargs)
+    def put(self, items: list[dict[str, Any]], at: float | None = None,
+            **override: Any) -> Any:
+        receipt = self.porcelain.ingest_structured(
+            items, at=at, **{**self.kwargs, **override})
         self.skipped.extend(receipt.skipped)
         return receipt
 
@@ -174,7 +178,8 @@ def _ingest_kwargs(ingest_kwargs: Mapping[str, Any] | None) -> dict[str, Any]:
     return dict(ingest_kwargs)
 
 
-def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[str]:
+def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any,
+                canonical_attribute: Callable[[str], str] | None = None) -> set[str]:
     """One item re-validated as ``extract`` checks it (§3, §4, r1.7): an item
     the grammar could write (its keys within ``GRAMMAR_KEYS`` plus
     ``sentence``, each holding what the grammar puts there), citing a sentence
@@ -189,6 +194,10 @@ def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[st
     problem = grammar_problem({k: v for k, v in item.items() if k != "sentence"})
     if problem is not None:
         raise CommitRefused(f"{where} is not a fact item the grammar writes: {problem}")
+    if canonical_attribute is not None and canonical_attribute(item["attribute"]) == "fixture":
+        raise CommitRefused(
+            f"{where}: attribute {item['attribute']!r} is the host's `fixture` declaration "
+            "in this world; a model's item never writes it")
     cited = item.get("sentence")
     if isinstance(cited, bool) or not isinstance(cited, int):
         raise CommitRefused(f"{where} cites no sentence")
@@ -217,7 +226,8 @@ def _check_item(registry: Registry, r: ChunkResult, n: int, item: Any) -> set[st
     return handles
 
 
-def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkResult]:
+def _checked(registry: Registry, results: Sequence[ChunkResult],
+             canonical_attribute: Callable[[str], str] | None = None) -> list[ChunkResult]:
     """The results in chunk order, refused (``CommitRefused``) before any write
     when they could not have come from ``extract`` over this registry's plan
     (r1.7: commit accepts exactly extract's language): every item is one the
@@ -225,7 +235,12 @@ def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkRe
     of every id it names at or before that sentence; every build handle used is
     declared and every declared one used; a pick's candidates are candidates of
     its chunk. A hand-made ``ChunkResult`` passes only what ``extract`` would
-    have accepted."""
+    have accepted.
+
+    ``canonical_attribute`` is the target world's attribute canonicalizer, the
+    one the gate applies on write: an item whose attribute canonicalizes to
+    ``fixture`` is refused (CONTAINMENT-DURABILITY-V1 r1.3), so a world alias
+    such as ``fixed -> fixture`` cannot carry a model's guess past the check."""
     results = list(results)
     for r in results:
         if not isinstance(r, ChunkResult):
@@ -254,7 +269,7 @@ def _checked(registry: Registry, results: Sequence[ChunkResult]) -> list[ChunkRe
             raise CommitRefused(f"chunk {r.index} declares a handle twice or a malformed one")
         used: set[str] = set()
         for n, item in enumerate(r.items):
-            used |= _check_item(registry, r, n, item)
+            used |= _check_item(registry, r, n, item, canonical_attribute)
         if used - set(declared):
             raise CommitRefused(f"chunk {r.index} uses undeclared handles "
                                 f"{sorted(used - set(declared), key=handle_number)}")
@@ -329,7 +344,7 @@ def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
     registry. The registry is not changed: mentions and escapes are drawn from
     a copy of its allocator, after every entry and persona id."""
     kwargs = _ingest_kwargs(ingest_kwargs)
-    ordered = _checked(registry, results)
+    ordered = _checked(registry, results, getattr(world, "canonical_attribute", None))
     times = _times(ordered, time_of)
     writer = _Writer(world, kwargs)
     allocator = registry.allocator()
@@ -339,6 +354,11 @@ def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
         if not ident.is_persona:
             writer.put(_identity_rows(ident.id, ident.type, ident.species, ident.names,
                                       ident.role))
+            if ident.fixture:
+                # CONTAINMENT-DURABILITY-V1 r1.3: the host's declaration, by the
+                # minted id, with host authority whatever `ingest_kwargs` say
+                # (a model's item never reaches this row).
+                writer.put([_literal(ident.id, "fixture", True)], extracted=False)
     for ident in registry.identities:
         if ident.is_persona:
             writer.put(_identity_rows(ident.id, ident.type, ident.species, ident.names, None))

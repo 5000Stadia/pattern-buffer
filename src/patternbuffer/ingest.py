@@ -322,6 +322,8 @@ SKIP_REASONS = frozenset({
                                              # FRAME-CONTINUITY-V1 §3: frame_continues_as)
     "host_only_predicate",                   # FRAME-CONTINUITY-V1 §3 (prose extraction may
                                              # not write frame_continues_as)
+    "fixture_not_host",                      # CONTAINMENT-DURABILITY-V1 §2 (prose extraction
+                                             # may not declare a fixture)
 })
 
 
@@ -1429,6 +1431,12 @@ class Ingestor:
             self._record_skip(entity, attribute, value, "malformed_id")
             return out
 
+        # CONTAINMENT-DURABILITY-V1 §2: `fixture` is a host's declaration, so
+        # an extracted (prose-authored) call never writes it — judged on the
+        # canonical attribute, before anything is written.
+        if attribute == "fixture" and self._extracted:
+            self._record_skip(entity, attribute, value, "fixture_not_host")
+            return out
         # FRAME-SCOPED-IDENTITY-V1 §1(a), at the head of step 9: the canon
         # identity edges are canon-only (identity is canon's; founder decision
         # 1). On the raw ids, after the authority and malformed-id gates (steps

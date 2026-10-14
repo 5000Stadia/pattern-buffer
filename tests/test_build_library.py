@@ -303,6 +303,10 @@ def test_3_validate_reports_every_listed_code():
                         b.Persona("Bo", "Bo ran.", "Ida was the shade.")]),       # name is alias
             E("t8", "person", ["Bo"], "Bo ran.", species="human"),         # species_not_allowed
             E("t9", "person", [], "Bo ran."),                               # missing_field
+            # CONTAINMENT-DURABILITY-V1: the three fixture codes.
+            E("f1", "object", ["Bo"], "Bo ran.", fixture="yes"),            # fixture_not_bool
+            E("f2", "person", ["Bo"], "Bo ran.", fixture=True),             # fixture_on_being
+            E("f3", "group", ["Bo"], "Bo ran.", fixture=True),              # fixture_not_allowed
         ],
         namesakes=[("t4", "nobody", "Bo ran.")])                            # namesake_unknown_key
     problems = manifest.problems(CODES_TEXT)
@@ -1610,13 +1614,13 @@ def test_entries_report_ids_types_anchors_gates_and_personas():
     reg = b.Registry.from_manifest(P, P_TEXT)
     assert reg.entries() == [
         {"id": DUKE, "key": "duke", "type": "person", "species": None,
-         "names": ["Duke Orsino", "Orsino"], "role": None, "anchor": (3, 3), "gate": (3, 1),
+         "names": ["Duke Orsino", "Orsino"], "role": None, "fixture": False, "anchor": (3, 3), "gate": (3, 1),
          "personas": [{"name": "the hooded stranger", "id": STRANGER_ID, "reveal": (3, 2),
                        "gate": (2, 1)}]},
         {"id": "person:orin", "key": "orin", "type": "person", "species": None,
-         "names": ["Orin"], "role": None, "anchor": (1, 2), "gate": (1, 2), "personas": []},
+         "names": ["Orin"], "role": None, "fixture": False, "anchor": (1, 2), "gate": (1, 2), "personas": []},
         {"id": "place:the_mill", "key": "mill", "type": "place", "species": None,
-         "names": ["the mill"], "role": None, "anchor": (1, 1), "gate": (1, 1), "personas": []},
+         "names": ["the mill"], "role": None, "fixture": False, "anchor": (1, 1), "gate": (1, 1), "personas": []},
     ]
 
 

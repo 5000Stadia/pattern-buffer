@@ -24,14 +24,21 @@ NAMESPACE = {"person": "person", "animal": "person", "creature": "person",
 # source must name an entry or persona (r1.7).
 BEING_NAMESPACES = frozenset(NAMESPACE[t] for t in BEINGS)
 
+# The types a host may declare a fixture (CONTAINMENT-DURABILITY-V1 r1.3).
+FIXTURE_TYPES = frozenset({"object", "place"})
+
 # The codes a ManifestError item carries. The first nine are the spec's list
 # (§1); ``species_not_allowed`` (a species on a type other than animal or
 # creature) and ``missing_field`` (a required field absent, empty or of the
 # wrong shape) cover the two refusals §1 states without naming a code.
+# CONTAINMENT-DURABILITY-V1 adds ``fixture_not_bool`` (anything but a real
+# bool), ``fixture_on_being`` (a fixture declared on a being) and
+# ``fixture_not_allowed`` (a fixture on a group or event: only an object or a
+# place can be built into its container).
 CODES = ("unknown_type", "role_as_type", "duplicate_key", "quote_not_found",
          "quote_not_unique", "persona_name_is_alias", "persona_reveal_before_entry",
          "persona_reveal_before_intro", "namesake_unknown_key", "species_not_allowed",
-         "missing_field")
+         "missing_field", "fixture_not_bool", "fixture_on_being", "fixture_not_allowed")
 
 # A type outside the closed set that is a plain word or phrase is read as a
 # role word (§1: "A role word ('condemned man') is refused as a type").
@@ -75,7 +82,9 @@ class Entry:
     """One identity. ``type`` is from the closed set (:data:`TYPES`); ``names``
     lead with the name the id is minted from; ``anchor_quote`` is an exact
     sentence (or a phrase found once) where it appears; ``species`` is allowed
-    for an animal or creature only."""
+    for an animal or creature only; ``fixture`` is a host's declaration that an
+    object or place is built into its container (its containment is permanent;
+    CONTAINMENT-DURABILITY-V1), a real ``bool``, never for a being."""
 
     key: str
     type: str
@@ -84,6 +93,7 @@ class Entry:
     personas: Sequence[Persona] = ()
     role: str | None = None
     species: str | None = None
+    fixture: bool = False
 
     def __post_init__(self) -> None:
         if isinstance(self.names, (list, tuple)):
@@ -175,6 +185,15 @@ class Manifest:
                 elif etype not in SPECIES_TYPES:
                     add(f"{where}.species", "species_not_allowed",
                         f"species {entry.species!r} is allowed only for animal and creature")
+            if type(entry.fixture) is not bool:
+                add(f"{where}.fixture", "fixture_not_bool",
+                    f"fixture must be true or false, not {entry.fixture!r}")
+            elif entry.fixture and etype in BEINGS:
+                add(f"{where}.fixture", "fixture_on_being",
+                    f"a {etype} moves; a fixture is an object or a place")
+            elif entry.fixture and etype in TYPES and etype not in FIXTURE_TYPES:
+                add(f"{where}.fixture", "fixture_not_allowed",
+                    f"fixture is allowed only for object and place, not {etype}")
             names = entry.names if isinstance(entry.names, tuple) else ()
             if not names or not all(isinstance(n, str) and n.strip() for n in names):
                 add(f"{where}.names", "missing_field",
@@ -230,6 +249,7 @@ class Manifest:
                 "key": e.key, "type": e.type,
                 "names": list(e.names) if isinstance(e.names, tuple) else e.names,
                 "anchor_quote": e.anchor_quote, "role": e.role, "species": e.species,
+                "fixture": e.fixture,
                 "personas": [{"name": p.name, "intro_quote": p.intro_quote,
                               "reveal_quote": p.reveal_quote} for p in e.personas],
             } for e in self.entries],
@@ -252,7 +272,8 @@ class Manifest:
                                  names=list(names) if isinstance(names, (list, tuple)) else names,
                                  anchor_quote=raw.get("anchor_quote", ""),
                                  personas=personas, role=raw.get("role"),
-                                 species=raw.get("species")))
+                                 species=raw.get("species"),
+                                 fixture=raw.get("fixture", False)))
         namesakes = [tuple(n) for n in (data.get("namesakes") or [])]
         return cls(entries=entries, namesakes=namesakes)
 

@@ -310,6 +310,9 @@ class TestNeighborhood:
             {"entity": "place:study", "attribute": "kind", "value": "room", "timeless": True},
             {"entity": "place:study", "attribute": "in", "value": "place:home", "timeless": True},
             {"entity": "obj:desk", "attribute": "kind", "value": "desk", "timeless": True},
+            # the desk is part of the constitutive spine: a host-declared fixture
+            # (CONTAINMENT-DURABILITY-V1; the stub's 0.9 verdict is now below the floor)
+            {"entity": "obj:desk", "attribute": "fixture", "value": True, "timeless": True},
             {"entity": "obj:desk", "attribute": "in", "value": "place:study", "timeless": True},
             {"entity": "obj:note", "attribute": "kind", "value": "note", "timeless": True},
             {"entity": "place:study", "attribute": "mentions", "value": "obj:note"},

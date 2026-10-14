@@ -256,6 +256,8 @@ def test_s0_skip_vocabulary(skip_reason_is_code):
         "identity_edge_outside_canon",
         # FRAME-CONTINUITY-V1 §3: prose extraction may not write frame_continues_as.
         "host_only_predicate",
+        # CONTAINMENT-DURABILITY-V1 §2: prose extraction may not declare a fixture.
+        "fixture_not_host",
     })
     for code in SKIP_REASONS:
         assert skip_reason_is_code(code)

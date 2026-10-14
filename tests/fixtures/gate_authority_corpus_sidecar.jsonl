@@ -11,9 +11,9 @@
 {"assertion_id": "a:11", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:12", "class_confidence": 0.95, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:13", "class_confidence": 0.95, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:14", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:14", "class_confidence": 0.95, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:15", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:16", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:16", "class_confidence": 0.95, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:17", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:18", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:19", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
@@ -57,7 +57,7 @@
 {"assertion_id": "a:57", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:58", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:59", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:60", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:60", "class_confidence": 0.95, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:61", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:62", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:63", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
@@ -65,7 +65,7 @@
 {"assertion_id": "a:65", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:66", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:67", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus"}
-{"assertion_id": "a:68", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
+{"assertion_id": "a:68", "class_confidence": 0.95, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:69", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:70", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
 {"assertion_id": "a:71", "class_confidence": 1.0, "durability": "EVENT", "needs_review": false, "world_id": "w:gate_corpus"}
@@ -88,7 +88,7 @@
 {"assertion_id": "a:3", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:4", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:5", "class_confidence": 1.0, "durability": "CONSTITUTIVE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
-{"assertion_id": "a:6", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
+{"assertion_id": "a:6", "class_confidence": 0.95, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:7", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:8", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
 {"assertion_id": "a:9", "class_confidence": 0.5, "durability": "STATE", "needs_review": false, "world_id": "w:gate_corpus_tracking"}
