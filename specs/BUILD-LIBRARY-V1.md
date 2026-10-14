@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -255,13 +255,24 @@ or `classify="defer"`) pass through to every `ingest_structured` call, unchanged
      more manifest entries or personas of a compatible type still gets **its own escape id**. Its
      facts go there, never onto a manifest id. Step 5 proposes it against **each** colliding
      candidate.
-5. **Proposals, never merges** *(r1.2, pbr: sources and targets)*. Each is an item with a `same_as`
-   field, written as a canon `maybe_same_as`:
+5. **Proposals, never merges** *(r1.2, pbr: sources and targets; r1.6, pbr's code review: the
+   encoding)*. Each is a canon `maybe_same_as` with its evidence:
    - **a pick:** source = its mention id, target = its `choice`, evidence = its `evidence_quote`;
    - **a colliding escape:** source = its escape id, with one proposal per colliding candidate,
      each with evidence = the escape's `quote`;
    - **a description across chapters (k5):** source = the later chapter's escape id, target = the
      earlier one, with evidence = the later `quote`.
+
+   *(r1.6)* **The encoding.** An item's `same_as` field can't carry a quote: the gate writes its
+   `maybe_same_as` with the fixed evidence "extractor late binding". So each proposal is written
+   as items through `porcelain.ingest_structured`, every one timeless, canon and
+   `status = assumed`:
+   - **the edge:** a raw `maybe_same_as` item, with the source as its `entity` and the target as
+     its entity `value`;
+   - **its evidence:** an `evidence` item whose `entity` is the edge's assertion id (from that
+     write's receipt), carrying the quote;
+   - **for a mention with no shape rows** (2a: candidates of mixed types, not all beings): a
+     `candidates` item on the same edge id, whose value is the JSON list of the candidate ids.
 
    The host, or `merge_gate`, decides later. Nothing in this step merges anything.
 6. **Hidden personas.** `correlate(persona_id, entry_id, evidence=<reveal quote>,
