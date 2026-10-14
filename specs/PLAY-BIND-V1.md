@@ -1,6 +1,6 @@
 # PLAY-BIND-V1: one deterministic matcher for a turn's mentions (R55)
 
-**Status:** r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
+**Status:** r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
 (`bind`) and one read-only MCP verb. No write path, gate, fold or prompt changes.
 **Source:**
 - R55, placed first in M5 "Continuity in play". Kabe, via the monitor, settled g70803c on 2026-10-14: "R55 comes out of
@@ -38,9 +38,11 @@ porcelain.bind(rows, *, as_of, scope=(), include=(), widen=(), mint=(),
 - **`as_of`:** the valid time the turn reads at (construct's horizon). Required.
 - **The candidate set** is the union of three sources, with every member existing in `frame` at `as_of`:
   - `scope`: entity ids, each expanded through `contents()` recursively at `as_of`, as `refer()`'s scope does;
-  - `include`: explicit ids the host adds, such as pre-held things or the pre-move chain;
+  - `include`: explicit ids the host adds, such as pre-held things or the pre-move chain. *(r1.1)* This is an exact
+    roster: each id joins as itself and is not expanded through `contents()`;
   - `widen`: namespaces (`"person"`, `"place"`, `"obj"`) whose every named entity existing at `as_of` joins the set.
-    This is construct's narrator widening.
+    This is construct's narrator widening. *(r1.1)* "Named" means at least one `name` or alias row visible in `frame`
+    at `as_of`; a slug alone doesn't count.
 
   An id that doesn't exist in `frame` at `as_of` is left out, and the result lists it under `excluded`.
 - **`mint`:** the namespaces this call may mint in (a tuple, default empty). The host passes its channel's
@@ -51,11 +53,17 @@ porcelain.bind(rows, *, as_of, scope=(), include=(), widen=(), mint=(),
 `bind` makes no model call and writes nothing: the log length and the sidecar are unchanged. The same inputs on the
 same log give the same result.
 
-## 2. One side, step by step
+## 2. One raw id, step by step
 
-A row has a **subject side** (`entity`), and a **value side** when the value names an entity: `value_type ==
-"entity"`, or `value_type` absent and the value is a string of the entity-id grammar in a `person`, `place` or `obj`
-namespace. Each side is resolved alone, in this order:
+A row has a **subject side** (`entity`), and a **value side** exactly when `value_type == "entity"`. *(r1.1)* `bind`
+infers no entity values from a value's shape. The host types values before calling: construct's relation-based
+detector, with explicit literal suppression, runs first. So an untyped `in · person:you` stays a literal here, and a
+literal `name · "obj:chain"` never becomes a side.
+
+*(r1.1)* **One decision per raw id per call.** `bind` first gathers every distinct raw id raised by any side of any
+row. A raw id's surfaces are the union of every row's `name`, `names` and `aliases` where it is the subject, plus its
+slug read as words. That evidence applies to its value sides too. Each raw id is resolved once, in the order below, and
+the decision applies to every side that raised it.
 
 1. **Malformed:** the id fails the entity-id grammar. Outcome `malformed`.
 2. **Pass-through:** a namespace other than `person`, `place` or `obj` (for example `fact`, `event` or `doc`). Outcome
@@ -63,8 +71,9 @@ namespace. Each side is resolved alone, in this order:
 3. **Exact id:** the id's `same_as` closure is a candidate. Outcome `bound`, signal `id`. If the closure exists at
    `as_of` but isn't a candidate, the outcome is `out_of_scope` with that id, and the host decides.
 4. **Name:** compare the mention's surfaces with every compatible candidate's names.
-   - **The mention's surfaces:** for a subject, the row's `name`, `names` and `aliases`, plus the id's slug read as
-     words (`tomas_reed_chains` gives "tomas reed chains"). For a value, the slug only.
+   - **The raw id's surfaces:** gathered across the call as above (`tomas_reed_chains` gives "tomas reed chains").
+     *(r1.1)* When the surfaces disagree, every surface is tried. If they match different candidates, the outcome is
+     `ambiguous`, listing all of them; one candidate matched by several surfaces is a single match.
    - **A candidate's names:** its authored names and aliases, and its learned aliases, visible in `frame` at
      `as_of`, plus its slug read as words.
    - **Keys:** each is `build.text.name_key`, then **number-folded** token by token (§3).
@@ -75,11 +84,15 @@ namespace. Each side is resolved alone, in this order:
    - One matching candidate gives `bound`, signal `name`. Two or more give `ambiguous`, listing them.
 5. **Kind:** no name matched. If exactly one compatible candidate's folded `kind` equals the side's folded slug, the
    outcome is `bound`, signal `kind` (refer's unique-kind-in-scope). Two or more give `ambiguous`.
-6. **Future-only:** steps 3–5 are run again over entities that exist at the head in `frame` but not at `as_of`. Any hit
-   gives `future_only`, listing those ids. `bind` never binds to one and never mints over one. Refusing a
+6. **Future-only:** steps 3–5 are run again over entities that exist at the head in `frame` but not at `as_of`. *(r1.1)*
+   This search is **global**: every compatible entity in the frame, whatever `scope`, `include` and `widen` hold.
+   Any hit gives `future_only`, with the ids in `Side.candidates`, so the host can tell a plain miss from a known
+   later entity. `bind` never binds to one and never mints over one. Refusing a
    future-only name, minting, or proposing `same_as` is the host's call (construct refuses in movement, equipment
    and Growth).
-7. **Mint:** the namespace is in `mint`. Outcome `minted`, with a new id: the namespace plus the slug, collision-checked
+7. **Mint:** the namespace is in `mint`. *(r1.1)* `mint` constrains only `person`, `place` and `obj`. The `fact`, `event`
+   and `doc` namespaces are deliberately left alone (step 2): they are pass-through, and the host's own policy governs
+   them. Outcome `minted`, with a new id: the namespace plus the slug, collision-checked
    against **every id in the log, any frame, any time**, and against this call's earlier mints. A taken id gets `_2`,
    then `_3`, and so on. One call mints a given raw id once: every side that raised it gets the same new id.
 8. **Otherwise:** `unknown`. The namespace isn't allowed to mint.
@@ -102,7 +115,8 @@ Side(raw, outcome, id, candidates, signal)
 ```
 
 - There is one `RowResult` for each input row, in order, keyed by `index`.
-- **`admitted`** is true when every side is `bound`, `minted` or `kept`. Then `row` is a copy of the input with both
+- **`admitted`** is true when every side is `bound`, `minted` or `kept`. *(r1.1)* It means the row's identities are
+  bound. It is not permission to ingest: every permission gate in §5 still runs on admitted rows. Then `row` is a copy of the input with both
   ids rewritten. Otherwise `row` is None and the row's sides still carry their outcomes and ids, since construct's cast
   movement reads them on dropped rows.
 - **A row with one failed side is never half-written:** a whole-row rejection, as `resolve_rows` does.
@@ -113,6 +127,28 @@ Side(raw, outcome, id, candidates, signal)
   `out_of_scope`, `future_only`, `unknown` or `malformed`.
 
 ## 5. Not in this spec
+
+*(r1.1)* **The host's duties, in order around `bind`.** These are construct's today, and `bind` assumes them:
+1. **Before `bind`:**
+   - the frame partition (strip or refuse per-item frames);
+   - voice and deixis (narrator tokens dropped; "I" and "you" bound to the protagonist, or to the NPC under an NPC's
+     POV);
+   - containment canonicalization;
+   - typing entity values (`value_type`).
+2. **`bind`:** matching and allocation only.
+3. **After `bind`, on admitted rows:**
+   - suppressing a `kind` row on a bound entity;
+   - refusing `person · in · obj`-shaped rows;
+   - restated-origin;
+   - protected-key licensing and the quarantine;
+   - stub gates and channel denials;
+   - refusing future-only names, or attaching a `same_as` proposal;
+   - narrated-objects-land;
+   - then ingest.
+
+**Movement's entitled matcher is out of scope** *(r1.1, construct)*. construct can offer a destination while withholding
+its protected name or kind. `bind` reads every visible name and alias of a candidate and has no per-candidate surface
+restriction, so it replaces `resolve_rows`' matcher only, not movement's.
 
 - **Voice and deixis** ("I", "you", the narrator's tokens), the frame partition, containment canonicalization,
   restated-origin, protected keys, the quarantine, stub gates, narrated-objects-land, and place creation (the move
@@ -138,16 +174,25 @@ Side(raw, outcome, id, candidates, signal)
    - run 11: `obj:straw`, with one in-scope entity named "straw pile", binds by fragment.
 2. **Future-only:** an entity first asserted at valid time 10, read at `as_of=5`, is never bound. Its exact id, a
    name match and a kind match each give `future_only` listing it. With `mint=("obj",)` it still isn't minted over.
+   *(r1.1)* It is found even when it is outside `scope`, `include` and `widen`.
 3. **Collision:** a mint whose slug is taken by any id, in any frame, at any time, gets `_2`; with `_2` taken too, `_3`.
    Two rows raising the same raw id in one call get the same new id.
 4. **Ambiguity:** two in-scope entities matching by name give `ambiguous` with both listed; the row isn't admitted.
 5. **Compatibility:** a `person:` side never binds an `obj`, and an `obj` side never binds a `person`.
 6. **Pass-through and malformed:** a `fact:` or `event:` id is `kept` unchanged; a malformed id is `malformed`.
 7. **Whole rows:** a good subject with an `unknown` value gives `admitted=False`, `row=None`, and both sides reported.
+7a. *(r1.1)* **One decision per raw id:**
+    - `obj:chain` as a subject with `name: "chain"` in one row and as a value in another binds the same candidate in
+      both;
+    - a raw id minted in one row has the same new id in every row;
+    - two rows naming the same raw id with surfaces matching different candidates give `ambiguous` in both.
+7b. *(r1.1)* **Value typing is the host's:** an untyped `in · person:you` has no value side, and `name · "obj:chain"`
+    with `value_type` absent or `literal` is never a side.
 8. **Candidates:**
    - `scope` expands through `contents()` at `as_of` (a thing moved in later isn't a candidate);
-   - `include` adds ids, and one that doesn't exist at `as_of` lands in `excluded`;
-   - `widen=("place",)` adds every named place existing at `as_of`.
+   - `include` adds exactly its ids, with no expansion, and one that doesn't exist at `as_of` lands in `excluded`;
+   - `widen=("place",)` adds every place with a name or alias row existing at `as_of`, and not a place with only a
+     slug.
 9. **Number folding:** "chains"/"chain", "berries"/"berry", "boxes"/"box" and "matches"/"match" fold together;
    "glass", "bus" and "gas" keep their `s`.
 10. **No write and deterministic:** the log length and sidecar count are unchanged after `bind`, and the same call twice
