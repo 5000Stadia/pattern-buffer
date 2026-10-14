@@ -317,3 +317,25 @@ def test_11_mcp_lists_bind_and_round_trips(world):
                                                  "value": 1}],
                                        "as_of": 5.0, "scope": ["place:cellar"]})
     assert "obj:tomas_reed_chains" in str(out)
+
+
+def test_12_as_of_inf_is_the_head(world):
+    """construct m01b969: a world with no play horizon binds at the head with
+    as_of=math.inf. An entity whose rows start late binds, never future_only,
+    and inf binds exactly as axis_heads()'s valid_head does."""
+    import math
+    _seed(world)
+    _future(world)
+    world.ingestor.cursor.advance(1e6)
+    world.ingest_structured([{"entity": "obj:far_bell", "attribute": "name", "value": "far bell"},
+                             {"entity": "obj:far_bell", "attribute": "in",
+                              "value": "place:cellar"}], classify="rules")
+    rows = [{"entity": "obj:far_bell", "attribute": "x", "value": 1},
+            {"entity": "obj:lantern", "attribute": "x", "value": 1},
+            {"entity": "obj:chain", "attribute": "x", "value": 1}]
+    at_inf = world.porcelain.bind(rows, as_of=math.inf, scope=["place:cellar"])
+    head = world.porcelain.axis_heads()["valid_head"]
+    at_head = world.porcelain.bind(rows, as_of=head, scope=["place:cellar"])
+    assert [r["subject"]["outcome"] for r in at_inf["rows"]] == ["bound"] * 3
+    assert at_inf["rows"][0]["subject"]["id"] == "obj:far_bell"
+    assert at_inf == at_head
