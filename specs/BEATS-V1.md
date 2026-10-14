@@ -52,8 +52,10 @@ Evaluation stays host-side, with construct's evaluator as the reference.
   - `model.AUTHOR_FRAME_PREFIX = "plot:"` and `is_author_frame(frame)` are the single test.
 - **Never a view.** *(r1.1, pbr)* **Every public function that takes a view frame** refuses an
   author frame, with `ValueError` naming the rule, before it stores or uses the frame:
-  - `WorldService.attach(world, view_frame)`, the ordinary entry point. `Runner` reaches it
-    unchanged, so the runner is covered;
+  - `WorldService.attach(world, view_frame)`, the ordinary entry point;
+  - `Runner(open_world, view_frame, ...)`, **in its constructor**. The runner attaches on its
+    own pump thread, where a refusal from `attach` would surface late and off the caller's
+    thread, so it refuses up front as well;
   - `WorldService.set_view_frame(frame)`;
   - `mirror.feed`, `mirror.export` and `mirror.present_handles`. `present_handles` builds the
     presentation layer a viewer sees, so it is guarded, not left as host-only.
