@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.8 (construct's wiring review, m3310d2: identity rows carry the story time of their entry's gate, not timeless). r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -241,6 +241,26 @@ difference:
    - For every entry: its shape rows *(c6)*, then its `name` and `alias` rows, then its `role`
      when given.
    - Then each persona id: its shape rows (its entry's type and species), then its name.
+   - *(r1.8, construct m3310d2)* **Identity time.** `commit(..., identity_time="gate")` is the
+     default.
+     - Every entry's identity rows (shape rows, `name`, `alias`, `role`, and a `fixture` row when
+       present) carry `valid_from = time_of(c)`, where c is the chunk holding the entry's **effective
+       gate** sentence.
+     - Every persona's shape and name rows carry `valid_from = time_of(c)`, with c the chunk holding
+       the persona's effective gate.
+     - Escapes and mentions carry their declaring chunk's time.
+     - An entry whose gate falls in no planned chunk (a chapter the build didn't include) carries
+       the time of the chunk after the last one it precedes. With none, it is written at
+       `time_of(last chunk)`. Either way it is never timeless.
+     - The rows are still written **first, by `seq`**, so allocation before any fact holds. Only
+       valid time changes.
+     - **Why.** A timeless identity row makes an entry first met in chapter 3 exist at every
+       valid time, including a host's opening horizon. That is the time gate collapsing for
+       identities. With gate times:
+       - `entities(canon, as_of=h)` excludes an entry first met after h;
+       - `state(entry, "name", as_of=h)` answers unknown before its gate;
+       - a persona's name is invisible before its own gate.
+   - `identity_time="timeless"` keeps r1.7's behaviour, for a host that wants it.
 2. **Allocation, before any fact.** Each chunk's handles are visited in (chunk index, handle
    number) order, and each gets an id and its type fact:
    - **a pick handle** gets a **provisional id** `mention:<slug>_<n>`, minted by code (step 2a);
@@ -436,6 +456,15 @@ For a book with no author (construct passes its author's manifest instead):
     - INGEST-V2 (the default) stays byte-identical.
     - The chapter-test battery on *The Last Honest Meter*'s seeded registry is unchanged under the
       default.
+14a. *(r1.8)* **Identity time.**
+     - **Gate time.** An entry gated in chapter 2's third chunk has every identity row's
+       `valid_from` equal to `time_of(that chunk)`. A persona's name rows carry its own gate chunk's
+       time. An escape carries its declaring chunk's time.
+     - **Absence before the gate.** `entities(canon, as_of=t)` for t before that time excludes the
+       entry, and `state(entry, "name", as_of=t)` is unknown. At and after it, both are present.
+     - **Order kept.** Every identity row's `seq` still precedes every chunk fact's `seq`.
+     - **The fallback.** `identity_time="timeless"` reproduces r1.7's rows byte for byte.
+     - **The grade.** GRADE-LEAKS-V1 still grades a gate-time build with zero leaks.
 15. **Full suite green.**
 
 ## Lexicon (added with the build)
