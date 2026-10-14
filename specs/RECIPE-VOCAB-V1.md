@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -86,6 +86,7 @@ value, detail)` for each of:
 | `link_type` | literal | closed: `switch`, `lever`, `plate`, `button`, `keypad`, `dial` | `durability: CONSTITUTIVE` | `control_type` | what kind of control the source is |
 | `control_mode` | literal | closed: `latching`, `momentary` | `durability: CONSTITUTIVE` | `mode` is **not** taken (construct's drift events use it), `switch_mode` | latching stays as set; momentary acts only while held |
 | `state` | literal | open: `on`, `off`, `open`, `shut`, `locked` | none (model-judged, as today) | `status` is **not** taken (hosts use it) | a device's or a portal's current setting; RFC-003 reads a portal's `state` |
+| `locked` | literal | closed: `true`, `false` | `durability: STATE` | none | whether a lock is engaged; a JSON boolean, separate from `state` *(r1.2)* |
 | `lit` | literal | closed: `dark`, `dim`, `lit`, `day`, `night` | none | `light_level`, `lighting`, `illumination` | how much light a place has now |
 | `outdoors` | literal | closed: `true`, `false` | `durability: CONSTITUTIVE` | `is_outdoors` | a place open to the sky; written timeless |
 | `exits` | literal | closed: `none` | none | none | an observed "no way out" (see below) |
@@ -98,6 +99,21 @@ value, detail)` for each of:
   - A place carrying both `exits · none` and a `connects_to` edge is served as written.
     `vocab.check()` reports it as `exits_none_with_edge`.
   - `none` is the only value: there is no `exits · <place>`.
+- *(r1.2, holo-emitter)* **One main setting per thing.** `state` is a thing's main setting: a
+  door's or lid's leaf (`open`, `shut`), or a light or switch (`on`, `off`).
+  - A lock is `locked · true|false`, so a door can be shut and locked without two values
+    colliding on one key.
+  - **A locked door is also `state · shut`.** RFC-003's route traversal reads a portal's `state`
+    against its kind's `blocks_when_state`, and doesn't read `locked`. Writing both keeps routes
+    right. `vocab.check()` reports `locked · true` beside `state · open` as
+    `locked_but_open`.
+  - **A part with its own setting is its own entity.** A press's third drawer is
+    `obj:press:drawer_3 · part_of · obj:press`, with its own `state · open`. The id grammar
+    allows `:` but not `#`.
+  - A keypad's accepted code isn't written as a state of the keypad: the door's `locked` carries
+    the outcome.
+- **Sitting** is the person's `sits_on <seat>` (VIEW-PEOPLE-V1), not a state of the chair. It is
+  already canonical and is not redeclared.
 - **`outdoors` is a literal `true`,** a JSON boolean. Its closed values are the booleans, not
   strings.
 - **Excluded from the aliases:**
@@ -110,7 +126,7 @@ value, detail)` for each of:
     relations into `wrong_value_type` rows.
 - **Already canonical and not redeclared:** `in`, `held_by`, `worn_by`, `connects_to`,
   `part_of`, `kind`, `role`, `fixture` (host-only, CONTAINMENT-DURABILITY-V1), and `posture`
-  (VIEW-PEOPLE-V1).
+  and `sits_on` (VIEW-PEOPLE-V1).
 
 ### 5. Extraction learns the vocabulary (build library, opt-in)
 
@@ -173,7 +189,8 @@ value, detail)` for each of:
    - `holds` as an alias raises;
    - reopening the world and applying again is idempotent.
 4. **`check`:** each finding kind on a hand-built world, and none on a clean one, with
-   `exits_none_with_edge` included.
+   `exits_none_with_edge` and `locked_but_open` included. *(r1.2)* A locked, shut door blocks a
+   route under `traversal:door · blocks_when_state · shut`.
 5. **Extract prompt:** with `vocabulary=None` it is byte-identical to today's (pinned). With
    `RECIPE`, the vocabulary section is present and lists every term once.
 6. **Lane 1:** the three goldens load clean and their reads pass.
