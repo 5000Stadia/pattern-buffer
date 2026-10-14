@@ -1,0 +1,113 @@
+{
+  "chunk_spans": [
+    {
+      "chapter": 1,
+      "chunk": 0,
+      "cursor": 1.0,
+      "seq": [
+        111,
+        188
+      ]
+    },
+    {
+      "chapter": 1,
+      "chunk": 1,
+      "cursor": 1.0,
+      "seq": [
+        189,
+        225
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 2,
+      "cursor": 2.0,
+      "seq": [
+        226,
+        345
+      ]
+    },
+    {
+      "chapter": 2,
+      "chunk": 3,
+      "cursor": 2.0,
+      "seq": [
+        346,
+        407
+      ]
+    }
+  ],
+  "correlations": 0,
+  "escapes": 10,
+  "handle_ids": {
+    "00/new:0": "person:nima_s_grandmother",
+    "01/new:0": "place:the_missing_room",
+    "02/new:0": "person:earlier_keeper_of_the_hall",
+    "02/new:1": "event:great_partition",
+    "02/new:2": "place:hidden_chamber",
+    "02/new:3": "obj:round_door",
+    "03/new:0": "person:pell_aven",
+    "03/new:1": "obj:round_door",
+    "03/new:2": "obj:clay_addresses",
+    "03/new:3": "place:chamber_in_the_wall",
+    "03/new:4": "place:first_house"
+  },
+  "identity_receipts": [],
+  "mentions": 0,
+  "minted": [
+    "place:oru",
+    "group:the_registry",
+    "person:ivara_noll",
+    "place:vellum_hall",
+    "obj:bark_strips",
+    "place:the_mouth_room",
+    "person:tovan_sere",
+    "obj:red_key",
+    "place:the_understair",
+    "person:eren_vey",
+    "person:eren_vell",
+    "place:the_tin_orchard",
+    "place:the_latch",
+    "obj:parcel_tied_with_blue_thread",
+    "obj:tin_box",
+    "obj:satchel",
+    "person:nima_orrel",
+    "obj:necklace_of_brass_washers",
+    "obj:hinge",
+    "place:the_sleeping_gallery",
+    "obj:sleeping_tag",
+    "person:alis_noll",
+    "person:mara_noll",
+    "obj:recipe_sheet",
+    "obj:handprint_strip",
+    "obj:ledger_with_a_cracked_spine",
+    "obj:bone_comb",
+    "group:the_hall_s_collection_of_unwanted_instruments",
+    "obj:note",
+    "place:the_sump",
+    "obj:stone_basin",
+    "obj:brass_map",
+    "obj:glass_thimble",
+    "obj:black_thread",
+    "person:nima_s_grandmother",
+    "place:the_missing_room",
+    "person:earlier_keeper_of_the_hall",
+    "event:great_partition",
+    "place:hidden_chamber",
+    "obj:round_door",
+    "person:pell_aven",
+    "obj:clay_addresses",
+    "place:chamber_in_the_wall",
+    "place:first_house"
+  ],
+  "pending_reveals": [],
+  "proposals": 0,
+  "rejections": 0,
+  "skipped": [],
+  "time_of": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 2.0,
+    "3": 2.0
+  }
+}

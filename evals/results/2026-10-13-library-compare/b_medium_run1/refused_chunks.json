@@ -1,0 +1,6 @@
+[
+  {
+    "chunk": 0,
+    "error": "model call failed: ModelShimError: model call failed after retries: Command '['claude', '-p', '--model', 'claude-sonnet-4-6', '--output-format', 'json', '--max-turns', '1', '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--no-session-persistence', '--system-prompt', 'You answer with one JSON object that matches the schema in the user message. No prose, no code fences, no tools.', '--effort', 'medium']' timed out after 300 seconds"
+  }
+]

@@ -1,0 +1,1156 @@
+[
+  {
+    "candidates": [
+      {
+        "gate": 2,
+        "id": "place:oru",
+        "names": [
+          "Oru"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 7,
+        "id": "group:the_registry",
+        "names": [
+          "The Registry"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 9,
+        "id": "person:ivara_noll",
+        "names": [
+          "Ivara Noll",
+          "Ivara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 9,
+        "id": "place:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "Hall"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 9,
+        "id": "obj:map",
+        "names": [
+          "map"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 9,
+        "id": "group:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "the Hall"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 10,
+        "id": "place:mouth_room",
+        "names": [
+          "Mouth Room"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 13,
+        "id": "person:tovan_sere",
+        "names": [
+          "Tovan Sere",
+          "Tovan"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 20,
+        "id": "obj:red_key",
+        "names": [
+          "red key"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 23,
+        "id": "place:understair",
+        "names": [
+          "Understair"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 26,
+        "id": "person:eren_vey",
+        "names": [
+          "Eren Vey",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 26,
+        "id": "obj:address_strips",
+        "names": [
+          "address strips"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 26,
+        "id": "person:eren_vell",
+        "names": [
+          "Eren Vell",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 31,
+        "id": "place:tin_orchard",
+        "names": [
+          "Tin Orchard",
+          "Orchard"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 34,
+        "id": "place:latch",
+        "names": [
+          "Latch"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 47,
+        "id": "obj:blue_thread",
+        "names": [
+          "blue thread"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 49,
+        "id": "obj:tin_box",
+        "names": [
+          "tin box"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 53,
+        "id": "obj:satchel",
+        "names": [
+          "satchel"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 59,
+        "id": "person:nima_orrel",
+        "names": [
+          "Nima Orrel",
+          "Nima"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 60,
+        "id": "obj:necklace_of_brass_washers",
+        "names": [
+          "necklace of brass washers"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 35,
+        "id": "obj:hinge",
+        "names": [
+          "hinge"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 105,
+        "id": "place:sleeping_gallery",
+        "names": [
+          "sleeping gallery"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 105,
+        "id": "obj:sleeping_tag",
+        "names": [
+          "sleeping tag"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 108,
+        "id": "person:alis_noll",
+        "names": [
+          "Alis Noll"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 110,
+        "id": "person:mara_noll",
+        "names": [
+          "Mara Noll",
+          "Mara"
+        ],
+        "species": null,
+        "type": "person"
+      }
+    ],
+    "chapter": 1,
+    "first_sentence": 1,
+    "index": 0,
+    "last_sentence": 141,
+    "text": "# Chapter 1: The Address That Hummed\n\nIn the city of Oru, no one gave directions by pointing. A finger could indicate a wall, but a wall might be elsewhere by supper. People navigated by listening for the rooms they wanted. A kitchen with a remembered argument clicked its pipes. A nursery hummed a lullaby even after its children had grown old. The Registry called these sounds addresses. Everyone else called them manners.\n\nIvara Noll worked in the Vellum Hall, where addresses were copied onto strips of skin-thin bark and pinned to a map that had no north. Her desk stood beside the Mouth Room, a chamber inside the Hall where new rooms were asked to say what they were. Its door was a circular slab of black wood with a brass lip. When it opened, the room inside gave a note like a spoon touching a cup.\n\n\u201cNot a room,\u201d said Tovan Sere, listening with his left ear. He was the Hall's senior examiner, though the younger clerks called him the Chair because he never stood while deciding anything. \u201cA pocket. A room has a door that expects to be used.\u201d\n\nIvara wrote pocket on the Mouth Room's bark strip. The word made the Mouth Room's note flatten. She scratched it out.\n\nAt her elbow sat a red key, a long iron thing with a forked tooth. Her mother had left it with no label and no lock to fit. Ivara kept it because it warmed when she lied. She had tested this carefully, first telling it that she liked turnip broth, then that she had never entered the Understair. It warmed at the second claim. The Understair was a maintenance passage below Vellum Hall, officially sealed since Ivara was small.\n\nAcross the aisle, Eren Vey sorted address strips by the pressure of their sound. He was a careful young clerk whose voice went thin at the end of every sentence, as if the rest of him had stepped through a door. Three desks away, Eren Vell, a porter with the same narrow face and almost the same name, carried stacks of bark to the drying racks. The two Eren\u2019s had learned to answer only to their surnames. When someone called \u201cEren,\u201d both looked up and Tovan deducted a minute of their pay.\n\nThe city had sent a petition that morning: a room was missing from the Tin Orchard. The Orchard was not a garden, though it contained rust-colored trees. Each tree grew a hollow metal fruit in which a family could keep a private address. Somewhere among the trees was a little room called the Latch, where the Orchard's caretaker stored spare door hinges. The petition said the Latch had vanished without taking its hinge inventory with it. That was impossible. Rooms did not leave their contents behind.\n\n\u201cWho signed?\u201d asked Tovan.\n\n\u201cA name, Lio,\u201d said Ivara. \u201cI took it for a woman\u2019s name. It says she is the last person who remembers the door.\u201d\n\n\u201cThen we have two problems,\u201d said the Chair. \u201cThe room and the memory.\u201d\n\nTovan sent Ivara and Eren Vey to inspect the Orchard. Before she left, Ivara slid the red key into her cuff. Eren Vell stopped at the Hall's outer door to hand her a parcel tied with blue thread. \u201cFor the Orchard keeper,\u201d he said. \u201cA tin box from the lost-property shelf. Don't open it. It has been waiting longer than I have.\u201d\n\nThe tin box was warm, too. Ivara put the tin box in her satchel and kept the key in her cuff. She did not ask why the parcel had no label. In the Registry, a question without an address could wander for days.\n\nThe Tin Orchard rang in the afternoon, each metal fruit making a different note as the branches shifted. The trees grew in shallow trays of pale grit. Their roots were loops of wire, and their leaves were tiny hinged tags that clicked together like teeth. Nima Orrel, the Orchard keeper, came to meet them. She wore a necklace of brass washers, one for each year she had lived in the Orchard.\n\n\u201cLio isn't a person,\u201d Nima said. \u201cIt's what the missing room calls itself when it wants to be found.\u201d Ivara understood that the petition had mistaken a room's name for its signer.\n\nIvara glanced at Eren. \u201cYou signed the petition.\u201d\n\n\u201cI signed the petition that arrived,\u201d said Nima. \u201cThe ink was already there.\u201d\n\nShe led them to a tray with an empty ring of grit. A single hinge lay in the center. Its pin bore a faded blue stain. Ivara thought of Eren Vell's parcel, still in her bag.\n\n\u201cWho was here last?\u201d asked Eren Vey.\n\n\u201cI was,\u201d Nima said. \u201cI put the hinge down. I heard the Latch ask me to keep quiet. Then the path ended.\u201d\n\nThe false certainty in her voice came from practice. Nima believed the Latch had been built by Nima's grandmother, and that her grandmother had hidden it to protect the Orchard. Everyone in Oru knew the tale: the old woman, the hinge, the room that slipped away. Ivara had copied the official version herself.\n\nBut there was no sound in the empty ring. A vanished room should leave an echo. Ivara crouched and heard instead a faint tapping from inside the grit. She took out the red key. Its prongs trembled toward the ground.\n\n\u201cThat key is not on the inventory,\u201d Nima said.\n\n\u201cNeither is this room,\u201d said Ivara.\n\nShe turned the key in the grit. A narrow seam opened, no wider than a thread, and from below came a voice that sounded exactly like the Mouth Room's note. The Orchard had a floor under its floor.\n\nEren Vey caught her sleeve before she could put her fingers into the seam. \u201cWe should record this first.\u201d\n\n\u201cIf we record it, the Hall will close it.\u201d\n\n\u201cIf we don't, the room can move.\u201d\n\nIvara looked at the empty hinge ring, the blue thread, and the parcel in her satchel. She knew, then, that Eren Vell had sent her the box for a reason. She did not yet know what he had put inside.\n\nNima set her palm over the seam. \u201cMy grandmother made the Latch,\u201d she said. \u201cIt belongs to our family.\u201d\n\nThe red key stayed cool in Ivara's hand. Nima believed the inherited story, though the story was wrong.\n\nThat night, Ivara did not go home. The Hall's sleeping gallery held thirty narrow bunks, each with a tag that named its occupant and one room they were permitted to dream in. Her tag said \u201cIvara Noll: Vellum Hall.\u201d She turned it over. On the back, someone had written Alis Noll in faded red ink.\n\nThe letters reminded Ivara of her mother's old recipe sheets, but the hand was not Mara's. Mara Noll wrote every letter with a small gap in its middle, as though each word had a door in it. Ivara went to her desk and searched the drawers for the sheet where Mara had recorded a recipe for shell milk. She did not find it. The name on the back of her sleeping tag had not come from this page. The letters had faded, but the writing itself was recent; someone had added the name since Mara's last recipe sheet.\n\nShe found Eren Vey still at his desk. \u201cDid you put this on my tag?\u201d\n\nHe inspected it without touching. \u201cNo. The tag is telling you where it thinks you belong.\u201d\n\n\u201cTags don't think.\u201d\n\n\u201cThey don't have to. They only need a little pressure from the room.\u201d\n\nHe explained that the first Hall clerks had not pinned addresses to a map. They pinned them to people. When a room moved, the people who had used it carried its location in their habits: how they paused at a turn, what they called a threshold, which side of a cup they reached for. Later clerks replaced these living records with tags and maps. Eren believed the Hall still listened to people, even when it pretended to listen only to paper.\n\n\u201cWhy did you come here?\u201d Ivara asked.\n\n\u201cMy mother said I was born in the wrong room.\u201d He tapped his own tag. It held no birthplace. \u201cI want to know what she meant.\u201d\n\nThe question made Ivara think of the report from the Orchard. Nima had signed it without remembering signing. The name Lio had appeared without a hand to write it. Perhaps a room could use a person's habits, too, and borrow a name when it had no other way to knock.\n\nEren showed her a thin scar across his wrist. A door had closed on it when he was very young, he said, but the door had been in a wall that no longer existed. He had never told the Registry. \u201cIf a room can keep part of you, then maybe it can keep a person.\u201d"
+  },
+  {
+    "candidates": [
+      {
+        "gate": 1,
+        "id": "place:oru",
+        "names": [
+          "Oru"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "group:the_registry",
+        "names": [
+          "The Registry"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 1,
+        "id": "person:ivara_noll",
+        "names": [
+          "Ivara Noll",
+          "Ivara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "place:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "Hall"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:map",
+        "names": [
+          "map"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "group:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "the Hall"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 1,
+        "id": "place:mouth_room",
+        "names": [
+          "Mouth Room"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "person:tovan_sere",
+        "names": [
+          "Tovan Sere",
+          "Tovan"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:red_key",
+        "names": [
+          "red key"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:understair",
+        "names": [
+          "Understair"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "person:eren_vey",
+        "names": [
+          "Eren Vey",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:address_strips",
+        "names": [
+          "address strips"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:eren_vell",
+        "names": [
+          "Eren Vell",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "place:tin_orchard",
+        "names": [
+          "Tin Orchard",
+          "Orchard"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "place:latch",
+        "names": [
+          "Latch"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:blue_thread",
+        "names": [
+          "blue thread"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:tin_box",
+        "names": [
+          "tin box"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:satchel",
+        "names": [
+          "satchel"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:nima_orrel",
+        "names": [
+          "Nima Orrel",
+          "Nima"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:necklace_of_brass_washers",
+        "names": [
+          "necklace of brass washers"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:hinge",
+        "names": [
+          "hinge"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:sleeping_gallery",
+        "names": [
+          "sleeping gallery"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:sleeping_tag",
+        "names": [
+          "sleeping tag"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:alis_noll",
+        "names": [
+          "Alis Noll"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "person:mara_noll",
+        "names": [
+          "Mara Noll",
+          "Mara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 6,
+        "id": "obj:handprint_strip",
+        "names": [
+          "handprint strip"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 14,
+        "id": "obj:ledger",
+        "names": [
+          "ledger"
+        ],
+        "species": null,
+        "type": "object"
+      }
+    ],
+    "chapter": 1,
+    "first_sentence": 142,
+    "index": 1,
+    "last_sentence": 186,
+    "text": "Ivara touched the red key through her cuff. It was cold. She hadn't lied, but she had kept a thought to herself: she sometimes heard a quiet second note under the Mouth Room's tone. Now it came again, so soft she could have blamed the pipes.\n\nAt dawn, the Hall called all clerks to the map. A new strip of bark had appeared by the Orchard's address. It bore no words, only a pair of small handprints. The younger clerks laughed and said a child had touched the wet bark. Tovan said nothing. He turned the strip face down and ordered Ivara to leave it alone.\n\nShe turned it face up again once the Chair had gone. The handprints were the exact size of her own hands before she could speak.\n\nAt the end of the morning shift, Ivara took the handprint strip to Tovan. He studied it for a long while, then brought out a ledger with a cracked spine. The book recorded the Hall's repairs, with a few private notes Tovan had added about residents. On the first page, in the same red ink, was a list of places that had been joined and separated. Beside each place was the name of the clerk who authorized the work.\n\nMara Noll appeared beside the first division. Tovan's name appeared beside the second. Ivara asked what the marks meant. He told her that Mara had argued against dividing the first house, but eventually signed the order to protect the children inside. He had signed the follow-up that made the division permanent.\n\n\u201cDid she tell you what happened to Alis?\u201d\n\n\u201cShe asked me to keep the address quiet.\u201d\n\n\u201cThat's not the same thing.\u201d\n\n\u201cNo,\u201d Tovan said. \u201cIt isn't.\u201d\n\nHe shut the ledger before she could read the other names. Ivara noticed a mark beside Eren Vey's birthplace, an open door drawn in blue. Tovan saw her notice it and did not cover the mark. That, more than his answer, told her that he had begun to understand what he owed them.\n\nShe left the Hall with the handprint strip tucked into her coat. Outside, the city had no streets in the usual sense. There were lanes made by repeated journeys, and the lanes grew firmer whenever enough people traveled them for the same reason. The path to the Orchard had become a shallow groove in the stone. Ivara followed it, listening to its small echo beneath her shoes.\n\nAt the gate, Nima's necklace made a distant chime. The Orchard keeper had begun the evening count, one washer for each tree that had offered its fruit to a family. The necklace counted Nima's years; this was a separate count. Ivara understood now why the trees were called an orchard even though they grew no food. Each one held a memory with a hard shell around it. The fruit could be opened only by the person who had put the address inside.\n\nSomewhere under the grit, the missing room tapped once. Ivara pressed the handprint strip to the ground. For a breath, she felt a child's fingers push back from the other side."
+  },
+  {
+    "candidates": [
+      {
+        "gate": 1,
+        "id": "place:oru",
+        "names": [
+          "Oru"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "group:the_registry",
+        "names": [
+          "The Registry"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 1,
+        "id": "person:ivara_noll",
+        "names": [
+          "Ivara Noll",
+          "Ivara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "place:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "Hall"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:map",
+        "names": [
+          "map"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "group:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "the Hall"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 1,
+        "id": "place:mouth_room",
+        "names": [
+          "Mouth Room"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "person:tovan_sere",
+        "names": [
+          "Tovan Sere",
+          "Tovan"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:red_key",
+        "names": [
+          "red key"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:understair",
+        "names": [
+          "Understair"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "person:eren_vey",
+        "names": [
+          "Eren Vey",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:address_strips",
+        "names": [
+          "address strips"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:eren_vell",
+        "names": [
+          "Eren Vell",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "place:tin_orchard",
+        "names": [
+          "Tin Orchard",
+          "Orchard"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "place:latch",
+        "names": [
+          "Latch"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:blue_thread",
+        "names": [
+          "blue thread"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:tin_box",
+        "names": [
+          "tin box"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:satchel",
+        "names": [
+          "satchel"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:nima_orrel",
+        "names": [
+          "Nima Orrel",
+          "Nima"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:necklace_of_brass_washers",
+        "names": [
+          "necklace of brass washers"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:hinge",
+        "names": [
+          "hinge"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:sleeping_gallery",
+        "names": [
+          "sleeping gallery"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:sleeping_tag",
+        "names": [
+          "sleeping tag"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:alis_noll",
+        "names": [
+          "Alis Noll"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "person:mara_noll",
+        "names": [
+          "Mara Noll",
+          "Mara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:handprint_strip",
+        "names": [
+          "handprint strip"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:ledger",
+        "names": [
+          "ledger"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 7,
+        "id": "obj:bone_comb",
+        "names": [
+          "bone comb"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 52,
+        "id": "place:sump",
+        "names": [
+          "Sump"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 56,
+        "id": "obj:brass_map",
+        "names": [
+          "brass map"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 60,
+        "id": "obj:glass_thimble",
+        "names": [
+          "glass thimble"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 60,
+        "id": "obj:black_thread",
+        "names": [
+          "black thread"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 44,
+        "id": "person:pell_aven",
+        "names": [
+          "Pell Aven",
+          "Pell"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 91,
+        "id": "obj:seventh_tooth",
+        "names": [
+          "seventh tooth"
+        ],
+        "species": null,
+        "type": "object"
+      }
+    ],
+    "chapter": 2,
+    "first_sentence": 1,
+    "index": 2,
+    "last_sentence": 154,
+    "text": "# Chapter 2: The Box With No Bottom\n\nAfter the Orchard closed its gates, Ivara returned to the Vellum Hall alone. Eren Vey was waiting there. The tin box knocked against Ivara's hip as she walked. It was lighter than a box should be, and the tapping from within followed the rhythm of her steps, half a beat late.\n\nTovan had locked the Mouth Room. He stood outside it with a bone comb in his hand. Its teeth were different lengths, and each tooth bore a tiny number. The comb had belonged to an earlier keeper of the Hall, who used it to comb the sounds from a new room until it could speak plainly. Tovan claimed he had borrowed it from the Hall's collection of unwanted instruments. The collection denied owning it. Under Ivara's cuff, the red key warmed; Tovan had not borrowed it.\n\n\u201cYou brought back an unregistered seam,\u201d he said. \u201cAnd a sound that matches this room.\u201d\n\n\u201cDid the Mouth Room move?\u201d asked Ivara.\n\n\u201cNo. It answered from the Orchard.\u201d\n\nEren Vey set his notes on the table. \u201cA room can share a voice.\u201d\n\n\u201cPeople share a voice. Rooms share walls.\u201d Tovan turned the comb over. \u201cUnless they're the same room.\u201d\n\nAt that, Ivara felt the red key stay cool in her cuff; Tovan's suggestion was true. She removed the tin box and put it on the table. The parcel's blue thread had gone slack. A small folded paper lay beneath the false bottom, tucked beside the map and thimble, though she had not opened the box.\n\nTovan read the note aloud: \u201cA room may be stored by its first name, but not its walls.\u201d The note was signed E. Vell.\n\n\u201cYou gave this to me,\u201d Ivara said.\n\n\u201cI gave you a box,\u201d said Eren Vell from the doorway. \u201cI didn't know there was a note.\u201d The porter had come in without his usual stack of bark. His palms were stained with blue ink.\n\nThe two Erens stood facing each other. Eren Vey looked down at the note. \u201cYou wrote that.\u201d\n\nEren Vell laughed, which made his face look less like the clerk's. \u201cI don't write. I carry.\u201d\n\nThe claim seemed true until Ivara saw the ink on his palms. The red key warmed: Pell was lying. Ivara picked up the box. Its inside was lined with felt, but when she tilted it, the tapping came from somewhere deeper than the base.\n\nTovan demanded the parcel. Ivara refused. She took the box to the Understair, with Eren Vey behind her and Eren Vell ahead. The passage was still officially sealed, though its door had been painted over and the paint had a fresh crack running through the middle. Under the stairs, the air smelled of wet paper though there was no water in Oru.\n\nThe passage narrowed into a room called the Sump, where discarded addresses were pressed into clay. In its center stood a stone basin. Ivara set the tin box inside it. The box lifted its lid by itself. A little brass map lay within, folded into a square. On its face, the map showed the Tin Orchard, the Vellum Hall, and a narrow room drawn between them. That room had no entrance. In its center was the word LATCH.\n\nBeneath the map, they found a glass thimble containing a black thread. The thimble was capped with red wax. The tin box had looked empty because its bottom was hinged upward; the objects had been tucked in the false base.\n\nEren Vey leaned close. \u201cThe plan on this map is older than the Orchard,\u201d Eren Vey said.\n\n\u201cOlder than the Hall,\u201d said Eren Vell. \u201cThe brass copy is newer. It shows rooms before they were divided.\u201d\n\nTovan arrived carrying the bone comb. He had taken the other staircase, or perhaps the Sump had brought him to them. The passage did not always preserve the route a person used. He ran the comb over the map. Each remaining numbered tooth vibrated. At the empty seventh place, the map shivered and the drawn Latch turned sideways.\n\nIvara understood that Tovan had lied about borrowing the comb: it had not come from the collection. It had been waiting for this map. \u201cWhat is the black thread?\u201d\n\n\u201cAn address before it learned to make a sound,\u201d Tovan said. \u201cIf someone pulls it, the room may come back.\u201d\n\n\u201cOr the room may unravel,\u201d said Eren Vey.\n\nTovan looked at the two men. \u201cYou both know more than you say.\u201d\n\nEren Vell took the thimble from the box. \u201cI used to be called Pell Aven. The Hall erased my name when the Latch disappeared. I was its child.\u201d\n\nThe name landed with a sound like a lock finding its slot. Ivara had heard the name Pell Aven in an old file: an apprentice missing from the Registry's winter roll. The porter was the same person, and he had carried the name Eren Vell for eight years. The Hall had not forgotten him; it had filed him under a job instead of a life.\n\nEren Vey stepped back from him. \u201cYou were the apprentice who stole the seventh tooth.\u201d\n\n\u201cI found it in the false bottom,\u201d Pell said. \u201cTovan had hidden it there. Before I sent you the box, I moved the tooth beneath the moth in the hidden chamber. The comb was breaking rooms into pieces, and I thought the Latch could keep them together.\u201d\n\nThe truth explained the missing tooth and the false bottom. It did not explain the blue thread, or why the Latch had called to Ivara. She had never met Pell before he became Eren Vell. At least, that was what she believed.\n\nThe red key stayed cool. Tovan snatched the map from the basin, but the line between Hall and Orchard remained in the stone beneath it. A new door appeared in the Sump wall, small and round, with a brass lip.\n\nFrom behind it, someone tapped three times.\n\nIvara put the glass thimble in her pocket. Pell kept the tin box. Eren Vey held the map, and Tovan held the bone comb. Four people, four objects, and an unopened door that knew the Mouth Room's note.\n\nThey did not open the round door. Tovan insisted that a door must be named before it was entered, but the small tapping continued from the other side. The sound was not impatient. It was counting their breaths.\n\nEren Vey asked Pell how he had come by the box. Pell said it had been on the lost-property shelf when he began work at the Hall, and that he had avoided it for years. On the day it was placed in Ivara's hands, it had appeared beside his porter cart. There was no record of a delivery. He had tied blue thread around it because the box's lid would not stay shut.\n\n\u201cDid you know what was inside?\u201d Ivara asked.\n\n\u201cNo. I knew who it was meant for.\u201d\n\n\u201cWho?\u201d\n\nPell looked at the crack in the door. \u201cSomeone who hears the note without asking what it means.\u201d\n\nIvara could not tell whether he meant herself or the room. She took out the red key and laid it on the stone basin. The key did not warm or cool. Tovan said that was not an answer. Eren Vey replied that silence was often the only answer a room could give without being claimed.\n\nThe brass map showed no route from the Sump to the round door. Tovan reached for the map, then stopped. Eren turned it upside down. A cluster of marks appeared, all on the side where the false bottom had pressed against the paper. The marks formed a row of five seats, just as if the map were a place setting. He recognized the number because he had found five names in the hidden chamber once, in a childhood dream he thought was invented.\n\nPell watched him. \u201cYou remember the house?\u201d\n\n\u201cI remember a song, but not the place.\u201d\n\n\u201cWhose song?\u201d\n\n\u201cI don't know.\u201d\n\nThe black thread in the thimble quivered. Eren pulled his hand away. He said that the song had followed him to the Hall, but he had never heard it when anyone else was present. He had decided it was his mother's humming, though he had no proof. Now, in the Sump, the thread repeated the same three notes.\n\nTovan sat on the basin's rim. For the first time that day, he looked old. He told them the Registry was founded after a terrible confusion called the Great Partition, when rooms had been joined and divided without consent. The Hall's first examiners made the comb to separate each room's voice. The comb was a safeguard. It was also the instrument that caused the division.\n\n\u201cWhich is why you kept the seventh tooth,\u201d Ivara said.\n\n\u201cI did not keep it. I hid it where no one would use it.\u201d\n\n\u201cThose are the same thing, if you have the only map.\u201d"
+  },
+  {
+    "candidates": [
+      {
+        "gate": 1,
+        "id": "place:oru",
+        "names": [
+          "Oru"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "group:the_registry",
+        "names": [
+          "The Registry"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 1,
+        "id": "person:ivara_noll",
+        "names": [
+          "Ivara Noll",
+          "Ivara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "place:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "Hall"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:map",
+        "names": [
+          "map"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "group:vellum_hall",
+        "names": [
+          "Vellum Hall",
+          "the Hall"
+        ],
+        "species": null,
+        "type": "group"
+      },
+      {
+        "gate": 1,
+        "id": "place:mouth_room",
+        "names": [
+          "Mouth Room"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "person:tovan_sere",
+        "names": [
+          "Tovan Sere",
+          "Tovan"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:red_key",
+        "names": [
+          "red key"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:understair",
+        "names": [
+          "Understair"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "person:eren_vey",
+        "names": [
+          "Eren Vey",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:address_strips",
+        "names": [
+          "address strips"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:eren_vell",
+        "names": [
+          "Eren Vell",
+          "Eren"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "place:tin_orchard",
+        "names": [
+          "Tin Orchard",
+          "Orchard"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "place:latch",
+        "names": [
+          "Latch"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:blue_thread",
+        "names": [
+          "blue thread"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:tin_box",
+        "names": [
+          "tin box"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:satchel",
+        "names": [
+          "satchel"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:nima_orrel",
+        "names": [
+          "Nima Orrel",
+          "Nima"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:necklace_of_brass_washers",
+        "names": [
+          "necklace of brass washers"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:hinge",
+        "names": [
+          "hinge"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:sleeping_gallery",
+        "names": [
+          "sleeping gallery"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:sleeping_tag",
+        "names": [
+          "sleeping tag"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:alis_noll",
+        "names": [
+          "Alis Noll"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "person:mara_noll",
+        "names": [
+          "Mara Noll",
+          "Mara"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:handprint_strip",
+        "names": [
+          "handprint strip"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:ledger",
+        "names": [
+          "ledger"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:bone_comb",
+        "names": [
+          "bone comb"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "place:sump",
+        "names": [
+          "Sump"
+        ],
+        "species": null,
+        "type": "place"
+      },
+      {
+        "gate": 1,
+        "id": "obj:brass_map",
+        "names": [
+          "brass map"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:glass_thimble",
+        "names": [
+          "glass thimble"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "obj:black_thread",
+        "names": [
+          "black thread"
+        ],
+        "species": null,
+        "type": "object"
+      },
+      {
+        "gate": 1,
+        "id": "person:pell_aven",
+        "names": [
+          "Pell Aven",
+          "Pell"
+        ],
+        "species": null,
+        "type": "person"
+      },
+      {
+        "gate": 1,
+        "id": "obj:seventh_tooth",
+        "names": [
+          "seventh tooth"
+        ],
+        "species": null,
+        "type": "object"
+      }
+    ],
+    "chapter": 2,
+    "first_sentence": 155,
+    "index": 3,
+    "last_sentence": 216,
+    "text": "Tovan accepted that. He turned the bone comb over in his hands, and the numbered teeth made a faint dry chatter. The missing seventh tooth had been designed to listen for a room's first name, before it acquired all the names people later gave it. That was why it could both mend and undo the comb's work. The red key in Ivara's hand was a separate object: iron, forked, and warm with a lie. It was not a tooth from the bone comb.\n\nIvara looked again at the brass map. The line to the Latch did not lead down. It led through the Hall, past the Mouth Room, to the handprints on the new bark strip. She had seen the marks that morning, disobeyed Tovan, and turned the strip face up again. She realized the Hall had begun answering her, not the Registry.\n\nThe three taps came again, now from the inside of the box. Pell placed it on the floor. The lid lifted and settled three times. On the fourth, it stayed open. A second note, lower than the first, sounded from the round door. It was the answer to the Mouth Room's tone.\n\nThey moved away from the basin toward the surface passage, but remained in the Sump. Ivara tried to take the brass map, but it clung to the basin as if the stone had grown around its edges. Eren Vey said the map might be choosing its first bearer. He laid his palm beside it and described the childhood song he had heard. The map released with a soft click.\n\nPell watched him take it. \u201cDoes it feel familiar?\u201d\n\n\u201cIt feels like someone has remembered me.\u201d\n\nThat was different from being recognized by the Hall. Eren put the map inside his coat. The glass thimble remained with Ivara, and the bone comb with Tovan. The box, still open, looked smaller now that the things hidden inside had been found.\n\nTovan asked Pell to describe the day the seventh tooth disappeared. Pell remembered the comb lying on the table in the first house. The children had been told not to touch it because the sound of the teeth could change a room. He had not understood the warning. Tovan had hidden the seventh tooth in the false bottom. Pell found it there, then moved it beneath the moth and tied it to the spool, hoping the comb would stop dividing the house. The comb did stop, but the room's names had already begun to separate.\n\n\u201cWhy didn't you tell us?\u201d Ivara asked.\n\n\u201cI tried to tell the Hall. The name I used was Pell Aven. Nobody found it in the files. When I told them I knew where the tooth was, they searched for a porter named Pell and found no one. Eventually I became the person they expected to see.\u201d\n\nThe Hall had not literally changed his face. It had narrowed the ways he could introduce himself until one name was easier than all the others. Ivara could see how a mistaken record became a habit, and a habit became a life.\n\nThe round door tapped a fourth time. This time, the bone comb answered without Tovan touching it. Its unnumbered gap gave off a faint shimmer. He held the comb away from the box. The whole Sump floor tilted by a degree, and the clay addresses slid toward the stone basin.\n\nEren Vey caught the map before it fell. Its folded edges opened against his chest. Every line led to the chamber in the wall. Pell recognized the shape as the plan of the house before the division: one room with five thresholds, each threshold opening wherever a person needed to enter.\n\n\u201cNot a door,\u201d said Tovan. \u201cA choice.\u201d\n\nThe distinction stayed with Ivara. She looked at the round outline and waited. The tapping stopped. Nobody had opened it, and still the room had let them hear its answer. They were learning to approach without forcing an entrance."
+  }
+]

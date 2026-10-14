@@ -1,0 +1,48 @@
+{
+  "stages": {
+    "commit": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 10643,
+      "calls": 7,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.138801,
+      "input_tokens": 21,
+      "output_tokens": 4992,
+      "seconds": 57.6
+    },
+    "extract": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 15913,
+      "calls": 4,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.535689,
+      "input_tokens": 12,
+      "output_tokens": 29345,
+      "seconds": 170.4
+    },
+    "registry": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 26436,
+      "calls": 4,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.183072,
+      "input_tokens": 12,
+      "output_tokens": 1628,
+      "seconds": 18.1
+    }
+  },
+  "total": {
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 52992,
+    "calls": 15,
+    "calls_without_usage": 0,
+    "cost_known": true,
+    "cost_usd": 0.857562,
+    "input_tokens": 45,
+    "output_tokens": 35965,
+    "seconds": 246.1
+  }
+}

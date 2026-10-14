@@ -1,0 +1,116 @@
+{
+  "ablation": [
+    {
+      "result": "not measured",
+      "stage": "extract"
+    },
+    {
+      "result": "not measured",
+      "stage": "registry"
+    }
+  ],
+  "build_what_ifs": "unmeasured",
+  "by_model_effort": [],
+  "ceilings": [],
+  "notes": [
+    "no objectives.jsonl: turns, floors and what-ifs are unmeasured"
+  ],
+  "output_bound_fit": {
+    "all": {
+      "latency_vs_input_tokens": {
+        "intercept_s": 144.457,
+        "n": 8,
+        "r2": 0.4946,
+        "seconds_per_1k_tokens": -18.671
+      },
+      "latency_vs_output_tokens": {
+        "intercept_s": 4.62,
+        "n": 8,
+        "r2": 0.9965,
+        "seconds_per_1k_tokens": 11.482
+      }
+    },
+    "extract": {
+      "latency_vs_input_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      }
+    },
+    "registry": {
+      "latency_vs_input_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      },
+      "latency_vs_output_tokens": {
+        "n": 4,
+        "unmeasured": "fewer than 5 calls (4)"
+      }
+    }
+  },
+  "overlapped_pipeline": {
+    "model": "Dependency model (hypothetical, not today's code): a pass-1 chunk's facts can be classified as soon as that chunk is accepted. The commit's K classification batches are spread over the N accepted chunks in acceptance order; batch j becomes ready when chunk ceil(j*N/K) has finished (facts per chunk assumed even). Batches run, with their measured durations, one at a time on a separate worker. Escape repair, the commit's other work (its wall minus the summed batch durations) and the audit stay serial after the last chunk and the last batch, as today. Pass-0 stays as measured.",
+    "note": "Lower bound: call latency is assumed not to change with concurrency. R26 measured four parallel pass-0 calls each running slower.",
+    "unmeasured": "needs pass-1 chunk and classification-batch objectives and stage walls"
+  },
+  "run_dir": "a_low_run1",
+  "stages": [
+    {
+      "api_time_share_of_latency": 0.982,
+      "cached_tokens": 0,
+      "calls": 4,
+      "calls_with_latency": 4,
+      "cost_known": true,
+      "cost_usd": 0.500988,
+      "harness_overhead_s": 5.831,
+      "input_tokens": 12,
+      "latency_max_s": 105.097,
+      "latency_p50_s": 68.016,
+      "latency_p90_s": 105.097,
+      "latency_sum_s": 327.171,
+      "max_concurrent_calls": 4,
+      "objectives": "unmeasured",
+      "out_tok_per_s_median": 81.79,
+      "out_tok_per_s_p10": 80.59,
+      "output_tokens": 27072,
+      "share": 0.8773,
+      "stage": "extract",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 3.1129,
+      "wall_s": 105.1,
+      "workers": 1
+    },
+    {
+      "api_time_share_of_latency": 0.784,
+      "cached_tokens": 0,
+      "calls": 4,
+      "calls_with_latency": 4,
+      "cost_known": true,
+      "cost_usd": 0.182994,
+      "harness_overhead_s": 8.48,
+      "input_tokens": 12,
+      "latency_max_s": 14.68,
+      "latency_p50_s": 9.489,
+      "latency_p90_s": 14.68,
+      "latency_sum_s": 39.273,
+      "max_concurrent_calls": 4,
+      "objectives": "unmeasured",
+      "out_tok_per_s_median": 38.46,
+      "out_tok_per_s_p10": 23.75,
+      "output_tokens": 1624,
+      "share": 0.1227,
+      "stage": "registry",
+      "turns_per_call_max": 1.0,
+      "turns_per_call_median": 1.0,
+      "utilization": 2.6716,
+      "wall_s": 14.7,
+      "workers": 1
+    }
+  ],
+  "total_wall_s": 119.8,
+  "turns": []
+}

@@ -1,0 +1,6 @@
+[
+  {
+    "chunk": 2,
+    "error": "handles: declared but not used: new:3"
+  }
+]

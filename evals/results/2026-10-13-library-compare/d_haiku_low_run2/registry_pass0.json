@@ -1,0 +1,293 @@
+{
+  "attributes": {},
+  "entities": {
+    "group:the_registry": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "The Registry"
+      ]
+    },
+    "group:vellum_hall": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "group",
+      "names": [
+        "Vellum Hall",
+        "the Hall"
+      ]
+    },
+    "obj:address_strips": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "address strips"
+      ]
+    },
+    "obj:black_thread": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "black thread"
+      ]
+    },
+    "obj:blue_thread": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "blue thread"
+      ]
+    },
+    "obj:bone_comb": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "bone comb"
+      ]
+    },
+    "obj:brass_map": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "brass map"
+      ]
+    },
+    "obj:glass_thimble": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "glass thimble"
+      ]
+    },
+    "obj:handprint_strip": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "handprint strip"
+      ]
+    },
+    "obj:hinge": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "hinge"
+      ]
+    },
+    "obj:ledger": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "ledger"
+      ]
+    },
+    "obj:map": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "map"
+      ]
+    },
+    "obj:necklace_of_brass_washers": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "necklace of brass washers"
+      ]
+    },
+    "obj:red_key": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "red key"
+      ]
+    },
+    "obj:satchel": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "satchel"
+      ]
+    },
+    "obj:seventh_tooth": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "seventh tooth"
+      ]
+    },
+    "obj:sleeping_tag": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "sleeping tag"
+      ]
+    },
+    "obj:tin_box": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "object",
+      "names": [
+        "tin box"
+      ]
+    },
+    "person:alis_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Alis Noll"
+      ]
+    },
+    "person:eren_vell": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Eren Vell",
+        "Eren"
+      ]
+    },
+    "person:eren_vey": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Eren Vey",
+        "Eren"
+      ]
+    },
+    "person:ivara_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Ivara Noll",
+        "Ivara"
+      ]
+    },
+    "person:mara_noll": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Mara Noll",
+        "Mara"
+      ]
+    },
+    "person:nima_orrel": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Nima Orrel",
+        "Nima"
+      ]
+    },
+    "person:pell_aven": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Pell Aven",
+        "Pell"
+      ]
+    },
+    "person:tovan_sere": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "person",
+      "names": [
+        "Tovan Sere",
+        "Tovan"
+      ]
+    },
+    "place:latch": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Latch"
+      ]
+    },
+    "place:mouth_room": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Mouth Room"
+      ]
+    },
+    "place:oru": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Oru"
+      ]
+    },
+    "place:sleeping_gallery": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "sleeping gallery"
+      ]
+    },
+    "place:sump": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Sump"
+      ]
+    },
+    "place:tin_orchard": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Tin Orchard",
+        "Orchard"
+      ]
+    },
+    "place:understair": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Understair"
+      ]
+    },
+    "place:vellum_hall": {
+      "aliases": [],
+      "anchors": [],
+      "kind": "place",
+      "names": [
+        "Vellum Hall",
+        "Hall"
+      ]
+    }
+  },
+  "places": [],
+  "timeline": {
+    "anchors": {},
+    "origin": ""
+  },
+  "world_id": "w:book_book"
+}

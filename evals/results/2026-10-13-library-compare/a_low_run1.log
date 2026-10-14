@@ -1,0 +1,7 @@
+2026-10-14 00:59:38,564 patternbuffer.build.categories category pass beings: alias 'the Chair' of 'Tovan Sere' names someone else; dropped
+2026-10-14 00:59:38,565 patternbuffer.build.categories category pass beings: alias 'Pell' of 'Eren Vell' names someone else; dropped
+2026-10-14 00:59:38,565 patternbuffer.build.categories category pass beings: alias 'Pell Aven' of 'Eren Vell' names someone else; dropped
+2026-10-14 00:59:38,565 patternbuffer.build.categories category pass things: alias 'address strips' of 'bark strip' names someone else; dropped
+2026-10-14 00:59:38,565 patternbuffer.build.categories category pass things: alias 'parcel' of 'tin box' names someone else; dropped
+2026-10-14 00:59:38,565 patternbuffer.build.categories category pass things: alias 'note' of 'folded paper' names someone else; dropped
+ABORT: chunks [2] were refused at extraction; nothing committed

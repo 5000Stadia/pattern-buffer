@@ -1,0 +1,3 @@
+2026-10-14 01:42:32,788 patternbuffer.build.categories category pass things: alias 'parcel' of 'tin box' names someone else; dropped
+2026-10-14 01:42:32,788 patternbuffer.build.categories category pass things: alias 'folded paper' of 'note' names someone else; dropped
+ABORT: chunks [2] were refused at extraction; nothing committed

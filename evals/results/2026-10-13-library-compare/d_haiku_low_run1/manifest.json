@@ -1,0 +1,694 @@
+{
+  "entries": [
+    {
+      "anchor_quote": "In the city of Oru, no one gave directions by pointing.",
+      "fixture": false,
+      "key": "place:oru",
+      "names": [
+        "Oru"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "The Registry called these sounds addresses.",
+      "fixture": false,
+      "key": "place:registry",
+      "names": [
+        "Registry"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "The Registry called these sounds addresses.",
+      "fixture": false,
+      "key": "group:the_registry",
+      "names": [
+        "The Registry"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "group"
+    },
+    {
+      "anchor_quote": "Ivara Noll worked in the Vellum Hall, where addresses were copied onto strips of skin-thin bark and pinned to a map that had no north.",
+      "fixture": false,
+      "key": "person:ivara_noll",
+      "names": [
+        "Ivara Noll",
+        "Ivara",
+        "Noll"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "Ivara Noll worked in the Vellum Hall, where addresses were copied onto strips of skin-thin bark and pinned to a map that had no north.",
+      "fixture": false,
+      "key": "place:vellum_hall",
+      "names": [
+        "Vellum Hall",
+        "the Hall"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "Ivara Noll worked in the Vellum Hall, where addresses were copied onto strips of skin-thin bark and pinned to a map that had no north.",
+      "fixture": false,
+      "key": "object:strip_of_skin_thin_bark",
+      "names": [
+        "strip of skin-thin bark",
+        "bark strip",
+        "address strip"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Ivara Noll worked in the Vellum Hall, where addresses were copied onto strips of skin-thin bark and pinned to a map that had no north.",
+      "fixture": false,
+      "key": "object:map",
+      "names": [
+        "map"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Ivara Noll worked in the Vellum Hall, where addresses were copied onto strips of skin-thin bark and pinned to a map that had no north.",
+      "fixture": false,
+      "key": "group:vellum_hall",
+      "names": [
+        "Vellum Hall",
+        "the Hall"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "group"
+    },
+    {
+      "anchor_quote": "Her desk stood beside the Mouth Room, a chamber inside the Hall where new rooms were asked to say what they were.",
+      "fixture": false,
+      "key": "place:mouth_room",
+      "names": [
+        "Mouth Room"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "Its door was a circular slab of black wood with a brass lip.",
+      "fixture": false,
+      "key": "object:brass_lip",
+      "names": [
+        "brass lip"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "When it opened, the room inside gave a note like a spoon touching a cup.",
+      "fixture": false,
+      "key": "object:spoon",
+      "names": [
+        "spoon"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "When it opened, the room inside gave a note like a spoon touching a cup.",
+      "fixture": false,
+      "key": "object:cup",
+      "names": [
+        "cup"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "\"Not a room,\" said Tovan Sere, listening with his left ear.",
+      "fixture": false,
+      "key": "person:tovan_sere",
+      "names": [
+        "Tovan Sere",
+        "Tovan",
+        "Sere"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "At her elbow sat a red key, a long iron thing with a forked tooth.",
+      "fixture": false,
+      "key": "object:red_key",
+      "names": [
+        "red key"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The Understair was a maintenance passage below Vellum Hall, officially sealed since Ivara was small.",
+      "fixture": false,
+      "key": "place:understair",
+      "names": [
+        "Understair"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "Across the aisle, Eren Vey sorted address strips by the pressure of their sound.",
+      "fixture": false,
+      "key": "person:eren_vey",
+      "names": [
+        "Eren Vey",
+        "Eren",
+        "Vey"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "Three desks away, Eren Vell, a porter with the same narrow face and almost the same name, carried stacks of bark to the drying racks.",
+      "fixture": false,
+      "key": "person:eren_vell",
+      "names": [
+        "Eren Vell",
+        "Eren",
+        "Vell"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "Three desks away, Eren Vell, a porter with the same narrow face and almost the same name, carried stacks of bark to the drying racks.",
+      "fixture": false,
+      "key": "object:bark",
+      "names": [
+        "bark"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The city had sent a petition that morning: a room was missing from the Tin Orchard.",
+      "fixture": false,
+      "key": "place:tin_orchard",
+      "names": [
+        "Tin Orchard",
+        "the Orchard"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "The city had sent a petition that morning: a room was missing from the Tin Orchard.",
+      "fixture": false,
+      "key": "group:tin_orchard",
+      "names": [
+        "Tin Orchard",
+        "the Orchard"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "group"
+    },
+    {
+      "anchor_quote": "Each tree grew a hollow metal fruit in which a family could keep a private address.",
+      "fixture": false,
+      "key": "object:metal_fruit",
+      "names": [
+        "metal fruit",
+        "fruit"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Somewhere among the trees was a little room called the Latch, where the Orchard's caretaker stored spare door hinges.",
+      "fixture": false,
+      "key": "place:latch",
+      "names": [
+        "Latch"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "Before she left, Ivara slid the red key into her cuff.",
+      "fixture": false,
+      "key": "object:cuff",
+      "names": [
+        "cuff"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Eren Vell stopped at the Hall's outer door to hand her a parcel tied with blue thread.",
+      "fixture": false,
+      "key": "object:tin_box",
+      "names": [
+        "tin box"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Eren Vell stopped at the Hall's outer door to hand her a parcel tied with blue thread.",
+      "fixture": false,
+      "key": "object:blue_thread",
+      "names": [
+        "blue thread"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Ivara put the tin box in her satchel and kept the key in her cuff.",
+      "fixture": false,
+      "key": "object:satchel",
+      "names": [
+        "satchel"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The trees grew in shallow trays of pale grit.",
+      "fixture": false,
+      "key": "object:grit",
+      "names": [
+        "grit"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The trees grew in shallow trays of pale grit.",
+      "fixture": false,
+      "key": "object:tray",
+      "names": [
+        "tray"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Their roots were loops of wire, and their leaves were tiny hinged tags that clicked together like teeth.",
+      "fixture": false,
+      "key": "object:wire",
+      "names": [
+        "wire"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Their roots were loops of wire, and their leaves were tiny hinged tags that clicked together like teeth.",
+      "fixture": false,
+      "key": "object:hinged_tags",
+      "names": [
+        "hinged tags"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Nima Orrel, the Orchard keeper, came to meet them.",
+      "fixture": false,
+      "key": "person:nima_orrel",
+      "names": [
+        "Nima Orrel",
+        "Nima",
+        "Orrel"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "She wore a necklace of brass washers, one for each year she had lived in the Orchard.",
+      "fixture": false,
+      "key": "object:necklace_of_brass_washers",
+      "names": [
+        "necklace of brass washers",
+        "necklace"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "A single hinge lay in the center.",
+      "fixture": false,
+      "key": "object:hinge",
+      "names": [
+        "hinge"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "A narrow seam opened, no wider than a thread, and from below came a voice that sounded exactly like the Mouth Room's note.",
+      "fixture": false,
+      "key": "object:seam",
+      "names": [
+        "seam"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The Hall's sleeping gallery held thirty narrow bunks, each with a tag that named its occupant and one room they were permitted to dream in.",
+      "fixture": false,
+      "key": "place:sleeping_gallery",
+      "names": [
+        "sleeping gallery"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "The Hall's sleeping gallery held thirty narrow bunks, each with a tag that named its occupant and one room they were permitted to dream in.",
+      "fixture": false,
+      "key": "object:tag",
+      "names": [
+        "tag"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "On the back, someone had written Alis Noll in faded red ink.",
+      "fixture": false,
+      "key": "person:alis_noll",
+      "names": [
+        "Alis Noll",
+        "Alis",
+        "Noll"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "On the back, someone had written Alis Noll in faded red ink.",
+      "fixture": false,
+      "key": "object:red_ink",
+      "names": [
+        "red ink"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The letters reminded Ivara of her mother's old recipe sheets, but the hand was not Mara's.",
+      "fixture": false,
+      "key": "object:recipe_sheet",
+      "names": [
+        "recipe sheet",
+        "recipe sheets"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Mara Noll wrote every letter with a small gap in its middle, as though each word had a door in it.",
+      "fixture": false,
+      "key": "person:mara_noll",
+      "names": [
+        "Mara Noll",
+        "Mara",
+        "Noll"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "Ivara went to her desk and searched the drawers for the sheet where Mara had recorded a recipe for shell milk.",
+      "fixture": false,
+      "key": "object:drawers",
+      "names": [
+        "drawers"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "He studied it for a long while, then brought out a ledger with a cracked spine.",
+      "fixture": false,
+      "key": "object:ledger",
+      "names": [
+        "ledger"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "He stood outside it with a bone comb in his hand.",
+      "fixture": false,
+      "key": "object:bone_comb",
+      "names": [
+        "bone comb",
+        "comb"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "A small folded paper lay beneath the false bottom, tucked beside the map and thimble, though she had not opened the box.",
+      "fixture": false,
+      "key": "object:note",
+      "names": [
+        "note"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "A small folded paper lay beneath the false bottom, tucked beside the map and thimble, though she had not opened the box.",
+      "fixture": false,
+      "key": "object:false_bottom",
+      "names": [
+        "false bottom"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "His palms were stained with blue ink.",
+      "fixture": false,
+      "key": "object:blue_ink",
+      "names": [
+        "blue ink"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The passage narrowed into a room called the Sump, where discarded addresses were pressed into clay.",
+      "fixture": false,
+      "key": "place:sump",
+      "names": [
+        "Sump"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "In its center stood a stone basin.",
+      "fixture": false,
+      "key": "object:stone_basin",
+      "names": [
+        "stone basin",
+        "basin"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "A little brass map lay within, folded into a square.",
+      "fixture": false,
+      "key": "object:brass_map",
+      "names": [
+        "brass map",
+        "brass copy"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Beneath the map, they found a glass thimble containing a black thread.",
+      "fixture": false,
+      "key": "object:glass_thimble",
+      "names": [
+        "glass thimble",
+        "thimble"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "Beneath the map, they found a glass thimble containing a black thread.",
+      "fixture": false,
+      "key": "object:black_thread",
+      "names": [
+        "black thread"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "The thimble was capped with red wax.",
+      "fixture": false,
+      "key": "object:red_wax",
+      "names": [
+        "red wax"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    },
+    {
+      "anchor_quote": "\"I used to be called Pell Aven. The Hall erased my name when the Latch disappeared. I was its child.\"",
+      "fixture": false,
+      "key": "person:pell_aven",
+      "names": [
+        "Pell Aven",
+        "Pell",
+        "Aven"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "person"
+    },
+    {
+      "anchor_quote": "Before I sent you the box, I moved the tooth beneath the moth in the hidden chamber.",
+      "fixture": false,
+      "key": "place:hidden_chamber",
+      "names": [
+        "hidden chamber"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "place"
+    },
+    {
+      "anchor_quote": "A new door appeared in the Sump wall, small and round, with a brass lip.",
+      "fixture": false,
+      "key": "object:round_door",
+      "names": [
+        "round door"
+      ],
+      "personas": [],
+      "role": null,
+      "species": null,
+      "type": "object"
+    }
+  ],
+  "namesakes": []
+}

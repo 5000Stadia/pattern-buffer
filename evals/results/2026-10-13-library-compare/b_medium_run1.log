@@ -1,0 +1,11 @@
+2026-10-14 01:07:52,739 patternbuffer.build.categories category pass beings: alias 'the Chair' of 'Tovan Sere' names someone else; dropped
+2026-10-14 01:07:52,740 patternbuffer.build.categories category pass things: alias 'strip of bark' of 'address strips' names someone else; dropped
+2026-10-14 01:07:52,740 patternbuffer.build.categories category pass things: alias 'parcel' of 'tin box' names someone else; dropped
+2026-10-14 01:07:52,740 patternbuffer.build.categories category pass things: alias 'small folded paper' of 'note' names someone else; dropped
+2026-10-14 01:12:52,985 model_shim model shim timeout (attempt 1)
+2026-10-14 01:12:52,995 model_shim model shim timeout (attempt 1)
+2026-10-14 01:18:08,120 model_shim model shim timeout (attempt 2)
+2026-10-14 01:18:08,152 model_shim model shim timeout (attempt 2)
+2026-10-14 01:23:38,294 model_shim model shim timeout (attempt 3)
+2026-10-14 01:23:38,294 patternbuffer.build.extract extract: chunk 0: model call failed: model call failed after retries: Command '['claude', '-p', '--model', 'claude-sonnet-4-6', '--output-format', 'json', '--max-turns', '1', '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--no-session-persistence', '--system-prompt', 'You answer with one JSON object that matches the schema in the user message. No prose, no code fences, no tools.', '--effort', 'medium']' timed out after 300 seconds
+ABORT: chunks [0] were refused at extraction; nothing committed

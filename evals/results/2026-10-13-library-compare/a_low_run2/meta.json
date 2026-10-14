@@ -1,0 +1,49 @@
+{
+  "book": "book",
+  "chapters": 2,
+  "chunks": 4,
+  "correlations": 0,
+  "date": "2026-10-14",
+  "entities": 47,
+  "escapes": 10,
+  "gate_refused": 4,
+  "log_rows": 407,
+  "manifest_entries": 34,
+  "max_words": 1500,
+  "mentions": 0,
+  "minted": 44,
+  "model": "claude-sonnet-4-6",
+  "pipeline": "BUILD-LIBRARY-V1 (patternbuffer.build)",
+  "proposals": 0,
+  "receipt": {
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 52992,
+    "calls": 15,
+    "calls_without_usage": 0,
+    "cost_known": true,
+    "cost_usd": 0.857562,
+    "input_tokens": 45,
+    "output_tokens": 35965,
+    "seconds": 246.1
+  },
+  "refused_lines": 15,
+  "rejections": 0,
+  "stage_models": {
+    "applied": true,
+    "map": {
+      "default": {
+        "effort": "low",
+        "model": "claude-sonnet-4-6"
+      }
+    },
+    "sha256": "7a0c6ab457be4851dac196a2cd998bf6fed1e2a2561e3ad2cdb35d830b066996"
+  },
+  "timings": {
+    "commit_s": 57.6,
+    "extract_s": 170.4,
+    "registry_s": 18.1,
+    "total_s": 246.1
+  },
+  "words": 4157,
+  "world_id": "w:book_book"
+}

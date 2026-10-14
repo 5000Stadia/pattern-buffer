@@ -1,0 +1,37 @@
+{
+  "stages": {
+    "extract": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 6641,
+      "calls": 8,
+      "calls_without_usage": 6,
+      "cost_known": false,
+      "cost_usd": 0.392619,
+      "input_tokens": 6,
+      "output_tokens": 23517,
+      "seconds": 945.4
+    },
+    "registry": {
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 26435,
+      "calls": 4,
+      "calls_without_usage": 0,
+      "cost_known": true,
+      "cost_usd": 0.340911,
+      "input_tokens": 12,
+      "output_tokens": 12151,
+      "seconds": 62.4
+    }
+  },
+  "total": {
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 33076,
+    "calls": 12,
+    "calls_without_usage": 6,
+    "cost_known": false,
+    "cost_usd": 0.73353,
+    "input_tokens": 18,
+    "output_tokens": 35668,
+    "seconds": 1007.8
+  }
+}
