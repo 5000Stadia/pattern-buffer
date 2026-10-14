@@ -1,6 +1,6 @@
 # RESTATED-ORIGIN-V1: a move written as both ends keeps only where the thing went
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
+**Status:** r1.1 (pbr's r1 RED: the group holds only containment items that pass every individual pre-write check, staged without side effects; and the family is every effective containment-family member, declared ones included). r1, for pbr review. Author: pb, 2026-10-14. An engine change at the ingest gate:
 deterministic, with no model and no prompt change.
 **Source:** construct's R20 run 11 (engine 42d0c23, letter "R20 run 11 … one engine-shaped
 question"), checked by pb in a read-only copy of the play world:
@@ -24,12 +24,23 @@ The old place is already in the log, so the restatement adds nothing and only br
 
 ## The rule
 
-Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass), after each item's
-normalization (canonical attribute, frame, identity-resolved entity and value, and the valid time
-the gate would stamp):
+Within **one** gate call (`ingest_structured`, or `ingest`'s structured pass):
 
-1. **The group.** Containment-family rows (`in`, `within`, `held_by`, `worn_by`, `carried_by`,
-   after canonicalization) with:
+0. **Staged validation, without side effects** *(r1.1, pbr)*.
+   - Before any containment row of the call is written, each item is run through every individual
+     pre-write check it would face. That includes canonicalization, frame, identity resolution,
+     the stamped valid time, the interval checks, the edge and cycle checks, and every other
+     per-item skip.
+   - This stage writes nothing: no declarations, no rows, no receipts.
+   - An item that fails a check keeps its existing skip reason, recorded once, exactly as today.
+     It never joins a group.
+   - Only the **eligible writes**, items that would otherwise enter, are grouped below.
+1. **The group.** Eligible writes whose attribute is in the **effective containment family**
+   *(r1.1, pbr)*: the built-in family (`in`, `within`, `held_by`, `worn_by`, `carried_by`) and
+   every attribute the world declares `relation_family: containment`
+   (`AttributeSemantics.containment_family()`). For an item whose first use would declare its
+   attribute, the family is projected from its declaration plan (`_family_after()`), as the gate
+   already does. The group's rows have:
    - the same resolved entity, frame and valid time;
    - an explicit or cursor-stamped `valid_from`. Timeless rows are never grouped;
    - an entity value.
@@ -86,6 +97,16 @@ the gate would stamp):
 3. **Across the family:** origin `in person:tomas`, then one call with `held_by person:tomas` and
    `in place:hall` at the same time. The `held_by` row is skipped; the `in place:hall` row is
    written.
+3a. *(r1.1)* **A declared containment predicate:** `attr:stowed_in` declared
+    `relation_family: containment`, origin `ring stowed_in obj:belt`, then one call with `ring
+    stowed_in obj:belt` and `ring in person:tomas`. The restatement is skipped `restated_origin`.
+    The same holds when `stowed_in`'s first use in this very call declares it containment
+    (projected family).
+3b. *(r1.1)* **A rejected change beside a restatement:** origin `ring in obj:belt`, then one call
+    with `ring in obj:belt` and `ring in obj:ring` (a self-containment cycle).
+    - The cycle edge is skipped with its existing reason, exactly once.
+    - No `restated_origin` receipt is written, and the restating row is written as today.
+    - Under `atomic=True`, the abort names only the cycle skip.
 4. **Left as written:**
    - no prior location (both written, conflicted);
    - both rows new places (both written, conflicted);
