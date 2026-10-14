@@ -218,16 +218,21 @@ class Classifier:
     def _declared_fixture(self, row: Assertion) -> bool:
         """Whether the host declared ``row.entity`` a fixture, as of ``row``'s
         own log position (CONTAINMENT-DURABILITY-V1 §2). Reads the canon
-        `fixture` rows visible then (retractions honoured); of the timeless
-        literal-boolean ones the latest-asserted decides. The subject is the id
-        as written, with no identity closure. Bounded at ``row.seq``, so a
+        `fixture` rows visible then (retractions honoured); of the
+        literal-boolean ones in force at the row's valid time, the
+        latest-asserted decides. In force (r1.6): open-ended, and timeless or
+        dated no later than the row's own ``valid_from`` (so a dated
+        declaration never covers a timeless row). The subject is the id as
+        written, with no identity closure. Bounded at ``row.seq``, so a
         declaration written later never reclassifies the row, on first
         classification or on rebuild()."""
+        at = row.valid_from
         declared = [
             r for r in self._buffer.visible(
                 entity=row.entity, attribute="fixture", frame="canon",
                 asserted_as_of=row.seq)
-            if r.valid_from is None and r.valid_to is None
+            if r.valid_to is None
+            and (r.valid_from is None or (at is not None and r.valid_from <= at))
             and r.value_type == "literal" and isinstance(r.value, bool)
         ]
         if not declared:

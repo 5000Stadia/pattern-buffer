@@ -1716,10 +1716,11 @@ def test_14a_every_identity_row_carries_its_gate_chunks_time(worlds):
         assert got and set(got.values()) == {t}, (entity, got)
     duke = identity_valid_froms(w, "person:duke_orsino")
     assert {a for a, _ in duke} >= {"kind", "being_type", "name", "alias", "role"}
-    # the host's fixture row stays timeless in gate mode: CONTAINMENT-DURABILITY-V1 r1.1
-    # counts only timeless declarations, so a dated one would declare nothing
-    assert identity_valid_froms(w, WELL)[("fixture", True)] is None
-    assert {v for (a, _), v in identity_valid_froms(w, WELL).items() if a != "fixture"} == {40.0}
+    # r1.8.3 (pbr): the host's fixture row is gate-timed too, no exception
+    assert identity_valid_froms(w, WELL)[("fixture", True)] == 40.0
+    assert set(identity_valid_froms(w, WELL).values()) == {40.0}
+    assert WELL not in w.porcelain.entities("canon", as_of=1.0)
+    assert WELL in w.porcelain.entities("canon", as_of=40.0)
     assert {a for a, _ in identity_valid_froms(w, STRANGER_ID)} == {"kind", "being_type", "name"}
     # the gate stamps the row's valid time, not a timeless flag
     assert all(r.valid_from is not None for r in entity_rows(w, "person:duke_orsino")

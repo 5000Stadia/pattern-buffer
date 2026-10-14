@@ -5,8 +5,8 @@ The writes, in order:
 0. **Shape rows first** for every minted id (:func:`shape_rows`).
 1. **The manifest**: each entry's shape rows, name and alias rows, and role,
    then its host `fixture = true` row when the entry declares one
-   (CONTAINMENT-DURABILITY-V1; written with ``extracted=False``, always
-   timeless: the guardrail counts only timeless declarations); then each
+   (CONTAINMENT-DURABILITY-V1; written with ``extracted=False``, timed like
+   the entry's other identity rows); then each
    persona's shape rows and name (on the persona id only, k7). With
    ``identity_time="gate"`` (the default, r1.8) these rows carry the story time
    of their entry's (or persona's) effective gate chunk, and an escape's or
@@ -434,11 +434,10 @@ def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
             if ident.fixture:
                 # CONTAINMENT-DURABILITY-V1 r1.3: the host's declaration, by the
                 # minted id, with host authority whatever `ingest_kwargs` say
-                # (a model's item never reaches this row). Always timeless, in
-                # gate mode too: the durability guardrail counts only timeless
-                # literal-boolean `fixture` rows (that spec's r1.1), so a dated
-                # one would silently stop declaring anything.
-                writer.put([_literal(ident.id, "fixture", True)], extracted=False)
+                # (a model's item never reaches this row). Gate-timed like every
+                # identity row (r1.8.3): that spec's r1.6 counts a dated,
+                # open-ended declaration from its valid time.
+                put_identity([_literal(ident.id, "fixture", True)], chunk, extracted=False)
     for ident in registry.identities:
         if ident.is_persona:
             put_identity(_identity_rows(ident.id, ident.type, ident.species, ident.names, None),
