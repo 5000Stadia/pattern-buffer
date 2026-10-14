@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -85,7 +85,7 @@ value, detail)` for each of:
 | `controls` | entity | n/a | `arity: set_valued`, `durability: CONSTITUTIVE` | `operates`, `powers` | what a switch, lever, plate, button or keypad works: `<switch> controls <light>` |
 | `link_type` | literal | closed: `switch`, `lever`, `plate`, `button`, `keypad`, `dial` | `durability: CONSTITUTIVE` | `control_type` | what kind of control the source is |
 | `control_mode` | literal | closed: `latching`, `momentary` | `durability: CONSTITUTIVE` | `mode` is **not** taken (construct's drift events use it), `switch_mode` | latching stays as set; momentary acts only while held |
-| `state` | literal | open: `on`, `off`, `open`, `shut`, `locked` | none (model-judged, as today) | `status` is **not** taken (hosts use it) | a device's or a portal's current setting; RFC-003 reads a portal's `state` |
+| `state` | literal | open: `on`, `off`, `open`, `shut` (*r1.3:* never `locked`, which is `locked · true`) | none (model-judged, as today) | `status` is **not** taken (hosts use it) | a device's or a portal's current setting; RFC-003 reads a portal's `state` |
 | `locked` | literal | closed: `true`, `false` | `durability: STATE` | none | whether a lock is engaged; a JSON boolean, separate from `state` *(r1.2)* |
 | `lit` | literal | closed: `dark`, `dim`, `lit`, `day`, `night` | none | `light_level`, `lighting`, `illumination` | how much light a place has now |
 | `outdoors` | literal | closed: `true`, `false` | `durability: CONSTITUTIVE` | `is_outdoors` | a place open to the sky; written timeless |
@@ -105,8 +105,16 @@ value, detail)` for each of:
     colliding on one key.
   - **A locked door is also `state · shut`.** RFC-003's route traversal reads a portal's `state`
     against its kind's `blocks_when_state`, and doesn't read `locked`. Writing both keeps routes
-    right. `vocab.check()` reports `locked · true` beside `state · open` as
-    `locked_but_open`.
+    right.
+  - *(r1.3, pbr)* `vocab.check()` tests the **folded current pair** per entity (the served
+    `locked` and `state` at the head, in the checked frame):
+    - `locked · true` with a served `state` other than `shut` is `locked_but_open` when that
+      state is `open`, and **`locked_not_shut`** otherwise;
+    - `locked · true` with no served `state` at all, or a conflicted one, is
+      **`locked_state_missing`**;
+    - a `state · locked` row anywhere is **`state_locked_legacy`**: the recipe spelling is
+      `locked · true` plus `state · shut`. Older prose (RFC-003's examples, tests) keeps its
+      meaning; only the lint flags it.
   - **A part with its own setting is its own entity.** A press's third drawer is
     `obj:press:drawer_3 · part_of · obj:press`, with its own `state · open`. The id grammar
     allows `:` but not `#`.
@@ -190,7 +198,13 @@ value, detail)` for each of:
    - reopening the world and applying again is idempotent.
 4. **`check`:** each finding kind on a hand-built world, and none on a clean one, with
    `exits_none_with_edge` and `locked_but_open` included. *(r1.2)* A locked, shut door blocks a
-   route under `traversal:door · blocks_when_state · shut`.
+   route under `traversal:door · blocks_when_state · shut`. *(r1.3)* These lane-1 cases are
+   flagged:
+   - `door state locked` alone is `state_locked_legacy`;
+   - `door locked true` with no state is `locked_state_missing`;
+   - with `state · ajar` it is `locked_not_shut`;
+   - with `state · open` it is `locked_but_open`;
+   - shut and locked is clean, and still blocks the route.
 5. **Extract prompt:** with `vocabulary=None` it is byte-identical to today's (pinned). With
    `RECIPE`, the vocabulary section is present and lists every term once.
 6. **Lane 1:** the three goldens load clean and their reads pass.
