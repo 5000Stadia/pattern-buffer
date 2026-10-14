@@ -134,7 +134,7 @@ def test_0_the_goldens_split_into_text_and_authored_as_the_lane_report_found():
     assert counts == {
         "switched-light": (9, ["holo-emitter planner"]),
         "code-lock": (10, ["holo-emitter planner", "manifest"]),
-        "take-and-drop": (8, ["manifest"])}
+        "take-and-drop": (7, ["holo-emitter planner", "manifest"])}
 
 
 def test_0_the_loader_refuses_none_both_and_an_unknown_author_naming_the_fact():
