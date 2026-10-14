@@ -172,7 +172,8 @@ class Refer:
         core = self._strip_determiner(description)
         texts = (description,) if core == ref_norm(description) else (description, core)
         hits = {e for text in texts
-                for e in self._registry.by_alias(text, asserted_as_of, frame=frame)}
+                for e in self._registry.by_alias(text, asserted_as_of, frame=frame,
+                                                 valid_as_of=as_of)}
         if len(hits) == 1:
             return Resolution(RESOLVED, next(iter(hits)),
                               receipt={"tier": 1, "signals": ["alias_exact"]})
@@ -211,7 +212,8 @@ class Refer:
         # tier 2) — and only where its entity is in the caller's scope. With
         # no scope the whole world is the scene.
         learned = {e for text in texts
-                   for e in self._registry.by_learned_alias(text, asserted_as_of, frame=frame)}
+                   for e in self._registry.by_learned_alias(text, asserted_as_of, frame=frame,
+                                                            valid_as_of=as_of)}
         if scope is not None:
             in_scene = set(members())
             learned = {e for e in learned if self._indexes.resolve_entity(e) in in_scene}

@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.8.3 (pbr's code-review RED: the manifest `fixture` row is gate-timed like every identity row, with no timeless exception; CONTAINMENT-DURABILITY-V1 r1.6 lets a dated host declaration count from its valid time). r1.8.2 (pbr: an identity gated after every committed chunk is refused, never given an earlier chunk's time). r1.8.1 (pbr's r1.8 review: `refer()`'s name vocabulary honours valid time, an ENGINE change; gate mode refuses when there is no chunk to take a time from). r1.8 (construct's wiring review, m3310d2: identity rows carry the story time of their entry's gate, not timeless). r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -241,6 +241,56 @@ difference:
    - For every entry: its shape rows *(c6)*, then its `name` and `alias` rows, then its `role`
      when given.
    - Then each persona id: its shape rows (its entry's type and species), then its name.
+   - *(r1.8, construct m3310d2)* **Identity time.** `commit(..., identity_time="gate")` is the
+     default.
+     - Every entry's identity rows (shape rows, `name`, `alias`, `role`, and a `fixture` row when
+       present) carry `valid_from = time_of(c)`, where c is the chunk holding the entry's **effective
+       gate** sentence.
+       - *(r1.8.3, pbr)* The `fixture` row has **no exception**: it is dated at the gate like the
+         rest, still written by the host route (`extracted=False`). A timeless one would list the
+         entry before its gate. CONTAINMENT-DURABILITY-V1 r1.6 counts a dated, open-ended host
+         declaration from its valid time, so the entry's containment rows (all from chunks at or
+         after its gate) still get the fixture guardrail.
+     - Every persona's shape and name rows carry `valid_from = time_of(c)`, with c the chunk holding
+       the persona's effective gate.
+     - Escapes and mentions carry their declaring chunk's time.
+     - An entry whose gate falls in no committed chunk (a chapter the build didn't include) carries
+       the time of the **first committed chunk after its gate**. That is conservative: never earlier
+       than the text that meets it.
+     - *(r1.8.2, pbr)* **No chunk at or after the gate: refuse.** If no committed chunk lies at or
+       after an entry's (or persona's) gate, commit **refuses before any write**
+       (`CommitRefused`, `no_chunk_at_or_after_identity_gate`, naming the entries). An earlier
+       chunk's time would make a future identity visible at an earlier horizon, and `time_of` isn't
+       required to be monotonic.
+       - A host building a shorter story leaves such entries out of the manifest, or uses
+         `identity_time="timeless"` knowingly. The library never guesses a time for them.
+     - *(r1.8.1, pbr)* **No chunk, no gate time.** In `identity_time="gate"`, a `results` sequence
+       with no committed chunk leaves no time to take, so commit **refuses before any write**
+       (`CommitRefused`, `no_chunk_for_identity_time`).
+     - `identity_time` is validated before any write: exactly `"gate"` or `"timeless"`, anything
+       else refused.
+     - The rows are still written **first, by `seq`**, so allocation before any fact holds. Only
+       valid time changes.
+     - **Why.** A timeless identity row makes an entry first met in chapter 3 exist at every
+       valid time, including a host's opening horizon. That is the time gate collapsing for
+       identities. With gate times:
+       - `entities(canon, as_of=h)` excludes an entry first met after h;
+       - `state(entry, "name", as_of=h)` answers unknown before its gate;
+       - a persona's name is invisible before its own gate.
+   - `identity_time="timeless"` keeps r1.7's behaviour, for a host that wants it.
+   - *(r1.8.1, pbr)* **Name lookup honours valid time. This is an engine change**, the only one in
+     this spec.
+     - `porcelain.refer(..., as_of=t)` passes only `asserted_as_of` to `IdentityRegistry.by_alias`,
+       whose vocabulary read (`_vocabulary_matches`) calls `buffer.visible` without a valid-time
+       bound. So a gate-timed name still resolves before its `valid_from`.
+     - `by_alias`, `by_learned_alias` and `_vocabulary_matches` gain `valid_as_of: float | None =
+       None`, and pass it to `buffer.visible`'s existing valid-time filter.
+     - `Refer` threads `as_of` into them. A row counts when it is valid at `as_of`: `valid_from` is
+       null or ≤ `as_of`, and `valid_to` is null or > `as_of`.
+     - With `as_of=None` nothing changes, since every existing caller passes none, so today's
+       resolution is byte-identical.
+     - Elsewhere this spec makes no engine change. The rest of the library is outside the core and
+       porcelain-only.
 2. **Allocation, before any fact.** Each chunk's handles are visited in (chunk index, handle
    number) order, and each gets an id and its type fact:
    - **a pick handle** gets a **provisional id** `mention:<slug>_<n>`, minted by code (step 2a);
@@ -329,7 +379,7 @@ For a book with no author (construct passes its author's manifest instead):
 - **The book runner** gains `run_book --pipeline library`. INGEST-V2 stays the default until the
   library matches it on the chapter test and passes this spec's tests. A later item retires the
   harness copy.
-- **No engine change.** The library uses existing porcelain verbs only.
+- **One engine change** *(r1.8.1)*: `refer()`'s name vocabulary honours `as_of` (§5). Otherwise the library uses existing porcelain verbs only.
 
 ## Prior art (from construct's design and pb's survey)
 
@@ -436,6 +486,34 @@ For a book with no author (construct passes its author's manifest instead):
     - INGEST-V2 (the default) stays byte-identical.
     - The chapter-test battery on *The Last Honest Meter*'s seeded registry is unchanged under the
       default.
+14a. *(r1.8)* **Identity time.**
+     - **Gate time.** An entry gated in chapter 2's third chunk has every identity row's
+       `valid_from` equal to `time_of(that chunk)`. A persona's name rows carry its own gate chunk's
+       time. An escape carries its declaring chunk's time.
+     - **Absence before the gate.** `entities(canon, as_of=t)` for t before that time excludes the
+       entry, and `state(entry, "name", as_of=t)` is unknown. At and after it, both are present.
+     - **Order kept.** Every identity row's `seq` still precedes every chunk fact's `seq`.
+     - **The fallback.** `identity_time="timeless"` reproduces r1.7's rows byte for byte.
+     - **The grade.** GRADE-LEAKS-V1 still grades a gate-time build with zero leaks.
+     - *(r1.8.1)* **`refer` at a time:**
+       - `refer("<an entry's exact name>", as_of=t)` with t before that entry's gate doesn't
+         resolve it, and at or after its gate it does;
+       - a persona's exact name behaves the same at its own gate;
+       - `refer(...)` with no `as_of` resolves both as today;
+       - every existing refer test passes unchanged.
+     - *(r1.8.1)* **No chunk:** gate mode with an empty `results` is refused with
+       `no_chunk_for_identity_time`, writing nothing; timeless mode with empty `results` writes the
+       manifest as before. A sparse `results` (chunks 0 and 3 only) gives an entry gated in chunk 2
+       the time of chunk 3;
+     - *(r1.8.2)* with the same sparse `results`, an entry gated after chunk 3 (in chunk 4 or
+       later) is refused with `no_chunk_at_or_after_identity_gate`, and the world is unchanged (same
+       log head and reads).
+     - *(r1.8.1)* `identity_time="other"` is refused before any write.
+     - *(r1.8.3, pbr)* **The fixture, end to end.** A manifest fixture entry gated in a later chunk:
+       `entities(canon, as_of=t)` for t before its gate time excludes it (no row of it, `fixture`
+       included, is visible then), its `fixture` row's `valid_from` is its gate time, and a
+       containment row on it from a chunk at or after the gate is CONSTITUTIVE 1.0 with no model
+       call.
 15. **Full suite green.**
 
 ## Lexicon (added with the build)

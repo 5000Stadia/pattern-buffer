@@ -242,15 +242,49 @@ def test_2_r1_1_a_retracted_true_does_not_count(make_world):
     assert verdict(w, row) == (STATE, 0.8)
 
 
-def test_2_r1_1_only_timeless_literal_boolean_canon_rows_count(make_world):
+def test_2_r1_1_only_literal_boolean_canon_rows_count(make_world):
     stub = Stub({("obj:door", "in"): (STATE, 0.8)})
     w, _ = make_world(stub)
     w.ingest_structured([
-        fixture_item("obj:door", True, timeless=False, valid_from=1.0),   # not timeless
         fixture_item("obj:door", "yes"),                                  # not a boolean
         fixture_item("obj:door", True, frame="knows:person:ann"),         # not canon
     ])
     row = w.ingest_structured([contain("obj:door", "place:cell", t=2.0)])[0]
+    assert ("obj:door", "in") in stub.classify_calls
+    assert verdict(w, row) == (STATE, 0.8)
+
+
+def dated_fixture(entity, valid_from, **kw):
+    return fixture_item(entity, True, timeless=False, valid_from=valid_from, **kw)
+
+
+def test_2_r1_6_a_dated_open_declaration_counts_from_its_valid_time(make_world):
+    stub = Stub({("obj:door", "in"): (STATE, 0.8)})
+    w, _ = make_world(stub)
+    w.ingest_structured([dated_fixture("obj:door", 1.0)])
+    row = w.ingest_structured([contain("obj:door", "place:cell", t=2.0)])[0]
+    assert verdict(w, row) == (CONSTITUTIVE, 1.0)
+    assert ("obj:door", "in") not in stub.classify_calls
+    w.classifier.rebuild()
+    assert verdict(w, row) == (CONSTITUTIVE, 1.0)
+
+
+@pytest.mark.parametrize("declaration, row_kw", [
+    (dict(valid_from=3.0), dict(t=2.0)),                          # dated later than the row
+    (dict(valid_from=1.0, valid_to=1.5), dict(t=2.0)),            # closed
+    (dict(valid_from=1.0), dict(t=None)),                         # dated vs a timeless row
+], ids=["later", "closed", "timeless_row"])
+def test_2_r1_6_a_declaration_not_in_force_at_the_row_does_not_count(make_world, declaration,
+                                                                      row_kw):
+    stub = Stub({("obj:door", "in"): (STATE, 0.8)})
+    w, _ = make_world(stub)
+    w.ingest_structured([dated_fixture("obj:door", **declaration)])
+    item = contain("obj:door", "place:cell", t=row_kw["t"] if row_kw["t"] is not None else 1.0)
+    if row_kw["t"] is None:
+        item = {**{k: v for k, v in item.items() if k != "valid_from"}, "timeless": True}
+    row = w.ingest_structured([item])[0]
+    if row_kw["t"] is None:
+        assert row.valid_from is None
     assert ("obj:door", "in") in stub.classify_calls
     assert verdict(w, row) == (STATE, 0.8)
 
@@ -654,8 +688,13 @@ def test_b_a_manifest_fixture_writes_a_host_row_before_any_chunk_fact(make_world
     reg, w, stub, receipt = build_world(make_world, cast(), stub=stub)
     assert receipt.skipped == ()
     declared = [r for r in w.buffer.all_rows() if r.attribute == "fixture"]
+    door_kind = [r for r in w.buffer.all_rows()
+                 if r.entity == "obj:barred_door" and r.attribute == "kind"][0]
+    # BUILD-LIBRARY-V1 r1.8.3: gate-timed like the entry's other identity rows
+    assert door_kind.valid_from is not None
     assert [(r.entity, r.value, r.value_type, r.frame, r.valid_from, r.status)
-            for r in declared] == [("obj:barred_door", True, "literal", "canon", None, "stated")]
+            for r in declared] == [("obj:barred_door", True, "literal", "canon",
+                                    door_kind.valid_from, "stated")]
     chunk_facts = [r for r in w.buffer.all_rows() if r.attribute == "in"]
     assert declared[0].seq < min(r.seq for r in chunk_facts)
     shapes = [r for r in w.buffer.all_rows()
@@ -680,6 +719,40 @@ def test_b_the_fixture_row_is_written_with_host_authority_whatever_ingest_kwargs
 def test_b_no_fixture_entry_writes_no_fixture_row(make_world):
     reg, w, stub, receipt = build_world(make_world, cast(door_fixture=False))
     assert [r for r in w.buffer.all_rows() if r.attribute == "fixture"] == []
+
+
+LATER_BOOK = {1: "The page lay in the book.\n", 2: "The barred door stood in the cell.\n"}
+
+
+class ChapterModel:
+    """The extraction model: each chunk's lines, chosen by the text it reads."""
+
+    def __call__(self, prompt, schema):
+        if "barred door" in prompt:
+            return {"lines": ["s1|obj:barred_door|in|@place:cell"], "escapes": [], "picks": []}
+        return {"lines": ["s1|obj:page|in|@obj:book"], "escapes": [], "picks": []}
+
+
+def test_b_r1_6_a_fixture_met_later_is_absent_before_its_gate_and_still_declares(make_world):
+    """BUILD-LIBRARY-V1 r1.8.3 with r1.6, end to end (pbr): the fixture row is
+    gate-timed, so nothing of the entry shows before its gate, and its
+    containment row from the gate's chunk keeps the fixture guardrail."""
+    stub = Stub()
+    reg = b.Registry.from_manifest(cast(), LATER_BOOK)
+    chunks = b.plan(LATER_BOOK, reg)
+    w, stub = make_world(stub, "later")
+    b.commit(w, reg, b.extract(chunks, reg, ChapterModel()), time_of=lambda i: 10.0 * (i + 1))
+    door = "obj:barred_door"
+    declared = the_row(w, door, "fixture")
+    assert declared.valid_from == 20.0 and declared.valid_to is None
+    assert door not in w.porcelain.entities("canon", as_of=19.9)
+    assert [r for r in w.buffer.visible(entity=door, valid_as_of=19.9)] == []
+    assert door in w.porcelain.entities("canon", as_of=20.0)
+    door_in = the_row(w, door, "in")
+    assert door_in.valid_from == 20.0
+    assert verdict(w, door_in) == (CONSTITUTIVE, 1.0)
+    assert (door, "in") not in stub.classify_calls
+    assert ("obj:page", "in") in stub.classify_calls         # the unannounced page still judged
 
 
 def test_b_a_place_may_be_a_fixture(make_world):

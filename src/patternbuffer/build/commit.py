@@ -5,8 +5,13 @@ The writes, in order:
 0. **Shape rows first** for every minted id (:func:`shape_rows`).
 1. **The manifest**: each entry's shape rows, name and alias rows, and role,
    then its host `fixture = true` row when the entry declares one
-   (CONTAINMENT-DURABILITY-V1; written with ``extracted=False``); then each
-   persona's shape rows and name (on the persona id only, k7).
+   (CONTAINMENT-DURABILITY-V1; written with ``extracted=False``, timed like
+   the entry's other identity rows); then each
+   persona's shape rows and name (on the persona id only, k7). With
+   ``identity_time="gate"`` (the default, r1.8) these rows carry the story time
+   of their entry's (or persona's) effective gate chunk, and an escape's or
+   mention's rows the time of its declaring chunk; ``"timeless"`` writes them
+   timeless, as r1.7 did.
 2. **Allocation, before any fact**: each chunk's handles, in (chunk index,
    handle number) order. A pick gets a provisional ``mention:<slug>_<n>`` with
    its shape (2a); an escape joins an earlier escape id or is minted like an
@@ -57,8 +62,17 @@ from patternbuffer.build.text import is_description, join_key, slug
 INGEST_KEYS = frozenset({"frame", "classify", "cursor_authoritative", "extracted", "atomic"})
 
 
+IDENTITY_TIMES = ("gate", "timeless")
+
+
 class CommitRefused(ValueError):
-    """``commit`` refused its input before writing anything."""
+    """``commit`` refused its input before writing anything. ``code`` names the
+    refusal when it has a stable one (r1.8: ``no_chunk_for_identity_time``,
+    ``no_chunk_at_or_after_identity_gate``); the message starts with it."""
+
+    def __init__(self, message: str, code: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 @dataclass(frozen=True)
@@ -331,37 +345,103 @@ def _resolved_ids(answer: Any) -> list[str]:
     return []
 
 
+def _gate_chunk(ordered: Sequence[ChunkResult], gate: tuple[int, int]) -> int | None:
+    """The index of the committed chunk holding ``gate`` (chapter, sentence);
+    failing that the first committed chunk after it; None when no committed
+    chunk lies at or after it (r1.8). ``ordered`` is in text order."""
+    for r in ordered:
+        if r.chapter == gate[0] and r.first_sentence <= gate[1] <= r.last_sentence:
+            return r.index
+    for r in ordered:
+        if (r.chapter, r.first_sentence) > gate:
+            return r.index
+    return None
+
+
+def _identity_chunks(registry: Registry,
+                     ordered: Sequence[ChunkResult]) -> dict[str, int]:
+    """Gate mode: each entry's and persona's identity-time chunk index, or a
+    refusal naming every one with no committed chunk at or after its gate."""
+    if not ordered:
+        raise CommitRefused(
+            "no_chunk_for_identity_time: identity_time='gate' takes each identity's time from a "
+            "committed chunk, and there is none (use identity_time='timeless' knowingly)",
+            code="no_chunk_for_identity_time")
+    chunks: dict[str, int] = {}
+    stranded: list[str] = []
+    for ident in registry.identities:
+        index = _gate_chunk(ordered, ident.gate)
+        if index is None:
+            stranded.append(ident.id)
+        else:
+            chunks[ident.id] = index
+    if stranded:
+        raise CommitRefused(
+            "no_chunk_at_or_after_identity_gate: no committed chunk lies at or after the gate of "
+            f"{stranded}; leave them out of the manifest or use identity_time='timeless'",
+            code="no_chunk_at_or_after_identity_gate")
+    return chunks
+
+
 def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
            time_of: Callable[[int], float] | None = None,
-           ingest_kwargs: Mapping[str, Any] | None = None) -> BuildReceipt:
+           ingest_kwargs: Mapping[str, Any] | None = None,
+           identity_time: str = "gate") -> BuildReceipt:
     """Write a build into ``world`` (§5), serially, through its porcelain.
 
     ``time_of(chunk_index)`` gives each chunk's story time (default ``i + 1``).
     ``ingest_kwargs`` (``frame``, ``classify``, ``cursor_authoritative``,
     ``extracted``, ``atomic``) pass through to every ``ingest_structured``
-    call unchanged. Refuses (``CommitRefused``, nothing written) results that
+    call unchanged. ``identity_time`` (r1.8) is ``"gate"`` (the default: each
+    entry's and persona's identity rows are valid from the story time of the
+    committed chunk holding its effective gate, or the first committed chunk
+    after it; an escape's or mention's from its declaring chunk) or
+    ``"timeless"`` (r1.7's rows, byte for byte). Gate mode refuses
+    (``CommitRefused``, nothing written) when no chunk is committed
+    (``no_chunk_for_identity_time``) or an identity is gated after every
+    committed chunk (``no_chunk_at_or_after_identity_gate``). Refuses (``CommitRefused``, nothing written) results that
     carry a refused chunk or could not have come from ``extract`` over this
     registry. The registry is not changed: mentions and escapes are drawn from
     a copy of its allocator, after every entry and persona id."""
+    if identity_time not in IDENTITY_TIMES:
+        raise CommitRefused(f"identity_time must be one of {list(IDENTITY_TIMES)}, "
+                            f"got {identity_time!r}", code="invalid_identity_time")
     kwargs = _ingest_kwargs(ingest_kwargs)
     ordered = _checked(registry, results, getattr(world, "canonical_attribute", None))
     times = _times(ordered, time_of)
+    gated = identity_time == "gate"
+    identity_chunk = _identity_chunks(registry, ordered) if gated else {}
     writer = _Writer(world, kwargs)
     allocator = registry.allocator()
+
+    def put_identity(rows: list[dict[str, Any]], chunk: int | None,
+                     **override: Any) -> None:
+        """Identity rows: timeless (r1.7) or, in gate mode, valid from the
+        chunk's story time (the pose stamps ``valid_from``; nothing carries
+        ``timeless``)."""
+        if not gated:
+            writer.put(rows, **override)
+            return
+        writer.put([{k: v for k, v in row.items() if k != "timeless"} for row in rows],
+                   at=times[chunk], **override)
 
     # 0 + 1. The manifest: shape rows first, then names, aliases and role.
     for ident in registry.identities:
         if not ident.is_persona:
-            writer.put(_identity_rows(ident.id, ident.type, ident.species, ident.names,
-                                      ident.role))
+            chunk = identity_chunk.get(ident.id)
+            put_identity(_identity_rows(ident.id, ident.type, ident.species, ident.names,
+                                        ident.role), chunk)
             if ident.fixture:
                 # CONTAINMENT-DURABILITY-V1 r1.3: the host's declaration, by the
                 # minted id, with host authority whatever `ingest_kwargs` say
-                # (a model's item never reaches this row).
-                writer.put([_literal(ident.id, "fixture", True)], extracted=False)
+                # (a model's item never reaches this row). Gate-timed like every
+                # identity row (r1.8.3): that spec's r1.6 counts a dated,
+                # open-ended declaration from its valid time.
+                put_identity([_literal(ident.id, "fixture", True)], chunk, extracted=False)
     for ident in registry.identities:
         if ident.is_persona:
-            writer.put(_identity_rows(ident.id, ident.type, ident.species, ident.names, None))
+            put_identity(_identity_rows(ident.id, ident.type, ident.species, ident.names, None),
+                         identity_chunk.get(ident.id))
 
     # 2 (with the rules of 4). Allocation, before any fact.
     handle_ids: dict[tuple[int, str], str] = {}
@@ -387,7 +467,7 @@ def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
                 mention = allocator.mint_numbered(f"mention:{slug(decl.surface)}")
                 shape, species, carries = _mention_shape(registry, decl.candidates)
                 if shape is not None:
-                    writer.put(shape_rows(mention, shape, species))
+                    put_identity(shape_rows(mention, shape, species), r.index)
                 propose(mention, decl.choice, decl.evidence_quote,
                         tuple(decl.candidates) if carries else None)
                 mentions += 1
@@ -401,7 +481,8 @@ def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
                 escape_id = described.get(slot)
                 if escape_id is None:
                     escape_id = allocator.mint(f"{NAMESPACE[type_]}:{slug(decl.name)}")
-                    writer.put(_identity_rows(escape_id, type_, decl.species, [decl.name], role))
+                    put_identity(_identity_rows(escape_id, type_, decl.species, [decl.name], role),
+                                 r.index)
                     escapes += 1
                     described[slot] = escape_id
                     earlier = latest_description.get((type_, key))
@@ -412,7 +493,8 @@ def commit(world: Any, registry: Registry, results: Sequence[ChunkResult], *,
                 escape_id = proper.get((type_, key))
                 if escape_id is None:
                     escape_id = allocator.mint(f"{NAMESPACE[type_]}:{slug(decl.name)}")
-                    writer.put(_identity_rows(escape_id, type_, decl.species, [decl.name], role))
+                    put_identity(_identity_rows(escape_id, type_, decl.species, [decl.name], role),
+                                 r.index)
                     escapes += 1
                     proper[(type_, key)] = escape_id
             # A collision with the manifest: the escape keeps its own id, and

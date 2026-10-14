@@ -1805,7 +1805,7 @@ class IdentityRegistry:
         return sorted(out, key=lambda entry: entry["canonical_id"])
 
     def by_alias(self, alias: str, asserted_as_of: int | None = None,
-                 frame: str = CANON) -> set[str]:
+                 frame: str = CANON, valid_as_of: float | None = None) -> set[str]:
         """Entities an authored name or alias names exactly, identity-resolved,
         as of a log position: refer's tier 1a (whitepaper §9). Names assert
         identity too. Aliases match like names (REFER-LEARNING-V1 §5): both
@@ -1814,22 +1814,28 @@ class IdentityRegistry:
         vocabulary and is skipped here; tier 1d reads it (§7). Description is
         perspectival (FRAME-SCOPED-IDENTITY-V1 §2): the rows are read in
         `frame` only, with no canon fallback for a non-canon frame — a name
-        private to Alice resolves in Alice's frame, never in canon's."""
+        private to Alice resolves in Alice's frame, never in canon's.
+
+        `valid_as_of` (BUILD-LIBRARY-V1 r1.8.1) bounds the vocabulary rows by
+        valid time too: a name row counts only when it is valid at that story
+        time (`valid_from` null or <= it, `valid_to` null or > it). None, the
+        default, is no bound: every existing read is unchanged."""
         rows = self._vocabulary_matches(alias, ("name", "alias"), asserted_as_of,
-                                        frame=frame)
+                                        frame=frame, valid_as_of=valid_as_of)
         legacy = self._legacy_learned(rows, asserted_as_of)
         return {self.resolve(row.entity, asserted_as_of)
                 for row in rows if row.id not in legacy}
 
     def by_learned_alias(self, alias: str, asserted_as_of: int | None = None,
-                         frame: str = CANON) -> set[str]:
+                         frame: str = CANON, valid_as_of: float | None = None) -> set[str]:
         """Entities refer has learned `alias` as a word for (REFER-LEARNING-V1
         §3), identity-resolved, as of a log position: `learned_alias` rows and
         legacy learned aliases (§7). Read only by refer's tier 1d, after the
         world's own vocabulary found nothing. A `learned_alias` is never
-        identity: no anchor, merge or collision read sees it."""
+        identity: no anchor, merge or collision read sees it. `valid_as_of`
+        bounds the rows by valid time exactly as in `by_alias`."""
         rows = self._vocabulary_matches(alias, ("alias", "learned_alias"), asserted_as_of,
-                                        frame=frame)
+                                        frame=frame, valid_as_of=valid_as_of)
         legacy = self._legacy_learned(rows, asserted_as_of)
         return {self.resolve(row.entity, asserted_as_of)
                 for row in rows if row.attribute == "learned_alias" or row.id in legacy}
@@ -1854,7 +1860,7 @@ class IdentityRegistry:
 
     def _vocabulary_matches(
         self, text: str, attributes: tuple[str, ...], asserted_as_of: int | None,
-        frame: str = CANON,
+        frame: str = CANON, valid_as_of: float | None = None,
     ) -> list[Assertion]:
         """The visible `attributes` rows whose string value equals `text`
         under `ref_norm` (REFER-LEARNING-V1 §5): the one read set behind
@@ -1863,12 +1869,15 @@ class IdentityRegistry:
         The frame half of this read is FRAME-SCOPED-IDENTITY-V1 §2's: rows
         are read in `frame` only, with no canon fallback for a non-canon frame,
         once, for names, aliases and learned words alike
-        (§4: one frame rule for all of refer's vocabulary)."""
+        (§4: one frame rule for all of refer's vocabulary).
+
+        `valid_as_of` is the story-time bound (BUILD-LIBRARY-V1 r1.8.1), the
+        buffer's own valid-time filter; None leaves the read unbounded."""
         needle = ref_norm(text)
         return [
             row for row in self._buffer.visible(
                 attribute_in=list(attributes), asserted_as_of=asserted_as_of,
-                frame=frame)
+                frame=frame, valid_as_of=valid_as_of)
             if isinstance(row.value, str) and ref_norm(row.value) == needle
         ]
 
