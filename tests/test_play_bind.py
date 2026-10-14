@@ -96,6 +96,22 @@ def test_2_a_future_entity_is_never_bound_or_minted_over(world):
         assert not r.rows[0].admitted and r.mints == {}
 
 
+def test_2_a_learned_alias_is_not_evidence_of_existence(world):
+    """pbr (code review): refer writes `learned_alias` timeless; it must not make
+    a future entity exist at every time."""
+    _seed(world)
+    _future(world)
+    world.ingest_structured([{"entity": "obj:brass_lantern", "attribute": "learned_alias",
+                              "value": "the glim", "timeless": True, "status": "inferred"}],
+                            classify="rules")
+    assert any(r.attribute == "learned_alias"
+               for r in world.buffer.visible(entity="obj:brass_lantern"))
+    r = _one(world, [{"entity": "obj:brass_lantern", "attribute": "lit", "value": True}],
+             include=("obj:brass_lantern",))
+    assert r.rows[0].subject.outcome == "future_only"
+    assert r.excluded == ("obj:brass_lantern",)
+
+
 def test_2_future_search_is_global(world):
     _seed(world)
     _future(world)

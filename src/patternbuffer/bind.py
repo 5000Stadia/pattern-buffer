@@ -15,7 +15,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping, Sequence
 
-from patternbuffer.model import CANON, ID_RE, infer_value_type
+from patternbuffer.model import CANON, ID_RE, META_ATTRIBUTES, infer_value_type
 from patternbuffer.names import ARTICLES, contains_matching_run, keys_match, name_key, tokens
 
 logger = logging.getLogger(__name__)
@@ -101,12 +101,14 @@ class Bind:
     # ------------------------------------------------------------ existence
 
     def _first_valid(self, canon: str, frame: str, cache: dict) -> float | None:
-        """The earliest valid time any closure member has a visible row in
-        ``frame`` (timeless counts as -inf); None when it has none at the head
-        (§2a)."""
+        """The earliest valid time any closure member has a visible domain row
+        in ``frame`` (timeless counts as -inf); None when it has none at the
+        head (§2a). The engine's bookkeeping rows (``META_ATTRIBUTES``, such as
+        refer's timeless ``learned_alias``) are not evidence of existence."""
         if canon not in cache:
             members = sorted(self._registry.closure(canon))
-            rows = self._buffer.visible(entity_in=members, frame=frame)
+            rows = [r for r in self._buffer.visible(entity_in=members, frame=frame)
+                    if r.attribute not in META_ATTRIBUTES]
             cache[canon] = (min(-math.inf if r.valid_from is None else r.valid_from
                                 for r in rows) if rows else None)
         return cache[canon]
