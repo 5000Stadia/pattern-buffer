@@ -335,15 +335,26 @@ def check(world: Any, vocabulary: Vocabulary, *, frame: str = "canon") -> list[F
 
 
 def _uncarried(world: Any, term: Term) -> dict[str, Any]:
-    """The declared keys of ``term`` that ``world`` does not carry for it."""
-    carried = world.semantics.semantics(term.attribute)
+    """The declared keys of ``term`` that ``world`` does not carry for it: the
+    visible ``attr:<term>`` declaration rows themselves, read key by key (the
+    last visible row of a predicate wins, as the semantics view folds them), not
+    the effective semantics. A term key equal to the engine's built-in default
+    is still missing until a row declares it (pbr, code review)."""
+    declared_rows: dict[str, Any] = {}
+    resolvable: set[str] = set()
+    for row in world.buffer.visible(entity=f"attr:{term.attribute}"):
+        if row.attribute == "resolvable_for":
+            if valid_declaration("resolvable_for", row.value):
+                resolvable.add(row.value)
+        elif row.attribute in _DECLARABLE:
+            declared_rows[row.attribute] = row.value
     missing: dict[str, Any] = {}
     for predicate, declared in term.semantics.items():
         if predicate == "resolvable_for":
             kinds = [declared] if isinstance(declared, str) else list(declared)
-            if not set(kinds) <= world.semantics.resolvable_kinds(term.attribute):
+            if not set(kinds) <= resolvable:
                 missing[predicate] = declared
-        elif getattr(carried, predicate) != declared:
+        elif predicate not in declared_rows or declared_rows[predicate] != declared:
             missing[predicate] = declared
     return missing
 

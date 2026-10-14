@@ -283,6 +283,32 @@ def test_4_undeclared_semantics_when_rows_came_first(bare):
     assert "CONSTITUTIVE" in found[0].detail and found[0].entity is None
 
 
+DEFAULTED = Vocabulary("defaulted", (
+    Term("mood", "literal", (), True, {"structural": False}, (), "how a being feels now"),
+    Term("tag", "literal", (), True, {"arity": "functional"}, (), "a label"),
+))
+
+
+@pytest.mark.parametrize("attribute, value", [("mood", "calm"), ("tag", "red")])
+def test_4_a_default_valued_declaration_is_missing_until_a_row_declares_it(tmp_path, attribute,
+                                                                          value):
+    """pbr (code review): a term key equal to the engine's built-in default
+    (structural False, arity functional) behaves the same undeclared, but the
+    world does not CARRY it; the check reads the attr: rows, not the overlay."""
+    rows_first = _world(tmp_path, f"rf_{attribute}", vocabulary=None)
+    declared = _world(tmp_path, f"dc_{attribute}", vocabulary=DEFAULTED)
+    try:
+        for w in (rows_first, declared):
+            put(w, {"entity": "person:ann", "attribute": attribute, "value": value})
+        found = [f for f in check(rows_first, DEFAULTED) if f.kind == "undeclared_semantics"]
+        assert [f.attribute for f in found] == [attribute]
+        assert not [f for f in check(declared, DEFAULTED) if f.kind == "undeclared_semantics"]
+        assert declared.buffer.visible(entity=f"attr:{attribute}")      # the row exists
+    finally:
+        rows_first.close()
+        declared.close()
+
+
 def test_4_declaring_after_the_rows_does_not_take_and_is_named(tmp_path):
     w = _world(tmp_path, "late", vocabulary=None)
     try:
