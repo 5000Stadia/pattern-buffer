@@ -190,7 +190,7 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
 - **Each chunk returns** *(r1.2, pbr: the result schema)*
   `ChunkResult(index, items, escapes, picks)`.
   - `items` are fact items whose `entity` (and `value`, for an entity value) is either a candidate
-    id or a **local handle** `new:<k>` (k = 0, 1, … within the chunk).
+    id or a **build handle** `new:<k>` (LEXICON: distinct from the mirror's *handle*) (k = 0, 1, … within the chunk).
   - `escapes` are `Escape(handle, type, name, species, quote)`, one per handle the chunk
     introduces for an entity not in the registry.
   - `picks` are `Pick(handle, surface, candidates, choice, evidence_quote)`, one per handle the
