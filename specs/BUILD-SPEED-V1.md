@@ -1,6 +1,6 @@
 # BUILD-SPEED-V1: classification batches in parallel, and smaller chunks on request
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-14. An opt-in engine change (classification)
+**Status:** r1.1 (pbr's r1 RED: with `workers > 1`, `batch_size` must be an exact positive int, checked before any work; pbr confirmed the store-after-all-calls boundary and that verdict handling has no race). r1, for pbr review. Author: pb, 2026-10-14. An opt-in engine change (classification)
 and a harness option. Defaults are unchanged.
 **Source:** the library comparison (`evals/results/2026-10-13-library-compare/REPORT.md`). Its
 one complete build took 246 s:
@@ -43,8 +43,15 @@ BUILD-LIBRARY-V1 (`plan(max_words=)`).
   several threads at once. The host opts in only with a thread-safe callable. The harness shim
   already is (extract calls it from four workers). The docstring says so.
 - **Bounds:** `workers` is an exact int of at least 1, and a bool is refused, the same as
-  BUILD-LIBRARY-V1's `workers`. Anything else raises `ValueError` before any call. `workers > 1`
-  without `batch_size` is a `ValueError` too: with no batches there is nothing to parallelize.
+  BUILD-LIBRARY-V1's `workers`. Anything else raises `ValueError` before any call.
+  - *(r1.1, pbr)* When `workers > 1`, `batch_size` must be an **exact positive int**:
+    `type(batch_size) is int and batch_size >= 1`. `None`, `0`, negatives, `True` and non-ints
+    each raise `ValueError`.
+  - Both checks run **before any work**: no guardrail pass, no store, no model call. With
+    nothing to split into batches, there is nothing to parallelize.
+  - Today's `step = batch_size or len(deferred)` stays as it is for `workers=1`, so existing
+    callers are unaffected. Under `workers > 1` there is no way to collapse into one serial
+    batch, or to skip rows with a negative step.
 - **Not changed:**
   - the classify prompt and its schema;
   - `classify="batch"` inside `ingest_structured`, which is a single batch per call;
@@ -86,8 +93,11 @@ that the grade doesn't drop, since smaller chunks see less context per call.
    are the caller's.
 5. **Context:** a context variable set by the caller is visible inside every model call, in each
    worker.
-6. **Bounds:** `workers` of 0, -1, `True`, 1.5 and `"2"` raise `ValueError` with zero calls.
-   `workers=2` with no `batch_size` raises.
+6. **Bounds:**
+   - `workers` of 0, -1, `True`, 1.5 and `"2"` each raise `ValueError` with zero calls;
+   - *(r1.1)* with `workers=2`, a `batch_size` of `None`, 0, -3, `True`, 2.0 and `"40"` each
+     raise `ValueError`, with no model call, no store and the sidecar unchanged;
+   - with `workers=1`, today's `batch_size` handling is unchanged (pinned).
 7. **Harness:**
    - `--max-words 750` reaches `plan`, and `meta.json` records it;
    - `--classify-workers` and `--extract-workers` reach their calls (fake shim);
