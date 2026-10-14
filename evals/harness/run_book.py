@@ -285,18 +285,33 @@ class Receipt:
 def run_book(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
              pass0: str = "sequential", merge_gate: bool = False, glean: bool = False,
              model_name: str = "injected", profile: bool = True,
-             pipeline: str = "ingest-v2") -> dict[str, Any]:
+             pipeline: str = "ingest-v2", max_words: int = LIBRARY_MAX_WORDS,
+             classify_workers: int = 1, extract_workers: int = 4) -> dict[str, Any]:
     """Build the book in ``book_dir`` into ``out_dir`` with ``model``; return meta.
 
     Raises ``BookRefused`` before any model call for a book it will not build,
     and ``BookRunAborted`` when pass-1 leaves failed chunks (nothing is
     committed; the staging stays). ``pipeline="library"`` builds with
-    ``patternbuffer.build`` instead (BUILD-LIBRARY-V1 §7, ``_run_library``)."""
+    ``patternbuffer.build`` instead (BUILD-LIBRARY-V1 §7, ``_run_library``);
+    ``max_words``, ``classify_workers`` and ``extract_workers`` are its
+    BUILD-SPEED-V1 options (INGEST-V2 refuses any non-default value)."""
     if pipeline not in PIPELINES:
         raise BookRefused(f"unknown pipeline {pipeline!r} (pipelines: {', '.join(PIPELINES)})")
+    speed = (max_words, classify_workers, extract_workers)
     if pipeline == "library":
+        if type(max_words) is not int or max_words < 100:
+            raise BookRefused(f"max_words must be an integer of at least 100, got {max_words!r}")
+        for name, value in (("classify_workers", classify_workers),
+                            ("extract_workers", extract_workers)):
+            if type(value) is not int or value < 1:
+                raise BookRefused(f"{name} must be an integer of at least 1, got {value!r}")
         return _run_library(book_dir, out_dir, model, pass0=pass0, merge_gate=merge_gate,
-                            glean=glean, model_name=model_name)
+                            glean=glean, model_name=model_name, max_words=max_words,
+                            classify_workers=classify_workers,
+                            extract_workers=extract_workers)
+    if speed != (LIBRARY_MAX_WORDS, 1, 4):
+        raise BookRefused("--max-words, --classify-workers and --extract-workers are "
+                          "--pipeline library options; INGEST-V2 takes none of them")
     from audit import run_audit
 
     plan = load_book(book_dir)
@@ -452,7 +467,9 @@ def _attempts_json(result: Any) -> list[dict[str, Any]]:
 
 
 def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str, dict], Any], *,
-                 pass0: str, merge_gate: bool, glean: bool, model_name: str) -> dict[str, Any]:
+                 pass0: str, merge_gate: bool, glean: bool, model_name: str,
+                 max_words: int = LIBRARY_MAX_WORDS, classify_workers: int = 1,
+                 extract_workers: int = 4) -> dict[str, Any]:
     """``run_book(pipeline="library")``: the book built with ``patternbuffer.build``.
 
     Stages (receipted like INGEST-V2's): ``registry`` (the category passes),
@@ -500,11 +517,11 @@ def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str
                                  f"{len(exc.problems)} problem(s), see manifest_problems.json"
                                  ) from exc
         library_registry_view(registry, world_id).save(run_dir / "registry_pass0.json")
-        chunks = build.plan(text, registry, max_words=LIBRARY_MAX_WORDS)
+        chunks = build.plan(text, registry, max_words=max_words)
         write_json(run_dir / "plan.json", [c.to_dict() for c in chunks])
 
         with receipt.stage("extract"):
-            results = build.extract(chunks, registry, labelled, workers=4)
+            results = build.extract(chunks, registry, labelled, workers=extract_workers)
         # Raw model output is diagnostic only: these files, never a world (k10).
         retried = [r for r in results if len(r.attempts) > 1]
         if retried:
@@ -525,7 +542,7 @@ def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str
                 built = build.commit(world, registry, results,
                                      time_of=lambda i: float(chunks[i].chapter),
                                      ingest_kwargs={"classify": "defer"})
-                world.classifier.classify_all(batch_size=40)
+                world.classifier.classify_all(batch_size=40, workers=classify_workers)
             world.truth.scan()
         write_json(run_dir / "chunk_spans.json", {"chunks": list(built.chunk_spans)})
         write_json(run_dir / "build_receipt.json", built.to_dict())
@@ -553,7 +570,7 @@ def _run_library(book_dir: str | Path, out_dir: str | Path, model: Callable[[str
             "rejections": built.rejections,
             "gate_refused": sum(len(r.gate_refused) for r in results),
             "refused_lines": sum(len(r.refused) for r in results),
-            "max_words": LIBRARY_MAX_WORDS,
+            "max_words": max_words,
             "timings": timings,
             "receipt": receipt.total(),
         }
@@ -586,7 +603,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     help="read the book and print counts and an estimate; import no model")
     ap.add_argument("--pipeline", choices=PIPELINES, default="ingest-v2",
                     help="ingest-v2 (default) or library (BUILD-LIBRARY-V1: patternbuffer.build)")
+    ap.add_argument("--max-words", type=int, default=LIBRARY_MAX_WORDS,
+                    help="library pipeline: the most words in a chunk, an int of at least 100 "
+                         f"(default {LIBRARY_MAX_WORDS})")
+    ap.add_argument("--classify-workers", type=int, default=1,
+                    help="library pipeline: parallel classification batch calls at commit "
+                         "(default 1, serial)")
+    ap.add_argument("--extract-workers", type=int, default=4,
+                    help="library pipeline: parallel chunk extraction calls (default 4)")
     args = ap.parse_args(argv)
+    if args.max_words < 100:
+        ap.error("--max-words must be an integer of at least 100")
+    if args.classify_workers < 1 or args.extract_workers < 1:
+        ap.error("--classify-workers and --extract-workers must be at least 1")
     if not args.dry_run and not args.out:
         ap.error("--out is required unless --dry-run")
     return args
@@ -610,7 +639,9 @@ def main(argv: list[str] | None = None,
             model_name = "injected"
         meta = run_book(args.book, args.out, model, pass0=args.pass0,
                         merge_gate=args.merge_gate, glean=args.glean, model_name=model_name,
-                        profile=not args.no_profile, pipeline=args.pipeline)
+                        profile=not args.no_profile, pipeline=args.pipeline,
+                        max_words=args.max_words, classify_workers=args.classify_workers,
+                        extract_workers=args.extract_workers)
     except (BookRefused, BookRunAborted) as exc:
         raise SystemExit(f"ABORT: {exc}") from exc
     print(json.dumps(meta, indent=2))

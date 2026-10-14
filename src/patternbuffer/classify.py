@@ -9,8 +9,10 @@ what they leave ambiguous, under asymmetric-cost defaults.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -391,20 +393,38 @@ class Classifier:
         c = self.get(assertion_id)
         return c.durability if c else STATE
 
-    def classify_all(self, batch_size: int | None = None) -> int:
+    def classify_all(self, batch_size: int | None = None, *, workers: int = 1) -> int:
         """Classify every row not yet in the sidecar. Returns count.
 
         With ``batch_size``, model-judged rows go to the model in batches
-        (one call per N rows) — same judgments, fewer round trips."""
+        (one call per N rows) — same judgments, fewer round trips.
+
+        ``workers > 1`` (BUILD-SPEED-V1) runs those batch calls in a thread
+        pool; see ``classify_rows`` for the contract. It requires an exact
+        positive-int ``batch_size``; a bad ``workers`` or ``batch_size`` raises
+        ``ValueError`` before any work."""
+        self._check_parallel(batch_size, workers)
         pending = [r for r in self._buffer.all_rows() if self.get(r.id) is None]
         if not batch_size:
             for row in pending:
                 self.classify(row)
             return len(pending)
-        return self.classify_rows(pending, batch_size)
+        return self.classify_rows(pending, batch_size, workers=workers)
+
+    @staticmethod
+    def _check_parallel(batch_size: Any, workers: Any) -> None:
+        """BUILD-SPEED-V1 bounds, checked before any guardrail pass, store or
+        model call: ``workers`` an exact int >= 1 (a bool is refused); with
+        ``workers > 1``, ``batch_size`` an exact int >= 1."""
+        if type(workers) is not int or workers < 1:
+            raise ValueError(f"workers must be an integer of at least 1, got {workers!r}")
+        if workers > 1 and (type(batch_size) is not int or batch_size < 1):
+            raise ValueError(
+                f"workers > 1 needs batch_size to be an integer of at least 1, "
+                f"got {batch_size!r}")
 
     def classify_rows(self, rows: list[Assertion], batch_size: int | None = None,
-                      model: bool = True) -> int:
+                      model: bool = True, *, workers: int = 1) -> int:
         """Classify a SPECIFIC set of rows (INGEST-HARDENING-V1): guardrails
         resolve immediately with zero model calls; model-needing rows go to one
         batch call (or `batch_size` chunks). The shared core of `classify_all`'s
@@ -416,7 +436,20 @@ class Classifier:
         containment→CONSTITUTIVE except sub-rule) so a movable's containment
         recency-supersedes; `needs_review` is never raised (STATE isn't flagged).
         The standing-spectrum default is safe: durability is rebuildable and the
-        erasing EVENT is barred (CLASSIFIER-EVENT-SAFETY)."""
+        erasing EVENT is barred (CLASSIFIER-EVENT-SAFETY).
+
+        ``workers > 1`` (BUILD-SPEED-V1, opt-in) runs the batches' MODEL CALLS
+        in a thread pool of that size; ``batch_size`` must then be an exact
+        positive int. Prompts are built, verdicts read and every sidecar write
+        made on the calling thread, the writes in batch order after all calls
+        return, so the stored classes equal the serial path's for the same
+        verdicts. A call that raises defaults only its own batch. HOST
+        CONTRACT: with ``workers > 1`` the injected model callable is called
+        from several threads at once and must be thread-safe. Each call runs in
+        a copy of the caller's ``contextvars`` context. ``workers=1`` (the
+        default) is the serial path, unchanged. An invalid ``workers`` or
+        ``batch_size`` raises ``ValueError`` before any work."""
+        self._check_parallel(batch_size, workers)
         rows = [r for r in rows if self.get(r.id) is None]
         deferred: list[Assertion] = []
         for row in rows:
@@ -435,18 +468,24 @@ class Classifier:
             if not model:
                 for row in deferred:
                     self._store(Classification(row.id, STATE, 0.5, False))
-            else:
+            elif workers == 1:
                 step = batch_size or len(deferred)
                 for start in range(0, len(deferred), step):
                     self._classify_batch(deferred[start : start + step])
+            else:
+                self._classify_batches_parallel(
+                    [deferred[start : start + batch_size]
+                     for start in range(0, len(deferred), batch_size)],
+                    workers)
         return len(rows)
 
-    def _classify_batch(self, rows: list[Assertion]) -> None:
+    @staticmethod
+    def _batch_prompt(rows: list[Assertion]) -> str:
         listing = "\n".join(
             f"{i}. {r.entity} · {r.attribute} · {json.dumps(r.value, default=json_default)}"
             for i, r in enumerate(rows)
         )
-        prompt = (
+        return (
             "Classify the lifetime of each fact about a world. Classes:\n"
             "CONSTITUTIVE: what the thing IS (identity, structure, fixtures, era); "
             "true at every moment unless the world is re-authored.\n"
@@ -457,16 +496,20 @@ class Classifier:
             "world? -> STATE. Ambiguous property -> STATE. " + _CONTAINMENT_CLAUSE
             + "\n\nFacts:\n" + listing
         )
-        verdicts: dict[int, tuple[str, float]] = {}
-        try:
-            out = self._model(prompt, task_schema(_BATCH_SCHEMA))
-            for v in out["verdicts"]:
-                # EVENT (or any non-standing verdict) is rejected -> the row
-                # falls to the asymmetric default below, never erased.
-                if v["durability"] in _STANDING_DURABILITIES:
-                    verdicts[int(v["index"])] = (v["durability"], float(v["class_confidence"]))
-        except Exception:
-            logger.exception("batch classification failed; defaulting batch")
+
+    @staticmethod
+    def _read_verdicts(out: Any, verdicts: dict[int, tuple[str, float]]) -> None:
+        """Fill ``verdicts`` from a batch answer (raises on a malformed one,
+        leaving what was read so far)."""
+        for v in out["verdicts"]:
+            # EVENT (or any non-standing verdict) is rejected -> the row
+            # falls to the asymmetric default, never erased.
+            if v["durability"] in _STANDING_DURABILITIES:
+                verdicts[int(v["index"])] = (v["durability"], float(v["class_confidence"]))
+
+    def _apply_verdicts(self, rows: list[Assertion],
+                        verdicts: dict[int, tuple[str, float]]) -> None:
+        """Store each row's verdict, or the asymmetric default when it has none."""
         for i, row in enumerate(rows):
             durability, confidence = self._apply_containment_floor(row, *verdicts.get(
                 i,
@@ -480,6 +523,44 @@ class Classifier:
                     durability == CONSTITUTIVE and confidence < _REVIEW_FLOOR,
                 )
             )
+
+    def _classify_batch(self, rows: list[Assertion]) -> None:
+        prompt = self._batch_prompt(rows)
+        verdicts: dict[int, tuple[str, float]] = {}
+        try:
+            out = self._model(prompt, task_schema(_BATCH_SCHEMA))
+            self._read_verdicts(out, verdicts)
+        except Exception:
+            logger.exception("batch classification failed; defaulting batch")
+        self._apply_verdicts(rows, verdicts)
+
+    def _call_batch(self, prompt: str) -> tuple[Any, Exception | None]:
+        """The model call alone, for a pool worker: the answer, or the
+        exception that ended it. Touches no classifier state."""
+        try:
+            return self._model(prompt, task_schema(_BATCH_SCHEMA)), None
+        except Exception as exc:
+            return None, exc
+
+    def _classify_batches_parallel(self, batches: list[list[Assertion]],
+                                   workers: int) -> None:
+        """BUILD-SPEED-V1: only the model calls run in the pool, each in a copy
+        of the calling thread's context taken here. Once every call has
+        returned, verdicts are read and stored on this thread, in batch order."""
+        prompts = [self._batch_prompt(b) for b in batches]
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(contextvars.copy_context().run, self._call_batch, p)
+                       for p in prompts]
+            answers = [f.result() for f in futures]
+        for rows, (out, exc) in zip(batches, answers):
+            verdicts: dict[int, tuple[str, float]] = {}
+            try:
+                if exc is not None:
+                    raise exc
+                self._read_verdicts(out, verdicts)
+            except Exception:
+                logger.exception("batch classification failed; defaulting batch")
+            self._apply_verdicts(rows, verdicts)
 
     def promote_accruals(self, threshold: int = 3) -> int:
         """Accrual promotion (whitepaper §5.1): repeated STATE observations
