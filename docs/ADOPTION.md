@@ -142,6 +142,8 @@ p.bind(rows, as_of, scope=None, include=None, widen=None, mint=None,
 # entity comes back future_only, never bound; a miss mints only in a `mint`
 # namespace, clear of every id the log has named. event:/fact:/doc: ids pass
 # through. Admitted means bound, not permission: your gates still run.
+# A world with no play horizon binds at the head with as_of=math.inf: every
+# entity ever introduced exists, and nothing is future-only.
 ```
 
 ### refer learns words, never picks
