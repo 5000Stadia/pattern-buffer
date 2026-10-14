@@ -98,7 +98,7 @@ class FakeModel:
 
 
 def built(worlds, text, manifest, outputs, *, max_words=1500, name="w", time_of=None,
-          ingest_kwargs=None, world=None):
+          ingest_kwargs=None, world=None, identity_time=None):
     """Registry, plan, fake extraction and commit of one small story."""
     registry = b.Registry.from_manifest(manifest, text)
     chunks = b.plan(text, registry, max_words=max_words)
@@ -107,7 +107,8 @@ def built(worlds, text, manifest, outputs, *, max_words=1500, name="w", time_of=
     w = world if world is not None else worlds(name)
     receipt = b.commit(w, registry, results, time_of=time_of,
                        ingest_kwargs={"classify": "rules"} if ingest_kwargs is None
-                       else ingest_kwargs)
+                       else ingest_kwargs,
+                       **({} if identity_time is None else {"identity_time": identity_time}))
     return SimpleNamespace(registry=registry, chunks=chunks, results=results, world=w,
                            receipt=receipt, model=model)
 
@@ -512,7 +513,10 @@ def test_5_a_reveal_outside_the_committed_chunks_writes_no_aka(worlds):
     chunks = b.plan(P_TEXT, reg)
     results = b.extract(chunks[:2], reg, FakeModel(P_OUT))
     w = worlds()
-    receipt = b.commit(w, reg, results, ingest_kwargs={"classify": "rules"})
+    # identity_time="timeless": the duke is gated after both committed chunks, which gate
+    # mode refuses (r1.8.2); this test is about the reveal, not identity time
+    receipt = b.commit(w, reg, results, ingest_kwargs={"classify": "rules"},
+                       identity_time="timeless")
     assert receipt.pending_reveals == (STRANGER_ID,) and receipt.correlations == 0
     assert rows(w, attribute="aka") == []
 
@@ -1102,9 +1106,10 @@ def test_8_every_minted_ids_first_rows_are_its_shape_rows(ks):
     expected[barmaid] = b.shape_rows(barmaid, "person")
     assert set(expected) == set(receipt.minted)
     for minted, shape in expected.items():
-        first = [(r.attribute, r.value, r.valid_from, r.frame)
-                 for r in entity_rows(w, minted)[:len(shape)]]
-        assert first == [(s["attribute"], s["value"], None, "canon") for s in shape], minted
+        # valid time is r1.8's (the gate chunk's story time, see test_14a); the
+        # order and the shape are this test's
+        first = [(r.attribute, r.value, r.frame) for r in entity_rows(w, minted)[:len(shape)]]
+        assert first == [(s["attribute"], s["value"], "canon") for s in shape], minted
         assert values(w, minted, "kind") == [shape[0]["value"]]  # no other kind row
 
 
@@ -1655,3 +1660,227 @@ def test_a_model_error_refuses_its_chunk_and_commit_refuses_the_build(worlds):
     with pytest.raises(b.CommitRefused):
         b.commit(w, reg, results)
     assert w.buffer.head() == 3
+
+
+# --------------------------------------- 14a. identity time (BUILD-LIBRARY-V1 r1.8)
+
+IT_TEXT = {
+    **P_TEXT,
+    3: "Duke Orsino rode in. The hooded stranger pulled back the hood: it was Duke Orsino."
+       "\n\nOrsino laughed at the old well.\n",
+}
+IT = b.Manifest(entries=[
+    E("duke", "person", ["Duke Orsino", "Orsino"], "Orsino laughed at the old well.",
+      role="ruler",
+      personas=[b.Persona("the hooded stranger", "The hooded stranger came to the mill.",
+                          "The hooded stranger pulled back the hood: it was Duke Orsino.")]),
+    E("orin", "person", ["Orin"], "Orin fished alone."),
+    E("mill", "place", ["the mill"], "The mill stood empty."),
+    E("well", "place", ["the old well"], "Orsino laughed at the old well.", fixture=True),
+])
+IT_OUT = {1: {"lines": ["s1|person:the_hooded_stranger|in|@place:the_mill",
+                        "s2|person:the_hooded_stranger|lit|lamp"]},
+          3: {"lines": ["s2|person:duke_orsino|mood|amused"]}}
+WELL = "place:the_old_well"
+# chunks: 0 = (1,1-2)  1 = (2,1-2)  2 = (3,1)  3 = (3,2-3); times 10, 20, 30, 40
+IT_CLOCK = lambda i: 10.0 * (i + 1)                                    # noqa: E731
+IDENTITY_ATTRIBUTES = ("kind", "being_type", "species", "name", "alias", "role", "fixture")
+
+
+def it_build(worlds, *, only=None, name="it", **kw):
+    reg = b.Registry.from_manifest(IT, IT_TEXT)
+    chunks = b.plan(IT_TEXT, reg)
+    results = b.extract(chunks, reg, FakeModel(IT_OUT))
+    if only is not None:
+        results = [r for r in results if r.index in only]
+    w = worlds(name)
+    kw.setdefault("ingest_kwargs", {"classify": "rules"})
+    return reg, w, results, lambda **more: b.commit(w, reg, results, time_of=IT_CLOCK,
+                                                    **{**kw, **more})
+
+
+def identity_valid_froms(w, entity):
+    return {(r.attribute, r.value): r.valid_from for r in entity_rows(w, entity)
+            if r.attribute in IDENTITY_ATTRIBUTES}
+
+
+def test_14a_every_identity_row_carries_its_gate_chunks_time(worlds):
+    reg, w, results, run = it_build(worlds)
+    assert [(c.index, c.chapter) for c in b.plan(IT_TEXT, reg)] == [(0, 1), (1, 2), (2, 3), (3, 3)]
+    run()
+    expected = {"person:duke_orsino": 30.0,                 # gated at "Duke Orsino rode in." (chunk 2)
+                STRANGER_ID: 20.0,                          # the persona's own introduction (chunk 1)
+                "person:orin": 10.0, "place:the_mill": 10.0}
+    for entity, t in expected.items():
+        got = identity_valid_froms(w, entity)
+        assert got and set(got.values()) == {t}, (entity, got)
+    duke = identity_valid_froms(w, "person:duke_orsino")
+    assert {a for a, _ in duke} >= {"kind", "being_type", "name", "alias", "role"}
+    # the host's fixture row stays timeless in gate mode: CONTAINMENT-DURABILITY-V1 r1.1
+    # counts only timeless declarations, so a dated one would declare nothing
+    assert identity_valid_froms(w, WELL)[("fixture", True)] is None
+    assert {v for (a, _), v in identity_valid_froms(w, WELL).items() if a != "fixture"} == {40.0}
+    assert {a for a, _ in identity_valid_froms(w, STRANGER_ID)} == {"kind", "being_type", "name"}
+    # the gate stamps the row's valid time, not a timeless flag
+    assert all(r.valid_from is not None for r in entity_rows(w, "person:duke_orsino")
+               if r.attribute in IDENTITY_ATTRIBUTES)
+
+
+def test_14a_an_escape_and_a_mention_carry_their_declaring_chunks_time(worlds):
+    out = built(worlds, KS_TEXT, KS, KS_OUT, name="ks_gate", time_of=lambda i: 100.0 + 10 * i)
+    mention = out.receipt.handle_ids[(0, "new:0")]
+    barmaid = out.receipt.handle_ids[(0, "new:1")]
+    for minted in (mention, barmaid):
+        got = {r.valid_from for r in entity_rows(out.world, minted)
+               if r.attribute in IDENTITY_ATTRIBUTES}
+        assert got == {100.0}, minted
+    # an entry first met in chapter 2 is stamped there, not at the opening horizon
+    assert {r.valid_from for r in entity_rows(out.world, "person:orin")
+            if r.attribute in IDENTITY_ATTRIBUTES} == {110.0}
+
+
+def test_14a_the_roster_and_the_name_are_absent_before_the_gate(worlds):
+    reg, w, results, run = it_build(worlds)
+    run()
+    p = w.porcelain
+    duke = "person:duke_orsino"
+    assert duke not in p.entities("canon", as_of=29.9)
+    assert duke in p.entities("canon", as_of=30.0) and duke in p.entities("canon", as_of=45.0)
+    assert STRANGER_ID not in p.entities("canon", as_of=19.9)
+    assert STRANGER_ID in p.entities("canon", as_of=20.0)
+    assert "person:orin" not in p.entities("canon", as_of=9.9)
+    assert "person:orin" in p.entities("canon", as_of=10.0)
+    assert p.state(duke, "name", as_of=29.9)["status"] == "unknown"
+    assert p.state(duke, "name", as_of=30.0)["status"] == "known"
+    assert p.state(STRANGER_ID, "name", as_of=19.9)["status"] == "unknown"
+    assert p.state(STRANGER_ID, "name", as_of=20.0)["status"] == "known"
+
+
+def test_14a_identity_rows_still_precede_every_chunk_fact_by_seq(worlds):
+    reg, w, results, run = it_build(worlds)
+    receipt = run()
+    ids = set(receipt.minted) | {i.id for i in reg.identities}
+    identity_seqs = [r.seq for r in w.buffer.all_rows()
+                     if r.entity in ids and r.attribute in IDENTITY_ATTRIBUTES]
+    first_fact = min(span["seq"][0] for span in receipt.chunk_spans if span["seq"])
+    assert identity_seqs and max(identity_seqs) < first_fact
+
+
+def test_14a_timeless_reproduces_r17s_rows_and_calls(worlds, monkeypatch):
+    reg, w, results, run = it_build(worlds, name="timeless")
+    calls: list[tuple[list[dict], dict]] = []
+    real = w.porcelain.ingest_structured
+
+    def spy(items, **kwargs):
+        calls.append((copy.deepcopy(items), kwargs))
+        return real(items, **kwargs)
+
+    monkeypatch.setattr(w.porcelain, "ingest_structured", spy)
+    run(identity_time="timeless")
+    manifest_calls = [(items, kw) for items, kw in calls if kw.get("at") is None
+                      and items and items[0].get("timeless") is True
+                      and items[0]["attribute"] in IDENTITY_ATTRIBUTES]
+    # r1.7: every identity write is timeless, unposed, one call per entry (shape,
+    # names, role) plus the host's fixture row on its own (extracted=False)
+    assert manifest_calls and all(all(i["timeless"] is True and "valid_from" not in i
+                                      for i in items) for items, _ in manifest_calls)
+    assert [kw.get("extracted") for items, kw in manifest_calls
+            if items[0]["attribute"] == "fixture"] == [False]
+    assert all(kw.get("at") is not None for items, kw in calls
+               if items and not items[0].get("timeless"))
+    for entity in ("person:duke_orsino", STRANGER_ID, "person:orin", WELL):
+        got = identity_valid_froms(w, entity)
+        assert got and set(got.values()) == {None}, entity
+    p = w.porcelain
+    assert "person:duke_orsino" in p.entities("canon", as_of=1.0)       # r1.7: exists at every time
+
+
+def test_14a_a_gate_time_build_has_zero_leaks_under_the_grader(worlds):
+    out = built(worlds, LEAK_TEXT, LEAK, LEAK_OUT, time_of=lambda i: float(i + 1),
+                identity_time="gate", name="leak_gate")
+    mara = identity_valid_froms(out.world, "person:mara_senn")
+    assert mara and set(mara.values()) == {4.0}                  # chunk 3 holds "Mara set the lamp down."
+    grade = leak_grade(out)
+    assert grade["identity_leaks"]["chunk_leak_rows"] == 0
+    assert grade["identity_leaks"]["registry_leaks"] == 0
+    assert grade["alias_leaks"]["count"] == 0 and grade["total"] == 0
+
+
+def test_14a_refer_at_a_time_resolves_a_name_only_from_its_gate(worlds):
+    reg, w, results, run = it_build(worlds)
+    run()
+    refer = w.porcelain.refer
+    duke = "person:duke_orsino"
+    for name in ("Duke Orsino", "Orsino"):
+        assert refer(name, as_of=29.9)["status"] == "underdetermined", name
+        at_gate = refer(name, as_of=30.0)
+        assert (at_gate["status"], at_gate["entity_id"]) == ("resolved", duke), name
+        assert refer(name, as_of=50.0)["entity_id"] == duke
+    assert refer("the hooded stranger", as_of=19.9)["status"] == "underdetermined"
+    stranger = refer("the hooded stranger", as_of=20.0)
+    assert (stranger["status"], stranger["entity_id"]) == ("resolved", STRANGER_ID)
+    # no as_of: both resolve as before
+    assert refer("Duke Orsino")["entity_id"] == duke
+    assert refer("the hooded stranger")["entity_id"] == STRANGER_ID
+    # timeless: the name resolves at every time, as in r1.7
+    _, w2, _, run2 = it_build(worlds, name="timeless_refer")
+    run2(identity_time="timeless")
+    assert w2.porcelain.refer("Duke Orsino", as_of=1.0)["entity_id"] == duke
+
+
+def test_14a_the_name_lookup_bound_is_valid_time_and_off_by_default(worlds):
+    reg, w, results, run = it_build(worlds)
+    run()
+    registry = w.registry
+    assert registry.by_alias("Duke Orsino") == {"person:duke_orsino"}
+    assert registry.by_alias("Duke Orsino", valid_as_of=None) == {"person:duke_orsino"}
+    assert registry.by_alias("Duke Orsino", valid_as_of=29.9) == set()
+    assert registry.by_alias("Duke Orsino", valid_as_of=30.0) == {"person:duke_orsino"}
+    assert registry.by_learned_alias("Duke Orsino", valid_as_of=29.9) == set()
+
+
+def test_14a_empty_results_in_gate_mode_are_refused_and_timeless_writes_the_manifest(worlds):
+    reg = b.Registry.from_manifest(IT, IT_TEXT)
+    w = worlds("empty")
+    before = world_reads(w)
+    head = w.buffer.head()
+    with pytest.raises(b.CommitRefused, match="no_chunk_for_identity_time") as refused:
+        b.commit(w, reg, [])
+    assert refused.value.code == "no_chunk_for_identity_time"
+    assert w.buffer.head() == head and world_reads(w) == before
+    receipt = b.commit(w, reg, [], identity_time="timeless")
+    assert w.buffer.head() > head and receipt.chunk_spans == ()
+    assert set(identity_valid_froms(w, "person:duke_orsino").values()) == {None}
+
+
+def test_14a_sparse_results_take_the_next_committed_chunks_time(worlds):
+    reg, w, results, run = it_build(worlds, only={0, 3})
+    receipt = run()
+    assert sorted(receipt.time_of) == [0, 3]
+    # the duke is gated in chunk 2, not committed: chunk 3's time; so is the persona (chunk 1)
+    assert set(identity_valid_froms(w, "person:duke_orsino").values()) == {40.0}
+    assert set(identity_valid_froms(w, STRANGER_ID).values()) == {40.0}
+    assert set(identity_valid_froms(w, "person:orin").values()) == {10.0}
+
+
+def test_14a_an_identity_gated_after_every_committed_chunk_is_refused_and_nothing_is_written(worlds):
+    reg, w, results, run = it_build(worlds, only={0, 2})       # the well is gated in chunk 3
+    before = world_reads(w)
+    head = w.buffer.head()
+    with pytest.raises(b.CommitRefused, match="no_chunk_at_or_after_identity_gate") as refused:
+        run()
+    assert refused.value.code == "no_chunk_at_or_after_identity_gate"
+    assert WELL in str(refused.value)
+    assert "person:duke_orsino" not in str(refused.value)     # only the stranded are named
+    assert w.buffer.head() == head and world_reads(w) == before
+    run(identity_time="timeless")                              # knowingly: the manifest is written
+    assert set(identity_valid_froms(w, WELL).values()) == {None}
+
+
+@pytest.mark.parametrize("bad", ["other", "Gate", "", None, True])
+def test_14a_an_invalid_identity_time_is_refused_before_any_write(worlds, bad):
+    reg, w, results, run = it_build(worlds)
+    head = w.buffer.head()
+    with pytest.raises(b.CommitRefused, match="identity_time"):
+        run(identity_time=bad)
+    assert w.buffer.head() == head
