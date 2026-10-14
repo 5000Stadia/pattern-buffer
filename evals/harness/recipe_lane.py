@@ -443,7 +443,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.metered:
         sys.path.insert(0, str(HERE))
         import model_shim
-        model = model_shim.get_model()
+        model, _model_name = model_shim.get_model()   # (callable, name)
     out_dir.mkdir(parents=True, exist_ok=True)
     reports = [run_recipe(n, out_dir, model, vocabulary=vocabulary, oracle=args.oracle)
                for n in names]
