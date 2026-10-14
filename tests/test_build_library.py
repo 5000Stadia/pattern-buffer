@@ -577,14 +577,17 @@ def test_6_a_pick_needs_two_known_candidates():
 # ------------------------------------------------------------ 6a. handles
 
 
-def test_6a_an_undeclared_or_unused_handle_refuses_the_chunk(worlds):
+def test_6a_an_undeclared_or_twice_declared_handle_refuses_the_chunk(worlds):
+    """r1.9 narrowed the old "declared but not used" refusal to a drop (14b)."""
     reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
     chunk = b.plan(ORIN_TEXT, reg)[0]
     undeclared = b.read_output(chunk, {"lines": ["s3|new:0|mood|x"]}, reg)
     assert undeclared.error == "handles: used but not declared: new:0"
     unused = b.read_output(chunk, {"lines": ["s3|person:orin|mood|x"], "escapes": [
         {"handle": "new:1", "type": "person", "name": "a ferryman", "quote": "The ferry"}]}, reg)
-    assert unused.error == "handles: declared but not used: new:1"
+    assert unused.error is None and unused.escapes == ()
+    assert [(d.handle, d.kind, d.name) for d in unused.dropped_handles] == [
+        ("new:1", "escape", "a ferryman")]
     twice = b.read_output(chunk, {"lines": ["s3|new:0|mood|x"], "escapes": [
         {"handle": "new:0", "type": "person", "name": "a", "quote": ""},
         {"handle": "new:0", "type": "person", "name": "b", "quote": ""}]}, reg)
@@ -1885,3 +1888,320 @@ def test_14a_an_invalid_identity_time_is_refused_before_any_write(worlds, bad):
     with pytest.raises(b.CommitRefused, match="identity_time"):
         run(identity_time=bad)
     assert w.buffer.head() == head
+
+
+# ------------------------- 14b. finishing a chunk (BUILD-LIBRARY-V1 r1.9, r1.9.1)
+
+RETRY_PARAGRAPH = ("Your previous answer for this chunk was refused: {error}. "
+                   "Answer again from the same text, following every rule above.")
+UNDECLARED = {"lines": ["s3|new:0|mood|x"]}
+UNDECLARED_ERROR = "handles: used but not declared: new:0"
+GOOD = {"lines": ["s3|person:orin|mood|calm"]}
+UNDECLARED_S1 = {"lines": ["s1|new:0|mood|x"]}      # chunks of one sentence (the toy book)
+
+
+class ScriptedChunks(FakeModel):
+    """A fake whose extraction answers are scripted per chunk and per call: the
+    n-th call for a chunk gets its n-th answer (the last repeats). An answer
+    that is an exception is raised. Records each call's chunk, prompt, label
+    and thread."""
+
+    def __init__(self, scripts: dict[int, list], **kw) -> None:
+        super().__init__(**kw)
+        self.scripts = scripts
+        self.calls: list[dict[str, Any]] = []
+
+    def __call__(self, prompt: str, schema: dict) -> Any:
+        if not prompt.startswith(b.EXTRACT_HEAD):
+            return super().__call__(prompt, schema)
+        index = int(re.search(r"PASSAGE \(chunk (\d+)", prompt).group(1))
+        with self._lock:
+            nth = sum(1 for c in self.calls if c["chunk"] == index)
+            self.calls.append({"chunk": index, "prompt": prompt, "label": b.current_label(),
+                               "thread": threading.current_thread().name})
+            self.prompts.append(prompt)
+        usage_ledger.record("test", "fake", {"input_tokens": 1, "output_tokens": 1}, cost_usd=0.0)
+        script = self.scripts.get(index, [{"lines": []}])
+        answer = script[min(nth, len(script) - 1)]
+        if isinstance(answer, Exception):
+            raise answer
+        return copy.deepcopy(answer)
+
+
+def orin_extract(answers: list, **kw):
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    model = ScriptedChunks({0: answers})
+    return reg, model, b.extract(b.plan(ORIN_TEXT, reg), reg, model, **kw)
+
+
+def a_ferryman(handle="new:1"):
+    return {"handle": handle, "type": "person", "name": "a ferryman", "species": None,
+            "quote": "The ferry left at dawn."}
+
+
+def test_14b_an_unused_escape_is_dropped_with_a_receipt_and_never_minted(worlds):
+    out = built(worlds, ORIN_TEXT, ORIN, {0: {
+        "lines": ["s3|person:orin|mood|calm", "s2|place:the_river|state|high"],
+        "escapes": [a_ferryman()]}})
+    result = out.results[0]
+    assert result.error is None and result.escapes == ()
+    assert result.dropped_handles == (
+        b.DroppedHandle(0, "new:1", "escape", "a ferryman", (), "unused_handle"),)
+    assert len(result.items) == 2 and result.refused == ()
+    assert (0, "new:1") not in out.receipt.handle_ids and out.receipt.escapes == 0
+    assert not [i for i in out.receipt.minted if "ferryman" in i]
+    assert not [r for r in out.world.buffer.all_rows() if "ferryman" in str(r.value)
+                or "ferryman" in r.entity]
+    assert values(out.world, "person:orin", "mood") == ["calm"]
+
+
+def test_14b_an_unused_pick_is_dropped_with_its_candidates_and_never_minted(worlds):
+    pick = holmes_pick()[0]["picks"]
+    out = built(worlds, HOLMES_TEXT, HOLMES,
+                {0: {"lines": ["s3|person:mycroft_holmes|reads|paper"], "picks": pick}})
+    result = out.results[0]
+    assert result.error is None and result.picks == ()
+    assert result.dropped_handles == (
+        b.DroppedHandle(0, "new:0", "pick", "Mr. Holmes", (SHERLOCK, MYCROFT),
+                        "unused_handle"),)
+    assert out.receipt.mentions == 0 and out.receipt.proposals == 0
+    assert not [r for r in out.world.buffer.all_rows() if r.entity.startswith("mention:")]
+    assert values(out.world, MYCROFT, "reads") == ["paper"]
+
+
+@pytest.mark.parametrize("line, where, reason", [
+    ("s4|new:1|only_two", "lines[1]", "malformed_line"),
+    ("s1|person:orin|knows|@new:1", "lines[1]", "gate_refused"),
+    ("s3|person:nobody|saw|@new:1", "lines[1]", "unknown_id"),
+], ids=["malformed", "gate", "unknown_id"])
+def test_14b_a_declaration_whose_only_line_was_refused_is_unused_too(worlds, line, where,
+                                                                      reason):
+    out = built(worlds, ORIN_TEXT, ORIN, {0: {"lines": ["s3|person:orin|mood|calm", line],
+                                              "escapes": [a_ferryman()]}})
+    result = out.results[0]
+    assert result.error is None and result.escapes == ()
+    assert [(r.where, r.reason) for r in result.refused + result.gate_refused] == [
+        (where, reason)]
+    assert [d.handle for d in result.dropped_handles] == ["new:1"]
+    assert (0, "new:1") not in out.receipt.handle_ids
+
+
+def test_14b_a_used_but_undeclared_or_twice_declared_handle_still_refuses_the_chunk():
+    _, model, results = orin_extract([UNDECLARED])
+    assert results[0].error == UNDECLARED_ERROR and results[0].dropped_handles == ()
+    twice = {"lines": ["s3|new:0|mood|x"], "escapes": [a_ferryman("new:0"), a_ferryman("new:0")]}
+    _, _, results = orin_extract([twice], retries=0)
+    assert results[0].error == "handles: declared twice: new:0"
+    # an undeclared handle in a line that is itself refused still refuses the chunk
+    gated = {"lines": ["s1|person:orin|knows|@new:4"]}
+    _, _, results = orin_extract([gated], retries=0)
+    assert results[0].error == "handles: used but not declared: new:4"
+
+
+def test_14b_commit_is_unchanged_and_ignores_attempts_and_dropped_handles(worlds):
+    w = worlds()
+    reg, _, results = orin_extract([{**GOOD, "escapes": [a_ferryman()]}])
+    assert results[0].dropped_handles and results[0].attempts
+    receipt = b.commit(w, reg, results, ingest_kwargs={"classify": "rules"})
+    assert receipt.escapes == 0 and values(w, "person:orin", "mood") == ["calm"]
+    # a hand-built result declaring an unused handle is still refused, before any write
+    forged = hand_made([], escapes=[b.Escape("new:0", "object", "forged lantern", None, "x")])
+    before, head = world_reads(w), w.buffer.head()
+    with pytest.raises(b.CommitRefused, match="declares build handles no item uses"):
+        b.commit(w, reg, [forged])
+    assert w.buffer.head() == head and world_reads(w) == before
+    # and a result without attempts or drops commits to the same world
+    kept = b.ChunkResult(index=0, items=results[0].items, escapes=(), picks=(),
+                         chapter=1, first_sentence=1, last_sentence=4)
+    w2 = worlds("w2")
+    b.commit(w2, reg, [kept], ingest_kwargs={"classify": "rules"})
+    assert world_reads(w2) == world_reads(w)
+
+
+def test_14b_a_refused_answer_gets_one_corrective_retry_in_the_same_label_and_worker():
+    reg, model, results = orin_extract([UNDECLARED, GOOD])
+    result = results[0]
+    assert result.error is None and len(result.items) == 1
+    assert [(a.error, a.raw) for a in result.attempts] == [(UNDECLARED_ERROR, UNDECLARED),
+                                                           (None, GOOD)]
+    first, second = model.calls
+    assert second["prompt"] == (first["prompt"].rstrip() + "\n\n"
+                                + RETRY_PARAGRAPH.format(error=UNDECLARED_ERROR))
+    assert second["prompt"].endswith(RETRY_PARAGRAPH.format(error=UNDECLARED_ERROR))
+    assert first["label"] == second["label"] == {"stage": "extract", "unit": "chunk:00"}
+    assert first["thread"] == second["thread"]
+    assert second["prompt"].startswith(b.EXTRACT_HEAD)
+
+
+def test_14b_retries_zero_is_the_old_behaviour_exactly():
+    _, model, results = orin_extract([UNDECLARED, GOOD], retries=0)
+    assert results[0].error == UNDECLARED_ERROR and len(model.calls) == 1
+    assert [(a.error, a.raw) for a in results[0].attempts] == [(UNDECLARED_ERROR, UNDECLARED)]
+
+
+def test_14b_refused_twice_keeps_the_second_error_and_both_raw_outputs():
+    other = {"lines": ["s3|new:2|mood|x"]}
+    _, model, results = orin_extract([UNDECLARED, other])
+    result = results[0]
+    assert result.error == "handles: used but not declared: new:2" and len(model.calls) == 2
+    assert [(a.error, a.raw) for a in result.attempts] == [
+        (UNDECLARED_ERROR, UNDECLARED), (result.error, other)]
+    assert model.calls[1]["prompt"].endswith(RETRY_PARAGRAPH.format(error=UNDECLARED_ERROR))
+
+
+def test_14b_a_raising_call_is_not_retried_and_keeps_raw_none():
+    _, model, results = orin_extract([RuntimeError("boom"), GOOD])
+    result = results[0]
+    assert len(model.calls) == 1
+    assert result.error == "model call failed: RuntimeError: boom"
+    assert result.attempts == (b.Attempt("model call failed: RuntimeError: boom", None),)
+
+
+def test_14b_a_retry_that_raises_keeps_the_first_raw_and_a_none():
+    _, model, results = orin_extract([UNDECLARED, RuntimeError("late")])
+    result = results[0]
+    assert len(model.calls) == 2
+    assert result.error == "model call failed: RuntimeError: late"
+    assert [a.raw for a in result.attempts] == [UNDECLARED, None]
+
+
+def test_14b_per_line_refusals_and_dropped_handles_never_trigger_a_retry():
+    partial = {"lines": ["s3|person:orin|mood|calm", "garbage", "s9|person:orin|mood|x",
+                         "s1|person:orin|mood|early", "s3|person:nobody|mood|x"],
+               "escapes": [a_ferryman()]}
+    _, model, results = orin_extract([partial])
+    result = results[0]
+    assert len(model.calls) == 1 and result.error is None and len(result.attempts) == 1
+    assert result.attempts[0] == b.Attempt(None, partial)
+    assert {r.reason for r in result.refused + result.gate_refused} == {
+        "malformed_line", "citation_outside_chunk", "gate_refused", "unknown_id"}
+    assert [d.handle for d in result.dropped_handles] == ["new:1"]
+
+
+@pytest.mark.parametrize("bad", [2, -1, True, False, 0.0, 1.0, None, "1"])
+def test_14b_retries_is_an_exact_zero_or_one_checked_before_any_call(bad):
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    model = ScriptedChunks({0: [GOOD]})
+    with pytest.raises(ValueError, match="retries"):
+        b.extract(b.plan(ORIN_TEXT, reg), reg, model, retries=bad)
+    assert model.calls == [] and model.prompts == []
+
+
+@pytest.mark.parametrize("ok", [0, 1])
+def test_14b_retries_zero_and_one_are_accepted(ok):
+    _, model, results = orin_extract([GOOD], retries=ok)
+    assert results[0].error is None and len(model.calls) == 1
+
+
+def test_14b_an_unused_malformed_escape_stays_a_per_item_refusal_never_a_drop(worlds):
+    nameless = {"handle": "new:2", "type": "person", "quote": "A man."}
+    out = built(worlds, ORIN_TEXT, ORIN, {0: {**GOOD, "escapes": [nameless]}})
+    result = out.results[0]
+    assert result.error is None and len(out.model.prompts) == 1
+    assert [(r.where, r.reason) for r in result.refused] == [("escapes[0]", "malformed_escape")]
+    assert result.dropped_handles == () and result.escapes == ()
+    assert (0, "new:2") not in out.receipt.handle_ids and out.receipt.escapes == 0
+
+
+def test_14b_an_unused_malformed_pick_keeps_its_own_code_and_no_drop():
+    pick = holmes_pick(choice=WATSON)[0]["picks"]
+    reg = b.Registry.from_manifest(HOLMES, HOLMES_TEXT)
+    chunk = b.plan(HOLMES_TEXT, reg)[0]
+    out = b.read_output(chunk, {"lines": ["s3|person:mycroft_holmes|reads|paper"],
+                                "picks": pick}, reg)
+    assert [r.reason for r in out.refused] == ["pick_choice_not_candidate"]
+    assert out.dropped_handles == () and out.picks == () and out.error is None
+
+
+def test_14b_a_declaration_sharing_a_line_with_a_refused_one_is_dropped_not_allocated():
+    reg = b.Registry.from_manifest(ORIN, ORIN_TEXT)
+    chunk = b.plan(ORIN_TEXT, reg)[0]
+    nameless = {"handle": "new:2", "type": "person", "quote": "A man."}
+    out = b.read_output(chunk, {"lines": ["s3|new:1|met|@new:2"],
+                                "escapes": [a_ferryman(), nameless]}, reg)
+    assert out.items == () and out.escapes == ()
+    assert [(r.where, r.reason) for r in out.refused] == [
+        ("escapes[1]", "malformed_escape"), ("lines[0]", "refused_handle")]
+    assert [d.handle for d in out.dropped_handles] == ["new:1"]
+
+
+def test_14b_the_predicate_retries_malformed_output_not_per_line_and_declaration_trouble():
+    # malformed output (lines not a list) is an answer-level error: retried
+    bad = {"lines": "s3|person:orin|mood|calm"}
+    _, model, results = orin_extract([bad, GOOD])
+    assert len(model.calls) == 2 and results[0].error is None
+    assert results[0].attempts[0].error.startswith("malformed output")
+    assert results[0].attempts[0].raw == bad
+    # a model that returned nothing at all also returned: retried
+    _, model, results = orin_extract([None, GOOD])
+    assert len(model.calls) == 2 and results[0].error is None
+    # non-list escapes / picks: retried
+    _, model, results = orin_extract([{"lines": [], "escapes": "x"}, GOOD])
+    assert len(model.calls) == 2
+    # only per-line refusals and a malformed declaration: accepted, one call
+    partial = {"lines": ["garbage", "s3|person:nobody|mood|x"],
+               "escapes": [{"handle": "new:0", "type": "person"}]}
+    _, model, results = orin_extract([partial, GOOD])
+    assert len(model.calls) == 1 and results[0].error is None
+    assert [r.reason for r in results[0].refused] == [
+        "malformed_line", "unknown_id", "malformed_escape"]
+
+
+def test_14b_chunks_retry_independently_in_their_own_labels():
+    reg = b.Registry.from_manifest(P, P_TEXT)
+    chunks = b.plan(P_TEXT, reg)
+    model = ScriptedChunks({1: [{"lines": ["s1|new:0|mood|x"]}, {"lines": []}]})
+    results = b.extract(chunks, reg, model, workers=3)
+    assert [len(r.attempts) for r in results] == [1, 2, 1, 1]
+    labels = sorted((c["chunk"], c["label"]["unit"]) for c in model.calls)
+    assert labels == sorted([(c.index, f"chunk:{c.index:02d}") for c in chunks]
+                            + [(1, "chunk:01")])
+
+
+def test_14b_the_retry_is_counted_under_its_chunk_in_the_usage_ledger(tmp_path):
+    book = tb.write_book(tmp_path / "toybook")
+    model = ScriptedChunks({**{k: [v] for k, v in TOY_EXTRACT.items()},
+                            1: [UNDECLARED_S1, TOY_EXTRACT[1]]}, categories=TOY_CATEGORIES)
+    out = tmp_path / "out"
+    assert rb.main(["--book", str(book), "--out", str(out), "--pipeline", "library"],
+                   model=model) == 0
+    usage = [json.loads(line) for line in (out / "usage.jsonl").read_text().splitlines()]
+    units = [u["unit"] for u in usage if u["stage"] == "extract"]
+    assert sorted(units) == ["chunk:00", "chunk:01", "chunk:01", "chunk:02"]
+    receipt = json.loads((out / "receipt.json").read_text())
+    assert receipt["stages"]["extract"]["calls"] == 4
+
+
+def test_14b_the_runner_writes_the_attempts_of_refused_and_retried_chunks(tmp_path):
+    book = tb.write_book(tmp_path / "toybook")
+    other = {"lines": ["s1|new:2|mood|x"]}
+    model = ScriptedChunks({**{k: [v] for k, v in TOY_EXTRACT.items()},
+                            0: [UNDECLARED_S1, other],           # refused twice
+                            2: [UNDECLARED_S1, TOY_EXTRACT[2]]},  # retried, then accepted
+                           categories=TOY_CATEGORIES)
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit, match="were refused at extraction"):
+        rb.main(["--book", str(book), "--out", str(out), "--pipeline", "library"], model=model)
+    refused = json.loads((out / "refused_chunks.json").read_text())
+    assert refused == [{"chunk": 0, "error": "handles: used but not declared: new:2",
+                        "attempts": [{"error": UNDECLARED_ERROR, "raw": UNDECLARED_S1},
+                                     {"error": "handles: used but not declared: new:2",
+                                      "raw": other}]}]
+    retried = json.loads((out / "retried_chunks.json").read_text())
+    assert [r["chunk"] for r in retried] == [0, 2]
+    assert [a["error"] for a in retried[1]["attempts"]] == [UNDECLARED_ERROR, None]
+    assert retried[1]["attempts"][1]["raw"] == TOY_EXTRACT[2]
+    assert not (out / "fresh_ingest.world").exists()           # nothing committed
+
+
+def test_14b_raw_output_is_never_written_to_a_world(tmp_path):
+    book = tb.write_book(tmp_path / "toybook")
+    marker = {"lines": ["s1|new:0|zzz_raw_marker|x"]}
+    model = ScriptedChunks({**{k: [v] for k, v in TOY_EXTRACT.items()},
+                            1: [marker, TOY_EXTRACT[1]]}, categories=TOY_CATEGORIES)
+    out = tmp_path / "out"
+    assert rb.main(["--book", str(book), "--out", str(out), "--pipeline", "library"],
+                   model=model) == 0
+    assert "zzz_raw_marker" in (out / "retried_chunks.json").read_text()
+    assert "zzz_raw_marker" not in (out / "ingest_dump.jsonl").read_text()
+    assert not (out / "refused_chunks.json").exists()

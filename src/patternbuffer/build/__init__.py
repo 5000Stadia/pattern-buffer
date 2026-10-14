@@ -16,7 +16,9 @@ Six functions:
 3. :func:`plan`: chunks cut at paragraph breaks, split before reveals, with
    sentence-scoped candidates.
 4. :func:`extract`: one labelled model call per chunk, in a pool, checked by
-   code (:class:`ChunkResult`, :class:`Escape`, :class:`Pick`).
+   code (:class:`ChunkResult`, :class:`Escape`, :class:`Pick`; a refused answer is
+   asked once more, an unused declaration is a :class:`DroppedHandle`, every
+   call a :class:`Attempt`).
 5. :func:`commit`: one serial writer, shape rows first, ids allocated before any
    fact, proposals never merges, the persona link only by ``correlate``.
 6. :func:`category_passes`: a manifest for prose with no author.
@@ -38,7 +40,9 @@ from patternbuffer.build.categories import (
 from patternbuffer.build.commit import BuildReceipt, CommitRefused, coerce_type, commit
 from patternbuffer.build.extract import (
     EXTRACT_HEAD,
+    Attempt,
     ChunkResult,
+    DroppedHandle,
     Escape,
     Pick,
     Refusal,
@@ -65,8 +69,8 @@ from patternbuffer.build.registry import (
 )
 
 __all__ = [
-    "Ambiguous", "BuildReceipt", "CATEGORY_HEAD", "CATEGORY_TYPES", "CODES", "Candidate",
-    "Chunk", "ChunkResult", "CommitRefused", "DEFAULT", "EXTRACT_HEAD", "Entry", "Escape",
+    "Ambiguous", "Attempt", "BuildReceipt", "CATEGORY_HEAD", "CATEGORY_TYPES", "CODES", "Candidate",
+    "Chunk", "ChunkResult", "CommitRefused", "DEFAULT", "DroppedHandle", "EXTRACT_HEAD", "Entry", "Escape",
     "HINTS", "Manifest", "ManifestError", "Persona", "Pick", "Refusal", "Registry",
     "Resolved", "TYPES", "Unknown", "category_passes", "coerce_type", "commit",
     "current_label", "extract", "label", "plan", "read_output", "shape_rows",
