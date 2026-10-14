@@ -124,7 +124,10 @@ Two tokens `a` and `b` match when they are equal, or when one is the other's plu
 shorter at least 3 letters:
 - `b == a + "s"` (chain/chains, key/keys, dog/dogs);
 - `b == a + "es"`, where `a` ends in `ch`, `sh`, `s`, `x` or `z` (match/matches, box/boxes, bus/buses);
-- `a` ends in a consonant plus `y`, and `b == a[:-1] + "ies"` (berry/berries).
+- `a` ends in a consonant plus `y`, and `b == a[:-1] + "ies"` (berry/berries);
+- `a` ends in a consonant plus `o`, and `b == a + "es"` (hero/heroes, potato/potatoes).
+
+A plural outside these rules (mouse/mice) simply doesn't match. A miss falls to the next step, never to a false bind.
 
 Nothing is stemmed on its own, so "analysis", "status", "series" and "news" are never cut down. A finite exception list
 blocks pairs whose plural has its own sense: news/new, means/mean, arms/arm, goods/good, glasses/glass,
@@ -219,7 +222,7 @@ restriction, so it replaces `resolve_rows`' matcher only, not movement's.
    - `widen=("place",)` adds every place with a name or alias row existing at `as_of`, and not a place with only a
      slug.
 9. **Number matching:**
-   - chains/chain, keys/key, berries/berry, boxes/box, matches/match and buses/bus match;
+   - chains/chain, keys/key, berries/berry, boxes/box, matches/match, buses/bus, gases/gas and heroes/hero match;
    - news/new, glasses/glass and arms/arm don't (the exception list);
    - analysis/analysi, status/statu and series/sery never arise, since nothing is stemmed: "analysis" matches only
      "analysis";
