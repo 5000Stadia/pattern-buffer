@@ -1,6 +1,6 @@
 # SESSION-GUARDRAILS-V1: deferred classification still applies the guardrails, and a failed seal closes the session
 
-**Status:** r1, for pbr review. Author: pb, 2026-10-13. An engine change, small.
+**Status:** r1.1, answering pbr's r1 RED: one end-of-call hook over every row the call appended, by log position; and the failed-seal test raises from the pass itself, with the classifier's own fallback unchanged. For pbr review. Author: pb, 2026-10-13. An engine change, small.
 **Source:** a status letter from construct's reviewer, on turn-time use of BUILD-SESSION-V1
 (construct's TURN-CLASSIFY-ONCE): a seal-failure state leak, and a question about immediate
 guardrails. pb's earlier advice to construct (m151ce5) wrongly said guardrail rows are classified
@@ -32,12 +32,26 @@ inside a session. Corrected in ma17d94.
   - When a guardrail decides, it stores and returns the same `Classification` that `classify` or
     `classify_rows` would store for that row.
   - Otherwise it returns `None` and stores nothing. It never calls the model.
-- **Ingest's classification step** (`_ingest_item` step 13, and the side-row path at `ingest.py`
-  ~669) changes in one case: when the row is **not** classified inline, and **not** collected for a
-  per-call batch.
-  - It calls `classify_if_guarded(row)`.
-  - A guardrail-decided row is therefore classified at ingest. An ambiguous row stays unclassified
-    until the seal, `classify_all` or `classify_rows`, exactly as today.
+- **One end-of-call hook** *(r1.1, pbr)*. Rows reach the log through several writers, not only
+  `_ingest_item` step 13:
+  - the registry's `add_alias` (the `aliases` side key);
+  - the `maybe_same_as` edge and its evidence;
+  - the §12 side rows (`source_valid_from`, `canonicalized_from`, `correction_proposal`,
+    `learned_at_wallclock`, `derived_by`, `reclassified_from`, `source`);
+  - `_declare`.
+
+  So the hook doesn't sit at each writer. At the **end of every ingest call**
+  (`ingest_structured`, `ingest`, `commit_set` and the porcelain paths that call them), when
+  classification for that call was **neither inline nor collected for a per-call batch**, the
+  ingestor runs `classify_if_guarded(row)` on **every row appended during the call**: every row with
+  `seq` in `(head before the call, head after it]`, whatever wrote it.
+  - Rows already classified are skipped.
+  - Inline and per-call `batch`/`rules` behaviour is unchanged. Those rows are classified already,
+    or collected.
+  - A guardrail-decided row is therefore classified by the time the call returns. An ambiguous row
+    stays unclassified until the seal, `classify_all` or `classify_rows`, exactly as today.
+  - An ingest call that raises classifies nothing further. Rows its atomic unit appended are rolled
+    back by the existing atomic path; anything left stands as today.
 - **Same verdicts, written earlier.** The guardrails are deterministic and `classify_rows` skips
   already-classified rows, so every row ends with the same verdict as before; only the moment
   differs.
@@ -51,6 +65,12 @@ inside a session. Corrected in ma17d94.
 
 ### 2. A failed seal closes the session
 
+- **The classifier's own failure contract is unchanged** *(r1.1, pbr)*. A model error inside
+  `_ask_model` or `_classify_batch` is caught there and gives the asymmetric fallback verdicts, and
+  the seal returns `sealed`. This spec doesn't touch that.
+- **Exceptions that do escape.** What can reach `seal_build` is an exception that propagates out of
+  the pass itself (from `classify_rows`, the sidecar store, or anything other than the model call
+  the classifier already guards).
 - `seal_build` runs its classification pass in `try … finally`.
   - The `finally` restores `classify_inline` and clears the session (`_build_head`,
     `_build_prev_inline`) whether the pass returned or raised.
@@ -71,14 +91,20 @@ inside a session. Corrected in ma17d94.
 1. **In a session:**
    - a `name` row, a delta, an event row and a containment row ingested inside `begin_build` are
      classified before the seal, with the same verdict `classify` would give;
+   - *(r1.1, pbr)* an item with an `aliases` side key: its `alias` rows, written by `add_alias`, are
+     classified before the seal;
+   - *(r1.1)* an item that produces a META side row (`source` via `source_doc`, or
+     `canonicalized_from` via an aliased attribute) has that row classified before the seal;
    - an ambiguous domain row is not classified before the seal, and is classified at it;
    - the seal makes no model call for the guardrail rows.
 2. **`classify="defer"` and the harness toggle** (`classify_inline = False`): guardrail rows are
    classified at ingest, ambiguous rows are not, and `classify_all` finishes them.
 3. **Same verdicts:** a fixture ingested deferred and then sealed gives byte-identical classifier
    verdicts to the same fixture before this change. Compare verdict tables, not counts.
-4. **A failed seal:**
-   - a model that raises during `seal_build(model=True)` re-raises;
+4. **A failed seal** *(r1.1)*:
+   - `classify_rows` monkeypatched to raise during `seal_build` re-raises that exception;
+   - separately, a model that raises during `seal_build(model=True)` still seals (the classifier's
+     fallback, unchanged), with the fallback verdicts;
    - afterwards no session is open, `classify_inline` is restored, a new `begin_build` succeeds,
      and the unreached rows are unclassified;
    - a following `classify_all` classifies them.
