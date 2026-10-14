@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -165,6 +165,13 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
   - **The code enforces the gate.** An item about candidate X (as subject or entity value) that cites
     a sentence before X's gate is **refused**: dropped, and recorded in the chunk result as
     `gate_refused`. An item citing a sentence outside the chunk is also refused.
+  - *(r1.7, pbr)* **Every id position is gated:** the subject, the entity value (written with `@`,
+    or a bare id the gate would infer), `cb=`, a `knows:` observer, and a **source** (`doc=` or
+    `src=`). Extraction checks a source against the whole registry, privately: the prompt still
+    shows only the chunk's candidates. A source that is a registry id is gated like any other id.
+    An unknown `person:` source is refused, because the engine reads a `person:` source as a
+    speaker's identity. Any other source, such as `doc:letter_1`, is document provenance and
+    stands.
   - So `resolve(surface, chapter, sentence)` and the chunk check apply **the same per-sentence
     gate**, and the two never disagree.
   - **Reveals still split:** the reveal sentence opens the next chunk. No chunk holds pre-reveal and
@@ -207,6 +214,16 @@ Persona(name: str, intro_quote: str, reveal_quote: str)
 **Time** *(c2)*. `time_of(chunk_index) -> float` gives each chunk's story time. When it's
 omitted, chunk *i* is committed at `i + 1`. `ingest_kwargs` (for example `cursor_authoritative`
 or `classify="defer"`) pass through to every `ingest_structured` call, unchanged.
+
+**Commit accepts exactly extract's language** *(r1.7, pbr)*. Before any write, commit re-checks
+every result as extraction does, and refuses the whole commit, with nothing written, on any
+difference:
+- every item carries only keys INGEST-V2's grammar writes, each holding what the grammar puts
+  there, plus its sentence citation;
+- the citation names a sentence of its chunk, and every id the item names is gated at or before
+  it (§3);
+- every build handle an item uses is declared, and every declared handle is used;
+- a pick's candidates are candidates of its chunk.
 
 **The writes, in this order** *(r1.2, pbr: ids are allocated before any fact is written)*:
 0. **The shape writer** *(r1.3, pbr)*. Every minted id, whether manifest entry, persona, escape or
