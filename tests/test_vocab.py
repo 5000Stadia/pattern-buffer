@@ -94,16 +94,16 @@ def test_1_vocabulary_refusals_name_the_pair():
     assert Vocabulary("v", (a,)).term("a") is a
 
 
-def test_1_the_recipe_is_the_r1_3_table():
+def test_1_the_recipe_is_the_r1_5_table():
     by = {t.attribute: t for t in RECIPE.terms}
     assert list(by) == ["controls", "link_type", "control_mode", "state", "locked", "lit",
-                        "outdoors", "exits", "disposition", "code"]
+                        "outdoors", "exits", "disposition", "code", "colour"]
     assert RECIPE.alias_map() == {
         "operates": "controls", "powers": "controls", "control_type": "link_type",
         "switch_mode": "control_mode", "light_level": "lit", "lighting": "lit",
         "illumination": "lit", "is_outdoors": "outdoors", "temperament": "disposition",
         "demeanor": "disposition", "demeanour": "disposition", "passcode": "code",
-        "combination": "code"}
+        "combination": "code", "color": "colour"}
     # the exclusions: hosts' own words, a thing's name, other meanings, entity-valued in the wild
     for taken in ("status", "mode", "light", "works", "opens", "outside", "exit", "way_out", "pin"):
         assert taken not in RECIPE.alias_map() and taken not in by

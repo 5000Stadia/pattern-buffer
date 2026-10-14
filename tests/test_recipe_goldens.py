@@ -134,7 +134,7 @@ def test_0_the_goldens_split_into_text_and_authored_as_the_lane_report_found():
     assert counts == {
         "switched-light": (9, ["holo-emitter planner"]),
         "code-lock": (10, ["holo-emitter planner", "manifest"]),
-        "take-and-drop": (7, ["holo-emitter planner", "manifest"])}
+        "take-and-drop": (13, ["holo-emitter planner", "manifest"])}
 
 
 def test_0_the_loader_refuses_none_both_and_an_unknown_author_naming_the_fact():
@@ -293,7 +293,8 @@ def test_lane2_the_manifest_seeds_only_what_the_story_names():
     assert unseeded == ["place:outside", "obj:door"]
     manifest, unseeded = lane.manifest_for(lane.load_golden("take-and-drop"))
     assert [e.key for e in manifest.entries] == [
-        "study", "hall", "doorway", "study_table", "book", "page", "hall_table"]
+        "study", "hall", "doorway", "study_table", "book", "page", "hall_table",
+        "steward", "steward_doublet", "steward_band"]
     assert unseeded == []
     assert [e.key for e in manifest.entries if e.fixture] == ["doorway"]
 
@@ -352,7 +353,9 @@ def test_lane2_containment_is_graded_on_the_folded_location(tmp_path):
     try:
         lane.load_into(reference, golden)
         spelled = json.loads(json.dumps(golden))
-        spelled["facts"][-1].update({"attribute": "within"})    # the same container, said another way
+        table = next(f for f in spelled["facts"]
+                     if f["entity"] == "obj:hall_table" and f["attribute"] == "in")
+        table.update({"attribute": "within"})    # the same container, said another way
         lane.load_into(other, spelled)
         names = lane.world_names(other)
         report = lane.grade(golden, reference, other, lane.ids_by_name(golden, names))
@@ -421,3 +424,24 @@ def test_lane2_dry_run_calls_no_model_and_writes_nothing(tmp_path, capsys, monke
 def test_lane2_a_paid_run_needs_the_metered_flag(tmp_path):
     with pytest.raises(SystemExit):
         lane.main([str(tmp_path / "out")])
+
+
+def test_0a_r1_5_the_steward_wears_a_black_doublet_and_a_white_falling_band(tmp_path):
+    """RECIPE-VOCAB-V1 r1.5 (holo-emitter m228b7b): a person in the hall and what
+    they wear, all six facts stated by sentence 4; `color` folds to `colour`."""
+    golden = lane.load_golden("take-and-drop")
+    steward = [f for f in golden["facts"] if f["entity"].startswith(("person:steward",
+                                                                      "obj:steward_"))]
+    assert len(steward) == 6
+    assert all(f["source"] == {"chapter": 1, "sentence": 4} for f in steward)
+    w = lane.open_world(tmp_path / "s.world", "w:s")
+    try:
+        lane.load_into(w, golden)
+        assert w.porcelain.locate("person:steward") == ["place:hall"]
+        for thing, colour in (("obj:steward_doublet", "black"), ("obj:steward_band", "white")):
+            assert w.porcelain.locate(thing)[0] == "person:steward"
+            assert value(w, thing, "colour") == colour
+        assert value(w, "person:steward", "posture") == "standing"
+        assert w.canonical_attribute("color") == "colour"
+    finally:
+        w.close()

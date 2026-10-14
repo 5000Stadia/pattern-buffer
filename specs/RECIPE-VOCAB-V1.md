@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1.4.1 (pbr's r1.4 RED and its follow-up: the Kabe author is exactly `Kabe YYYY-MM-DD` with a real calendar date; each source form's keys are exact, so the loader can tell an allowed author from an unknown one; and a text source cites a sentence that exists: chapter 1 and a sentence from 1 to the story's count, both non-boolean integers). r1.4 (the metered lane-2 run, `evals/results/2026-10-14-recipe-lane/REPORT.md`, and holo-emitter mdeb447: every golden fact's `source` is either text, which cites a sentence, or authored, which names who authored it; lane 2 grades only text facts. The `exits` gloss says it is only ever `none`). r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.5 (holo-emitter m228b7b, for the shared story's people-and-clothes step: one more term, `colour`, a thing's plain colour, with `color` as its alias. It is the word Photonic declares resolvable for garments, and today `colour` and `color` are separate canonical attributes, so one fragments from the other. take-and-drop's golden gains a steward in the hall wearing a black doublet and a white falling band (Photonic's kinds, m067634)). r1.4.1 (pbr's r1.4 RED and its follow-up: the Kabe author is exactly `Kabe YYYY-MM-DD` with a real calendar date; each source form's keys are exact, so the loader can tell an allowed author from an unknown one; and a text source cites a sentence that exists: chapter 1 and a sentence from 1 to the story's count, both non-boolean integers). r1.4 (the metered lane-2 run, `evals/results/2026-10-14-recipe-lane/REPORT.md`, and holo-emitter mdeb447: every golden fact's `source` is either text, which cites a sentence, or authored, which names who authored it; lane 2 grades only text facts. The `exits` gloss says it is only ever `none`). r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -92,6 +92,7 @@ value, detail)` for each of:
 | `exits` | literal | closed: `none` | none | none | an observed "no way out": only ever the word none; ways out are connects_to (*r1.4*) |
 | `disposition` | literal | open: `friendly`, `wary`, `hostile`, `timid`, `playful`, `indifferent` | `durability: DISPOSITIONAL` | `temperament`, `demeanor`, `demeanour` | a being's temperament |
 | `code` | literal | open (digits or a word) | none | `passcode`, `combination` | what a keypad or lock opens to |
+| `colour` | literal | open: `black`, `white`, `grey`, `brown`, `red`, `blue`, `green`, `yellow` | none | `color` | a thing's main colour, one plain word (*r1.5*) |
 
 - **`exits · none`** is RFC-002's legitimate negation: an observed positive fact with a
   negative-sounding value, never inferred from missing rows. The ways out of a place remain
@@ -225,6 +226,12 @@ value, detail)` for each of:
      last sentence, and accepts the last sentence itself;
    - lane 2 in `--oracle` mode grades only text facts and lists the authored ones it skipped;
    - the `exits` gloss text is pinned.
+0a. *(r1.5)* **`colour`:**
+   - `color` folds to `colour` through `apply_aliases`;
+   - take-and-drop's steward loads with `person:steward in place:hall`, posture `standing`, and the doublet and falling band
+     `worn_by person:steward` with `colour` black and white;
+   - all six facts are text, citing sentence 4;
+   - the `RECIPE` prompt section lists `colour` once.
 
 1. **`Term` and `Vocabulary`:** an unknown `value_type`, a closed term with no values, a
    duplicate attribute, or an alias claimed by two terms is refused at construction, naming it.

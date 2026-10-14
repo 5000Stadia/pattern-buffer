@@ -1,8 +1,8 @@
 {
   "schema": "patternbuffer.recipe-facts/1",
   "recipe": "take-and-drop",
-  "note": "RECIPE-VOCAB-V1 r1.3 golden, from holo-emitter's story and shape for the recipe. Containment is `in` throughout (the engine has no separate `on`): the book is `in` the study table, the page `in` the book. Added by pb for routes and placement: the doorway and the study table are `in place:study`, and `place:study connects_to obj:doorway`, so a route study -> doorway -> hall exists. The play (the book taken: held_by person:player, then put down: in the hall table) is not canon here; it is written by the lane-1 read test. Sources (r1.4): 7 facts cite the story's sentences; 2 are authored, so lane 2 does not grade them: the doorway's `fixture` (by the manifest), and the doorway `in place:study` (a planner's choice: the story says it joins the two rooms, not which one holds it).",
-  "story": "There is a study and a hall, joined by an open doorway. In the study a book lies on a table, and a loose page lies in the book. In the hall stands another table.",
+  "note": "RECIPE-VOCAB-V1 r1.3 golden, from holo-emitter's story and shape for the recipe. Containment is `in` throughout (the engine has no separate `on`): the book is `in` the study table, the page `in` the book. Added by pb for routes and placement: the doorway and the study table are `in place:study`, and `place:study connects_to obj:doorway`, so a route study -> doorway -> hall exists. The play (the book taken: held_by person:player, then put down: in the hall table) is not canon here; it is written by the lane-1 read test. A steward in the hall, with what they wear, was added for the shared story's people-and-clothes step (holo-emitter m228b7b; garments are worn_by, with Photonic's kinds (m067634: doublet, falling_band) and its `colour`). Sources (r1.4): 13 facts cite the story's sentences; 2 are authored, so lane 2 does not grade them: the doorway's `fixture` (by the manifest), and the doorway `in place:study` (a planner's choice: the story says it joins the two rooms, not which one holds it).",
+  "story": "There is a study and a hall, joined by an open doorway. In the study a book lies on a table, and a loose page lies in the book. In the hall stands another table. In the hall a steward stands by the table, in a black doublet and a white falling band.",
   "entities": [
     {
       "id": "place:study",
@@ -52,6 +52,27 @@
       "kind": "table",
       "names": [
         "another table"
+      ]
+    },
+    {
+      "id": "person:steward",
+      "kind": "person",
+      "names": [
+        "steward"
+      ]
+    },
+    {
+      "id": "obj:steward_doublet",
+      "kind": "doublet",
+      "names": [
+        "black doublet"
+      ]
+    },
+    {
+      "id": "obj:steward_band",
+      "kind": "falling_band",
+      "names": [
+        "white falling band"
       ]
     }
   ],
@@ -162,6 +183,78 @@
       "source": {
         "chapter": 1,
         "sentence": 3
+      }
+    },
+    {
+      "entity": "person:steward",
+      "attribute": "in",
+      "value": "place:hall",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "person:steward",
+      "attribute": "posture",
+      "value": "standing",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:steward_doublet",
+      "attribute": "worn_by",
+      "value": "person:steward",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:steward_doublet",
+      "attribute": "colour",
+      "value": "black",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:steward_band",
+      "attribute": "worn_by",
+      "value": "person:steward",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:steward_band",
+      "attribute": "colour",
+      "value": "white",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
       }
     }
   ]

@@ -210,6 +210,10 @@ RECIPE = Vocabulary("recipe", (
          gloss="a being's temperament"),
     Term("code", LITERAL, open_values=True, aliases=("passcode", "combination"),
          gloss="what a keypad or lock opens to"),
+    Term("colour", LITERAL,
+         values=("black", "white", "grey", "brown", "red", "blue", "green", "yellow"),
+         open_values=True, aliases=("color",),
+         gloss="a thing's main colour, one plain word"),
 ))
 
 
