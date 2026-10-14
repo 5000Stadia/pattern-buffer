@@ -117,8 +117,8 @@ is the one you judge it is; evidence_quote is the passage's exact words that
 support the choice. Its facts go on the handle: the build keeps your choice as
 evidence, never as identity.
 
-Every handle a line uses is declared exactly once. A handle you declare that no
-line uses is dropped."""
+Every handle a line uses is declared exactly once, and every handle declared is
+used by a line."""
 
 
 @dataclass(frozen=True)
