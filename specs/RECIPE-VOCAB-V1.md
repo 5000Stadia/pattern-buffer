@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1.4.1 (pbr's r1.4 RED: the Kabe author is exactly `Kabe YYYY-MM-DD` with a real calendar date, and each source form's keys are exact, so the loader can tell an allowed author from an unknown one). r1.4 (the metered lane-2 run, `evals/results/2026-10-14-recipe-lane/REPORT.md`, and holo-emitter mdeb447: every golden fact's `source` is either text, which cites a sentence, or authored, which names who authored it; lane 2 grades only text facts. The `exits` gloss says it is only ever `none`). r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.4.1 (pbr's r1.4 RED and its follow-up: the Kabe author is exactly `Kabe YYYY-MM-DD` with a real calendar date; each source form's keys are exact, so the loader can tell an allowed author from an unknown one; and a text source cites a sentence that exists: chapter 1 and a sentence from 1 to the story's count, both non-boolean integers). r1.4 (the metered lane-2 run, `evals/results/2026-10-14-recipe-lane/REPORT.md`, and holo-emitter mdeb447: every golden fact's `source` is either text, which cites a sentence, or authored, which names who authored it; lane 2 grades only text facts. The `exits` gloss says it is only ever `none`). r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -158,7 +158,12 @@ value, detail)` for each of:
   - *(r1.4, holo-emitter mdeb447)* **Every fact has exactly one of two source forms**, never
     none:
     - **text:** exactly the keys `{"chapter": <int>, "sentence": <int>}`. The story states it,
-      and lane 2 grades it;
+      and lane 2 grades it. *(r1.4.1, pbr)* The citation must exist:
+      - both values are integers and not booleans (`true` is refused);
+      - a golden's `story` is one chapter, so `chapter` is 1;
+      - `sentence` is from 1 to the story's sentence count, numbered as the build library
+        numbers them (`build.text.Book({1: story})`, 1-based). So 0, a negative number and a
+        sentence past the end are refused;
     - **authored:** exactly `{"authored": "<who>"}` or `{"authored": "<who>", "note": "<why>"}`,
       with `note` a string. The story doesn't state it (the code's digits, an unnamed door,
       start states the text only implies). Lane 2 doesn't grade it: a build gets it from the
@@ -173,7 +178,8 @@ value, detail)` for each of:
   - **The golden loader refuses, naming the fact:**
     - a fact with no source;
     - a source with keys from both forms, or any key outside its form (*r1.4.1*);
-    - a text source whose `chapter` or `sentence` isn't an integer;
+    - a text source whose `chapter` or `sentence` isn't a non-boolean integer, or that cites a
+      chapter or sentence the story doesn't have (*r1.4.1*);
     - an `authored` value that isn't one of the three forms.
 
     That's holo-emitter's rule, "cites its sentence or its author".
@@ -215,6 +221,8 @@ value, detail)` for each of:
    - *(r1.4.1)* it refuses an extra key on either form (`{"chapter", "sentence", "note"}`,
      `{"authored", "why"}`), a mixed source (`{"chapter", "authored"}`) and a non-integer
      `sentence`;
+   - *(r1.4.1)* it refuses `chapter` 0 or 2, `sentence` 0, -1, `true` and one past the story's
+     last sentence, and accepts the last sentence itself;
    - lane 2 in `--oracle` mode grades only text facts and lists the authored ones it skipped;
    - the `exits` gloss text is pinned.
 
