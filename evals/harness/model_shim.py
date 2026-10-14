@@ -73,7 +73,9 @@ class StageMapError(ModelShimError):
 # ------------------------------------------------------- STAGE-MODELS-V1 (the map)
 
 STAGE_MODELS_ENV = "PB_EVAL_STAGE_MODELS"
-STAGE_KEYS = ("pass0", "pass1", "escape_repair", "commit", "audit")   # BUILD-PROFILE-V1 labels
+# BUILD-PROFILE-V1 labels, then the build library's (BUILD-LIBRARY-V1 §4, §6:
+# its category passes and its chunk extraction)
+STAGE_KEYS = ("pass0", "pass1", "escape_repair", "commit", "audit", "registry", "extract")
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
 
 
