@@ -1,6 +1,6 @@
 # BEATS-V1: author frames are sealed, and beats are written in one shared shape
 
-**Status:** r1, for pbr review. It folds in the shape reads of construct (m3a85eb) and holo-emitter (meb1f95):
+**Status:** r1.1 (pbr's r1 RED: `WorldService.attach(world, view_frame)` also installs a view frame and is guarded too; the rule now covers every public function that takes a view frame, `mirror.present_handles` included). r1, for pbr review. It folds in the shape reads of construct (m3a85eb) and holo-emitter (meb1f95):
 - `session:*` frames are not author frames;
 - the reference rule is a read-only lint, never a gate;
 - `patternbuffer.condition/1` is construct's `arc/io.py` JSON, pinned and round-trip tested on both sides;
@@ -50,14 +50,18 @@ Evaluation stays host-side, with construct's evaluator as the reference.
   - *(r1, construct)* **`session:*` is not an author frame.** It holds construct's
     bookkeeping (turns, transcript, the episode cast), and play reads it every turn.
   - `model.AUTHOR_FRAME_PREFIX = "plot:"` and `is_author_frame(frame)` are the single test.
-- **Never a view.** The read surfaces that serve a player or a device refuse an author frame as
-  their frame, with `ValueError` naming the rule:
-  - `mirror.feed` and `mirror.export` (`view_frame`);
-  - `WorldService.set_view_frame`;
-  - a `Session` read.
+- **Never a view.** *(r1.1, pbr)* **Every public function that takes a view frame** refuses an
+  author frame, with `ValueError` naming the rule, before it stores or uses the frame:
+  - `WorldService.attach(world, view_frame)`, the ordinary entry point. `Runner` reaches it
+    unchanged, so the runner is covered;
+  - `WorldService.set_view_frame(frame)`;
+  - `mirror.feed`, `mirror.export` and `mirror.present_handles`. `present_handles` builds the
+    presentation layer a viewer sees, so it is guarded, not left as host-only.
 
-  Today the exclusion holds only because nobody passes `plot:*`. `set_view_frame` checks only
-  that the name is non-empty (`service.py:355`).
+  Session reads use the service's installed frame, so they are covered by the two setters. The
+  build lists every public function in `service.py` and `mirror.py` that takes a `view_frame`,
+  and fails a test if one is unguarded. Today `set_view_frame` checks only that the name is
+  non-empty (`service.py:355`), and `attach` checks nothing.
 - **Never widened, never a character's frame.** These already hold and are pinned by tests:
   - FRAME-CONTINUITY-V1 widens only `knows:` frames;
   - frames filter at source, so a `knows:` read never sees `plot:` rows;
@@ -140,8 +144,8 @@ Evaluation stays host-side, with construct's evaluator as the reference.
 
 - **Engine core:**
   - `model.is_author_frame`;
-  - the refusals in `mirror.feed` and `mirror.export`, `WorldService.set_view_frame`, and the
-    session reads.
+  - *(r1.1)* the refusals in `WorldService.attach` and `set_view_frame`, and in `mirror.feed`,
+    `export` and `present_handles`.
 
   That is the only engine change.
 - **Outside the core:** `patternbuffer.beats`, beside `vocab` and `build`, holding
@@ -149,10 +153,13 @@ Evaluation stays host-side, with construct's evaluator as the reference.
 
 ## 5. Tests
 
-1. `mirror.export(world, "plot:main")`, `mirror.feed(...)`,
-   `WorldService.set_view_frame("plot:main")` and a session read in `plot:main` each raise
-   `ValueError`, naming the author-frame rule. `canon`, `knows:` and `session:main` views are
-   unchanged.
+1. *(r1.1)* `WorldService().attach(world, "plot:main")`, `Runner(..., "plot:main")`,
+   `set_view_frame("plot:main")`, `mirror.export`, `mirror.feed` and `mirror.present_handles`
+   with `"plot:main"` each raise `ValueError`, naming the author-frame rule.
+   - `attach` refuses before any reader snapshot opens, and the service stays unattached.
+   - `canon`, `knows:` and `session:main` views are unchanged.
+   - An introspection test enumerates the public `service`/`mirror` callables with a
+     `view_frame` parameter and asserts each refuses.
 2. A beat's rows in `plot:main` (construct's `_beat_rows` shape) are absent from every canon and
    `knows:` read, every mirror export and every widened read. This pins what already holds.
 3. `author_references`:
