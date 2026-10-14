@@ -1,6 +1,6 @@
 # PLAY-BIND-V1: one deterministic matcher for a turn's mentions (R55)
 
-**Status:** r1.3 (pbr's r1.2 RED: an id outside `person`, `place` and `obj` is always kept unchanged and never identity-resolved; the exact-id step applies to those three namespaces only; the value predicate says `value_type == "entity"` explicitly). r1.2 (pbr's r1 RED: a value side is exactly what ingest would write as entity-valued, in any namespace; an exact id's existence is checked before any name match, so a future-only id is never bound by its slug; number folding becomes a pair rule with a minimum stem and a finite exception list; the collision universe and identity normalization are defined). r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
+**Status:** r1.3 (pbr's r1.2 RED, and its AMBER: §2a's canonical mapping excludes pass-through ids; an id outside `person`, `place` and `obj` is always kept unchanged and never identity-resolved; the exact-id step applies to those three namespaces only; the value predicate says `value_type == "entity"` explicitly). r1.2 (pbr's r1 RED: a value side is exactly what ingest would write as entity-valued, in any namespace; an exact id's existence is checked before any name match, so a future-only id is never bound by its slug; number folding becomes a pair rule with a minimum stem and a finite exception list; the collision universe and identity normalization are defined). r1.1 (construct's spec read, mc5d1c9: one decision per raw id per call, using every row's name evidence; a value is an entity side only when `value_type == "entity"`, typed by the host; future-only search is global; `include` is exact and `widen` means name rows; movement's entitled matcher is out of scope; the host's duties are listed, and admitted means bound, not permission). r1, for pbr review and construct's spec read. Author: pb, 2026-10-14. An additive porcelain read
 (`bind`) and one read-only MCP verb. No write path, gate, fold or prompt changes.
 **Source:**
 - R55, placed first in M5 "Continuity in play". Kabe, via the monitor, settled g70803c on 2026-10-14: "R55 comes out of
@@ -110,7 +110,8 @@ the decision applies to every side that raised it.
 
 ### 2a. Identity and existence *(r1.2, pbr)*
 
-- **Canonical representative:** every raw id, `scope` member, `include` member and candidate is first mapped through
+- **Canonical representative:** every `person`, `place` or `obj` raw id that reaches steps 3–8, and every `scope`
+  member, `include` member and candidate, is first mapped through
   the `same_as` closure as the identity registry holds it at the head (`IdentityRegistry.resolve`), the same mapping
   ingest applies at its gate. Candidates are a set of canonical ids, and a bound side carries the canonical id.
 - **Exists at `t`:** some member of the closure has a row in `frame`, asserted at or before the head, whose
