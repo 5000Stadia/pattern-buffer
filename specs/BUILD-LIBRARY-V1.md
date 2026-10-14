@@ -1,6 +1,6 @@
 # BUILD-LIBRARY-V1: `patternbuffer.build`, registry-first world building as a shared library
 
-**Status:** r1.8.1 (pbr's r1.8 review: `refer()`'s name vocabulary honours valid time, an ENGINE change; gate mode refuses when there is no chunk to take a time from). r1.8 (construct's wiring review, m3310d2: identity rows carry the story time of their entry's gate, not timeless). r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
+**Status:** r1.8.2 (pbr: an identity gated after every committed chunk is refused, never given an earlier chunk's time). r1.8.1 (pbr's r1.8 review: `refer()`'s name vocabulary honours valid time, an ENGINE change; gate mode refuses when there is no chunk to take a time from). r1.8 (construct's wiring review, m3310d2: identity rows carry the story time of their entry's gate, not timeless). r1.7 (pbr's re-review of the build: commit accepts exactly extract's language, balanced build handles and the grammar's key set, and a `src=` source is gated like every other id position). r1.6 (pbr's code review of the build: §5 step 5 states the proposal encoding the build uses, which pbr accepted: a raw canon `maybe_same_as` edge item, then an `evidence` item on the edge's assertion id, and for a mixed-type mention a `candidates` item on it). r1.5 (pbr r1.4: `resolve()` uses the effective gate too, and the registry stores and exposes it). r1.4, answering pbr's r1.3 RED: candidates are sentence-scoped. Items cite their sentence, code enforces each candidate's gate sentence, and the gate is the effective first appearance. r1.3, answering pbr's r1.2 RED: a chunk's candidates are gated at its last sentence, and only reveals split chunks; one shape writer for every minted id; the error code list completed. r1.2, answering pbr's r1 RED: personas get an introduction anchor; a being's type is its own attribute beside `kind = person`, since R49 moves any other kind on a `person:` id to `role`; and the result schema has local handles, so ids are allocated before any fact is written. r1.1 added construct's read of r1 (m94f82c, its points marked *(k1–k7)*). r1 was for pbr review. Construct gave a shape read on the interface (m29b672), and its
 six points are folded in, marked *(c1–c6)*. Author: pb, 2026-10-13.
 
 **Source:**
@@ -249,9 +249,16 @@ difference:
      - Every persona's shape and name rows carry `valid_from = time_of(c)`, with c the chunk holding
        the persona's effective gate.
      - Escapes and mentions carry their declaring chunk's time.
-     - An entry whose gate falls in no planned chunk (a chapter the build didn't include) carries
-       the time of the first committed chunk after its gate. With none, it carries the time of the
-       last committed chunk. Either way it is never timeless.
+     - An entry whose gate falls in no committed chunk (a chapter the build didn't include) carries
+       the time of the **first committed chunk after its gate**. That is conservative: never earlier
+       than the text that meets it.
+     - *(r1.8.2, pbr)* **No chunk at or after the gate: refuse.** If no committed chunk lies at or
+       after an entry's (or persona's) gate, commit **refuses before any write**
+       (`CommitRefused`, `no_chunk_at_or_after_identity_gate`, naming the entries). An earlier
+       chunk's time would make a future identity visible at an earlier horizon, and `time_of` isn't
+       required to be monotonic.
+       - A host building a shorter story leaves such entries out of the manifest, or uses
+         `identity_time="timeless"` knowingly. The library never guesses a time for them.
      - *(r1.8.1, pbr)* **No chunk, no gate time.** In `identity_time="gate"`, a `results` sequence
        with no committed chunk leaves no time to take, so commit **refuses before any write**
        (`CommitRefused`, `no_chunk_for_identity_time`).
@@ -492,7 +499,10 @@ For a book with no author (construct passes its author's manifest instead):
      - *(r1.8.1)* **No chunk:** gate mode with an empty `results` is refused with
        `no_chunk_for_identity_time`, writing nothing; timeless mode with empty `results` writes the
        manifest as before. A sparse `results` (chunks 0 and 3 only) gives an entry gated in chunk 2
-       the time of chunk 3.
+       the time of chunk 3;
+     - *(r1.8.2)* with the same sparse `results`, an entry gated after chunk 3 (in chunk 4 or
+       later) is refused with `no_chunk_at_or_after_identity_gate`, and the world is unchanged (same
+       log head and reads).
      - *(r1.8.1)* `identity_time="other"` is refused before any write.
 15. **Full suite green.**
 
