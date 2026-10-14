@@ -1,0 +1,781 @@
+{
+ "source": "construct effort-probe (scripted probe world, ids and verdicts only; no prose)",
+ "audit_failures": [
+  {
+   "entity": "obj:iron_barred_door",
+   "attribute": "in",
+   "value": "place:cell_12",
+   "confidence": 0.95
+  },
+  {
+   "entity": "obj:slit_window",
+   "attribute": "in",
+   "value": "place:cell_12",
+   "confidence": 0.96
+  },
+  {
+   "entity": "obj:split_seal",
+   "attribute": "in",
+   "value": "obj:execution_page",
+   "confidence": 0.78
+  },
+  {
+   "entity": "obj:split_seal",
+   "attribute": "in",
+   "value": "obj:execution_page",
+   "confidence": 0.78
+  },
+  {
+   "entity": "obj:execution_page",
+   "attribute": "in",
+   "value": "obj:book",
+   "confidence": 0.86
+  },
+  {
+   "entity": "obj:split_seal",
+   "attribute": "in",
+   "value": "obj:execution_page",
+   "confidence": 0.72
+  },
+  {
+   "entity": "obj:execution_page",
+   "attribute": "in",
+   "value": "obj:book",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:execution_page",
+   "attribute": "in",
+   "value": "obj:ledger",
+   "confidence": 0.93
+  },
+  {
+   "entity": "obj:glossy_blot",
+   "attribute": "in",
+   "value": "obj:execution_page",
+   "confidence": 0.82
+  },
+  {
+   "entity": "obj:blot",
+   "attribute": "in",
+   "value": "obj:execution_page",
+   "confidence": 0.8
+  },
+  {
+   "entity": "obj:notation",
+   "attribute": "in",
+   "value": "obj:margin",
+   "confidence": 0.82
+  },
+  {
+   "entity": "obj:pikes_new_line",
+   "attribute": "in",
+   "value": "place:death_clerks_ledger_room",
+   "confidence": 0.65
+  },
+  {
+   "entity": "obj:wet_line",
+   "attribute": "in",
+   "value": "obj:ledger",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:pike_wet_line",
+   "attribute": "in",
+   "value": "obj:ledger",
+   "confidence": 0.86
+  },
+  {
+   "entity": "obj:wet_entries",
+   "attribute": "in",
+   "value": "obj:ledger_margin",
+   "confidence": 0.86
+  },
+  {
+   "entity": "obj:dividing_line",
+   "attribute": "in",
+   "value": "obj:ledger_margin",
+   "confidence": 0.95
+  },
+  {
+   "entity": "obj:iron_barred_door",
+   "attribute": "in",
+   "value": "place:cell_12",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:wedge",
+   "attribute": "in",
+   "value": "obj:fall_board",
+   "confidence": 0.7
+  },
+  {
+   "entity": "obj:ansels_qualification",
+   "attribute": "in",
+   "value": "obj:death_ledger",
+   "confidence": 0.78
+  },
+  {
+   "entity": "obj:iron_barred_door",
+   "attribute": "in",
+   "value": "place:cell_12",
+   "confidence": 0.84
+  },
+  {
+   "entity": "obj:filing_cabinet",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.72
+  },
+  {
+   "entity": "obj:window",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.97
+  },
+  {
+   "entity": "obj:wooden_desk",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.71
+  },
+  {
+   "entity": "obj:window",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:window",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.9
+  },
+  {
+   "entity": "place:renewed_last_office",
+   "attribute": "in",
+   "value": "obj:desk",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:shed_hasp",
+   "attribute": "in",
+   "value": "place:streetlamp_smoke",
+   "confidence": 0.72
+  },
+  {
+   "entity": "place:renewed_last_office",
+   "attribute": "in",
+   "value": "obj:desk",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:window",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.86
+  },
+  {
+   "entity": "place:renewed_last_office",
+   "attribute": "in",
+   "value": "obj:desk",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:filing_cabinet",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.65
+  },
+  {
+   "entity": "obj:window",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.98
+  },
+  {
+   "entity": "place:renewed_last_office",
+   "attribute": "in",
+   "value": "obj:desk",
+   "confidence": 0.9
+  },
+  {
+   "entity": "obj:window",
+   "attribute": "in",
+   "value": "place:renewed_last_office",
+   "confidence": 0.96
+  },
+  {
+   "entity": "place:nearest_moored_barge",
+   "attribute": "in",
+   "value": "place:blackwater_river",
+   "confidence": 0.9
+  }
+ ],
+ "batches": [
+  {
+   "rows": [
+    {
+     "entity": "obj:clean_nail",
+     "attribute": "in",
+     "value": "obj:cuff"
+    },
+    {
+     "entity": "obj:straw",
+     "attribute": "in",
+     "value": "obj:pallet"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.94
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    }
+   ],
+   "none": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.85
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.85
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:pallet",
+     "attribute": "in",
+     "value": "place:cell_12"
+    },
+    {
+     "entity": "obj:covered_crates",
+     "attribute": "in",
+     "value": "place:nearest_moored_barge"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.94
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.72
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.72
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:filing_cabinet",
+     "attribute": "in",
+     "value": "place:renewed_last_office"
+    },
+    {
+     "entity": "obj:clean_nail",
+     "attribute": "in",
+     "value": "person:elias_venn"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.85
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.86
+    }
+   ],
+   "none": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.8
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:execution_page",
+     "attribute": "in",
+     "value": "obj:book"
+    },
+    {
+     "entity": "obj:wedge",
+     "attribute": "in",
+     "value": "obj:fall_board"
+    },
+    {
+     "entity": "obj:torn_slip_corner",
+     "attribute": "in",
+     "value": "place:renewed_last_office"
+    },
+    {
+     "entity": "obj:ansels_qualification",
+     "attribute": "in",
+     "value": "obj:death_ledger"
+    }
+   ],
+   "low": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.92
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.78
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.86
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.84
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.76
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.7
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.83
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:split_seal",
+     "attribute": "in",
+     "value": "obj:execution_page"
+    },
+    {
+     "entity": "obj:clean_nail",
+     "attribute": "in",
+     "value": "place:cell_12"
+    },
+    {
+     "entity": "obj:property_slip",
+     "attribute": "in",
+     "value": "obj:latch"
+    }
+   ],
+   "low": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.74
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.85
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.75
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:black_fleck",
+     "attribute": "in",
+     "value": "place:death_clerks_ledger_room"
+    },
+    {
+     "entity": "obj:iron_barred_door",
+     "attribute": "in",
+     "value": "place:cell_12"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.78
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.67
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.72
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:paint_fleck",
+     "attribute": "in",
+     "value": "person:elias_venn"
+    },
+    {
+     "entity": "obj:receipt",
+     "attribute": "in",
+     "value": "place:blackwater_river"
+    },
+    {
+     "entity": "obj:shed_hasp",
+     "attribute": "in",
+     "value": "place:streetlamp_smoke"
+    },
+    {
+     "entity": "obj:metal_chairs",
+     "attribute": "in",
+     "value": "place:renewed_last_office"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.96
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.74
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.8
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.8
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.75
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.75
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:pikes_new_line",
+     "attribute": "in",
+     "value": "place:death_clerks_ledger_room"
+    },
+    {
+     "entity": "obj:rusted_bucket",
+     "attribute": "in",
+     "value": "place:cell_12"
+    },
+    {
+     "entity": "obj:sawdust",
+     "attribute": "in",
+     "value": "obj:scaffold_carpenter_cuffs"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.88
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.97
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.96
+    }
+   ],
+   "none": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.76
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.72
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:property_slip",
+     "attribute": "in",
+     "value": "obj:latch_shadow"
+    },
+    {
+     "entity": "obj:wet_line",
+     "attribute": "in",
+     "value": "obj:ledger"
+    },
+    {
+     "entity": "obj:notation",
+     "attribute": "in",
+     "value": "obj:margin"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.74
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.65
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.82
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.78
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.82
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:blot",
+     "attribute": "in",
+     "value": "obj:execution_page"
+    },
+    {
+     "entity": "obj:counter_stub",
+     "attribute": "in",
+     "value": "person:elias_venn"
+    },
+    {
+     "entity": "obj:tar_cloth",
+     "attribute": "in",
+     "value": "place:nearest_moored_barge"
+    }
+   ],
+   "low": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.82
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.95
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.92
+    }
+   ],
+   "none": [
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.8
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:clean_nail",
+     "attribute": "in",
+     "value": "obj:pouch"
+    },
+    {
+     "entity": "obj:pike_wet_line",
+     "attribute": "in",
+     "value": "obj:ledger"
+    },
+    {
+     "entity": "obj:papers",
+     "attribute": "in",
+     "value": "obj:elias_coat"
+    },
+    {
+     "entity": "obj:dividing_line",
+     "attribute": "in",
+     "value": "obj:ledger_margin"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.86
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.94
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.9
+    }
+   ],
+   "none": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.68
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.78
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.94
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.72
+    }
+   ]
+  },
+  {
+   "rows": [
+    {
+     "entity": "obj:property_slip",
+     "attribute": "in",
+     "value": "person:elias_venn"
+    },
+    {
+     "entity": "obj:white_smear",
+     "attribute": "in",
+     "value": "obj:marked_glove"
+    },
+    {
+     "entity": "obj:wet_entries",
+     "attribute": "in",
+     "value": "obj:ledger_margin"
+    },
+    {
+     "entity": "obj:slit_window",
+     "attribute": "in",
+     "value": "place:cell_12"
+    }
+   ],
+   "low": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.78
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.76
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.95
+    }
+   ],
+   "none": [
+    {
+     "durability": "STATE",
+     "class_confidence": 0.9
+    },
+    {
+     "durability": "STATE",
+     "class_confidence": 0.82
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.68
+    },
+    {
+     "durability": "CONSTITUTIVE",
+     "class_confidence": 0.96
+    }
+   ]
+  }
+ ]
+}

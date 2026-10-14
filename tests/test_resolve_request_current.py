@@ -55,7 +55,9 @@ def test_current_holds_own_state_as_of_the_placeholder(tmp_path):
     req = _request(model)
     # As of 3.0 the haircut (at 5.0) has not happened; age is current; the
     # DISPOSITIONAL sex is inherited, not current; the tavern's rows never are.
-    assert req.current == (("age", 24), ("hair", "long, blonde"))
+    # A person's containment is STATE by guardrail (CONTAINMENT-DURABILITY-V1 §1:
+    # beings move), so where she is stands is her own current fact too.
+    assert req.current == (("age", 24), ("hair", "long, blonde"), ("in", "place:tavern"))
     assert ("person:barmaid", "sex", "female") in req.inherited
     assert all(attr != "sex" for attr, _ in req.current)
 

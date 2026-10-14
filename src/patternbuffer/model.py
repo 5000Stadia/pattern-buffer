@@ -33,8 +33,10 @@ COMPOSITION_FAMILY = frozenset({"part_of"})
 
 # Fixed structural predicates (spec §4.3). Domain vocabulary emerges
 # freely through the canonicalization gate; these never do.
+# `fixture` (CONTAINMENT-DURABILITY-V1 §2) is a host's declaration that a thing
+# is built into its container; host-only at the gate (`fixture_not_host`).
 STRUCTURAL_PREDICATES = (
-    frozenset({"kind", "connects_to", "adjacent_to", "caused_by"})
+    frozenset({"kind", "connects_to", "adjacent_to", "caused_by", "fixture"})
     | CONTAINMENT_FAMILY | COMPOSITION_FAMILY
 )
 

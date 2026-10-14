@@ -52,6 +52,13 @@ _STANDING_DURABILITIES = frozenset({CONSTITUTIVE, DISPOSITIONAL, STATE})
 # every future materialization (whitepaper §5.1), so they are flagged.
 _REVIEW_FLOOR = 0.6
 
+# CONTAINMENT-DURABILITY-V1 §3: a model verdict of CONSTITUTIVE on a
+# containment row below this confidence is stored STATE. A CONSTITUTIVE row
+# outranks every later STATE move on its key, so a guessed permanence freezes
+# a movable where it was first seen; a wrong STATE on a real fixture costs
+# little. Not per-world: `attr:in` is inviolable core.
+CONTAINMENT_CONSTITUTIVE_FLOOR = 0.9
+
 _SIDECAR_SCHEMA = """
 CREATE TABLE IF NOT EXISTS sidecar_classification (
   assertion_id     TEXT PRIMARY KEY,
@@ -64,6 +71,12 @@ CREATE TABLE IF NOT EXISTS sidecar_classifier_meta (
   value INTEGER NOT NULL
 );
 """
+
+# CONTAINMENT-DURABILITY-V1 §4: the one sentence both prompts carry.
+_CONTAINMENT_CLAUSE = (
+    "An object's location is STATE unless the object is clearly built into "
+    "the place (a door, a window, a fixed fitting); when unsure, STATE."
+)
 
 _MODEL_SCHEMA = {
     "title": TASK_CLASSIFY,
@@ -178,7 +191,17 @@ class Classifier:
                 # A place's containment is part of what the place IS — the
                 # study does not move out of the home (fixture sub-rule).
                 return CONSTITUTIVE, 0.9
-            # objects: fixture vs movable is a judgment (falls to the model)
+            if row.entity.startswith("person:"):
+                # CONTAINMENT-DURABILITY-V1 §1: beings move. A being is a
+                # subject id in the `person:` namespace as written; the
+                # classifier sees the buffer only, not identity closure.
+                return STATE, 0.95
+            if self._declared_fixture(row):
+                # CONTAINMENT-DURABILITY-V1 §2: the host declared this thing
+                # built into its container, as of the row's own position.
+                return CONSTITUTIVE, 1.0
+            # other objects: fixture vs movable is a judgment (falls to the
+            # model, whose CONSTITUTIVE needs CONTAINMENT_CONSTITUTIVE_FLOOR)
         elif self._semantics.is_structural(row.attribute):
             return CONSTITUTIVE, 1.0
         if ASSERTION_ID_RE.fullmatch(row.entity):
@@ -192,12 +215,48 @@ class Classifier:
             return STATE, 0.5
         return None
 
+    def _declared_fixture(self, row: Assertion) -> bool:
+        """Whether the host declared ``row.entity`` a fixture, as of ``row``'s
+        own log position (CONTAINMENT-DURABILITY-V1 §2). Reads the canon
+        `fixture` rows visible then (retractions honoured); of the timeless
+        literal-boolean ones the latest-asserted decides. The subject is the id
+        as written, with no identity closure. Bounded at ``row.seq``, so a
+        declaration written later never reclassifies the row, on first
+        classification or on rebuild()."""
+        declared = [
+            r for r in self._buffer.visible(
+                entity=row.entity, attribute="fixture", frame="canon",
+                asserted_as_of=row.seq)
+            if r.valid_from is None and r.valid_to is None
+            and r.value_type == "literal" and isinstance(r.value, bool)
+        ]
+        if not declared:
+            return False
+        return max(declared, key=lambda r: (r.asserted_at, r.seq)).value is True
+
+    def _apply_containment_floor(
+        self, row: Assertion, durability: str, confidence: float
+    ) -> tuple[str, float]:
+        """The one normalization of a model-judged containment verdict
+        (CONTAINMENT-DURABILITY-V1 §3), shared by classify() and
+        _classify_batch(): a CONSTITUTIVE below CONTAINMENT_CONSTITUTIVE_FLOOR
+        is stored STATE, the model's confidence kept. Logged, not stored."""
+        if (durability == CONSTITUTIVE
+                and confidence < CONTAINMENT_CONSTITUTIVE_FLOOR
+                and self._semantics.is_containment(row.attribute)):
+            logger.info(
+                "containment floor: %s judged CONSTITUTIVE at %.3f (< %.2f); "
+                "stored STATE", row.id, confidence, CONTAINMENT_CONSTITUTIVE_FLOOR)
+            return STATE, confidence
+        return durability, confidence
+
     def classify(self, row: Assertion) -> Classification:
         verdict = self._guardrails(row)
         if verdict is not None:
             durability, confidence = verdict
         else:
-            durability, confidence = self._ask_model(row)
+            durability, confidence = self._apply_containment_floor(
+                row, *self._ask_model(row))
         needs_review = durability == CONSTITUTIVE and confidence < _REVIEW_FLOOR
         c = Classification(row.id, durability, confidence, needs_review)
         self._store(c)
@@ -238,8 +297,7 @@ class Classifier:
             "DISPOSITIONAL (how they tend) over STATE; a temporary ability or "
             "condition, or a time-relative quantity (age), remains STATE. "
             "Asymmetric defaults: an "
-            "ambiguous property is STATE; ambiguous fixture containment is "
-            "CONSTITUTIVE."
+            "ambiguous property is STATE. " + _CONTAINMENT_CLAUSE
         )
         try:
             out = self._model(prompt, task_schema(_MODEL_SCHEMA))
@@ -249,8 +307,10 @@ class Classifier:
                 raise ValueError(durability)
         except Exception:
             logger.exception("classifier model call failed for %s; defaulting", row.id)
-            # Asymmetric default: ambiguous property -> STATE, except
-            # in/within containment, which defaults CONSTITUTIVE.
+            # Asymmetric default: ambiguous property -> STATE. Containment
+            # returns CONSTITUTIVE 0.5 here, which the caller's containment
+            # floor stores as STATE: a failed call never makes a location
+            # permanent (CONTAINMENT-DURABILITY-V1 §3).
             if self._semantics.is_containment(row.attribute):
                 return CONSTITUTIVE, 0.5
             return STATE, 0.5
@@ -389,8 +449,8 @@ class Classifier:
             "STATE: what it is RIGHT NOW (positions of movables, moods); one event "
             "could flip it.\n"
             "Mutability test: could one event flip it without re-authoring the "
-            "world? -> STATE. Ambiguous property -> STATE; ambiguous fixture "
-            "containment -> CONSTITUTIVE.\n\nFacts:\n" + listing
+            "world? -> STATE. Ambiguous property -> STATE. " + _CONTAINMENT_CLAUSE
+            + "\n\nFacts:\n" + listing
         )
         verdicts: dict[int, tuple[str, float]] = {}
         try:
@@ -403,12 +463,12 @@ class Classifier:
         except Exception:
             logger.exception("batch classification failed; defaulting batch")
         for i, row in enumerate(rows):
-            durability, confidence = verdicts.get(
+            durability, confidence = self._apply_containment_floor(row, *verdicts.get(
                 i,
                 (CONSTITUTIVE, 0.5)
                 if self._semantics.is_containment(row.attribute)
                 else (STATE, 0.5),
-            )
+            ))
             self._store(
                 Classification(
                     row.id, durability, confidence,

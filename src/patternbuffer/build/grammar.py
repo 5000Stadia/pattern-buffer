@@ -136,6 +136,12 @@ def grammar_problem(item: Mapping[str, Any]) -> str | None:
         value = item.get(field)
         if not isinstance(value, str) or FIELD_RE.fullmatch(value) is None:
             return f"{field} {value!r} is not a field the grammar writes"
+    if item["attribute"] == "fixture":
+        # CONTAINMENT-DURABILITY-V1 r1.2: a fixture is a host's declaration (a
+        # manifest entry's `fixture`), never a model's guess. World-independent
+        # first line; commit's `_checked` closes the alias route after the
+        # target world's canonicalization.
+        return "attribute 'fixture' is a host declaration; a model never writes it"
     if "value" not in item:
         return "no value"
     if not _json_data(item["value"]):

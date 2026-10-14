@@ -65,6 +65,7 @@ class Identity:
     entry_id: str | None = None
     reveal: tuple[int, int] | None = None
     reveal_quote: str | None = None
+    fixture: bool = False
 
     @property
     def is_persona(self) -> bool:
@@ -183,7 +184,8 @@ class Registry:
                 id=eid, key=entry.key, type=normalize_type(entry.type),
                 species=entry.species.strip() if entry.species else None,
                 names=tuple(entry.names), role=entry.role, anchor=anchor,
-                gate=_effective_gate(book, anchor, entry.names)))
+                gate=_effective_gate(book, anchor, entry.names),
+                fixture=entry.fixture))
         for entry, eid, pids in zip(manifest.entries, entry_ids, persona_ids):
             for persona, pid in zip(entry.personas, pids):
                 intro = book.locate(persona.intro_quote)[0]
@@ -220,7 +222,7 @@ class Registry:
 
     def entries(self) -> list[dict[str, Any]]:
         """The entries in manifest order, for a host's cast author (§2 c3):
-        ``{id, key, type, species, names, role, anchor, gate, personas}`` with
+        ``{id, key, type, species, names, role, fixture, anchor, gate, personas}`` with
         each persona as ``{name, id, reveal, gate}``; positions are
         ``(chapter, sentence)``."""
         out: list[dict[str, Any]] = []
@@ -230,7 +232,7 @@ class Registry:
             out.append({
                 "id": ident.id, "key": ident.key, "type": ident.type,
                 "species": ident.species, "names": list(ident.names), "role": ident.role,
-                "anchor": ident.anchor, "gate": ident.gate,
+                "fixture": ident.fixture, "anchor": ident.anchor, "gate": ident.gate,
                 "personas": [{"name": p.names[0], "id": p.id, "reveal": p.reveal,
                               "gate": p.gate}
                              for p in self._identities if p.entry_id == ident.id],
