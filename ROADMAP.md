@@ -140,13 +140,14 @@ Kabe approved 2026-10-12 (gate gde97f3): "Full agree on establishing that servic
     - Every narrator or character read goes through that character's own frame, and beat rows and unwitnessed events are never reachable from it. That is the engine's frames-filter-at-source rule applied to beats.
     - The threat model is the engine leaking, not someone reading files.
   - Next: a spec, after the speed work's current specs land.
-- [ ] R56 Coherence-recipe vocabulary (Kabe approved recipes on 2026-10-13, via holo-emitter m3a6670 and m2c1f42: "Yes to all"). One declared canonical vocabulary so that extraction and every project's writes never fragment:
+- [x] R56 Coherence-recipe vocabulary (Kabe approved recipes on 2026-10-13, via holo-emitter m3a6670 and m2c1f42: "Yes to all"). One declared canonical vocabulary so that extraction and every project's writes never fragment:
   - `controls` (an entity-valued link from a switch, lever, plate or keypad to what it works), with `link_type` and `control_mode` (latching, momentary) as literals on the source;
   - `exits · none` as the explicit no-way-out fact (RFC-002: an absence means nothing undeclared);
   - `disposition` for a being's temperament.
 
   Each gets a recipe-facts golden for switched-light, code-lock and take-and-drop, checked in two lanes: the golden JSON on every change, and the story text through `patternbuffer.build` on demand.
   - Settled with holo-emitter (2026-10-14, m5f3da8, m342c1a): `outdoors` is a timeless literal fact, not an entity field; a code is a canon row plus the same row in `knows:<who>`; `fixture` is sourced from the host's manifest, never a sentence; held things are `held_by` in the golden (what extraction writes), and the grader compares containment on the folded location, so construct's `in · person:player` still matches.
+  - Done 2026-10-14: RECIPE-VOCAB-V1 r1.3.1 (shape-read by construct and holo-emitter, pbr GREEN spec and code), merged. `patternbuffer.vocab` (RECIPE, `attribute_default`, `apply_aliases`, `check`), `extract(..., vocabulary=)`, goldens in `evals/recipes/`, lane 1 in the suite. Lane 2 (story text through the library, graded) is written and waits for Kabe's yes (gate).
 
 ## Later
 
