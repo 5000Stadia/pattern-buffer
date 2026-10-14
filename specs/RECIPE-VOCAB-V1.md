@@ -1,6 +1,6 @@
 # RECIPE-VOCAB-V1: one declared vocabulary for the coherence recipes, and their goldens
 
-**Status:** r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
+**Status:** r1.3.1 (on pb's build review: two glosses reworded for the model, since a gloss is prompt text; no behaviour change). r1.3 (pbr's r1.2 RED: `locked` leaves `state`'s values, and `check()` tests the folded pair: a locked door must read `state · shut`). r1.2 (holo-emitter's shape read mfb985e: a lock is its own boolean `locked`, `state` is a thing's one main setting, a part with its own setting is its own entity, and sitting is `sits_on`). r1.1 (construct's shape read m132fd6: `mode` becomes `control_mode`, since construct writes `mode` on its drift events; the aliases that are entity-valued in the wild, `outside`, `exit`, `way_out` and `pin`, are dropped, since an alias can't depend on the value type). r1, for a shape read by holo-emitter and construct, then pbr. Author: pb, 2026-10-14.
 ROADMAP R56. Outside the engine core: a vocabulary is data, declared through the engine's existing
 seams, with no engine change.
 **Source:**
@@ -85,8 +85,8 @@ value, detail)` for each of:
 | `controls` | entity | n/a | `arity: set_valued`, `durability: CONSTITUTIVE` | `operates`, `powers` | what a switch, lever, plate, button or keypad works: `<switch> controls <light>` |
 | `link_type` | literal | closed: `switch`, `lever`, `plate`, `button`, `keypad`, `dial` | `durability: CONSTITUTIVE` | `control_type` | what kind of control the source is |
 | `control_mode` | literal | closed: `latching`, `momentary` | `durability: CONSTITUTIVE` | `mode` is **not** taken (construct's drift events use it), `switch_mode` | latching stays as set; momentary acts only while held |
-| `state` | literal | open: `on`, `off`, `open`, `shut` (*r1.3:* never `locked`, which is `locked · true`) | none (model-judged, as today) | `status` is **not** taken (hosts use it) | a device's or a portal's current setting; RFC-003 reads a portal's `state` |
-| `locked` | literal | closed: `true`, `false` | `durability: STATE` | none | whether a lock is engaged; a JSON boolean, separate from `state` *(r1.2)* |
+| `state` | literal | open: `on`, `off`, `open`, `shut` (*r1.3:* never `locked`, which is `locked · true`) | none (model-judged, as today) | `status` is **not** taken (hosts use it) | a thing's one main setting now: a door's or lid's open or shut, a light's or switch's on or off; never locked (*r1.3.1:* the glosses are model-facing, so no spec names) |
+| `locked` | literal | closed: `true`, `false` | `durability: STATE` | none | true while a lock is engaged; a locked door is also state shut *(r1.2, r1.3.1)* |
 | `lit` | literal | closed: `dark`, `dim`, `lit`, `day`, `night` | none | `light_level`, `lighting`, `illumination` | how much light a place has now |
 | `outdoors` | literal | closed: `true`, `false` | `durability: CONSTITUTIVE` | `is_outdoors` | a place open to the sky; written timeless |
 | `exits` | literal | closed: `none` | none | none | an observed "no way out" (see below) |

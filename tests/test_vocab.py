@@ -495,7 +495,7 @@ def test_5_with_the_recipe_the_section_follows_the_rules_and_lists_every_term_on
         assert len(listed) == 1, term.attribute
         assert term.gloss in listed[0]
         assert ("(values: " in listed[0]) == (term.value_type == "literal" and not term.open_values)
-    assert "locked: whether a lock is engaged; a JSON boolean, separate from `state` (values: true, false)" in lines
+    assert "locked: true while a lock is engaged; a locked door is also state shut (values: true, false)" in lines
     assert "exits: an observed \"no way out\" (values: none)" in lines
     # the rest of the prompt is the old one
     assert prompt.replace(RECIPE.prompt_section() + "\n\n", "") == _prompt_as_it_was(chunks[0], reg.book)
