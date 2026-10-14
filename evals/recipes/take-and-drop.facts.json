@@ -1,0 +1,167 @@
+{
+  "schema": "patternbuffer.recipe-facts/1",
+  "recipe": "take-and-drop",
+  "note": "RECIPE-VOCAB-V1 r1.3 golden, from holo-emitter's story and shape for the recipe. Containment is `in` throughout (the engine has no separate `on`): the book is `in` the study table, the page `in` the book. Added by pb for routes and placement: the doorway and the study table are `in place:study`, and `place:study connects_to obj:doorway`, so a route study -> doorway -> hall exists. The play (the book taken: held_by person:player, then put down: in the hall table) is not canon here; it is written by the lane-1 read test.",
+  "story": "There is a study and a hall, joined by an open doorway. In the study a book lies on a table, and a loose page lies in the book. In the hall stands another table.",
+  "entities": [
+    {
+      "id": "place:study",
+      "kind": "place",
+      "names": [
+        "study"
+      ]
+    },
+    {
+      "id": "place:hall",
+      "kind": "place",
+      "names": [
+        "hall"
+      ]
+    },
+    {
+      "id": "obj:doorway",
+      "kind": "door",
+      "names": [
+        "doorway"
+      ]
+    },
+    {
+      "id": "obj:study_table",
+      "kind": "table",
+      "names": [
+        "table"
+      ]
+    },
+    {
+      "id": "obj:book",
+      "kind": "book",
+      "names": [
+        "book"
+      ]
+    },
+    {
+      "id": "obj:page",
+      "kind": "page",
+      "names": [
+        "page",
+        "loose page"
+      ]
+    },
+    {
+      "id": "obj:hall_table",
+      "kind": "table",
+      "names": [
+        "another table"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "entity": "obj:doorway",
+      "attribute": "fixture",
+      "value": true,
+      "value_type": "literal",
+      "frame": "canon",
+      "timeless": true,
+      "source": {
+        "manifest": true
+      }
+    },
+    {
+      "entity": "obj:doorway",
+      "attribute": "in",
+      "value": "place:study",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 1
+      }
+    },
+    {
+      "entity": "place:study",
+      "attribute": "connects_to",
+      "value": "obj:doorway",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 1
+      }
+    },
+    {
+      "entity": "obj:doorway",
+      "attribute": "connects_to",
+      "value": "place:hall",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 1
+      }
+    },
+    {
+      "entity": "obj:doorway",
+      "attribute": "state",
+      "value": "open",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 1
+      }
+    },
+    {
+      "entity": "obj:study_table",
+      "attribute": "in",
+      "value": "place:study",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 2
+      }
+    },
+    {
+      "entity": "obj:book",
+      "attribute": "in",
+      "value": "obj:study_table",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 2
+      }
+    },
+    {
+      "entity": "obj:page",
+      "attribute": "in",
+      "value": "obj:book",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 2
+      }
+    },
+    {
+      "entity": "obj:hall_table",
+      "attribute": "in",
+      "value": "place:hall",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    }
+  ]
+}

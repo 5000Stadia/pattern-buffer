@@ -1,0 +1,334 @@
+{
+  "schema": "patternbuffer.recipe-facts/1",
+  "recipe": "code-lock",
+  "note": "RECIPE-VOCAB-V1 r1.3 golden. Imported from holo-emitter's draft (m046211) and corrected by the settled points: `outdoors` is a timeless boolean; the door's `fixture` is a timeless manifest row (the draft gave it valid_from 0); the code is a canon row plus the same row in knows:person:dog; the door is `locked · true` and also `state · shut` (r1.2/r1.3). The draft cited sentence 5, but the story has four sentences: the door, the keypad and the outside are all in sentence 4.",
+  "story": "the world is empty, except for a room. The room is completely dark. There is a light switch in the room, that if flipped turns on a light, the brightly illuminate the room and shows that there is a friendly dog. The dog only says a four digit code to the main player, and the only way to exit the room is a keypad with a four digit number.",
+  "entities": [
+    {
+      "id": "place:room",
+      "kind": "place",
+      "names": [
+        "room"
+      ]
+    },
+    {
+      "id": "place:outside",
+      "kind": "place",
+      "names": [
+        "outside"
+      ]
+    },
+    {
+      "id": "obj:switch",
+      "kind": "switch",
+      "names": [
+        "light switch"
+      ]
+    },
+    {
+      "id": "obj:light",
+      "kind": "light",
+      "names": [
+        "light"
+      ]
+    },
+    {
+      "id": "person:dog",
+      "kind": "person",
+      "names": [
+        "dog"
+      ]
+    },
+    {
+      "id": "obj:door",
+      "kind": "door",
+      "names": [
+        "door"
+      ]
+    },
+    {
+      "id": "obj:keypad",
+      "kind": "keypad",
+      "names": [
+        "keypad"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "entity": "place:outside",
+      "attribute": "outdoors",
+      "value": true,
+      "value_type": "literal",
+      "frame": "canon",
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      },
+      "timeless": true
+    },
+    {
+      "entity": "place:room",
+      "attribute": "lit",
+      "value": "dark",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 2
+      }
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "in",
+      "value": "place:room",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "obj:light",
+      "attribute": "in",
+      "value": "place:room",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "controls",
+      "value": "obj:light",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "link_type",
+      "value": "switch",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "obj:switch",
+      "attribute": "control_mode",
+      "value": "latching",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "obj:light",
+      "attribute": "state",
+      "value": "off",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "person:dog",
+      "attribute": "in",
+      "value": "place:room",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "person:dog",
+      "attribute": "disposition",
+      "value": "friendly",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "person:dog",
+      "attribute": "posture",
+      "value": "all_fours",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 3
+      }
+    },
+    {
+      "entity": "place:outside",
+      "attribute": "lit",
+      "value": "day",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:door",
+      "attribute": "fixture",
+      "value": true,
+      "value_type": "literal",
+      "frame": "canon",
+      "timeless": true,
+      "source": {
+        "manifest": true
+      }
+    },
+    {
+      "entity": "obj:door",
+      "attribute": "in",
+      "value": "place:room",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:door",
+      "attribute": "connects_to",
+      "value": "place:outside",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:keypad",
+      "attribute": "in",
+      "value": "place:room",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:keypad",
+      "attribute": "controls",
+      "value": "obj:door",
+      "value_type": "entity",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:keypad",
+      "attribute": "link_type",
+      "value": "keypad",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:keypad",
+      "attribute": "control_mode",
+      "value": "latching",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:keypad",
+      "attribute": "code",
+      "value": "4071",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:keypad",
+      "attribute": "code",
+      "value": "4071",
+      "value_type": "literal",
+      "frame": "knows:person:dog",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:door",
+      "attribute": "locked",
+      "value": true,
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    },
+    {
+      "entity": "obj:door",
+      "attribute": "state",
+      "value": "shut",
+      "value_type": "literal",
+      "frame": "canon",
+      "valid_from": 0,
+      "source": {
+        "chapter": 1,
+        "sentence": 4
+      }
+    }
+  ]
+}
