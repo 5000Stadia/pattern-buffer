@@ -1,6 +1,6 @@
 # CONTAINMENT-DURABILITY-V1: a movable's location is never made permanent by a guess
 
-**Status:** r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
+**Status:** r1.4 (pbr r1.3: `fixture` is typed exactly, round-trips through JSON, and travels to commit on the registry's identity record). r1.3 (pbr r1.2: the build library gets a host route for fixtures, and its model items are fixture-denied after the target world's canonicalization). r1.2 (pbr r1.1: `fixture` is host-only; model extraction can't write it). r1.1 answered pbr's r1 RED by narrowing:
 - no per-world floor (`attr:in` is inviolable core);
 - the being and fixture tests use only what the classifier can see, bounded at the row's own log position;
 - no sidecar schema change;
@@ -68,7 +68,18 @@ fold.
      build:
      - **The host route.** `Entry` gains `fixture: bool = False`. It is valid only for the
        non-being types `object` and `place`. validate() refuses it on a being with
-       `fixture_on_being`. Commit's manifest writer emits, after the entry's shape rows and before
+       `fixture_on_being`.
+       - *(r1.4, pbr)* **Exact type.** validate() accepts only a real `bool` (`type(x) is bool`).
+         A string, an int (including `1` and `0`), `None` or anything else is refused with
+         `fixture_not_bool`, listed with the other problems in the one `ManifestError`.
+       - *(r1.4)* **JSON round-trip.** `Manifest.to_dict()` writes `fixture` for every entry, and
+         `from_dict()` reads it, defaulting to `false` when it is absent. So a manifest written
+         before this change still loads. A fixture manifest round-trips equal and commits the same
+         world.
+       - *(r1.4)* **Transport to commit.** `Registry.from_manifest` copies the flag onto the
+         entry's identity record (`Identity.fixture`, beside `id`, `type` and `species`).
+         `entries()` reports it. Commit's manifest writer reads `Identity.fixture` by the entry's
+         minted id, never by list position. Commit's manifest writer emits, after the entry's shape rows and before
        any chunk fact, one host row: `<id> · fixture · true`, timeless, canon, written through
        `ingest_structured` with `extracted=False` (host authority).
      - **The model route is closed after canonicalization.** For every model-result item (chunk
@@ -158,7 +169,13 @@ fold.
    - *(r1.3)* a manifest `Entry(..., type="object", fixture=True)` for `obj:barred_door` writes
      `fixture = true` as a host row before any chunk fact, and its containment row gets the fixture
      guardrail (CONSTITUTIVE 1.0, no model call);
-   - *(r1.3)* `fixture=True` on a being is refused by validate() (`fixture_on_being`).
+   - *(r1.3)* `fixture=True` on a being is refused by validate() (`fixture_on_being`);
+   - *(r1.4)* `fixture` set to `"yes"`, `1`, `0` and `None` is each refused with `fixture_not_bool`,
+     and the int-shaped ones are not accepted as bools;
+   - *(r1.4)* a manifest with a `fixture=True` entry survives `to_dict` then `from_dict` equal, and
+     both commit byte-identical worlds (dumps equal). A dict without `fixture` loads as `false`;
+   - *(r1.4)* `entries()` reports `fixture`, and reordering the manifest's entries still puts the
+     fixture row on the right id.
 3. **The floor:**
    - a model verdict of CONSTITUTIVE 0.7 on `obj:execution_page in obj:book` is stored STATE, with
      the confidence and the demoted mark;
