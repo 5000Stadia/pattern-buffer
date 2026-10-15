@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import functools
 import importlib
 import inspect
 import json
@@ -1170,14 +1171,16 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
         def log_message(self, fmt: str, *args: Any) -> None:    # route to logging
             logger.debug("http %s", fmt % args)
 
-        def _send(self, code: int, body: dict) -> None:
+        def _send(self, code: int, body: dict, cors: str | None = None) -> None:
+            # `cors` is passed only by POST /call after its Host and path checks
+            # passed (r5.1): no refusal of those checks, and no preflight
+            # refusal, ever carries a CORS header
             data = json.dumps(body).encode("utf-8")
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(data)))
-            origin = self._granted_origin()
-            if origin is not None and self.path.split("?", 1)[0] == "/call":
-                self.send_header("Access-Control-Allow-Origin", origin)
+            if cors is not None:
+                self.send_header("Access-Control-Allow-Origin", cors)
                 self.send_header("Vary", "Origin")
             self.end_headers()
             self.wfile.write(data)
@@ -1237,12 +1240,15 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
             if self.path.split("?", 1)[0] != "/call":
                 return self._send(404, {"error": {"type": "not_found",
                                                   "message": self.path}})
+            # r5.1: from here every answer, a refusal included, may be read by a
+            # granted loopback page, so its queue can tell refused from offline
+            send = functools.partial(self._send, cors=self._granted_origin())
             # JSON only: a cross-origin page cannot send this type without a
             # preflight, which this server grants only to a loopback page, and
             # only when started with --allow-loopback-origins (r5.1)
             if (self.headers.get("Content-Type") or "").split(";")[0].strip() \
                     != "application/json":
-                return self._send(415, {"error": {"type": "unsupported_media_type",
+                return send(415, {"error": {"type": "unsupported_media_type",
                                                   "message": "send application/json"}})
             try:
                 length = int(self.headers.get("Content-Length") or 0)
@@ -1255,23 +1261,23 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
                         and isinstance(args, dict)):
                     raise ValueError("shape")
             except (ValueError, KeyError, TypeError):
-                return self._send(400, {"error": {
+                return send(400, {"error": {
                     "type": "bad_request",
                     "message": "POST /call wants {session, verb, args}"}})
             try:
                 result = runner.session(name).call(verb, **args)
             except Refused as exc:
-                return self._send(400, {"error": {"type": "refused", "message": str(exc)}})
+                return send(400, {"error": {"type": "refused", "message": str(exc)}})
             except (ValueError, TypeError) as exc:
-                return self._send(400, {"error": {"type": "bad_request",
+                return send(400, {"error": {"type": "bad_request",
                                                   "message": str(exc)}})
             except TimeoutError as exc:
-                return self._send(504, {"error": {"type": "timeout", "message": str(exc)}})
+                return send(504, {"error": {"type": "timeout", "message": str(exc)}})
             except Exception as exc:
                 logger.exception("call %s failed", verb)
-                return self._send(500, {"error": {"type": type(exc).__name__,
+                return send(500, {"error": {"type": type(exc).__name__,
                                                   "message": "see the service log"}})
-            self._send(200, {"result": result})
+            send(200, {"result": result})
 
     return Handler
 

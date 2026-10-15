@@ -1107,11 +1107,18 @@ def test_r5_1_a_loopback_page_is_granted_only_when_opted_in(tmp_path):
             assert hdrs["access-control-allow-methods"] == "POST"
             assert hdrs["access-control-allow-headers"] == "Content-Type"
             assert "access-control-allow-credentials" not in hdrs
-        code, body = _http(r.port, "POST", "/call",
-                           {"session": "holo-play", "verb": "state",
-                            "args": {"entity": "person:barmaid", "attribute": "gold"}},
-                           headers={"Origin": "http://127.0.0.1:8798"})
-        assert code == 200
+        import http.client
+        conn = http.client.HTTPConnection("127.0.0.1", r.port, timeout=10)
+        conn.request("POST", "/call", body=json.dumps(
+            {"session": "holo-play", "verb": "state",
+             "args": {"entity": "person:barmaid", "attribute": "gold"}}),
+            headers={"Origin": "http://127.0.0.1:8798", "Content-Type": "application/json"})
+        resp = conn.getresponse()
+        resp.read()
+        conn.close()
+        assert resp.status == 200
+        assert resp.getheader("Access-Control-Allow-Origin") == "http://127.0.0.1:8798"
+        assert resp.getheader("Vary") == "Origin"
     finally:
         r.stop()
 
@@ -1124,9 +1131,17 @@ def test_r5_1_everything_else_is_refused(tmp_path):
             code, hdrs = _raw(r.port, "OPTIONS", "/call", {"Origin": origin, **PREFLIGHT})
             assert code == 403 and "access-control-allow-origin" not in hdrs
         good = {"Origin": "http://localhost:3000"}
-        assert _raw(r.port, "OPTIONS", "/call", {**good, "Access-Control-Request-Method": "PUT"})[0] == 403
-        assert _raw(r.port, "OPTIONS", "/call", {**good, **PREFLIGHT,
-                    "Access-Control-Request-Headers": "content-type, authorization"})[0] == 403
+        # pbr: a refused preflight, or a forged Host, carries no CORS header at all
+        for headers in ({**good, "Access-Control-Request-Method": "PUT"},
+                        {**good, **PREFLIGHT,
+                         "Access-Control-Request-Headers": "content-type, authorization"},
+                        {**good, **PREFLIGHT, "Host": "evil.example"}):
+            code, hdrs = _raw(r.port, "OPTIONS", "/call", headers)
+            assert code == 403
+            assert "access-control-allow-origin" not in hdrs and "vary" not in hdrs
+        code, hdrs = _raw(r.port, "POST", "/call", {**good, "Host": "evil.example",
+                                                   "Content-Type": "application/json"})
+        assert code == 403 and "access-control-allow-origin" not in hdrs
         assert _raw(r.port, "OPTIONS", "/now", {**good, **PREFLIGHT})[0] == 404
         code, hdrs = _raw(r.port, "GET", "/now", good)
         assert code == 200 and "access-control-allow-origin" not in hdrs

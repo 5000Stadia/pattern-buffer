@@ -214,7 +214,10 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
 
      The answer is 204, echoing that origin in `Access-Control-Allow-Origin`, with `POST`,
      `Content-Type`, a 600-second max age and `Vary: Origin`. Responses to `POST /call` from that
-     origin carry the same `Access-Control-Allow-Origin`. There is never an
+     origin carry the same `Access-Control-Allow-Origin`, *(pbr)* but only once the `Host` and path
+     checks have passed. That includes a refusal of the call itself, so the page's queue can read
+     `refused` rather than see a network error. A refused preflight and a failed `Host` check never
+     carry a CORS header. There is never an
      `Access-Control-Allow-Credentials`, and no other path, origin, method or header is granted: a
      refused preflight gets 403.
      - Without the flag the runner grants nothing, as before.
