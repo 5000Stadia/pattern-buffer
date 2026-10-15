@@ -65,7 +65,9 @@ suppression), so a literal `name · "obj:chain"` arrives as `value_type: "litera
 *(r1.1)* **One decision per raw id per call.** `bind` first gathers every distinct raw id raised by any side of any
 row. A raw id's surfaces are the union of every row's `name`, `names` and `aliases` where it is the subject, plus its
 slug read as words. That evidence applies to its value sides too. Each raw id is resolved once, in the order below, and
-the decision applies to every side that raised it.
+the decision applies to every side that raised it. Hosts may rely on this as part of the contract: a raw id
+gets the same `Side` in every row of one call. construct adds a name-free probe row for a value whose own row's
+subject is malformed, so the value keeps its correlated outcome (construct 77c3ca0). Test 7a pins it.
 
 1. **Malformed:** the id fails the entity-id grammar. Outcome `malformed`.
 2. **Pass-through** *(r1.3: moved before identity)*: an id in any namespace other than `person`, `place` or `obj` (for
