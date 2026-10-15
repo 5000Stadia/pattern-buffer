@@ -34,6 +34,7 @@ import inspect
 import json
 import logging
 import queue
+import re
 import signal
 import threading
 import time
@@ -1071,7 +1072,11 @@ class Runner:
                  rate: RateCap | None = None,
                  model_route: Callable[[dict], str] | None = None,
                  mirror_key: bytes | None = None,
-                 people: Sequence[str] | None = None) -> None:
+                 people: Sequence[str] | None = None,
+                 loopback_origins: bool = False) -> None:
+        # WORLD-SERVICE-V1 r5.1 §9: answer a loopback page's CORS preflight on
+        # /call. Off by default: no cross-origin page is granted anything.
+        self.loopback_origins = loopback_origins
         # BEATS-V1 §1: refuse here, on the caller's thread; `attach` on the pump
         # thread would surface the same refusal late.
         refuse_author_view(view_frame, "Runner")
@@ -1154,6 +1159,8 @@ class Runner:
 
 
 _LOOPBACK_HOSTS = ("127.0.0.1", "localhost")
+# WORLD-SERVICE-V1 r5.1 §9: the only origins a granted runner answers, any port.
+_LOOPBACK_ORIGIN = re.compile(r"http://(?:127\.0\.0\.1|localhost)(?::[0-9]{1,5})?")
 
 
 def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
@@ -1168,8 +1175,20 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(data)))
+            origin = self._granted_origin()
+            if origin is not None and self.path.split("?", 1)[0] == "/call":
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
             self.end_headers()
             self.wfile.write(data)
+
+        def _granted_origin(self) -> str | None:
+            # r5.1: echoed only for a loopback page, only when the runner was
+            # started with --allow-loopback-origins; never with credentials
+            origin = self.headers.get("Origin")
+            if runner.loopback_origins and origin and _LOOPBACK_ORIGIN.fullmatch(origin):
+                return origin
+            return None
 
         def _host_ok(self) -> bool:
             # a browser page on another origin cannot read our answers, but a
@@ -1186,6 +1205,31 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
                 return self._send(200, {"now": runner.service.now()})
             self._send(404, {"error": {"type": "not_found", "message": self.path}})
 
+        def do_OPTIONS(self) -> None:                            # noqa: N802
+            # r5.1 §9: the preflight for POST /call from a loopback page, granted
+            # only to POST with Content-Type; everything else is refused
+            if not self._host_ok():
+                return self._send(403, {"error": {"type": "forbidden",
+                                                  "message": "loopback hosts only"}})
+            if self.path.split("?", 1)[0] != "/call":
+                return self._send(404, {"error": {"type": "not_found", "message": self.path}})
+            origin = self._granted_origin()
+            method = self.headers.get("Access-Control-Request-Method")
+            asked = {h.strip().lower() for h in
+                     (self.headers.get("Access-Control-Request-Headers") or "").split(",")
+                     if h.strip()}
+            if origin is None or method != "POST" or not asked <= {"content-type"}:
+                return self._send(403, {"error": {"type": "forbidden",
+                                                  "message": "no cross-origin grant"}})
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "POST")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Vary", "Origin")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
         def do_POST(self) -> None:                               # noqa: N802
             if not self._host_ok():
                 return self._send(403, {"error": {"type": "forbidden",
@@ -1194,7 +1238,8 @@ def _handler_for(runner: Runner) -> type[BaseHTTPRequestHandler]:
                 return self._send(404, {"error": {"type": "not_found",
                                                   "message": self.path}})
             # JSON only: a cross-origin page cannot send this type without a
-            # preflight, which this server never grants
+            # preflight, which this server grants only to a loopback page, and
+            # only when started with --allow-loopback-origins (r5.1)
             if (self.headers.get("Content-Type") or "").split(";")[0].strip() \
                     != "application/json":
                 return self._send(415, {"error": {"type": "unsupported_media_type",
@@ -1255,6 +1300,10 @@ def main(argv: list[str] | None = None) -> int:
                              "into canon or a character's knowledge, never the "
                              "player's view (repeatable)")
     parser.add_argument("--policy", choices=sorted(POLICIES), default=None)
+    parser.add_argument("--allow-loopback-origins", action="store_true",
+                        help="answer CORS preflights on /call from http://127.0.0.1 "
+                             "or http://localhost pages (any port), POST with "
+                             "Content-Type only, no credentials; off by default")
     parser.add_argument("--mirror-key-file", default=None, metavar="PATH",
                         help="a file of raw key bytes (at least 16): turns on the "
                              "offline mirror's present layer and signs its cursors")
@@ -1286,7 +1335,8 @@ def main(argv: list[str] | None = None) -> int:
                     args.view_frame, port=args.port,
                     recorders=tuple(args.recorder), authors=tuple(args.author),
                     rate=RateCap(args.rate) if args.rate is not None else None,
-                    model_route=route, mirror_key=mirror_key, people=people)
+                    model_route=route, mirror_key=mirror_key, people=people,
+                    loopback_origins=args.allow_loopback_origins)
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())

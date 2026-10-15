@@ -1,6 +1,6 @@
 # WORLD-SERVICE-V1: one world, every module
 
-**Status:** r5. Build findings tightened two canon-leak paths and replaced the rate cap's mechanism: §4, §3 and §8, each marked *(r5)*. r4: It closes pbr's r3 RED, the one remaining authorization gap: a frame supplied by
+**Status:** r5.1 (holo-emitter m01295c: its page and the runner are different loopback origins, so the browser preflights `POST /call`, which the runner refused. §9 gains an opt-in, loopback-only CORS grant). r5. Build findings tightened two canon-leak paths and replaced the rate cap's mechanism: §4, §3 and §8, each marked *(r5)*. r4: It closes pbr's r3 RED, the one remaining authorization gap: a frame supplied by
 the caller on `resolve` and `record` (§4, §5), plus joining narrowed to the `perceive_in` path
 (§7b). r3 answered pbr's r2 RED (§3, §4, §7) and folded in the snapshot cadence (§2). Earlier rounds folded in construct's shape read (m53b6e8). Author: pb,
 2026-10-12.
@@ -206,6 +206,21 @@ svc.session("holo-emitter", role="viewer")   # a client's door, §3
    - It binds 127.0.0.1 only. Wider hosting (a phone, the public site) is Kabe's call and is not
      built here.
    - With no `--generator`, model-routed resolves return `{"status": "no_model"}`.
+   - *(r5.1)* **`--allow-loopback-origins`** (off by default): the runner answers a CORS preflight
+     (`OPTIONS /call`) only when all of these hold:
+     - the `Origin` is exactly `http://127.0.0.1` or `http://localhost`, with any port;
+     - the method asked for is `POST`;
+     - the headers asked for are at most `Content-Type`.
+
+     The answer is 204, echoing that origin in `Access-Control-Allow-Origin`, with `POST`,
+     `Content-Type`, a 600-second max age and `Vary: Origin`. Responses to `POST /call` from that
+     origin carry the same `Access-Control-Allow-Origin`. There is never an
+     `Access-Control-Allow-Credentials`, and no other path, origin, method or header is granted: a
+     refused preflight gets 403.
+     - Without the flag the runner grants nothing, as before.
+     - The `Host` check (loopback names only) runs first in either case.
+     - **Why opt-in:** any page served on loopback, by any local program, could then call the runner,
+       so the person starting it chooses.
 
 ## What does not change
 

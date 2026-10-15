@@ -1071,3 +1071,74 @@ def test_concurrent_clients_do_not_corrupt_the_service(runner):
         t.join(30)
         assert not t.is_alive(), "a client hung"
     assert len(results) == 18 and all(code == 200 for code, _ in results)
+
+
+# ---------------------------------------- r5.1: the opt-in loopback CORS grant
+
+def _raw(port, method, path, headers):
+    import http.client
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    conn.request(method, path, body=None, headers=headers)
+    resp = conn.getresponse()
+    resp.read()
+    conn.close()
+    return resp.status, {k.lower(): v for k, v in resp.getheaders()}
+
+
+def _granted_runner(tmp_path, loopback_origins):
+    build_world(tmp_path, name="cors.world").close()
+    model, route = make_runner_callable(_generator)
+    return Runner(lambda gated: World(tmp_path / "cors.world", "w:svc", model=gated(model)), VF,
+                  port=0, recorders=("holo-play",), model_route=route,
+                  loopback_origins=loopback_origins).start()
+
+
+PREFLIGHT = {"Access-Control-Request-Method": "POST",
+             "Access-Control-Request-Headers": "content-type"}
+
+
+def test_r5_1_a_loopback_page_is_granted_only_when_opted_in(tmp_path):
+    r = _granted_runner(tmp_path, True)
+    try:
+        for origin in ("http://127.0.0.1:8798", "http://localhost:3000", "http://localhost"):
+            code, hdrs = _raw(r.port, "OPTIONS", "/call", {"Origin": origin, **PREFLIGHT})
+            assert code == 204
+            assert hdrs["access-control-allow-origin"] == origin
+            assert hdrs["access-control-allow-methods"] == "POST"
+            assert hdrs["access-control-allow-headers"] == "Content-Type"
+            assert "access-control-allow-credentials" not in hdrs
+        code, body = _http(r.port, "POST", "/call",
+                           {"session": "holo-play", "verb": "state",
+                            "args": {"entity": "person:barmaid", "attribute": "gold"}},
+                           headers={"Origin": "http://127.0.0.1:8798"})
+        assert code == 200
+    finally:
+        r.stop()
+
+
+def test_r5_1_everything_else_is_refused(tmp_path):
+    r = _granted_runner(tmp_path, True)
+    try:
+        for origin in ("https://127.0.0.1:8798", "http://evil.example", "http://127.0.0.2",
+                       "http://localhost.evil.example", "null"):
+            code, hdrs = _raw(r.port, "OPTIONS", "/call", {"Origin": origin, **PREFLIGHT})
+            assert code == 403 and "access-control-allow-origin" not in hdrs
+        good = {"Origin": "http://localhost:3000"}
+        assert _raw(r.port, "OPTIONS", "/call", {**good, "Access-Control-Request-Method": "PUT"})[0] == 403
+        assert _raw(r.port, "OPTIONS", "/call", {**good, **PREFLIGHT,
+                    "Access-Control-Request-Headers": "content-type, authorization"})[0] == 403
+        assert _raw(r.port, "OPTIONS", "/now", {**good, **PREFLIGHT})[0] == 404
+        code, hdrs = _raw(r.port, "GET", "/now", good)
+        assert code == 200 and "access-control-allow-origin" not in hdrs
+    finally:
+        r.stop()
+
+
+def test_r5_1_off_by_default(tmp_path):
+    r = _granted_runner(tmp_path, False)
+    try:
+        code, hdrs = _raw(r.port, "OPTIONS", "/call",
+                          {"Origin": "http://127.0.0.1:8798", **PREFLIGHT})
+        assert code == 403 and "access-control-allow-origin" not in hdrs
+    finally:
+        r.stop()
